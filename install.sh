@@ -58,68 +58,68 @@ read DOTS
 case $DOTS in
 1)
   cd $HOME
-  git clone https://github.com/hyprtk/arch-dots.git
-  cd arch-dots
+  git clone https://github.com/hyprtk/arch-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 2)
   cd $HOME
-  git clone https://github.com/hyprtk/archbang-dots.git
-  cd archbang-dots
+  git clone https://github.com/hyprtk/archbang-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 3)
   cd $HOME
-  git clone https://github.com/hyprtk/archcraft-dots.git
-  cd archcraft-dots
+  git clone https://github.com/hyprtk/archcraft-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 4)
   cd $HOME
-  git clone https://github.com/hyprtk/archman-dots.git
-  cd archman-dots
+  git clone https://github.com/hyprtk/archman-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 5)
   cd $HOME
-  git clone https://github.com/hyprtk/bslx-dots.git
-  cd bslx-dots
+  git clone https://github.com/hyprtk/bslx-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 6)
   cd $HOME
-  git clone https://github.com/hyprtk/cachy-dots.git
-  cd cachy-dots
+  git clone https://github.com/hyprtk/cachy-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 7)
   cd $HOME
-  git clone https://github.com/hyprtk/endeavour-dots.git
-  cd endeavour-dots
+  git clone https://github.com/hyprtk/endeavour-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 8)
   cd $HOME
-  git clone https://github.com/hyprtk/garuda-dots.git
-  cd garuda-dots
+  git clone https://github.com/hyprtk/garuda-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 9)
   cd $HOME
-  git clone https://github.com/hyprtk/kiro-dots.git
-  cd kiro-dots
+  git clone https://github.com/hyprtk/kiro-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 10)
   cd $HOME
-  git clone https://github.com/hyprtk/manjaro-dots.git
-  cd manjaro-dots
+  git clone https://github.com/hyprtk/manjaro-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 11)
   cd $HOME
-  git clone https://github.com/hyprtk/my-dots.git
-  cd my-dots
+  git clone https://github.com/hyprtk/my-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 12)
   cd $HOME
-  git clone https://github.com/hyprtk/reborn-dots.git
-  cd reborn-dots
+  git clone https://github.com/hyprtk/reborn-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 *)
   cd $HOME
-  git clone https://github.com/hyprtk/arch-dots.git
-  cd arch-dots
+  git clone https://github.com/hyprtk/arch-dots.git ~/hyprtk
+  cd ~/hyprtk
   sh ./1-install.sh;;
 esac
 echo ""
