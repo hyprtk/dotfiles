@@ -1,125 +1,107 @@
-a#!/usr/bin/env bash
+#!/usr/bin/env bash
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
 MAGENTA='\033[35m'
-BOLD='\033[1m'
-RESET='\033[0m'
+CYAN='\033[0;36m'
+WHITE='\033[0;37m'
+RED='\033[1;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-echo -e "${CYAN}"
-cat << 'EOF'
- ██                                ██   ██
-░██       ██   ██ ██████          ░██  ░██
-░██      ░░██ ██ ░██░░░██ ██████ ██████░██  ██
-░██████   ░░███  ░██  ░██░░██░░█░░░██░ ░██ ██
-░██░░░██   ░██   ░██████  ░██ ░   ░██  ░████
-░██  ░██   ██    ░██░░░   ░██     ░██  ░██░██  ██ ██ ██
-░██  ░██  ██     ░██     ░███     ░░██ ░██░░██░██░██░██
-░░   ░░  ░░      ░░      ░░░       ░░  ░░  ░░ ░░ ░░ ░░
-EOF
-echo -e "${RESET}"
-echo -e "${MAGENTA}"
-echo "
-#########################################################
-#                                                       #
-#             Which Arch Distro do you have?            #
-#                                                       #
-#########################################################
+if ! command -v gum &>/dev/null; then
+    echo -e "${CYAN}Installing gum...${NC}"
+    if command -v pacman &>/dev/null; then
+        sudo pacman -S --noconfirm gum
+    elif command -v yay &>/dev/null; then
+        yay -S --noconfirm gum
+    elif command -v paru &>/dev/null; then
+        paru -S --noconfirm gum
+    else
+        echo -e "${MAGENTA}gum not found and couldn't be installed.${NC}"
+        exit 1
+    fi
+fi
 
-1) Arch Linux
-2) ArchBANG Linux
-3) Archcraft Linux
-4) Archman Linux
-5) BlueStar Linux
-6) CachyOS
-7) EndeavourOS
-8) Garuda Linux
-9) Kiro Linux (ArcoLinux Rebrand)
-10) Manjaro Linux
-11) My Personal Dotfiles (contains testing features before being promoted to other Dots)
-12) RebornOS 
-"
-echo -e "${RESET}"
-echo -e "${CYAN}"
-echo "#########################   IMPORTANT   #############################
-*********************************************************************
-Installing my personal dots files may break your current system,
-if you wish to use my personal dots i would advise on a clean install
-*********************************************************************"
-echo -e "${RESET}"
-echo -e "${MAGENTA}"
-echo " Defaults to Arch if you choose to not make selection "
-echo -e "${RESET}"
-echo ""
-read DOTS
+clear
+
+gum style \
+    --border-foreground 5 \
+    --border double \
+    --align center \
+    --padding "1 3" \
+    --margin "1 0" \
+    "$(printf "${CYAN}HYPRTK DOTFILES${NC}")" \
+    "$(printf "${CYAN}Hyprland Desktop Environment Installer${NC}")" \
+    "" \
+    "$(printf "${RED}DISCLAIMER${NC}")" \
+    "$(printf "${WHITE}Installing these dotfiles may alter your system${NC}")" \
+    "$(printf "${WHITE}configuration. A clean install is recommended for${NC}")" \
+    "$(printf "${WHITE}best results.${NC}")"
+
+gum style --foreground 5 --bold --padding "1 0" "Select your distribution:"
+
+DISTROS=(
+    "1) Arch Linux"
+    "2) ArchBANG Linux"
+    "3) Archcraft Linux"
+    "4) Archman Linux"
+    "5) BlueStar Linux"
+    "6) CachyOS"
+    "7) EndeavourOS"
+    "8) Garuda Linux"
+    "9) Kiro Linux (ArcoLinux Rebrand)"
+    "10) Manjaro Linux"
+    "11) My Personal Dotfiles"
+    "12) RebornOS"
+    "13) Exit"
+)
+
+SELECTED=$(gum choose \
+    --height=13 \
+    --cursor.foreground=5 \
+    --selected.foreground=0 \
+    --selected.background=5 \
+    --item.foreground=6 \
+    "${DISTROS[@]}")
+
+if [[ -z "$SELECTED" || "$SELECTED" == "13) Exit" ]]; then
+    printf '\033[1A\033[K'
+    echo -e "${MAGENTA}Installation cancelled.${NC}"
+    exit 0
+fi
+
+DOTS="${SELECTED%%)*}"
+
+if ! gum confirm --prompt.foreground=5 "Proceed with installation?"; then
+    echo -e "${MAGENTA}Installation cancelled.${NC}"
+    exit 0
+fi
+
 case $DOTS in
-1)
-  cd $HOME
-  git clone https://github.com/hyprtk/arch-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-2)
-  cd $HOME
-  git clone https://github.com/hyprtk/archbang-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-3)
-  cd $HOME
-  git clone https://github.com/hyprtk/archcraft-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-4)
-  cd $HOME
-  git clone https://github.com/hyprtk/archman-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-5)
-  cd $HOME
-  git clone https://github.com/hyprtk/bslx-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-6)
-  cd $HOME
-  git clone https://github.com/hyprtk/cachy-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-7)
-  cd $HOME
-  git clone https://github.com/hyprtk/endeavour-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-8)
-  cd $HOME
-  git clone https://github.com/hyprtk/garuda-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-9)
-  cd $HOME
-  git clone https://github.com/hyprtk/kiro-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-10)
-  cd $HOME
-  git clone https://github.com/hyprtk/manjaro-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-11)
-  cd $HOME
-  git clone https://github.com/hyprtk/my-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-12)
-  cd $HOME
-  git clone https://github.com/hyprtk/reborn-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
-*)
-  cd $HOME
-  git clone https://github.com/hyprtk/arch-dots.git ~/hyprtk
-  cd ~/hyprtk
-  sh ./1-install.sh;;
+1)  REPO="arch-dots" ;;
+2)  REPO="archbang-dots" ;;
+3)  REPO="archcraft-dots" ;;
+4)  REPO="archman-dots" ;;
+5)  REPO="bslx-dots" ;;
+6)  REPO="cachy-dots" ;;
+7)  REPO="endeavour-dots" ;;
+8)  REPO="garuda-dots" ;;
+9)  REPO="kiro-dots" ;;
+10) REPO="manjaro-dots" ;;
+11) REPO="my-dots" ;;
+12) REPO="reborn-dots" ;;
+*)  REPO="arch-dots" ;;
 esac
-echo ""
+
+gum spin --spinner dot --title "Cloning $REPO..." -- git clone "https://github.com/hyprtk/$REPO.git" ~/hyprtk
+cd ~/hyprtk
+sh ./1-install.sh
+
+echo
+gum style \
+    --foreground 6 \
+    --border-foreground 5 \
+    --border double \
+    --padding "1 3" \
+    --margin "1 0" \
+    "Installation complete" \
+    "github.com/hyprtk/dotfiles"
