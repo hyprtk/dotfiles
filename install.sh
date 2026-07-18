@@ -7,23 +7,11 @@ RED='\033[1;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-if ! command -v gum &>/dev/null; then
-    echo -e "${CYAN}Installing gum...${NC}"
-    if command -v pacman &>/dev/null; then
-        sudo pacman -S --noconfirm gum
-    elif command -v yay &>/dev/null; then
-        yay -S --noconfirm gum
-    elif command -v paru &>/dev/null; then
-        paru -S --noconfirm gum
-    else
-        echo -e "${MAGENTA}gum not found and couldn't be installed.${NC}"
-        exit 1
-    fi
-fi
+GUM="./standalone/gum"
 
 clear
 
-gum style \
+$GUM style \
     --border-foreground 5 \
     --border double \
     --align center \
@@ -37,7 +25,7 @@ gum style \
     "$(printf "${WHITE}configuration. A clean install is recommended for${NC}")" \
     "$(printf "${WHITE}best results.${NC}")"
 
-gum style --foreground 5 --bold --padding "1 0" "Select your distribution:"
+$GUM style --foreground 5 --bold --padding "1 0" "Select your distribution:"
 
 DISTROS=(
     "1) Arch Linux"
@@ -55,7 +43,7 @@ DISTROS=(
     "13) Exit"
 )
 
-SELECTED=$(gum choose \
+SELECTED=$($GUM choose \
     --height=13 \
     --cursor.foreground=5 \
     --selected.foreground=0 \
@@ -71,7 +59,7 @@ fi
 
 DOTS="${SELECTED%%)*}"
 
-if ! gum confirm --prompt.foreground=5 "Proceed with installation?"; then
+if ! $GUM confirm --prompt.foreground=5 "Proceed with installation?"; then
     echo -e "${MAGENTA}Installation cancelled.${NC}"
     exit 0
 fi
@@ -92,12 +80,12 @@ case $DOTS in
 *)  REPO="arch-dots" ;;
 esac
 
-gum spin --spinner dot --title "Cloning $REPO..." -- git clone "https://github.com/hyprtk/$REPO.git" ~/hyprtk
+$GUM spin --spinner dot --title "Cloning $REPO..." -- git clone "https://github.com/hyprtk/$REPO.git" ~/hyprtk
 cd ~/hyprtk
 sh ./1-install.sh
 
 echo
-gum style \
+$GUM style \
     --foreground 6 \
     --border-foreground 5 \
     --border double \
