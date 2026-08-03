@@ -44,7 +44,7 @@ Hyprland: In addition, you can switch the Waybar Template
 
 	Keybinding SUPER + CTRL + T or by pressing the _ icon under the picture icon in waybar.
 
-The templates are available in ~/dotfiles/waybar/themes. You can add your own personal themes into this folder. The script will read in the folder structure.
+The templates are available in ~/hyprtk/configs/waybar/themes. You can add your own personal themes into this folder. The script will read in the folder structure.
 
 ## Getting started
 
@@ -120,6 +120,6 @@ RebornOS
 ## My Personal Dots - Dev Dots
 
 Arch Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/mydots1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/mydots2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/mydots3.png)
+![MODEL](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch1.png)
+![Model](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch2.png)
+![Model](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch3.png)

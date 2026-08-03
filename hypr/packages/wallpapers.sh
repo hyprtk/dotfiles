@@ -2,7 +2,7 @@
 
 # Source library for package functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../../scripts/library.sh"
+source "$SCRIPT_DIR/../../installer/scripts/library.sh"
 
 print_subsection_header "Wallpapers"
 
@@ -27,7 +27,7 @@ while true; do
             else
                 mkdir ~/Pictures/Wallpapers
             fi
-            cp ~/hyprtk/Wallpapers/* ~/Pictures/Wallpapers
+            cp ~/hyprtk/assets/Wallpapers/* ~/Pictures/Wallpapers
             echo "Default wallpapers installed."
         break;;
         * ) echo "Please answer yes or no.";;
