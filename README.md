@@ -120,6 +120,6 @@ RebornOS
 ## My Personal Dots - Dev Dots
 
 Arch Linux
-![MODEL](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch1.png)
-![Model](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch2.png)
-![Model](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/mydots1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/mydots2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/mydots3.png)
