@@ -63,63 +63,63 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 ## Screenshots & Video
 
 Arch Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/arch1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/arch2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/arch3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots/arch1.png)
+![Model](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots/arch2.png)
+![Model](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots/arch3.png)
 
 ArchBANG Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archbang1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archbang2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archbang3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archbang1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archbang2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archbang3.png)
 
 Archcraft Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archcraft1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archcraft2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archcraft3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archcraft1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archcraft2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archcraft3.png)
 
 Archman Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archman1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archman2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/archman3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archman1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archman2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archman3.png)
 
 BlueStar Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/bslx1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/bslx2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/bslx3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/bslx1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/bslx2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/bslx3.png)
 
 CachyOS
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/cachy1.png)
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/cachy2.png)
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/cachy3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/cachy1.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/cachy2.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/cachy3.png)
 
 EndeavourOS
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/endeavour1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/endeavour2.png)
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/endeavour3.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour2.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour3.png)
 
 Garuda
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/garuda1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/garuda2.png)
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/garuda3.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda2.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda3.png)
 
 Kiro Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/kiro1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/kiro2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/kiro3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/kiro1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/kiro2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/kiro3.png)
 
 Manjaro Linux
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/manjaro1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/manjaro2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/manjaro3.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/manjaro1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/manjaro2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/manjaro3.png)
 
 RebornOS
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/screenshots/reborn1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/reborn2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/screenshots/reborn3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn3.png)
 
 ## My Personal Dots - Dev Dots
 
-Arch Linux
-![MODEL](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch1.png)
-![Model](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch2.png)
-![Model](https://github.com/hyprtk/arch-dots/blob/main/screenshots/arch3.png)
+My Dots
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/mydots1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/mydots2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/mydots3.png)
