@@ -87,7 +87,7 @@ button:hover {
 #mode,
 #idle_inhibitor,
 #scratchpad,
-#mpd
+#mpd,
 #kbstate {
     padding: 0 10px;
     color: #ffffff;

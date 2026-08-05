@@ -2,9 +2,9 @@
 # Professional ASCII art headers and footers
 # Color scheme: cyan, magenta, white, yellow, red
 
-# Get the directory of this script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/colors.sh"
+# Get the directory of this script (uses _HEADERS_DIR to avoid clobbering caller's SCRIPT_DIR)
+_HEADERS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$_HEADERS_DIR/colors.sh"
 
 # Main header for the installer
 print_main_header() {
@@ -94,7 +94,7 @@ print_main_footer() {
     echo ""
     echo -e "${COLOR_BOLD_MAGENTA}══════════════════════════════════════════════════════════════════════════════${COLOR_RESET}"
     echo -e "${COLOR_BOLD_WHITE}                           Installation Complete!${COLOR_RESET}"
-    echo -e "${COLOR_CYAN}                      by hyprtk (Kori Tk) (2026)${COLOR_RESET}"
+    echo -e "${COLOR_CYAN}                      by Kori Tk (2026)${COLOR_RESET}"
     echo -e "${COLOR_BOLD_MAGENTA}══════════════════════════════════════════════════════════════════════════════${COLOR_RESET}"
     echo ""
 }

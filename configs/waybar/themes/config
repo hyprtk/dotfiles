@@ -7,7 +7,7 @@
 // ░██░   ░░░██░░████████  ██     ░██████ ░░████████░███
 // ░░       ░░  ░░░░░░░░  ░░      ░░░░░    ░░░░░░░░ ░░░
 //
-// by hyprtk (Kori Tk) (2026)
+// by Kori Tk (2026)
 // ----------------------------------------------------- 
 //
 {
@@ -23,7 +23,6 @@
     // "margin-top": 0,
     // "margin-bottom": 14,
     
-    "layer": "top",
     "height": 16,
     "margin-left": 0,
     "margin-right": 0,    
@@ -96,12 +95,12 @@
         "drawer": {
         "transition-duration": 500,
         "children-class": "not-hardware",
-        "transition-left-to-right": false,
+        "transition-left-to-right": true,
     },
         "modules": [
-            "disk",
             "cpu",
-            "memory"
+            "memory",
+            "disk"
         ]
     },
 
@@ -111,7 +110,7 @@
         "drawer": {
         "transition-duration": 500,
         "children-class": "not-audio",
-        "transition-left-to-right": false,
+        "transition-left-to-right": true,
     },
         "modules": [
             "pulseaudio",

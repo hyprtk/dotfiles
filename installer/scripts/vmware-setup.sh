@@ -1,5 +1,5 @@
-#/bin/bash
-figlet -f 3d "VMWare Setup"
+#!/bin/bash
+# ── VMWare Setup ──────────────────────────────────────
 echo ""
 echo " Check If Virtualisation is enabled "
 lscpu | grep Virtualization

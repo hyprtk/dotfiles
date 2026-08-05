@@ -2,9 +2,9 @@
 # Distro detection script
 # Detects the current Arch-based distribution
 
-# Get the directory of this script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/colors.sh"
+# Get the directory of this script (uses _DISTRO_DIR to avoid clobbering caller's SCRIPT_DIR)
+_DISTRO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$_DISTRO_DIR/colors.sh"
 
 # Detect the current distro
 detect_distro() {

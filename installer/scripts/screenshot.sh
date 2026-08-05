@@ -1,32 +1,25 @@
 #!/bin/bash
-#
-#   ████████                                                 ██                 ██
-#  ██░░░░░░                                                 ░██                ░██
-# ░██         █████  ██████  █████   █████  ███████   ██████░██       ██████  ██████
-# ░█████████ ██░░░██░░██░░█ ██░░░██ ██░░░██░░██░░░██ ██░░░░ ░██████  ██░░░░██░░░██░
-# ░░░░░░░░██░██  ░░  ░██ ░ ░███████░███████ ░██  ░██░░█████ ░██░░░██░██   ░██  ░██
-#        ░██░██   ██ ░██   ░██░░░░ ░██░░░░  ░██  ░██ ░░░░░██░██  ░██░██   ░██  ░██
-#  ████████ ░░█████ ░███   ░░██████░░██████ ███  ░██ ██████ ░██  ░██░░██████  ░░██
-# ░░░░░░░░   ░░░░░  ░░░     ░░░░░░  ░░░░░░ ░░░   ░░ ░░░░░░  ░░   ░░  ░░░░░░    ░░
-#                                                      
-#  
-# by hyprtk (Kori Tk) (2026)
-# ----------------------------------------------------- 
+# ── Screenshot ────────────────────────────────────────
+# by Kori Tk (2026)
+# ─────────────────────────────────────────────────────
 prompt='Screenshot'
 mesg="DIR: ~/Pictures/Screenshots"
 
-SAVE_DIR=$(cat ~/hyprtk/installer/scripts/settings/screenshot-folder)
-SAVE_FILENAME=$(cat ~/hyprtk/installer/scripts/settings/screenshot-filename)
-eval screenshot_folder="$SAVE_DIR"
-eval NAME="$SAVE_FILENAME"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SAVE_DIR=$(cat "$SCRIPT_DIR/settings/screenshot-folder")
+SAVE_FILENAME=$(cat "$SCRIPT_DIR/settings/screenshot-filename")
+screenshot_folder="$SAVE_DIR"
+NAME="$SAVE_FILENAME"
 
 # Notifications
-source "$HOME/hyprtk/installer/scripts/notification-handler"
+if [ -f "$SCRIPT_DIR/../../hypr/scripts/notification-handler" ]; then
+    source "$SCRIPT_DIR/../../hypr/scripts/notification-handler"
+fi
 APP_NAME="Screen Capture"
 NOTIFICATION_ICON="camera-photo-symbolic"
 
 # Screenshot Editor
-export GRIMBLAST_EDITOR="$(cat $HOME/hyprtk/installer/scripts/settings/screenshot-editor)"
+export GRIMBLAST_EDITOR="$(cat "$SCRIPT_DIR/settings/screenshot-editor")"
 
 # Example for keybindings
 # bind = SUPER, p, exec, grimblast save active
@@ -285,4 +278,9 @@ case ${chosen} in
         ;;
 esac
 
-mv screenshot*.png ~/Pictures/Screenshots
+# Move any stray screenshots in current directory
+shopt -s nullglob
+for f in screenshot*.png; do
+    mv "$f" ~/Pictures/Screenshots/ 2>/dev/null || true
+done
+shopt -u nullglob

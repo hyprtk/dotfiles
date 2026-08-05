@@ -1,16 +1,7 @@
 #!/bin/bash
-#
-#  ██      ██           ██
-# ░██     ░██          ░██
-# ░██     ░██  ██████  ░██ ██   ██ ██████████   █████
-# ░░██    ██  ██░░░░██ ░██░██  ░██░░██░░██░░██ ██░░░██
-#  ░░██  ██  ░██   ░██ ░██░██  ░██ ░██ ░██ ░██░███████
-#   ░░████   ░██   ░██ ░██░██  ░██ ░██ ░██ ░██░██░░░░
-#    ░░██    ░░██████  ███░░██████ ███ ░██ ░██░░██████
-#     ░░      ░░░░░░  ░░░  ░░░░░░ ░░░  ░░  ░░  ░░░░░░
-#
-# by hyprtk (Kori Tk) (2026)
-# ----------------------------------------------------- 
+# ── Volume ────────────────────────────────────────────
+# by Kori Tk (2026)
+# ─────────────────────────────────────────────────────
 
 # Get Volume
 get_volume() {
@@ -49,7 +40,7 @@ toggle_mic() {
 	if [ "$(pamixer --default-source --get-mute)" == "false" ]; then
 		pamixer --default-source -m && notify-send -h string:x-canonical-private-synchronous:sys-notify -u low -i "Microphone Switched OFF"
 	elif [ "$(pamixer --default-source --get-mute)" == "true" ]; then
-		pamixer -u --default-source u && notify-send -h string:x-canonical-private-synchronous:sys-notify -u low -i "Microphone Switched ON"
+		pamixer -u --default-source && notify-send -h string:x-canonical-private-synchronous:sys-notify -u low -i "Microphone Switched ON"
 	fi
 }
 

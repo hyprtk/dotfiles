@@ -2,7 +2,7 @@
 
 # Configuration
 INPUT_FILE="$HOME/.cache/wal/colors"
-OUTPUT_FILE="$HOME/hyprtk/papirus-icons/scripts/folder-color.txt"
+OUTPUT_FILE="$HOME/hyprtk/configs/papirus-icons/scripts/folder-color.txt"
 LINE_NUMBER=5               # pywal line index (0‑based, so 5 → color4)
 DEFAULT_COLOR="mocha-blue"  # safe fallback from the palette below
 
@@ -29,34 +29,6 @@ DEFAULT_COLOR="mocha-blue"  # safe fallback from the palette below
 #    --color15: #c8c9cd;   16
 
 # Extract the specific line and write to output file
-
-# Old Icon theme colors
-#  [hyprtk-adwaita]="#93c0ea #3a87e5 #3a87e5 #e4e4e4"
-#  [hyprtk-blue]="#5294e2 #4877b1 #1d344f #e4e4e4"
-#  [hyprtk-black]="#4f4f4f #3f3f3f #c2c2c2 #dcdcdc"
-#  [hyprtk-bluegrey]="#607d8b #4d646f #222c31 #e4e4e4"
-#  [hyprtk-breeze]="#57b8ec #147eb8 #106796 #e4e4e4"
-#  [hyprtk-brown]="#ae8e6c #957552 #3d3226 #e4e4e4"
-#  [hyprtk-carmine]="#a30002 #7a0002 #390001 #e4e4e4"
-#  [hyprtk-cyan]="#00bcd4 #0096aa #00424a #e4e4e4"
-#  [hyprtk-darkcyan]="#45abb7 #35818a #eaeaea #e4e4e4"
-#  [hyprtk-deeporange]="#eb6637 #e95420 #522413 #e4e4e4"
-#  [hyprtk-green]="#87b158 #60924b #2f3e1f #e4e4e4"
-#  [hyprtk-grey]="#8e8e8e #727272 #323232 #e4e4e4"
-#  [hyprtk-indigo]="#5c6bc0 #3f51b5 #202543 #e4e4e4"
-#  [hyprtk-magenta]="#ca71df #b259b8 #47274e #e4e4e4"
-#  [hyprtk-orange]="#ee923a #dd772f #533314 #e4e4e4"
-#  [hyprtk-palebrown]="#d1bfae #bea389 #a38d7b #e4e4e4"
-#  [hyprtk-paleorange]="#eeca8f #c89e6b #917359 #e4e4e4"
-#  [hyprtk-pink]="#f06292 #ec407a #542233 #e4e4e4"
-#  [hyprtk-red]="#e25252 #bf4b4b #4f1d1d #e4e4e4"
-#  [hyprtk-teal]="#16a085 #12806a #08382e #e4e4e4"
-#  [hyprtk-violet]="#7e57c2 #5d399b #2c1e44 #e4e4e4"
-#  [hyprtk-white]="#e4e4e4 #cccccc #4f4f4f #ffffff"
-#  [hyprtk-yaru]="#676767 #973552 #e4e4e4 #ff7446"
-#  [hyprtk-yellow]="#f9bd30 #e19d00 #594411 #e4e4e4"
-#  [hyprtk-nordic]="#81a1c1 #5e81ac #3b4253 #eceff4"
-
 
 # Extract the selected color from pywal cache
 if [[ ! -f "$INPUT_FILE" ]]; then
@@ -134,6 +106,31 @@ if [[ -z "$closest_color" ]]; then
         [mocha-sky]="#89dceb #6db0bb #304d52 #e4e4e4"
         [mocha-teal]="#94e2d5 #79b4a9 #344f4b #e4e4e4"
         [mocha-yellow]="#f9e2af #e0bb00 #574f3d #e4e4e4"
+        [hyprtk-adwaita]="#93c0ea #3a87e5 #3a87e5 #e4e4e4"
+        [hyprtk-blue]="#5294e2 #4877b1 #1d344f #e4e4e4"
+        [hyprtk-black]="#4f4f4f #3f3f3f #c2c2c2 #dcdcdc"
+        [hyprtk-bluegrey]="#607d8b #4d646f #222c31 #e4e4e4"
+        [hyprtk-breeze]="#57b8ec #147eb8 #106796 #e4e4e4"
+        [hyprtk-brown]="#ae8e6c #957552 #3d3226 #e4e4e4"
+        [hyprtk-carmine]="#a30002 #7a0002 #390001 #e4e4e4"
+        [hyprtk-cyan]="#00bcd4 #0096aa #00424a #e4e4e4"
+        [hyprtk-darkcyan]="#45abb7 #35818a #eaeaea #e4e4e4"
+        [hyprtk-deeporange]="#eb6637 #e95420 #522413 #e4e4e4"
+        [hyprtk-green]="#87b158 #60924b #2f3e1f #e4e4e4"
+        [hyprtk-grey]="#8e8e8e #727272 #323232 #e4e4e4"
+        [hyprtk-indigo]="#5c6bc0 #3f51b5 #202543 #e4e4e4"
+        [hyprtk-magenta]="#ca71df #b259b8 #47274e #e4e4e4"
+        [hyprtk-orange]="#ee923a #dd772f #533314 #e4e4e4"
+        [hyprtk-palebrown]="#d1bfae #bea389 #a38d7b #e4e4e4"
+        [hyprtk-paleorange]="#eeca8f #c89e6b #917359 #e4e4e4"
+        [hyprtk-pink]="#f06292 #ec407a #542233 #e4e4e4"
+        [hyprtk-red]="#e25252 #bf4b4b #4f1d1d #e4e4e4"
+        [hyprtk-teal]="#16a085 #12806a #08382e #e4e4e4"
+        [hyprtk-violet]="#7e57c2 #5d399b #2c1e44 #e4e4e4"
+        [hyprtk-white]="#e4e4e4 #cccccc #4f4f4f #ffffff"
+        [hyprtk-yaru]="#676767 #973552 #e4e4e4 #ff7446"
+        [hyprtk-yellow]="#f9bd30 #e19d00 #594411 #e4e4e4"
+        [hyprtk-nordic]="#81a1c1 #5e81ac #3b4253 #eceff4"
     )
 
     # Convert a hex color (e.g., "#aabbcc") to R G B integers

@@ -1,2 +1,0 @@
-#!/bin/bash
-exec "/home/hyprtk/.local/share/theme-gui/venv/bin/python3" -m theme_gui "$@"

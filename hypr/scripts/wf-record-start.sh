@@ -1,14 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 
 icon_path="$HOME/.config/hypr/icons/media-record.svg"
-notify_cmd_shot="notify-send -h string:x-canonical-private-synchronous:screeenrecord -u low -i ${icon_path}"
+notify_cmd_shot="notify-send -h string:x-canonical-private-synchronous:screencord -u low -i ${icon_path}"
 
 recordings="$HOME/Videos/Recordings"
 tmp_dir="${recordings}/.tmp"
 tmp_file="${tmp_dir}/.recording"
 
-if [ -z $(pgrep wf-recorder) ]
-then
+if [ -z "$(pgrep wf-recorder)" ]; then
     mkdir -p "${tmp_dir}"
 
     filepath="${tmp_dir}/$(date "+%s").mp4"

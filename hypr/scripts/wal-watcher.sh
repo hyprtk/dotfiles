@@ -21,10 +21,9 @@ while true; do
         [ -f ~/.cache/wal/dunstrc ]               && cp ~/.cache/wal/dunstrc                ~/.config/dunst/dunstrc
         [ -f ~/.cache/wal/hyprland-colors.conf ]  && cp ~/.cache/wal/hyprland-colors.conf  ~/.config/hypr/hyprland-colors.conf
         [ -f ~/.cache/wal/colors-matuwall.json ]  && cp ~/.cache/wal/colors-matuwall.json  ~/.config/matuwall/colors.json
+        [ -f ~/.cache/wal/colors-swaylock.conf ]  && cp ~/.cache/wal/colors-swaylock.conf  ~/.config/swaylock/config
         bash ~/hyprtk/hypr/scripts/generate-aero-colors.sh
-        bash ~/.config/hypr/scripts/hyprlock_wall.sh "$CURRENT"
-        #sudo cp "$CURRENT" /usr/share/sddm/themes/catppuccin/backgrounds/current-wall.jpg 2>/dev/null
-        #bash ~/.config/hypr/scripts/sddm-colors.sh
+        # Update hyprlock background
         cp "$CURRENT" ~/.cache/current-wallpaper.png 2>/dev/null
         hyprctl reload 2>/dev/null
         ~/hyprtk/configs/papirus-icons/scripts/change-icons.sh

@@ -1,2 +1,2 @@
 #!/bin/bash
-alacritty  -o "window.dimensions.lines=15" "window.dimensions.columns=90" --class floating -e ~/.local/share/icons/papirus-folders.sh -C hyprtk-violet --theme Papirus-Dark
+/home/hyprtk/.local/bin/papirus-folders -C violet --theme Papirus-Dark

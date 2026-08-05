@@ -146,6 +146,10 @@ error-message {
 EOF
 
 # Sync rofi to live if it exists and is a different path
-if [ -d "$(dirname "$ROFI_LIVE")" ] && [ "$(readlink -f "$ROFI_OUT")" != "$(readlink -f "$ROFI_LIVE")" ]; then
-    cp "$ROFI_OUT" "$ROFI_LIVE"
+if [ -f "$ROFI_OUT" ] && [ -d "$(dirname "$ROFI_LIVE")" ]; then
+    rofi_out_resolved="$(readlink -f "$ROFI_OUT" 2>/dev/null || echo "$ROFI_OUT")"
+    rofi_live_resolved="$(readlink -f "$ROFI_LIVE" 2>/dev/null || echo "$ROFI_LIVE")"
+    if [ "$rofi_out_resolved" != "$rofi_live_resolved" ]; then
+        cp "$ROFI_OUT" "$ROFI_LIVE"
+    fi
 fi

@@ -234,12 +234,6 @@ window#waybar {
     color: rgba(220, 220, 235, 0.90);
 }
 
-#mpris { color: @green; }
-#network { color: @sky; }
-#pulseaudio { color: @sapphire; }
-#disk { color: @yellow; }
-#cpu { color: @yellow; }
-#memory { color: @green; }
 #custom-appmenu { color: @sky; }
 #custom-terminal { color: @green; }
 #custom-filemanager { color: @sky; }

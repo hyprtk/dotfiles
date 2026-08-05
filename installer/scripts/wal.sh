@@ -1,5 +1,5 @@
-#
-# by hyprtk (Kori Tk) (2026)
+#!/bin/bash
+# by Kori Tk (2026)
 # ----------------------------------------------------- 
 
 wal -q -i ~/Pictures/Wallpapers/ 
