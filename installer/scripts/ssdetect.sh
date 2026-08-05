@@ -14,8 +14,8 @@
 # ----------------------------------------------------- 
 
 # Define the scripts to run
-NVIDIA_SCRIPT="$HOME/hyprtk/scripts/screenshot.sh"
-AMDINTEL_SCRIPT="$HOME/hyprtk/scripts/sshot.sh"
+NVIDIA_SCRIPT="$HOME/hyprtk/installer/scripts/screenshot.sh"
+AMDINTEL_SCRIPT="$HOME/hyprtk/installer/scripts/sshot.sh"
 
 # Check if NVIDIA GPU is available
 if nvidia-smi --query-gpu=index --format=csv,noheader 2>/dev/null | grep -q .; then

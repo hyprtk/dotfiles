@@ -30,6 +30,8 @@ wal -i "$WALLPAPER" -n -q
 [ -f ~/.cache/wal/wob.ini ]              && cp ~/.cache/wal/wob.ini             ~/.config/wob/wob.ini
 [ -f ~/.cache/wal/dunstrc ]              && cp ~/.cache/wal/dunstrc              ~/.config/dunst/dunstrc
 [ -f ~/.cache/wal/hyprland-colors.conf ] && cp ~/.cache/wal/hyprland-colors.conf ~/.config/hypr/hyprland-colors.conf
+[ -f ~/.cache/wal/colors-matuwall.json ] && cp ~/.cache/wal/colors-matuwall.json ~/.config/matuwall/colors.json
+bash ~/hyprtk/hypr/scripts/generate-aero-colors.sh
 
 killall waybar 2>/dev/null; ~/hyprtk/configs/waybar/launch.sh
 ~/hyprtk/configs/papirus-icons/scripts/change-icons.sh

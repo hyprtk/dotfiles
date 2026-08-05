@@ -51,6 +51,13 @@ echo "${arrThemes[0]}"
 ~/hyprtk/configs/rofi/scripts/sync-rofi-theme.sh
 
 # ----------------------------------------------------- 
+# Generate aero colors if needed (pywal → waybar + rofi)
+# ----------------------------------------------------- 
+if echo "${arrThemes[1]}" | grep -q "aero"; then
+    bash ~/hyprtk/hypr/scripts/generate-aero-colors.sh 2>/dev/null
+fi
+
+# ----------------------------------------------------- 
 # Loading the configuration and style file
 # ----------------------------------------------------- 
 waybar -c ~/hyprtk/configs/waybar/themes${arrThemes[0]}/config -s ~/hyprtk/configs/waybar/themes${arrThemes[1]}/style.css &

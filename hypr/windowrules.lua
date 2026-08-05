@@ -53,3 +53,14 @@ hl.window_rule({
     size = "800 600",
 })
 
+-- Theme GUI - floating with fixed dimensions
+hl.window_rule({
+    name = "theme-gui",
+    match = {
+        class = "dev.hyprtk.theme_gui",
+    },
+    float = true,
+    size = "1000 650",
+    center = true,
+})
+

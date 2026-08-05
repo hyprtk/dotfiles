@@ -5,6 +5,12 @@ LAST_WALL=""
 
 while true; do
     CURRENT=$(awww query 2>/dev/null | grep -oP '(?<=image: ).*')
+    # Skip if wallpaper-colors.sh is already processing this change
+    if [ -f "$HOME/.cache/wal/.wallpaper-change.lock" ]; then
+        LAST_WALL="$CURRENT"
+        sleep 1
+        continue
+    fi
     if [ -n "$CURRENT" ] && [ "$CURRENT" != "$LAST_WALL" ] && [ -f "$CURRENT" ]; then
         echo "Wallpaper changed: $CURRENT"
         LAST_WALL="$CURRENT"
@@ -15,12 +21,12 @@ while true; do
         [ -f ~/.cache/wal/dunstrc ]               && cp ~/.cache/wal/dunstrc                ~/.config/dunst/dunstrc
         [ -f ~/.cache/wal/hyprland-colors.conf ]  && cp ~/.cache/wal/hyprland-colors.conf  ~/.config/hypr/hyprland-colors.conf
         [ -f ~/.cache/wal/colors-matuwall.json ]  && cp ~/.cache/wal/colors-matuwall.json  ~/.config/matuwall/colors.json
+        bash ~/hyprtk/hypr/scripts/generate-aero-colors.sh
         bash ~/.config/hypr/scripts/hyprlock_wall.sh "$CURRENT"
         #sudo cp "$CURRENT" /usr/share/sddm/themes/catppuccin/backgrounds/current-wall.jpg 2>/dev/null
         #bash ~/.config/hypr/scripts/sddm-colors.sh
         cp "$CURRENT" ~/.cache/current-wallpaper.png 2>/dev/null
         hyprctl reload 2>/dev/null
-        killall waybar 2>/dev/null; ~/hyprtk/configs/waybar/launch.sh
         ~/hyprtk/configs/papirus-icons/scripts/change-icons.sh
         pkill dunst 2>/dev/null; dunst &
         pkill wob 2>/dev/null

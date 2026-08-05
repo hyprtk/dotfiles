@@ -570,6 +570,14 @@ main() {
     fi
     gum_log "Pywal16 Installed" success
     
+    gum_style_subheader "Install Theme GUI"
+    if [ -f "$HOME/.local/bin/theme-gui" ]; then
+        gum_log "Theme GUI already installed" success
+    else
+        gum_spin "Installing Theme GUI..." bash "$SCRIPT_DIR/configs/theme-gui/install.sh"
+    fi
+    gum_log "Theme GUI Installed" success
+    
     gum_style_subheader "Install Wallpapers"
     sh ~/hyprtk/hypr/packages/wallpapers.sh
     gum_log "Wallpapers Installed" success
