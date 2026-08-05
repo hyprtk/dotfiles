@@ -63,9 +63,9 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 ## Screenshots & Video
 
 Arch Linux
-![MODEL](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots/arch1.png)
-![Model](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots/arch2.png)
-![Model](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots/arch3.png)
+![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch3.png)
 
 ArchBANG Linux
 ![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archbang1.png)
