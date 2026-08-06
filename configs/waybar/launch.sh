@@ -11,7 +11,7 @@ killall waybar
 # ----------------------------------------------------- 
 # Default theme: /THEMEFOLDER;/VARIATION
 # ----------------------------------------------------- 
-themestyle="/hyprtk;/hyprtk"
+themestyle="/hyprtk-top;/hyprtk-top"
 
 # ----------------------------------------------------- 
 # Get current theme information from .cache/.themestyle.sh
@@ -22,9 +22,9 @@ fi
 
 IFS=';' read -ra arrThemes <<< "$themestyle"
 
-# Validate theme data; fall back to hyprtk if broken
+# Validate theme data; fall back to hyprtk-top if broken
 if [ ${#arrThemes[@]} -lt 2 ] || [ ! -f ~/hyprtk/configs/waybar/themes${arrThemes[1]}/style.css ]; then
-    themestyle="/hyprtk;/hyprtk"
+    themestyle="/hyprtk-top;/hyprtk-top"
     IFS=';' read -ra arrThemes <<< "$themestyle"
 fi
 

@@ -15,10 +15,17 @@ listThemes=()
 listNames=""
 
 # ----------------------------------------------------- 
-# Read theme folder
+# Read theme folder and sort by base name, then bottom before top
 # ----------------------------------------------------- 
-options=$(find "$themes_path" -maxdepth 2 -type d)
-for value in $options
+sorted=$(find "$themes_path" -maxdepth 2 -type d | while read -r d; do
+    name=$(basename "$d")
+    key=$(echo "$name" | sed 's/-top$//;s/-bottom$//')
+    pos=1
+    case "$name" in *-bottom) pos=0;; esac
+    printf '%s\t%d\t%s\n' "$key" "$pos" "$d"
+done | sort -t$'\t' -k1,1 -k2,2n | cut -f3)
+
+for value in $sorted
 do
     if [ ! "$value" = "$themes_path" ]; then
         if [ "$(find "$value" -maxdepth 1 -type d | wc -l)" = 1 ]; then
