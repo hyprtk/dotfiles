@@ -3,8 +3,8 @@
 A complete, opinionated Hyprland desktop setup for Arch-based distributions. One script installs everything: compositor config, status bar, theming, wallpaper management, and 40+ utility scripts.
 
 <p align="center">
-<img src="https://github.com/hyprtk/dotfiles/blob/main/assets/thumbnails/arch1.png?raw=true" width="48%">
-<img src="https://github.com/hyprtk/dotfiles/blob/main/assets/thumbnails/arch2.png?raw=true" width="48%">
+<img src="https://github.com/hyprtk/dotfiles/blob/main/assets/thumbnails/arch1.png" width="48%">
+<img src="https://github.com/hyprtk/dotfiles/blob/main/assets/thumbnails/arch2.png" width="48%">
 </p>
 
 **Supported distros:** Arch Linux, ArchBang, Archcraft, Archman, BlueStar, CachyOS, EndeavourOS, Garuda, Kiro, Manjaro, RebornOS
