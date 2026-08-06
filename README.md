@@ -131,7 +131,7 @@ All keybinds use `SUPER` (Windows key) as the modifier.
 
 <table>
 <tr>
-<td width="33%">
+<td width="50%">
 
 ### Core
 
@@ -148,9 +148,6 @@ All keybinds use `SUPER` (Windows key) as the modifier.
 | `SUPER + R` | Reload config |
 | `SUPER + C` | Color picker |
 
-</td>
-<td width="33%">
-
 ### Wallpapers & Theming
 
 | Key | Action |
@@ -160,6 +157,9 @@ All keybinds use `SUPER` (Windows key) as the modifier.
 | `SUPER + Ctrl + W` | Wallpaper selector |
 | `SUPER + Ctrl + T` | Switch Waybar theme |
 
+</td>
+<td width="50%">
+
 ### Screenshots & Recording
 
 | Key | Action |
@@ -168,9 +168,6 @@ All keybinds use `SUPER` (Windows key) as the modifier.
 | `SUPER + P` | Screenshot |
 | `SUPER + Shift + Print` | Start recording |
 | `SUPER + Alt + Print` | Stop recording |
-
-</td>
-<td width="33%">
 
 ### Workspaces
 
