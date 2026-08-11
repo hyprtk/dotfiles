@@ -8,6 +8,7 @@
 // ░░       ░░  ░░░░░░░░  ░░      ░░░░░    ░░░░░░░░ ░░░
 //
 // by Kori Tk (2026)
+// Transparent glass pill theme
 // ----------------------------------------------------- 
 //
 {
@@ -63,15 +64,6 @@
         "clock",
         "custom/exit"
     ],
-
-    // Group Quicklinks
-    //"group/quicklinks": {
-    //    "orientation": "horizontal",
-    //    "modules": [
-    //        "custom/filemanager",
-    //        "custom/brave",     
-    //     ]
-    //},
 
     // Group Themes
     "group/themes": {

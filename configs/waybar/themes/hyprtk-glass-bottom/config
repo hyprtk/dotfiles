@@ -8,20 +8,21 @@
 // ░░       ░░  ░░░░░░░░  ░░      ░░░░░    ░░░░░░░░ ░░░
 //
 // by Kori Tk (2026)
+// Transparent glass pill theme (bottom)
 // ----------------------------------------------------- 
 //
 {
     // General Settings
 
-    // Position TOP
-    "layer": "top",
-    "margin-top": 5,
-    "margin-bottom": 0,
+    // Position TOP (disabled for bottom variant)
+    // "layer": "top",
+    // "margin-top": 5,
+    // "margin-bottom": 0,
 
     // Position BOTTOM
-    // "position": "bottom",
-    // "margin-top": 0,
-    // "margin-bottom": 14,
+    "position": "bottom",
+    "margin-top": 0,
+    "margin-bottom": 5,
     
     "height": 16,
     "margin-left": 0,
@@ -63,15 +64,6 @@
         "clock",
         "custom/exit"
     ],
-
-    // Group Quicklinks
-    //"group/quicklinks": {
-    //    "orientation": "horizontal",
-    //    "modules": [
-    //        "custom/filemanager",
-    //        "custom/brave",     
-    //     ]
-    //},
 
     // Group Themes
     "group/themes": {
