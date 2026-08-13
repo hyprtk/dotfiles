@@ -64,5 +64,5 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 
 Arch Linux
 ![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch1.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch2.png)
+![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch3.png)
