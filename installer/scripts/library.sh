@@ -35,6 +35,29 @@ _isInstalledYay() {
 }
 
 # ------------------------------------------------------
+# Function: Install all pacman packages if not installed
+# ------------------------------------------------------
+_installPackagesPacman() {
+    local toInstall=()
+
+    for pkg in "$@"; do
+        if [[ $(_isInstalledPacman "${pkg}") == 0 ]]; then
+            echo "${pkg} is already installed."
+            continue
+        fi
+
+        toInstall+=("${pkg}")
+    done
+
+    if [[ "${toInstall[@]}" == "" ]]; then
+        return 0
+    fi
+
+    printf "Packages not installed:\n%s\n" "${toInstall[@]}"
+    sudo pacman --noconfirm -S "${toInstall[@]}"
+}
+
+# ------------------------------------------------------
 # Function: Install or update pacman package
 # ------------------------------------------------------
 _installOrUpdatePacman() {
