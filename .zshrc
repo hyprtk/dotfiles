@@ -43,4 +43,4 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH=/home/hyprtk/.opencode/bin:$PATH
 alias oc='opencode'
 
-. "$HOME/.local/share/../bin/env"
+[ -f "$HOME/.local/share/../bin/env" ] && . "$HOME/.local/share/../bin/env"
