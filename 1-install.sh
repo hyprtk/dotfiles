@@ -359,7 +359,7 @@ else
     # ── NVIDIA info ──────────────────────────────────────────────────────
     _step "NVIDIA Information"
     echo -e "${WHITE}  If you installed an NVIDIA card, follow the instructions in:${NC}"
-    echo -e "${CYAN}  ~/hyprtk/hypr/conf/nvidia.conf${NC}"
+    echo -e "${CYAN}  ~/hyprtk/hypr/nvidia.lua${NC}"
     $GUM input --placeholder "Press Enter to continue..."
 
     # ── Confirm dotfiles ────────────────────────────────────────────────
