@@ -352,16 +352,6 @@ else
     _ok "pywal16 installed"
 fi
 
-# ── Wallpapers ────────────────────────────────────────────────────────────
-_step "Installing Wallpapers"
-_spin "Installing wallpapers..." "sh $SCRIPT_DIR/hypr/packages/wallpapers.sh" "$LOG_FILE"
-_ok "Wallpapers installed"
-
-# ── Fonts ─────────────────────────────────────────────────────────────────
-_step "Installing Fonts"
-_spin "Installing fonts..." "sh $SCRIPT_DIR/hypr/packages/fonts.sh" "$LOG_FILE"
-_ok "Fonts installed"
-
 # ── Icons root ────────────────────────────────────────────────────────────
 _step "Installing Icons (root)"
 _spin "Installing Papirus icons for root..." "wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | DESTDIR=/root/.local/share/icons sh" "$LOG_FILE"
