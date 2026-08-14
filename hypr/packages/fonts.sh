@@ -1,5 +1,5 @@
+# ── fonts ─────────────────────────────────────────────────────────
 #!/bin/bash
-figlet -f 3d "Fonts"
 echo ""
 echo ""
 echo "-> Install fonts"

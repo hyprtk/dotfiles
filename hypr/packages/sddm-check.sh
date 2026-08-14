@@ -1,5 +1,5 @@
+# ── sddm-check ─────────────────────────────────────────────────────────
 #!/bin/bash
-figlet -f 3d "sddm check"
 sh ~/hyprtk/installer/scripts/rm-dm-managers.sh
 echo ""
 if [ ! -d /etc/sddm.conf.d/ ]; then

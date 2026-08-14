@@ -67,6 +67,10 @@ die() {
     exit 1
 }
 
+_spin() {
+    $GUM spin --spinner dot --title "$1" -- bash -c "$2"
+}
+
 # ── Preflight ──────────────────────────────────────────────────────────────
 check_gum
 clear
@@ -85,8 +89,13 @@ echo -e "${WHITE}  You will be asked for your Root password to proceed.${NC}"
 echo ""
 
 # ── Distro detection ──────────────────────────────────────────────────────
+DISTRO=""
+DISTRO_NAME=""
+DISTRO_VERSION=""
+
 _detect_distro() {
     local distro_id="" distro_name="" distro_version="" distro_pretty=""
+
     if [ -f /etc/os-release ]; then
         distro_id=$(grep -E '^ID=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
         distro_name=$(grep -E '^NAME=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
@@ -94,41 +103,46 @@ _detect_distro() {
         distro_pretty=$(grep -E '^PRETTY_NAME=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
     fi
 
+    # Handle "Hyprtk on (Arch Linux)" format — extract the distro name
+    # Also handle plain "Arch Linux" or just "arch"
+    local clean_name="${distro_pretty:-$distro_name}"
+    clean_name="${clean_name#Hyprtk on }"
+    clean_name="${clean_name#Hyprtk on }"
+    clean_name="${clean_name#(}"
+    clean_name="${clean_name%)}"
+    clean_name=$(echo "$clean_name" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
     # Map ID to internal distro name
-    local detected=""
+    DISTRO=""
     case "$distro_id" in
-        arch)                  detected=arch ;;
-        archbang)              detected=archbang ;;
-        archcraft)             detected=archcraft ;;
-        archman)               detected=archman ;;
-        bluestar|bslx)         detected=bslx ;;
-        cachyos|cachy)         detected=cachy ;;
-        endeavour|endeavouros) detected=endeavour ;;
-        garuda)                detected=garuda ;;
-        kiro)                  detected=kiro ;;
-        manjaro)               detected=manjaro ;;
-        reborn|rebornos)       detected=reborn ;;
+        arch)                  DISTRO=arch ;;
+        archbang)              DISTRO=archbang ;;
+        archcraft)             DISTRO=archcraft ;;
+        archman)               DISTRO=archman ;;
+        bluestar|bslx)         DISTRO=bslx ;;
+        cachyos|cachy)         DISTRO=cachy ;;
+        endeavour|endeavouros) DISTRO=endeavour ;;
+        garuda)                DISTRO=garuda ;;
+        kiro)                  DISTRO=kiro ;;
+        manjaro)               DISTRO=manjaro ;;
+        reborn|rebornos)       DISTRO=reborn ;;
     esac
 
-    # Display detection result
-    if [ -n "$detected" ]; then
-        _box \
-            "$(printf "${CYAN}DISTRO DETECTED${NC}")" \
-            "" \
-            "$(printf "${WHITE}Name:${NC}     ${CYAN}%s${NC}" "${distro_pretty:-$distro_name}")" \
-            "$(printf "${WHITE}ID:${NC}        ${CYAN}%s${NC}" "$distro_id")" \
-            "$(printf "${WHITE}Version:${NC}   ${CYAN}%s${NC}" "${distro_version:-N/A}")" \
-            "$(printf "${WHITE}Detected:${NC}  ${CYAN}%s${NC}" "$detected")"
-        echo ""
-    fi
-
-    echo "$detected"
+    DISTRO_NAME="$clean_name"
+    DISTRO_VERSION="${distro_version:-N/A}"
 }
 
-# Run detection
-DISTRO="${DISTRO:-}"
-if [ -z "$DISTRO" ]; then
-    DISTRO=$(_detect_distro)
+_detect_distro
+
+# Show detection result if found
+if [ -n "$DISTRO" ]; then
+    _box \
+        "$(printf "${CYAN}DISTRO DETECTED${NC}")" \
+        "" \
+        "$(printf "${WHITE}Name:     ${CYAN}%s${NC}" "$DISTRO_NAME")" \
+        "$(printf "${WHITE}ID:       ${CYAN}%s${NC}" "$DISTRO")" \
+        "$(printf "${WHITE}Version:  ${CYAN}%s${NC}" "$DISTRO_VERSION")"
+    echo ""
 fi
 
 # Manual selection if auto-detect failed
@@ -178,6 +192,7 @@ if [ -z "$DISTRO" ]; then
         "Manjaro Linux")    DISTRO=manjaro ;;
         "RebornOS")         DISTRO=reborn ;;
     esac
+    DISTRO_NAME="$SELECTED"
 fi
 
 # Normalise: accept "*-dots" style input
@@ -189,7 +204,7 @@ case "$DISTRO" in
     *) die "unsupported distro '$DISTRO'" ;;
 esac
 
-_ok "Target distro: $DISTRO"
+_ok "Target distro: $DISTRO_NAME ($DISTRO)"
 
 # Confirm before proceeding
 if ! $GUM confirm --prompt.foreground=5 "Proceed with $DISTRO installation?"; then
@@ -228,11 +243,7 @@ _step "Installing Yay"
 if sudo pacman -Qs yay > /dev/null 2>&1; then
     _ok "yay already installed"
 else
-    _installPackagesPacman "base-devel"
-    git clone https://aur.archlinux.org/yay-git.git ~/Downloads/yay-git
-    cd ~/Downloads/yay-git
-    makepkg -si --noconfirm
-    cd "$SCRIPT_DIR"
+    _spin "Installing yay..." "_installPackagesPacman base-devel && git clone https://aur.archlinux.org/yay-git.git ~/Downloads/yay-git && cd ~/Downloads/yay-git && makepkg -si --noconfirm && cd $SCRIPT_DIR"
     _ok "yay installed"
 fi
 
@@ -269,7 +280,7 @@ _step "Installing Pywal16"
 if [ -f /usr/bin/wal ]; then
     _ok "pywal16 already installed"
 else
-    $GUM spin --spinner dot --title "Installing pywal16..." -- bash -c "yay --noconfirm -S python-pywal16-git"
+    _spin "Installing pywal16..." "yay --noconfirm -S python-pywal16-git"
     _ok "pywal16 installed"
 fi
 
