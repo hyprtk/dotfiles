@@ -85,27 +85,57 @@ echo -e "${WHITE}  You will be asked for your Root password to proceed.${NC}"
 echo ""
 
 # ── Distro detection ──────────────────────────────────────────────────────
+_detect_distro() {
+    local distro_id="" distro_name="" distro_version="" distro_pretty=""
+    if [ -f /etc/os-release ]; then
+        distro_id=$(grep -E '^ID=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
+        distro_name=$(grep -E '^NAME=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
+        distro_version=$(grep -E '^VERSION_ID=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
+        distro_pretty=$(grep -E '^PRETTY_NAME=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
+    fi
+
+    # Map ID to internal distro name
+    local detected=""
+    case "$distro_id" in
+        arch)                  detected=arch ;;
+        archbang)              detected=archbang ;;
+        archcraft)             detected=archcraft ;;
+        archman)               detected=archman ;;
+        bluestar|bslx)         detected=bslx ;;
+        cachyos|cachy)         detected=cachy ;;
+        endeavour|endeavouros) detected=endeavour ;;
+        garuda)                detected=garuda ;;
+        kiro)                  detected=kiro ;;
+        manjaro)               detected=manjaro ;;
+        reborn|rebornos)       detected=reborn ;;
+    esac
+
+    # Display detection result
+    if [ -n "$detected" ]; then
+        _box \
+            "$(printf "${CYAN}DISTRO DETECTED${NC}")" \
+            "" \
+            "$(printf "${WHITE}Name:${NC}     ${CYAN}%s${NC}" "${distro_pretty:-$distro_name}")" \
+            "$(printf "${WHITE}ID:${NC}        ${CYAN}%s${NC}" "$distro_id")" \
+            "$(printf "${WHITE}Version:${NC}   ${CYAN}%s${NC}" "${distro_version:-N/A}")" \
+            "$(printf "${WHITE}Detected:${NC}  ${CYAN}%s${NC}" "$detected")"
+        echo ""
+    fi
+
+    echo "$detected"
+}
+
+# Run detection
 DISTRO="${DISTRO:-}"
 if [ -z "$DISTRO" ]; then
-    if [ -f /etc/os-release ]; then
-        DISTRO_ID=$(grep -E '^ID=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
-        case "$DISTRO_ID" in
-            arch)           DISTRO=arch ;;
-            archbang)       DISTRO=archbang ;;
-            archcraft)      DISTRO=archcraft ;;
-            archman)        DISTRO=archman ;;
-            bluestar|bslx)  DISTRO=bslx ;;
-            cachyos|cachy)  DISTRO=cachy ;;
-            endeavour|endeavouros) DISTRO=endeavour ;;
-            garuda)         DISTRO=garuda ;;
-            kiro)           DISTRO=kiro ;;
-            manjaro)        DISTRO=manjaro ;;
-            reborn|rebornos) DISTRO=reborn ;;
-        esac
-    fi
+    DISTRO=$(_detect_distro)
 fi
 
+# Manual selection if auto-detect failed
 if [ -z "$DISTRO" ]; then
+    _warn "Could not auto-detect distro from /etc/os-release"
+    echo ""
+
     DISTROS=(
         "Arch Linux"
         "ArchBANG Linux"
@@ -159,7 +189,13 @@ case "$DISTRO" in
     *) die "unsupported distro '$DISTRO'" ;;
 esac
 
-_ok "Detected distro: $DISTRO"
+_ok "Target distro: $DISTRO"
+
+# Confirm before proceeding
+if ! $GUM confirm --prompt.foreground=5 "Proceed with $DISTRO installation?"; then
+    echo -e "${MAGENTA}  Installation cancelled.${NC}"
+    exit 0
+fi
 
 # Source distro-specific hooks
 STEPS="$SCRIPT_DIR/installer/steps/$DISTRO.sh"
