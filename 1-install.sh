@@ -279,6 +279,7 @@ _ok "Leftover packages removed"
 # ── Load libraries ────────────────────────────────────────────────────────
 _step "Loading Installation Libraries"
 source "$SCRIPT_DIR/installer/scripts/library.sh"
+export -f _installSymLink _isInstalledPacman _isInstalledYay _installPackagesPacman _installPackagesYay 2>/dev/null
 _ok "Library loaded"
 
 # ── Timezone ──────────────────────────────────────────────────────────────
