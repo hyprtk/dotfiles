@@ -492,8 +492,10 @@ _box \
     "$(printf "${WHITE}Done!${NC}")" \
     "" \
     "$(printf "${WHITE}Next steps:${NC}")" \
-    "$(printf "${CYAN}1. Update keyboard layout and screen resolution${NC}")" \
-    "$(printf "${CYAN}   in ~/hyprtk/hypr/hyprland.conf${NC}")" \
+    "$(printf "${CYAN}1. Update keyboard layout${NC}")" \
+    "$(printf "${CYAN}   in ~/hyprtk/hypr/inpu.lua${NC}")" \
+    "$(printf "${CYAN}1. Updatescreen resolution${NC}")" \
+    "$(printf "${CYAN}   in ~/hyprtk/hypr/monitors.lua${NC}")" \
     "$(printf "${WHITE}2. Reboot your system${NC}")" \
     "" \
     "$(printf "${CYAN}github.com/hyprtk/dotfiles${NC}")"
