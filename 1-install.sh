@@ -521,7 +521,10 @@ else
 
         # ── Root user config ─────────────────────────────────────────
         _step "Setting Up Root User Config"
-        _spin "Copying root config..." "sudo find /root/.config -type l -delete 2>/dev/null; sudo cp -rf $SCRIPT_DIR/configs/root/* /" "$LOG_FILE"
+        echo -e "${CYAN}  → ${WHITE}Copying root config${NC}"
+        sudo find /root/.config -type l -delete 2>/dev/null
+        sudo cp -rf "$SCRIPT_DIR"/configs/root/* /
+        log "Root config copied"
         _ok "Root user config copied"
 
         # ── Sudoers ──────────────────────────────────────────────────
