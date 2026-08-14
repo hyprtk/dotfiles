@@ -489,9 +489,9 @@ else
         _ok "ZSH installed"
 
         _step "Installing ZSH Plugins"
-        _spin "Installing zsh-autosuggestions..." "git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions 2>/dev/null" "$LOG_FILE"
-        _spin "Installing zsh-syntax-highlighting..." "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting 2>/dev/null" "$LOG_FILE"
-        _spin "Installing fast-syntax-highlighting..." "git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting 2>/dev/null" "$LOG_FILE"
+        _spin "Installing zsh-autosuggestions..." "[ -d \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions ] || git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions 2>/dev/null" "$LOG_FILE"
+        _spin "Installing zsh-syntax-highlighting..." "[ -d \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting ] || git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting 2>/dev/null" "$LOG_FILE"
+        _spin "Installing fast-syntax-highlighting..." "[ -d \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting ] || git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting 2>/dev/null" "$LOG_FILE"
         _ok "ZSH plugins installed"
 
         # ── .zshrc ────────────────────────────────────────────────────
@@ -521,7 +521,7 @@ else
 
         # ── Root user config ─────────────────────────────────────────
         _step "Setting Up Root User Config"
-        _spin "Copying root config..." "sudo cp -r $SCRIPT_DIR/configs/root /" "$LOG_FILE"
+        _spin "Copying root config..." "sudo find /root/.config -type l -delete 2>/dev/null; sudo cp -rf $SCRIPT_DIR/configs/root/* /" "$LOG_FILE"
         _ok "Root user config copied"
 
         # ── Sudoers ──────────────────────────────────────────────────
