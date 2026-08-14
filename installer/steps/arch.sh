@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # arch distro steps — base behavior with the full boot pipeline:
 # splash to bootctl + mkinitcpio (os-release to /usr/lib/ is the default fallback).
 

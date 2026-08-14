@@ -1,11 +1,11 @@
-#/bin/bash 
+#!/bin/bash
 echo ""
 echo " Welcome to the Hyprland & XFCE installer "
 echo " I have chosen as my preference to install both, if you choose No on either Environments the installer will fail and close "
 echo " I chose it this way so if 1 Enviroment has problems i still have the other to boot too, enjoy"
-echo""
+echo ""
 echo " You will now be asked to enter your Root password to proceed with the installation process"
-echo""
+echo ""
 sleep 2
 
 # ── Unified hyprtk installer ─────────────────────────────────────────────
@@ -77,7 +77,7 @@ else
     sudo pacman -Rns plasma-meta kde-applications-meta --noconfirm
     sudo pacman -Rns plasma kde-applications --noconfirm
 fi
-echo""
+echo ""
 clear
 echo "
 #########################################################

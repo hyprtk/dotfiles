@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # kiro distro steps — removes xfce4 + sddm-git + fastfetch-git,
 # os-release to /usr/lib/ (no splash/bootctl), backs up existing hypr config.
 # grudupdater.sh is NOT shipped in any source tree — omitted (guarded no-op).

@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # endeavour distro steps — os-release to /usr/lib/ (no splash/bootctl),
 # backs up existing hypr config.
 

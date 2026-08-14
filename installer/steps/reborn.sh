@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # reborn distro steps — os-release to /usr/lib/ (no splash/bootctl),
 # multiline sudoers, backs up existing hypr config.
 

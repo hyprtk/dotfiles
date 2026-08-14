@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 figlet -f 3d "VMWare Setup"
 echo ""
 echo " Check If Virtualisation is enabled "

@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # cachy distro steps — os-release to /usr/lib/ plus systemd propagate paths,
 # cachyos-branding hook, backs up existing hypr config.
 

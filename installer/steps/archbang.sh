@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # archbang distro steps — removes swaylock, installs os-release to /etc/,
 # no splash/bootctl step, backs up existing hypr config.
 

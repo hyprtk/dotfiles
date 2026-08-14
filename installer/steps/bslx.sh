@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # bslx distro steps — plasma removal with -Rcs, grub wallpaper copy,
 # os-release to /usr/lib/ (no splash/bootctl), backs up existing hypr config.
 
