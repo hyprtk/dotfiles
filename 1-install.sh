@@ -6,8 +6,6 @@
 # Uses gum for TUI. Password entry remains functional via native sudo prompts.
 # ──────────────────────────────────────────────────────────────────────────
 
-set -uo pipefail
-
 # ── Color variables ────────────────────────────────────────────────────────
 MAGENTA='\033[35m'
 CYAN='\033[0;36m'
@@ -21,10 +19,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # ── Gum setup ──────────────────────────────────────────────────────────────
 GUM="$SCRIPT_DIR/installer/standalone/gum"
-
-gum() {
-    "$GUM" "$@"
-}
 
 check_gum() {
     if [ -x "$GUM" ]; then
@@ -41,7 +35,7 @@ check_gum() {
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 _box() {
-    gum style \
+    $GUM style \
         --border-foreground 5 \
         --border double \
         --align center \
@@ -126,9 +120,9 @@ if [ -z "$DISTRO" ]; then
         "RebornOS"
     )
 
-    gum style --foreground 5 --bold --padding "1 0" "Select your distribution:"
+    $GUM style --foreground 5 --bold --padding "1 0" "Select your distribution:"
 
-    SELECTED=$(gum choose \
+    SELECTED=$($GUM choose \
         --height=13 \
         --cursor.foreground=5 \
         --selected.foreground=0 \
@@ -207,7 +201,7 @@ else
 fi
 
 # ── Confirm start ─────────────────────────────────────────────────────────
-if ! gum confirm --prompt.foreground=5 "Start the installation now?"; then
+if ! $GUM confirm --prompt.foreground=5 "Start the installation now?"; then
     echo -e "${MAGENTA}  Installation cancelled.${NC}"
     exit 0
 fi
@@ -217,7 +211,7 @@ _step "Graphics Card Setup"
 sh "$SCRIPT_DIR/hypr/packages/graphics-card.sh"
 
 # ── Confirm core apps ────────────────────────────────────────────────────
-if ! gum confirm --prompt.foreground=5 "Install core apps now?"; then
+if ! $GUM confirm --prompt.foreground=5 "Install core apps now?"; then
     echo -e "${MAGENTA}  Installation aborted.${NC}"
     exit 0
 fi
@@ -239,7 +233,7 @@ _step "Installing Pywal16"
 if [ -f /usr/bin/wal ]; then
     _ok "pywal16 already installed"
 else
-    gum spin --spinner dot --title "Installing pywal16..." -- bash -c "yay --noconfirm -S python-pywal16-git"
+    $GUM spin --spinner dot --title "Installing pywal16..." -- bash -c "yay --noconfirm -S python-pywal16-git"
     _ok "pywal16 installed"
 fi
 
@@ -275,7 +269,7 @@ xdg-user-dirs-gtk-update --force 2>/dev/null
 _ok "Default wallpaper set"
 
 # ── Confirm Hyprland config ──────────────────────────────────────────────
-if ! gum confirm --prompt.foreground=5 "Configure Hyprland now?"; then
+if ! $GUM confirm --prompt.foreground=5 "Configure Hyprland now?"; then
     echo -e "${MAGENTA}  Hyprland configuration skipped.${NC}"
 else
     # ── Thunar xfconf ────────────────────────────────────────────────────
@@ -319,10 +313,10 @@ else
     _step "NVIDIA Information"
     echo -e "${WHITE}  If you installed an NVIDIA card, follow the instructions in:${NC}"
     echo -e "${CYAN}  ~/hyprtk/hypr/conf/nvidia.conf${NC}"
-    gum input --placeholder "Press Enter to continue..."
+    $GUM input --placeholder "Press Enter to continue..."
 
     # ── Confirm dotfiles ────────────────────────────────────────────────
-    if ! gum confirm --prompt.foreground=5 "Install dotfiles now?"; then
+    if ! $GUM confirm --prompt.foreground=5 "Install dotfiles now?"; then
         echo -e "${MAGENTA}  Dotfile installation skipped.${NC}"
     else
         # ── .config directory ───────────────────────────────────────────
