@@ -304,7 +304,7 @@ fi
 
 # ── Graphics card ─────────────────────────────────────────────────────────
 _step "Graphics Card Setup"
-_spin "Configuring graphics card..." "sh $SCRIPT_DIR/hypr/packages/graphics-card.sh" "$LOG_FILE"
+sh "$SCRIPT_DIR/hypr/packages/graphics-card.sh"
 _ok "Graphics card configured"
 
 # ── Confirm core apps ────────────────────────────────────────────────────
@@ -316,10 +316,25 @@ fi
 
 # ── Core packages ─────────────────────────────────────────────────────────
 _step "Installing Core Packages"
-for pkg in hyprland xfce4 filetools webtools printers network media terminaltools systemtools system hyprviz sddm-check sddmgrub matuwall; do
+for pkg in hyprland xfce4 filetools webtools printers network media terminaltools systemtools system sddm-check sddmgrub matuwall; do
     _spin "Installing $pkg..." "sh $SCRIPT_DIR/hypr/packages/$pkg.sh" "$LOG_FILE"
     _ok "$pkg installed"
 done
+
+# hyprviz needs interactive sudo - run without spin
+echo -e "${CYAN}  → ${WHITE}Installing hyprviz${NC}"
+sh "$SCRIPT_DIR/hypr/packages/hyprviz.sh"
+_ok "hyprviz installed"
+
+# wallpapers needs y/n confirmation - run without spin
+echo -e "${CYAN}  → ${WHITE}Installing wallpapers${NC}"
+sh "$SCRIPT_DIR/hypr/packages/wallpapers.sh"
+_ok "wallpapers installed"
+
+# fonts needs y/n confirmation and sudo - run without spin
+echo -e "${CYAN}  → ${WHITE}Installing fonts${NC}"
+sh "$SCRIPT_DIR/hypr/packages/fonts.sh"
+_ok "fonts installed"
 
 _spin "Installing awww wrapper..." "sh $SCRIPT_DIR/installer/scripts/awww-wrapper.sh" "$LOG_FILE"
 _ok "awww wrapper installed"
@@ -477,7 +492,9 @@ else
         # ── ZSH ──────────────────────────────────────────────────────
         _step "Installing ZSH"
         _spin "Installing zsh..." "sudo pacman -S zsh --noconfirm" "$LOG_FILE"
-        _spin "Installing oh-my-zsh..." "sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended" "$LOG_FILE"
+        # oh-my-zsh install needs interactive input - run without spin
+        echo -e "${CYAN}  → ${WHITE}Installing oh-my-zsh${NC}"
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
         _ok "ZSH installed"
 
         _step "Installing ZSH Plugins"
@@ -489,7 +506,10 @@ else
         # ── .zshrc ────────────────────────────────────────────────────
         _step "Updating .zshrc"
         _spin "Installing .zshrc..." "_installSymLink .zshrc ~/.zshrc $SCRIPT_DIR/.zshrc ~/.zshrc" "$LOG_FILE"
-        _spin "Setting default shell..." "sudo chsh -s /bin/zsh && chsh -s /bin/zsh" "$LOG_FILE"
+        # chsh needs password - run without spin
+        echo -e "${CYAN}  → ${WHITE}Setting default shell to zsh${NC}"
+        sudo chsh -s /bin/zsh
+        chsh -s /bin/zsh
         _ok ".zshrc updated"
 
         # ── Standalone apps ──────────────────────────────────────────
