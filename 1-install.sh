@@ -1,708 +1,460 @@
 #!/bin/bash
-echo ""
-echo " Welcome to the Hyprland & XFCE installer "
-echo " I have chosen as my preference to install both, if you choose No on either Environments the installer will fail and close "
-echo " I chose it this way so if 1 Enviroment has problems i still have the other to boot too, enjoy"
-echo ""
-echo " You will now be asked to enter your Root password to proceed with the installation process"
-echo ""
-sleep 2
-
-# ── Unified hyprtk installer ─────────────────────────────────────────────
+# ── Unified hyprtk installer (gum TUI) ────────────────────────────────────
 # Merges the installers of all 11 supported distros (arch, archbang, archcraft,
 # archman, bslx, cachy, endeavour, garuda, kiro, manjaro, reborn).
 # Per-distro hooks live in installer/steps/<distro>.sh and are sourced here.
+# Uses gum for TUI. Password entry remains functional via native sudo prompts.
 # ──────────────────────────────────────────────────────────────────────────
+
+set -uo pipefail
+
+# ── Color variables ────────────────────────────────────────────────────────
+MAGENTA='\033[35m'
+CYAN='\033[0;36m'
+WHITE='\033[0;37m'
+RED='\033[1;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# ── Script directory detection ─────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ── Gum setup ──────────────────────────────────────────────────────────────
+GUM="$SCRIPT_DIR/installer/standalone/gum"
+
+gum() {
+    "$GUM" "$@"
+}
+
+check_gum() {
+    if [ -x "$GUM" ]; then
+        return
+    fi
+    if command -v gum &>/dev/null; then
+        GUM="$(command -v gum)"
+        return
+    fi
+    echo -e "${CYAN}gum not found. Installing...${NC}"
+    sudo pacman -S --noconfirm gum
+    GUM="$(command -v gum)"
+}
+
+# ── Helpers ────────────────────────────────────────────────────────────────
+_box() {
+    gum style \
+        --border-foreground 5 \
+        --border double \
+        --align center \
+        --padding "1 3" \
+        --margin "1 0" \
+        "$@"
+}
+
+_step() {
+    clear
+    _box "$(printf "${CYAN}%s${NC}" "$1")"
+    echo ""
+}
+
+_ok() {
+    echo -e "${CYAN}  ✓ ${WHITE}$1${NC}"
+}
+
+_warn() {
+    echo -e "${YELLOW}  ! ${WHITE}$1${NC}"
+}
+
+_fail() {
+    echo -e "${RED}  ✗ ${WHITE}$1${NC}"
+}
+
+die() {
+    _fail "$1"
+    exit 1
+}
+
+# ── Preflight ──────────────────────────────────────────────────────────────
+check_gum
+clear
+
+_box \
+    "$(printf "${CYAN}HYPRTK DOTFILES${NC}")" \
+    "$(printf "${CYAN}Hyprland Desktop Environment Installer${NC}")" \
+    "" \
+    "$(printf "${RED}DISCLAIMER${NC}")" \
+    "$(printf "${WHITE}Installing these dotfiles may alter your system${NC}")" \
+    "$(printf "${WHITE}configuration. A clean install is recommended for${NC}")" \
+    "$(printf "${WHITE}best results.${NC}")"
+
+echo ""
+echo -e "${WHITE}  You will be asked for your Root password to proceed.${NC}"
+echo ""
+
+# ── Distro detection ──────────────────────────────────────────────────────
 DISTRO="${DISTRO:-}"
 if [ -z "$DISTRO" ]; then
     if [ -f /etc/os-release ]; then
         DISTRO_ID=$(grep -E '^ID=' /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
         case "$DISTRO_ID" in
-            arch)        DISTRO=arch ;;
-            archbang)    DISTRO=archbang ;;
-            archcraft)   DISTRO=archcraft ;;
-            archman)     DISTRO=archman ;;
-            bluestar|bslx) DISTRO=bslx ;;
-            cachyos|cachy) DISTRO=cachy ;;
+            arch)           DISTRO=arch ;;
+            archbang)       DISTRO=archbang ;;
+            archcraft)      DISTRO=archcraft ;;
+            archman)        DISTRO=archman ;;
+            bluestar|bslx)  DISTRO=bslx ;;
+            cachyos|cachy)  DISTRO=cachy ;;
             endeavour|endeavouros) DISTRO=endeavour ;;
-            garuda)      DISTRO=garuda ;;
-            kiro)        DISTRO=kiro ;;
-            manjaro)     DISTRO=manjaro ;;
+            garuda)         DISTRO=garuda ;;
+            kiro)           DISTRO=kiro ;;
+            manjaro)        DISTRO=manjaro ;;
             reborn|rebornos) DISTRO=reborn ;;
         esac
     fi
 fi
+
 if [ -z "$DISTRO" ]; then
-    echo "Could not auto-detect distro. Available:"
-    echo "  arch archbang archcraft archman bslx cachy endeavour garuda kiro manjaro reborn"
-    while [ -z "$DISTRO" ]; do
-        read -p "Enter your distro name: " DISTRO
-    done
+    DISTROS=(
+        "Arch Linux"
+        "ArchBANG Linux"
+        "Archcraft Linux"
+        "Archman Linux"
+        "BlueStar Linux"
+        "CachyOS"
+        "EndeavourOS"
+        "Garuda Linux"
+        "Kiro Linux"
+        "Manjaro Linux"
+        "RebornOS"
+    )
+
+    gum style --foreground 5 --bold --padding "1 0" "Select your distribution:"
+
+    SELECTED=$(gum choose \
+        --height=13 \
+        --cursor.foreground=5 \
+        --selected.foreground=0 \
+        --selected.background=5 \
+        --item.foreground=6 \
+        "${DISTROS[@]}")
+
+    if [[ -z "$SELECTED" ]]; then
+        echo -e "${MAGENTA}  Installation cancelled.${NC}"
+        exit 0
+    fi
+
+    case "$SELECTED" in
+        "Arch Linux")       DISTRO=arch ;;
+        "ArchBANG Linux")   DISTRO=archbang ;;
+        "Archcraft Linux")  DISTRO=archcraft ;;
+        "Archman Linux")    DISTRO=archman ;;
+        "BlueStar Linux")   DISTRO=bslx ;;
+        "CachyOS")          DISTRO=cachy ;;
+        "EndeavourOS")      DISTRO=endeavour ;;
+        "Garuda Linux")     DISTRO=garuda ;;
+        "Kiro Linux")       DISTRO=kiro ;;
+        "Manjaro Linux")    DISTRO=manjaro ;;
+        "RebornOS")         DISTRO=reborn ;;
+    esac
 fi
+
 # Normalise: accept "*-dots" style input
 DISTRO="${DISTRO%-dots}"
+
 # Validate
 case "$DISTRO" in
     arch|archbang|archcraft|archman|bslx|cachy|endeavour|garuda|kiro|manjaro|reborn) ;;
-    *) echo "ERROR: unsupported distro '$DISTRO'" >&2; exit 1 ;;
+    *) die "unsupported distro '$DISTRO'" ;;
 esac
-echo "Detected distro: $DISTRO"
-STEPS="$(dirname "$0")/installer/steps/$DISTRO.sh"
+
+_ok "Detected distro: $DISTRO"
+
+# Source distro-specific hooks
+STEPS="$SCRIPT_DIR/installer/steps/$DISTRO.sh"
 if [ -f "$STEPS" ]; then
     source "$STEPS"
 fi
 
-sudo pacman -S figlet --noconfirm
-sudo cp ~/hyprtk/configs/figlet/fonts/* /usr/share/figlet/fonts/
-figlet -f 3d "Install"
-echo "
-
-by hyprtk (Kori Tk) (2026)
-#########################################################
-"
-sleep 2
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#             Removing leftover Packages                #
-#                                                       #
-#########################################################
-"
-sleep 2
+# ── Pre-install (distro-specific cleanup) ─────────────────────────────────
+_step "Removing leftover Packages"
 if type pre_install >/dev/null 2>&1; then
     pre_install
 else
-    sudo pacman -Rns plasma-meta kde-applications-meta --noconfirm
-    sudo pacman -Rns plasma kde-applications --noconfirm
+    sudo pacman -Rns plasma-meta kde-applications-meta --noconfirm 2>/dev/null
+    sudo pacman -Rns plasma kde-applications --noconfirm 2>/dev/null
 fi
+_ok "Leftover packages removed"
+
+# ── Load libraries ────────────────────────────────────────────────────────
+_step "Loading Installation Libraries"
+source "$SCRIPT_DIR/installer/scripts/library.sh"
+_ok "Library loaded"
+
+# ── Timezone ──────────────────────────────────────────────────────────────
 echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#             Starting Installation Process             #
-#                                                       #
-#########################################################
-"
-sleep 2
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#              Load Installation Libraries              #
-#                                                       #
-#########################################################
-"
-echo ""
-source $(dirname "$0")/installer/scripts/library.sh
-echo ""
-echo ""
-sh ~/hyprtk/installer/scripts/set-timezone.sh
-echo ""
-sleep 2
-clear
-echo "
-#########################################################
-#                                                       #
-#            Installation Libraries loaded              #
-#                                                       #
-#########################################################
-"
-echo ""
-sleep 2
-clear
-echo "
-#########################################################
-#                                                       #
-#                     Install Yay                       #
-#                                                       #
-#########################################################
-"
-echo ""
-if sudo pacman -Qs yay > /dev/null ; then
-    echo "yay is installed. You can proceed with the installation"
+sh "$SCRIPT_DIR/installer/scripts/set-timezone.sh" 2>/dev/null
+_ok "Timezone configured"
+
+# ── Install Yay ───────────────────────────────────────────────────────────
+_step "Installing Yay"
+if sudo pacman -Qs yay > /dev/null 2>&1; then
+    _ok "yay already installed"
 else
-    echo "yay is not installed and will be installed now!"
     _installPackagesPacman "base-devel"
     git clone https://aur.archlinux.org/yay-git.git ~/Downloads/yay-git
     cd ~/Downloads/yay-git
-    makepkg -si
-    cd ~/hyprtk/
-    clear
+    makepkg -si --noconfirm
+    cd "$SCRIPT_DIR"
+    _ok "yay installed"
 fi
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#                    Yay is Installed                   #
-#                                                       #
-#########################################################
-"
-sleep 2
-echo ""
-echo ""
-while true; do
-    read -p "DO YOU WANT TO START THE INSTALLATION NOW? (Yy/Nn): " yn
-    case $yn in
-        [Yy]* )
-            echo "Installation started."
-        break;;
-        [Nn]* ) 
-            exit;
-        break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-echo ""
-echo ""
-sleep 2
-echo ""
-clear
-sh ~/hyprtk/hypr/packages/graphics-card.sh
-sleep 2
-clear
-while true; do
-    read -p "DO YOU WANT TO INSTALL THE CORE APPS NOW? (Yy/Nn): " yn
-    case $yn in
-        [Yy]* )
-            echo "Installation started."
-        break;;
-        [Nn]* ) 
-            echo "Installation is Aborted"
-            exit;
-        break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-echo ""
-figlet -f 3d "Core Apps"
-echo ""
-echo "
-#########################################################
-#                                                       #
-#             Installing required Packages              #
-#                                                       #
-#########################################################
-"
 
-echo ""
-sh ~/hyprtk/hypr/packages/hyprland.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/xfce4.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/filetools.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/webtools.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/printers.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/network.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/media.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/terminaltools.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/systemtools.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/system.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/hyprviz.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/sddm-check.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/sddmgrub.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/hypr/packages/matuwall.sh
-echo ""
-sleep 2
-echo ""
-sh ~/hyprtk/installer/scripts/awww-wrapper.sh
-echo ""
+# ── Confirm start ─────────────────────────────────────────────────────────
+if ! gum confirm --prompt.foreground=5 "Start the installation now?"; then
+    echo -e "${MAGENTA}  Installation cancelled.${NC}"
+    exit 0
+fi
+
+# ── Graphics card ─────────────────────────────────────────────────────────
+_step "Graphics Card Setup"
+sh "$SCRIPT_DIR/hypr/packages/graphics-card.sh"
+
+# ── Confirm core apps ────────────────────────────────────────────────────
+if ! gum confirm --prompt.foreground=5 "Install core apps now?"; then
+    echo -e "${MAGENTA}  Installation aborted.${NC}"
+    exit 0
+fi
+
+# ── Core packages ─────────────────────────────────────────────────────────
+_step "Installing Core Packages"
+for pkg in hyprland xfce4 filetools webtools printers network media terminaltools systemtools system hyprviz sddm-check sddmgrub matuwall; do
+    sh "$SCRIPT_DIR/hypr/packages/$pkg.sh"
+    _ok "$pkg installed"
+done
+sh "$SCRIPT_DIR/installer/scripts/awww-wrapper.sh"
+_ok "awww wrapper installed"
 if type grudupdater >/dev/null 2>&1; then
     grudupdater
 fi
-echo "
-#########################################################
-#                                                       #
-#              Installed required Packages              #
-#                                                       #
-#########################################################
-"
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#                    Install Pywal16                    #
-#                                                       #
-#########################################################
-"
-if [ -f /usr/bin/wal ]; then
-    echo "pywal16 already installed."
-else
-    yay --noconfirm -S python-pywal16-git
-fi
-echo ""
-echo "
-#########################################################
-#                                                       #
-#                    Pywal16 Installed                  #
-#                                                       #
-#########################################################
-"
-echo ""
-clear
-echo ""
-echo "
-#########################################################
-#                                                       #
-#                   Install Wallpapers                  #
-#                                                       #
-#########################################################
-"
-echo ""
-echo ""
-sh ~/hyprtk/hypr/packages/wallpapers.sh
-echo ""
-sleep 2
-echo "
-#########################################################
-#                                                       #
-#                 Wallpapers Installed                  #
-#                                                       #
-#########################################################
-"
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#                     Install Fonts                     #
-#                                                       #
-#########################################################
-"
-echo ""
-echo ""
-sh ~/hyprtk/hypr/packages/fonts.sh
-echo ""
-sleep 2
-echo "
-#########################################################
-#                                                       #
-#                    Fonts Installed                    #
-#                                                       #
-#########################################################
-"
-echo ""
-clear
-echo ""
-echo "
-#########################################################
-#                                                       #
-#                   Install Icons Root                  #
-#                                                       #
-#########################################################
-"
-echo ""
-echo "-> Installing to root user"
-wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | DESTDIR="/root/.local/share/icons" sh
 
-echo "
-#########################################################
-#                                                       #
-#                    Icons Installed                    #
-#                                                       #
-#########################################################
-"
-echo ""
-clear
-echo ""
-echo "
-#########################################################
-#                                                       #
-#                   Initiating Pywal16                  #
-#                                                       #
-#########################################################
-"
-echo ""
-echo "-> Init pywal16"
-wal -i ~/hyprtk/assets/Wallpapers/default.png
-echo "pywal16 initiated."
-echo ""
-echo ""
-echo "-> Copy default wallpaper to .cache"
-cp ~/hyprtk/assets/Wallpapers/default.png ~/.cache/current-wallpaper.png
+# ── Pywal16 ───────────────────────────────────────────────────────────────
+_step "Installing Pywal16"
+if [ -f /usr/bin/wal ]; then
+    _ok "pywal16 already installed"
+else
+    gum spin --spinner dot --title "Installing pywal16..." -- bash -c "yay --noconfirm -S python-pywal16-git"
+    _ok "pywal16 installed"
+fi
+
+# ── Wallpapers ────────────────────────────────────────────────────────────
+_step "Installing Wallpapers"
+sh "$SCRIPT_DIR/hypr/packages/wallpapers.sh"
+_ok "Wallpapers installed"
+
+# ── Fonts ─────────────────────────────────────────────────────────────────
+_step "Installing Fonts"
+sh "$SCRIPT_DIR/hypr/packages/fonts.sh"
+_ok "Fonts installed"
+
+# ── Icons root ────────────────────────────────────────────────────────────
+_step "Installing Icons (root)"
+echo -e "${WHITE}  Installing Papirus icons for root user...${NC}"
+wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | DESTDIR="/root/.local/share/icons" sh
+_ok "Icons installed for root"
+
+# ── Init pywal16 ─────────────────────────────────────────────────────────
+_step "Initiating Pywal16"
+wal -i "$SCRIPT_DIR/assets/Wallpapers/default.png"
+_ok "pywal16 initiated"
+
+echo -e "${WHITE}  Copying default wallpaper to .cache...${NC}"
+cp "$SCRIPT_DIR/assets/Wallpapers/default.png" ~/.cache/current-wallpaper.png
 sudo cp ~/.cache/current-wallpaper.png /root/.cache/current-wallpaper.png
 if type grub_wallpaper >/dev/null 2>&1; then
     grub_wallpaper
 fi
-xdg-user-dirs-update --force
-xdg-user-dirs-gtk-update --force   
-echo "default wallpaper copied."
-echo ""
-echo "
-#########################################################
-#                                                       #
-#                    Pywal16 Initiated                  #
-#                                                       #
-#########################################################
-"
-echo ""
-sleep 2
-clear
-echo ""
-figlet -f 3d "Hyprland"
-echo ""
-echo " by hyprtk (Kori Tk) (2026) "
-echo " ------------------------------------------------------------------- "
-echo ""
-echo ""
-while true; do
-    read -p "DO YOU WANT TO START THE INSTALLATION NOW? (Yy/Nn): " yn
-    case $yn in
-        [Yy]* )
-            echo "Installation started."
-        break;;
-        [Nn]* ) 
-            echo "Installation is Aborted"
-            exit;
-        break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-echo ""
-echo ""
-echo "
-#########################################################
-#                                                       #
-#            Launch Thunar to generate xfconf           #
-#                                                       #
-#########################################################
-"
-echo ""
-echo "-> Launching Thunar to populate xfconf"
-thunar &
-sleep 3
-echo ""
-echo ""
-echo "-> Closing Thunar"
-killall thunar
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#                   Enabling Bluetooth                  #
-#                                                       #
-#########################################################
-"
-sudo systemctl start bluetooth
-sudo systemctl enable bluetooth
-echo ""
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#                   Enabling Cockpit                    #
-#                                                       #
-#########################################################
-"
-if type install_os_release >/dev/null 2>&1; then
-    install_os_release
-else
-    sudo cp ~/hyprtk/installer/os-release/os-release-$DISTRO /usr/lib/
-fi
-if type install_boot >/dev/null 2>&1; then
-    install_boot
-fi
-sudo cp ~/hyprtk/configs/User-Management/manage-users.desktop /usr/share/applications/
-sudo systemctl enable --now cockpit.socket
-sudo systemctl start cockpit.socket
-echo ""
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#                   Enabling Samba                      #
-#                                                       #
-#########################################################
-"
-sudo cp ~/hyprtk/configs/smb/smb.conf /etc/samba/
-sudo systemctl enable smb nmb
-sudo systemctl start smb nmb
-sudo systemctl restart smb nmb
-echo "Please update the interfaces section of /etc/samba/smb.conf with your IP address"
-sleep 3
-clear
-echo "
-#########################################################
-#                                                       #
-#           IMPORTANT Graphic Card Information          #
-#                                                       #
-#########################################################
-"
-echo ""
-echo ""
-echo "If you installed an NVIDIA Graphics Card please follow the instructions in the"
-echo "nvidia.conf file located ~/hyprtk/hypr/conf/nvidia.conf"
-echo ""
-sleep 5
-clear
-figlet -f 3d "hyprtk"
-echo ""
-echo " by hyprtk (Kori Tk) (2026) "
-echo " ------------------------------------------------------------------- "
-echo ""
-echo "The script will ask for permission to remove existing directories and files from ~/.config/"
-echo "Symbolic links will then be created from ~/hyprtk into your ~/.config/ directory."
-echo "But you can decide to keep your personal versions by answering with No (Nn)."
-echo ""
-sleep 5
-clear
-echo ""
-echo "
-#########################################################
-#                                                       #
-#              Confirm dotfile files Install            #
-#                                                       #
-#########################################################
-"
-while true; do
-    read -p " DO YOU WANT TO START THE INSTALLATION NOW? (Yy/Nn): " yn
-    case $yn in
-        [Yy]* )
-            echo "Installation started."
-        break;;
-        [Nn]* ) 
-            exit;
-        break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#             Check .config directory exists            #
-#                                                       #
-#########################################################
-"
-echo ""
-echo "-> Check if .config folder exists"
+xdg-user-dirs-update --force 2>/dev/null
+xdg-user-dirs-gtk-update --force 2>/dev/null
+_ok "Default wallpaper set"
 
-if [ -d ~/.config ]; then
-    echo ".config folder already exists."
+# ── Confirm Hyprland config ──────────────────────────────────────────────
+if ! gum confirm --prompt.foreground=5 "Configure Hyprland now?"; then
+    echo -e "${MAGENTA}  Hyprland configuration skipped.${NC}"
 else
-    mkdir ~/.config
-    echo ".config folder created."
+    # ── Thunar xfconf ────────────────────────────────────────────────────
+    _step "Launching Thunar to generate xfconf"
+    thunar &
+    sleep 3
+    killall thunar 2>/dev/null
+    _ok "Thunar xfconf generated"
+
+    # ── Bluetooth ────────────────────────────────────────────────────────
+    _step "Enabling Bluetooth"
+    sudo systemctl start bluetooth
+    sudo systemctl enable bluetooth
+    _ok "Bluetooth enabled"
+
+    # ── Cockpit / os-release ─────────────────────────────────────────────
+    _step "Enabling Cockpit"
+    if type install_os_release >/dev/null 2>&1; then
+        install_os_release
+    else
+        sudo cp "$SCRIPT_DIR/installer/os-release/os-release-$DISTRO" /usr/lib/
+    fi
+    if type install_boot >/dev/null 2>&1; then
+        install_boot
+    fi
+    sudo cp "$SCRIPT_DIR/configs/User-Management/manage-users.desktop" /usr/share/applications/
+    sudo systemctl enable --now cockpit.socket
+    sudo systemctl start cockpit.socket
+    _ok "Cockpit enabled"
+
+    # ── Samba ────────────────────────────────────────────────────────────
+    _step "Enabling Samba"
+    sudo cp "$SCRIPT_DIR/configs/smb/smb.conf" /etc/samba/
+    sudo systemctl enable smb nmb
+    sudo systemctl start smb nmb
+    sudo systemctl restart smb nmb
+    _warn "Update interfaces in /etc/samba/smb.conf with your IP address"
+    _ok "Samba enabled"
+
+    # ── NVIDIA info ──────────────────────────────────────────────────────
+    _step "NVIDIA Information"
+    echo -e "${WHITE}  If you installed an NVIDIA card, follow the instructions in:${NC}"
+    echo -e "${CYAN}  ~/hyprtk/hypr/conf/nvidia.conf${NC}"
+    gum input --placeholder "Press Enter to continue..."
+
+    # ── Confirm dotfiles ────────────────────────────────────────────────
+    if ! gum confirm --prompt.foreground=5 "Install dotfiles now?"; then
+        echo -e "${MAGENTA}  Dotfile installation skipped.${NC}"
+    else
+        # ── .config directory ───────────────────────────────────────────
+        _step "Checking .config Directory"
+        if [ -d ~/.config ]; then
+            _ok ".config folder exists"
+        else
+            mkdir ~/.config
+            _ok ".config folder created"
+        fi
+
+        # ── General symlinks ───────────────────────────────────────────
+        _step "Installing General Configs"
+        _installSymLink alacritty ~/.config/alacritty "$SCRIPT_DIR/configs/alacritty/" ~/.config
+        _installSymLink ranger ~/.config/ranger "$SCRIPT_DIR/configs/ranger/" ~/.config
+        _installSymLink vim ~/.config/vim "$SCRIPT_DIR/configs/vim/" ~/.config
+        _installSymLink nvim ~/.config/nvim "$SCRIPT_DIR/configs/nvim/" ~/.config
+        _installSymLink starship ~/.config/starship.toml "$SCRIPT_DIR/configs/starship/starship.toml" ~/.config/starship.toml
+        _installSymLink rofi ~/.config/rofi "$SCRIPT_DIR/configs/rofi/" ~/.config
+        _installSymLink dunst ~/.config/dunst "$SCRIPT_DIR/configs/dunst/" ~/.config
+        _installSymLink wal ~/.config/wal "$SCRIPT_DIR/configs/wal/" ~/.config
+        _installSymLink btop ~/.config/btop "$SCRIPT_DIR/configs/btop/" ~/.config
+        _ok "General configs installed"
+
+        # ── Re-init pywal16 ───────────────────────────────────────────
+        _step "Re-Initiating Pywal16"
+        if type wal_init >/dev/null 2>&1; then
+            wal_init
+        else
+            wal -i "$SCRIPT_DIR/assets/Wallpapers/default.png"
+        fi
+        _ok "Pywal16 templates initiated"
+
+        # ── GTK ───────────────────────────────────────────────────────
+        _step "Installing GTK Configs"
+        _installSymLink gtk-3.0 ~/.config/gtk-3.0 "$SCRIPT_DIR/configs/gtk/gtk-3.0/" ~/.config/
+        _installSymLink gtk-4.0 ~/.config/gtk-4.0 "$SCRIPT_DIR/configs/gtk/gtk-4.0/" ~/.config/
+        _installSymLink themes ~/.local/share/themes "$SCRIPT_DIR/assets/themes" ~/.local/share/
+        _installSymLink icons ~/.local/share/icons "$SCRIPT_DIR/assets/papirus-icons/icons" ~/.local/share/
+        _ok "GTK configs installed"
+
+        # ── Xfce ──────────────────────────────────────────────────────
+        _step "Installing Xfce Configs"
+        _installSymLink xfce4 ~/.config/xfce4 "$SCRIPT_DIR/configs/xfce4" ~/.config/
+        _installSymLink Thunar ~/.config/Thunar "$SCRIPT_DIR/configs/Thunar" ~/.config/
+        _installSymLink Mousepad ~/.config/Mousepad "$SCRIPT_DIR/configs/Mousepad" ~/.config/
+        _ok "Xfce configs installed"
+
+        # ── Hyprland ──────────────────────────────────────────────────
+        _step "Installing Hyprland Configs"
+        if type pre_hypr_symlink >/dev/null 2>&1; then
+            pre_hypr_symlink
+        fi
+        _installSymLink hypr ~/.config/hypr "$SCRIPT_DIR/hypr/" ~/.config
+        _installSymLink fastfetch ~/.config/fastfetch "$SCRIPT_DIR/configs/fastfetch/" ~/.config
+        _installSymLink waybar ~/.config/waybar "$SCRIPT_DIR/configs/waybar/" ~/.config
+        _installSymLink swaylock ~/.config/swaylock "$SCRIPT_DIR/configs/swaylock/" ~/.config
+        _installSymLink swappy ~/.config/swappy "$SCRIPT_DIR/configs/swappy/" ~/.config
+        _installSymLink hyprlogout ~/.config/hyprlogout "$SCRIPT_DIR/configs/hyprlogout/" ~/.config
+        _installSymLink waypaper ~/.config/waypaper "$SCRIPT_DIR/configs/waypaper/" ~/.config
+        _installSymLink zshrc ~/.config/zshrc "$SCRIPT_DIR/configs/zshrc/" ~/.config
+        _installSymLink ohmyposh ~/.config/ohmyposh "$SCRIPT_DIR/configs/ohmyposh/" ~/.config
+        _installSymLink matuwall ~/.config/matuwall "$SCRIPT_DIR/configs/matuwall/" ~/.config
+        _installSymLink wob ~/.config/wob "$SCRIPT_DIR/configs/wob/" ~/.config
+        mkdir -p ~/.local/bin
+        _ok "Hyprland configs installed"
+
+        # ── ZSH ──────────────────────────────────────────────────────
+        _step "Installing ZSH"
+        sudo pacman -S zsh --noconfirm
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        _ok "ZSH installed"
+
+        _step "Installing ZSH Plugins"
+        git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions 2>/dev/null
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting 2>/dev/null
+        git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting 2>/dev/null
+        _ok "ZSH plugins installed"
+
+        # ── .zshrc ────────────────────────────────────────────────────
+        _step "Updating .zshrc"
+        _installSymLink .zshrc ~/.zshrc "$SCRIPT_DIR/.zshrc" ~/.zshrc
+        sudo chsh -s /bin/zsh
+        chsh -s /bin/zsh
+        _ok ".zshrc updated"
+
+        # ── Standalone apps ──────────────────────────────────────────
+        _step "Installing Standalone Apps"
+        _installSymLink standalone ~/.local/bin "$SCRIPT_DIR/installer/standalone/" ~/.local/bin
+        _installSymLink oh-my-zsh ~/.oh-my-zsh/oh-my-zsh.sh "$SCRIPT_DIR/configs/oh-my-zsh/oh-my-zsh.sh" ~/.oh-my-zsh
+        _ok "Standalone apps installed"
+
+        # ── hyprtk-menu ──────────────────────────────────────────────
+        _step "Installing hyprtk-menu"
+        sh "$SCRIPT_DIR/installer/scripts/hyprtk-menu-install.sh"
+        _ok "hyprtk-menu installed"
+
+        # ── theme-gui ────────────────────────────────────────────────
+        _step "Installing theme-gui"
+        bash "$SCRIPT_DIR/installer/theme-gui/install.sh"
+        _ok "theme-gui installed"
+
+        # ── Root user config ─────────────────────────────────────────
+        _step "Setting Up Root User Config"
+        sudo cp -r "$SCRIPT_DIR/configs/root" /
+        _ok "Root user config copied"
+
+        # ── Sudoers ──────────────────────────────────────────────────
+        if type setup_sudoers >/dev/null 2>&1; then
+            setup_sudoers
+        else
+            echo -e 'Defaults env_reset,pwfeedback' | sudo tee -a /etc/sudoers > /dev/null
+        fi
+        _ok "Sudoers configured"
+    fi
 fi
-echo ""
-sleep 3
+
+# ── Cleanup ────────────────────────────────────────────────────────────────
+rm -rf "$HOME/dotfiles" 2>/dev/null
+
+# ── Completion ─────────────────────────────────────────────────────────────
 clear
-echo "
-#########################################################
-#                                                       #
-#                 Create Symbolic Links                 #
-#                                                       #
-#########################################################
-"
-# name symlink source target
-echo ""
-echo ""
-echo "-------------------------------------"
-echo "-> Install general hyprtk"
-echo "-------------------------------------"
-echo ""
-echo ""
-_installSymLink alacritty ~/.config/alacritty ~/hyprtk/configs/alacritty/ ~/.config
-_installSymLink ranger ~/.config/ranger ~/hyprtk/configs/ranger/ ~/.config
-_installSymLink vim ~/.config/vim ~/hyprtk/configs/vim/ ~/.config
-_installSymLink nvim ~/.config/nvim ~/hyprtk/configs/nvim/ ~/.config
-_installSymLink starship ~/.config/starship.toml ~/hyprtk/configs/starship/starship.toml ~/.config/starship.toml
-_installSymLink rofi ~/.config/rofi ~/hyprtk/configs/rofi/ ~/.config
-_installSymLink dunst ~/.config/dunst ~/hyprtk/configs/dunst/ ~/.config
-_installSymLink wal ~/.config/wal ~/hyprtk/configs/wal/ ~/.config
-_installSymLink btop ~/.config/btop ~/hyprtk/configs/btop/ ~/.config
-echo ""
-clear
-echo "
-#########################################################
-#                                                       #
-#                  Re-Initiating Pywal16                #
-#                                                       #
-#########################################################
-"
-echo ""
-if type wal_init >/dev/null 2>&1; then
-    wal_init
-else
-    wal -i ~/hyprtk/assets/Wallpapers/default.png
-fi
-echo "Pywal16 templates initiated!"
-echo ""
-echo ""
-echo "
-#########################################################
-#                                                       #
-#                    Pywal16 Initiated                  #
-#                                                       #
-#########################################################
-"
-echo ""
-clear
-echo "-------------------------------------"
-echo "-> Install GTK hyprtk"
-echo "-------------------------------------"
-echo ""
-_installSymLink gtk-3.0 ~/.config/gtk-3.0 ~/hyprtk/configs/gtk/gtk-3.0/ ~/.config/
-_installSymLink gtk-4.0 ~/.config/gtk-4.0 ~/hyprtk/configs/gtk/gtk-4.0/ ~/.config/
-_installSymLink themes ~/.local/share/themes ~/hyprtk/assets/themes ~/.local/share/
-_installSymLink icons ~/.local/share/icons ~/hyprtk/assets/papirus-icons/icons ~/.local/share/
-echo ""
-clear
-echo "-------------------------------------"
-echo "-> Install Xfce hyprtk"
-echo "-------------------------------------"
-echo ""
-_installSymLink xfce4 ~/.config/xfce4 ~/hyprtk/configs/xfce4 ~/.config/
-_installSymLink Thunar ~/.config/Thunar ~/hyprtk/configs/Thunar ~/.config/
-_installSymLink Mousepad ~/.config/Mousepad ~/hyprtk/configs/Mousepad ~/.config/
-echo ""
-clear
-echo "-------------------------------------"
-echo "-> Install Hyprland hyprtk"
-echo "-------------------------------------"
-echo ""
-if type pre_hypr_symlink >/dev/null 2>&1; then
-    pre_hypr_symlink
-fi
-_installSymLink hypr ~/.config/hypr ~/hyprtk/hypr/ ~/.config
-_installSymLink fastfetch ~/.config/fastfetch ~/hyprtk/configs/fastfetch/ ~/.config
-_installSymLink waybar ~/.config/waybar ~/hyprtk/configs/waybar/ ~/.config
-_installSymLink swaylock ~/.config/swaylock ~/hyprtk/configs/swaylock/ ~/.config
-_installSymLink swappy ~/.config/swappy ~/hyprtk/configs/swappy/ ~/.config
-_installSymLink hyprlogout ~/.config/hyprlogout ~/hyprtk/configs/hyprlogout/ ~/.config
-_installSymLink waypaper ~/.config/waypaper ~/hyprtk/configs/waypaper/ ~/.config
-_installSymLink zshrc ~/.config/zshrc ~/hyprtk/configs/zshrc/ ~/.config
-_installSymLink ohmyposh ~/.config/ohmyposh ~/hyprtk/configs/ohmyposh/ ~/.config
-_installSymLink matuwall ~/.config/matuwall ~/hyprtk/configs/matuwall/ ~/.config
-_installSymLink wob ~/.config/wob ~/hyprtk/configs/wob/ ~/.config
-mkdir ~/.local/bin
-echo ""
-clear
-echo ""
-echo ""
-echo "-------------------------------------"
-echo "-> Install ZSH"
-echo "-------------------------------------"
-echo ""
-sudo pacman -S zsh --noconfirm
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-echo ""
-echo ""
-echo "-------------------------------------"
-echo "-> Install ZSH Plugins"
-echo "-------------------------------------"
-echo ""
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
-echo ""
-echo "
-#########################################################
-#                                                       #
-#                      Update .zshrc                    #
-#                                                       #
-#########################################################
-"
-echo ""
-echo "-> Install .zshrc"
-echo ""
-_installSymLink .zshrc ~/.zshrc ~/hyprtk/.zshrc ~/.zshrc
-echo ""
-sudo chsh -s /bin/zsh
-chsh -s /bin/zsh
-echo "
-#########################################################
-#                                                       #
-#                    .zshrc Updated                     #
-#                                                       #
-#########################################################
-"
-echo ""
-_installSymLink standalone ~/.local/bin ~/hyprtk/installer/standalone/ ~/.local/bin
-_installSymLink oh-my-zsh ~/.oh-my-zsh/oh-my-zsh.sh ~/hyprtk/configs/oh-my-zsh/oh-my-zsh.sh ~/.oh-my-zsh
-echo ""
-echo "-> Install hyprtk-menu"
-echo ""
-sh ~/hyprtk/installer/scripts/hyprtk-menu-install.sh
-echo ""
-echo "-> Install theme-gui"
-echo ""
-bash ~/hyprtk/installer/theme-gui/install.sh
-echo ""
-rm -R $HOME/dotfiles
-clear
-echo ""
-echo ""
-echo "-------------------------------------"
-echo "-> Setup Root User Config"
-echo "-------------------------------------"
-echo ""
-sudo cp -r ~/hyprtk/configs/root /
-echo " Copying Config and Themes to ROOT User "
-echo ""
-sleep 3
-if type setup_sudoers >/dev/null 2>&1; then
-    setup_sudoers
-else
-    echo -e 'Defaults env_reset,pwfeedback'| sudo tee -a /etc/sudoers
-fi
-echo " Setup Password Feedback when entering SUDO password "
-echo ""
-sleep 3
-clear
-echo ""
-echo ""
-echo "-------------------------------------"
-echo "-> Congratulations Setup Complete"
-echo "-------------------------------------"
-echo ""
-echo "DONE!"
-echo ""
-echo "NEXT: Update the keyboard layout and screen resolution in ~/hyprtk/hypr/hyprland.conf"
-echo "Now proceed with rebooting your system and Enjoy!!!"
+_box \
+    "$(printf "${CYAN}INSTALLATION COMPLETE${NC}")" \
+    "" \
+    "$(printf "${WHITE}Done!${NC}")" \
+    "" \
+    "$(printf "${WHITE}Next steps:${NC}")" \
+    "$(printf "${CYAN}1. Update keyboard layout and screen resolution${NC}")" \
+    "$(printf "${CYAN}   in ~/hyprtk/hypr/hyprland.conf${NC}")" \
+    "$(printf "${WHITE}2. Reboot your system${NC}")" \
+    "" \
+    "$(printf "${CYAN}github.com/hyprtk/dotfiles${NC}")"
+
 echo ""
