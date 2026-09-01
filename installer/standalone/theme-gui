@@ -1,2 +1,2 @@
 #!/bin/bash
-exec "$HOME/.local/share/theme-gui/venv/bin/python3" -m theme_gui "$@"
+exec "/home/hyprtk/.cache/hyprtk-dryrun/sb.xHwuhy/home/.local/share/theme-gui/venv/bin/python3" -m theme_gui "$@"

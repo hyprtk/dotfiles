@@ -2,7 +2,7 @@
     hyprtk-aero — Windows 7 Aero Glass (pywal auto-generated)
     -----------------------------------------------------  */
 window {
-    background-color:            rgba(15, 24, 37,0.70);
+    background-color:            rgba(9, 11, 21,0.70);
     border-color:                rgba(255,255,255,0.20);
 }
 
@@ -13,7 +13,7 @@ inputbar {
 }
 
 textbox-prompt-colon {
-    background-color:            #637B81;
+    background-color:            #C94AA7;
     text-color:                  #ffffff;
 }
 
@@ -32,7 +32,7 @@ button {
 }
 
 button selected {
-    background-color:            #637B81;
+    background-color:            #C94AA7;
     text-color:                  #ffffff;
     border-color:                rgba(255,255,255,0.30);
 }
@@ -45,24 +45,24 @@ element {
 element normal.normal,
 element normal.urgent,
 element normal.active {
-    text-color:                  #c3c5c8;
+    text-color:                  #c1c2c4;
 }
 
 element selected.normal {
-    background-color:            #65A798;
+    background-color:            #EA58B4;
     text-color:                  #ffffff;
     border-color:                rgba(255,255,255,0.30);
 }
 
 element selected.urgent,
 element selected.active {
-    text-color:                  #c3c5c8;
+    text-color:                  #c1c2c4;
 }
 
 element alternate.normal,
 element alternate.urgent,
 element alternate.active {
-    text-color:                  #c3c5c8;
+    text-color:                  #c1c2c4;
 }
 
 message {

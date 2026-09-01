@@ -8,11 +8,25 @@ from . import paths
 # ── Color conversion helpers ────────────────────────────────────────────────
 
 
+def is_valid_hex(hex_color: str) -> bool:
+    """Return True if *hex_color* is a valid #RRGGBB or #RRGGBBAA color."""
+    if not isinstance(hex_color, str):
+        return False
+    h = hex_color.strip().lstrip("#")
+    return len(h) in (6, 8) and all(c in "0123456789abcdefABCDEF" for c in h)
+
+
 def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
-    """Convert #RRGGBB or #RRGGBBAA to (r, g, b) ints 0-255."""
-    h = hex_color.lstrip("#")
+    """Convert #RRGGBB or #RRGGBBAA to (r, g, b) ints 0-255.
+
+    Returns (0, 0, 0) for invalid input instead of raising.
+    """
+    h = hex_color.strip().lstrip("#")
     if len(h) >= 6:
-        return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        try:
+            return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        except ValueError:
+            pass
     return 0, 0, 0
 
 
@@ -100,7 +114,9 @@ def parse_wal_colors() -> dict[str, str]:
             continue
         if "=" in line:
             key, _, val = line.partition("=")
-            result[key.strip()] = val.strip().strip("'\"")
+            val = val.strip().strip("'\"")
+            if is_valid_hex(val):
+                result[key.strip()] = val
     return result
 
 

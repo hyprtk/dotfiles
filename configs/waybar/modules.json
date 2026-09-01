@@ -91,35 +91,35 @@
     // Wallpaper
     "custom/wallpaper": {
         "format": "",
-        "on-click": "~/hyprtk/hypr/scripts/matuwall-toggle.sh",
+        "on-click": "~/.local/bin/theme-gui",
         "on-click-right": "~/hyprtk/installer/scripts/updatewal-awww.sh",
         "tooltip": true,
         "tooltip-format": "Wallpaper Switcher"
     },
 
     // Waybar Theme
-    "custom/waybarthemes": {
-        "format": "",
-        "on-click": "~/hyprtk/configs/waybar/themeswitcher.sh",
-        "tooltip": true,
-        "tooltip-format": "Waybar Theme Switcher"
-    },
+    //"custom/waybarthemes": {
+    //    "format": "",
+    //    "on-click": "~/hyprtk/configs/waybar/themeswitcher.sh",
+    //    "tooltip": true,
+    //    "tooltip-format": "Waybar Theme Switcher"
+    //},
 
     // Icon Theme
-    "custom/iconthemes": {
-        "format": "",
-        "on-click": "~/hyprtk/installer/scripts/icon-color-select.sh",
-        "tooltip": true,
-        "tooltip-format": "Folder Theme Switcher"
-    },
+    //"custom/iconthemes": {
+    //    "format": "",
+    //    "on-click": "~/hyprtk/installer/scripts/icon-color-select.sh",
+    //    "tooltip": true,
+    //    "tooltip-format": "Folder Theme Switcher"
+    //},
 
-        // Set sddm & grub to current wallpaper
-    "custom/sddmgrub": {
-        "format": "",
-        "on-click": "alacritty -o window.dimensions.lines=45 window.dimensions.columns=90 --class floating -e ~/hyprtk/configs/sddm/update.sh",
-        "tooltip": true,
-        "tooltip-format": "sddm/grub updater"
-    },
+    //    // Set sddm & grub to current wallpaper
+    //"custom/sddmgrub": {
+    //    "format": "",
+    //    "on-click": "alacritty -o window.dimensions.lines=45 window.dimensions.columns=90 --class floating -e ~/hyprtk/configs/sddm/update.sh",
+    //    "tooltip": true,
+    //    "tooltip-format": "sddm/grub updater"
+    //},
 
     // Filemanager Launcher
     "custom/filemanager": {

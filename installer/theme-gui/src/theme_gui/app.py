@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import logging
 from pathlib import Path
 
 import gi
@@ -16,6 +17,7 @@ from .modules.icons import IconsPage
 from .modules.matuwall import MatuwallPage
 from .modules.pywal import PywalPage
 from .modules.rofi import RofiPage
+from .modules.sddm import SddmPage
 from .modules.swaylock import SwaylockPage
 from .modules.wallpaper import WallpaperPage
 from .modules.waybar import WaybarPage
@@ -30,6 +32,7 @@ PAGES: dict[str, tuple[str, str, type]] = {
     "matuwall": ("Matuwall", "folder-pictures-symbolic", MatuwallPage),
     "swaylock": ("Swaylock", "system-lock-screen-symbolic", SwaylockPage),
     "icons": ("Icons", "folder-symbolic", IconsPage),
+    "sddm": ("SDDM & GRUB", "system-os-install-symbolic", SddmPage),
 }
 
 
@@ -180,7 +183,10 @@ class ThemeGuiApp(Adw.Application):
         sm.set_color_scheme(Adw.ColorScheme.DEFAULT)
 
         provider = Gtk.CssProvider()
-        provider.load_from_data(build_app_css().encode())
+        try:
+            provider.load_from_data(build_app_css().encode())
+        except GLib.Error as exc:
+            logging.getLogger(__name__).warning("failed to load app css: %s", exc)
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
             provider,

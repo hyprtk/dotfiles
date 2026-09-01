@@ -223,5 +223,8 @@ class WallpaperPage(BasePage):
                 self._css_provider,
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1,
             )
-        self._css_provider.load_from_data(build_app_css().encode())
+        try:
+            self._css_provider.load_from_data(build_app_css().encode())
+        except GLib.Error as exc:
+            log.warning("failed to reload app css: %s", exc)
         return False

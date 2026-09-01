@@ -13,6 +13,7 @@ pre_install() {
 
 pre_hypr_symlink() {
     [ -e ~/.config/hypr ] && mv ~/.config/hypr ~/.config/hypr-old
+    return 0
 }
 
 grudupdater() {

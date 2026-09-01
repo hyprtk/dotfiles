@@ -263,6 +263,8 @@ fi
 STEPS="$SCRIPT_DIR/installer/steps/$DISTRO.sh"
 if [ -f "$STEPS" ]; then
     source "$STEPS"
+    # Export hooks so they are visible to the bash -c subshells used by _spin
+    export -f pre_install install_os_release install_boot pre_hypr_symlink wal_init grub_wallpaper grudupdater setup_sudoers 2>/dev/null
     log "Sourced distro hooks: $STEPS"
 fi
 

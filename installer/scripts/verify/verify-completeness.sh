@@ -50,6 +50,7 @@ MAP[grub]=configs/grub
 # Intentionally removed from the merged tree (user decision) — excluded from the
 # "missing" check. Prefix patterns, matched against merged-relative paths.
 REMOVED_EXCLUDE=(
+  '^hypr/hyprlock.conf$'
   '^configs/root/.local/share/themes/Arc-Azure-dodger-blue'
   '^configs/root/.config/nwg-look(/|$)'
   '^configs/root/.local/share/nwg-look(/|$)'

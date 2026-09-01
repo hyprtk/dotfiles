@@ -1,4 +1,9 @@
 #!/bin/bash
+# Non-interactive when -y/--yes is passed (used by theme-gui module)
+AUTO=""
+case "$1" in
+    -y|--yes) AUTO=1 ;;
+esac
 echo "
 
           ████████  ███████   ██     ██ ██████   
@@ -34,19 +39,23 @@ echo ""
 echo " by hyprtk (Kori Tk) (2026) "
 echo " ------------------------------------------------------------------- "
 echo ""
-while true; do
-    read -p "Update the background wallpaper of GRUB & sddm to the current wallpaper NOW? (Yy/Nn): " yn
-    case $yn in
-        [Yy]* )
-            echo "Update started."
-        break;;
-        [Nn]* ) 
-            echo "Update is Aborted"
-            exit;
-        break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
+if [ -z "$AUTO" ]; then
+    while true; do
+        read -p "Update the background wallpaper of GRUB & sddm to the current wallpaper NOW? (Yy/Nn): " yn
+        case $yn in
+            [Yy]* )
+                echo "Update started."
+            break;;
+            [Nn]* ) 
+                echo "Update is Aborted"
+                exit;
+            break;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+else
+    echo "Update started."
+fi
 echo ""
 if [ ! -d /etc/sddm.conf.d/ ]; then
     sudo mkdir /etc/sddm.conf.d
@@ -56,8 +65,8 @@ echo ""
 sudo rm -rf /usr/share/grub/themes/*
 sudo rm -rf /boot/grub/themes/*
 echo ""
-sudo cp $HOME/hyprtk/sddm/sddm.conf /etc/sddm.conf.d/
-sudo cp $HOME/hyprtk/sddm/sddm.conf /etc/
+sudo cp $HOME/hyprtk/configs/sddm/sddm.conf /etc/sddm.conf.d/
+sudo cp $HOME/hyprtk/configs/sddm/sddm.conf /etc/
 echo "File /etc/sddm.conf updated."
 echo ""
 echo ""
@@ -65,7 +74,7 @@ sudo cp ~/.cache/current-wallpaper.png /usr/share/sddm/themes/Sugar-Candy/Backgr
 echo "Current wallpaper copied into /usr/share/sddm/themes/Sugar-Candy/Backgrounds/"
 echo ""
 echo ""
-sudo cp $HOME/hyprtk/sddm/theme.conf /usr/share/sddm/themes/Sugar-Candy/
+sudo cp $HOME/hyprtk/configs/sddm/theme.conf /usr/share/sddm/themes/Sugar-Candy/
 echo "File theme.conf updated in /usr/share/sddm/themes/Sugar-Candy/"
 echo ""
 echo ""
