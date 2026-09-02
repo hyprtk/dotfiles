@@ -126,7 +126,9 @@ class ArcWindow(Gtk.Window):
         corner = self._cfg["corner"]
         x = m if "left" in corner else w - m - f
         y = m if "top" in corner else h - m - f
-        return Gdk.Rectangle(x=x, y=y, width=f, height=f)
+        rect = Gdk.Rectangle()
+        rect.x, rect.y, rect.width, rect.height = x, y, f, f
+        return rect
 
     def _set_input_region(self, rect: Gdk.Rectangle | None) -> None:
         wnd = self.get_window()
@@ -135,7 +137,8 @@ class ArcWindow(Gtk.Window):
         if rect is None:
             # Reset: the whole surface is interactive.
             w, h = self._menu.open_size()
-            rect = Gdk.Rectangle(x=0, y=0, width=w, height=h)
+            rect = Gdk.Rectangle()
+            rect.x, rect.y, rect.width, rect.height = 0, 0, w, h
         region = cairo.Region(cairo.RectangleInt(rect.x, rect.y, rect.width, rect.height))
         wnd.input_shape_combine_region(region, 0, 0)
 
