@@ -25,5 +25,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("xhost +local:")
     hl.exec_cmd("hyprctl dismissnotify")
+    hl.exec_cmd("hyprtk-arc-menu")
 end)
 

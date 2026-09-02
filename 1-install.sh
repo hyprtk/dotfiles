@@ -521,6 +521,11 @@ else
         _spin "Installing theme-gui..." "bash $SCRIPT_DIR/installer/theme-gui/install.sh" "$LOG_FILE"
         _ok "theme-gui installed"
 
+        # ── hyprtk-arc-menu ──────────────────────────────────────────
+        _step "Installing hyprtk-arc-menu"
+        _spin "Installing hyprtk-arc-menu..." "bash $SCRIPT_DIR/installer/hyprtk-arc-menu/install.sh" "$LOG_FILE"
+        _ok "hyprtk-arc-menu installed"
+
         # ── Root user config ─────────────────────────────────────────
         _step "Setting Up Root User Config"
         echo -e "${CYAN}  → ${WHITE}Copying root config${NC}"

@@ -1,0 +1,167 @@
+"""Layer-shell window hosting the arc menu, plus hotkey handling."""
+from __future__ import annotations
+
+import logging
+
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version("GtkLayerShell", "0.1")
+
+from gi.repository import Gdk, Gio, GLib, Gtk, GtkLayerShell
+
+from .arc_menu import ArcMenu
+from .config import CORNERS, PYWAL_PATH, load_pywal_colors, resolve_palette
+
+log = logging.getLogger("hyprtk_arc_menu.app")
+
+
+class ArcWindow(Gtk.Window):
+    """A borderless, transparent layer-shell surface pinned to a screen corner."""
+
+    def __init__(self, cfg: dict):
+        super().__init__(type=Gtk.WindowType.TOPLEVEL)
+        self._cfg = cfg
+        self._wal_monitor: Gio.FileMonitor | None = None
+        self._wal_debounce: int | None = None
+
+        self.set_title("hyprtk-arc-menu")
+        self.set_decorated(False)
+        self.set_skip_taskbar_hint(True)
+        self.set_skip_pager_hint(True)
+        self.set_app_paintable(True)
+        self.set_accept_focus(False)
+
+        visual = self.get_screen().get_rgba_visual()
+        if visual:
+            self.set_visual(visual)
+
+        self._menu = ArcMenu(
+            cfg,
+            on_close=self._on_menu_closed,
+            on_run=self._on_run,
+            on_toggle=self.toggle,
+            palette=resolve_palette(cfg, load_pywal_colors() if cfg.get("use_pywal", True) else None),
+        )
+        self.add(self._menu)
+
+        self._init_layer_shell()
+        self._apply_closed_size()
+
+        self.connect("key-press-event", self._on_key_press)
+        self.connect("focus-out-event", self._on_focus_out)
+
+        if cfg.get("use_pywal", True):
+            self._setup_wal_monitor()
+
+    # ── pywal theming ─────────────────────────────────────────────
+
+    def _setup_wal_monitor(self) -> None:
+        """Watch ~/.cache/wal/ so a wallpaper change re-themes the menu live."""
+        try:
+            self._wal_monitor = Gio.File.new_for_path(
+                str(PYWAL_PATH.parent)
+            ).monitor_directory(Gio.FileMonitorFlags.NONE, None)
+        except GLib.Error as exc:
+            log.warning("Could not monitor pywal cache: %s", exc)
+            return
+        self._wal_monitor.connect("changed", self._on_wal_changed)
+
+    def _on_wal_changed(self, _monitor, file, *_args) -> None:
+        if file.get_basename() != PYWAL_PATH.name:
+            return
+        if self._wal_debounce is not None:
+            GLib.source_remove(self._wal_debounce)
+        self._wal_debounce = GLib.timeout_add(400, self._reload_wal)
+
+    def _reload_wal(self) -> bool:
+        self._wal_debounce = None
+        pywal = load_pywal_colors()
+        if pywal:
+            self._menu.apply_palette(resolve_palette(self._cfg, pywal))
+        return GLib.SOURCE_REMOVE
+
+    # ── layer shell ───────────────────────────────────────────────
+
+    def _init_layer_shell(self) -> None:
+        corner = CORNERS[self._cfg["corner"]]
+        GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
+        GtkLayerShell.set_namespace(self, "hyprtk-arc-menu")
+        for edge in corner["edges"]:
+            GtkLayerShell.set_anchor(self, edge, True)
+        # Do not reserve space; float above windows.
+        GtkLayerShell.set_exclusive_zone(self, -1)
+        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.NONE)
+
+    def _set_keyboard_mode(self, on: bool) -> None:
+        mode = (
+            GtkLayerShell.KeyboardMode.ON_DEMAND
+            if on
+            else GtkLayerShell.KeyboardMode.NONE
+        )
+        GtkLayerShell.set_keyboard_mode(self, mode)
+        self.set_accept_focus(on)
+        if on:
+            self.grab_focus()
+
+    # ── sizing ────────────────────────────────────────────────────
+
+    def _apply_closed_size(self) -> None:
+        w, h = self._menu.closed_size()
+        self._set_surface_size(w, h)
+        self._menu.layout_fab(w, h)
+        self._menu.set_items_visible(False)
+
+    def _set_surface_size(self, w: int, h: int) -> None:
+        # Layer-shell surfaces size more reliably via set_size_request than
+        # gtk_window_resize (which can be overridden by content size request).
+        self._menu.set_size_request(w, h)
+        self.set_size_request(w, h)
+
+    # ── state control ─────────────────────────────────────────────
+
+    def toggle(self) -> None:
+        if self._menu.is_open():
+            self.close_menu()
+        else:
+            self.open_menu()
+
+    def open_menu(self) -> None:
+        w, h = self._menu.open_size()
+        self._set_surface_size(w, h)
+        self._menu.layout_fab(w, h)
+        self._set_keyboard_mode(True)
+        self._menu.open(w, h)
+
+    def close_menu(self) -> None:
+        if not self._menu.is_open():
+            return
+        w, h = self._menu.open_size()
+        self._menu.close(w, h)
+
+    def _on_menu_closed(self) -> None:
+        self._apply_closed_size()
+        self._set_keyboard_mode(False)
+
+    def _on_run(self, entry: dict) -> None:
+        command = entry.get("command")
+        if command:
+            try:
+                GLib.spawn_command_line_async(command)
+            except GLib.Error as exc:
+                log.warning("Failed to launch %r: %s", command, exc)
+        if self._cfg.get("close_on_click", True):
+            self.close_menu()
+
+    # ── events ────────────────────────────────────────────────────
+
+    def _on_key_press(self, _widget, event) -> bool:
+        if event.keyval == Gdk.KEY_Escape and self._menu.is_open():
+            self.close_menu()
+            return True
+        return False
+
+    def _on_focus_out(self, *_args) -> bool:
+        if self._cfg.get("close_on_unfocus") and self._menu.is_open():
+            self.close_menu()
+        return False
