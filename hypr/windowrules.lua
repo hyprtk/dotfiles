@@ -52,6 +52,17 @@ hl.window_rule({
     size = "1100 700",
 })
 
+-- hyprtk-menu settings window (floating)
+hl.window_rule({
+    name = "windowrule-settings",
+    match = {
+        title = "(^(hyprtk-menu settings)$)",
+    },
+    float = true,
+    center = true,
+    size = "360 400",
+})
+
 -- Specific to launching floating terminal windows
 hl.window_rule({
     name = "windowrule-6",
