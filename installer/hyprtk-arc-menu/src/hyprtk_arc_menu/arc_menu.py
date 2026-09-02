@@ -130,11 +130,6 @@ class ArcMenu(Gtk.Fixed):
     def animation_time(self) -> int:
         return int(self.cfg["animation_time"])
 
-    def closed_size(self) -> tuple[int, int]:
-        m = self.margin
-        f = self.fab_size
-        return m + f, m + f
-
     def open_size(self) -> tuple[int, int]:
         m = self.margin
         f = self.fab_size

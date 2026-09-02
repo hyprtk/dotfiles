@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import logging
 
+import cairo
+
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("GtkLayerShell", "0.1")
@@ -46,7 +48,11 @@ class ArcWindow(Gtk.Window):
         self.add(self._menu)
 
         self._init_layer_shell()
-        self._apply_closed_size()
+        # Constant surface size (the arc size); the window never resizes.
+        w, h = self._menu.open_size()
+        self._set_surface_size(w, h)
+        self._menu.layout_fab(w, h)
+        self._apply_closed()
 
         self.connect("key-press-event", self._on_key_press)
         self.connect("focus-out-event", self._on_focus_out)
@@ -109,18 +115,42 @@ class ArcWindow(Gtk.Window):
             self.grab_focus()
 
     # ── sizing ────────────────────────────────────────────────────
+    # The surface keeps a constant size (the open/arc size) at all times so
+    # collapsing never resizes it (which caused a visual "pop"). When closed,
+    # an input shape limits clicks to the FAB and the rest passes through.
 
-    def _apply_closed_size(self) -> None:
-        w, h = self._menu.closed_size()
-        self._set_surface_size(w, h)
-        self._menu.layout_fab(w, h)
-        self._menu.set_items_visible(False)
+    def _fab_rect(self) -> Gdk.Rectangle:
+        m = self._menu.margin
+        f = self._menu.fab_size
+        w, h = self._menu.open_size()
+        corner = self._cfg["corner"]
+        x = m if "left" in corner else w - m - f
+        y = m if "top" in corner else h - m - f
+        return Gdk.Rectangle(x=x, y=y, width=f, height=f)
+
+    def _set_input_region(self, rect: Gdk.Rectangle | None) -> None:
+        wnd = self.get_window()
+        if wnd is None:
+            return
+        if rect is None:
+            # Reset: the whole surface is interactive.
+            w, h = self._menu.open_size()
+            rect = Gdk.Rectangle(x=0, y=0, width=w, height=h)
+        region = cairo.Region(cairo.RectangleInt(rect.x, rect.y, rect.width, rect.height))
+        wnd.input_shape_combine_region(region, 0, 0)
 
     def _set_surface_size(self, w: int, h: int) -> None:
         # Layer-shell surfaces size more reliably via set_size_request than
         # gtk_window_resize (which can be overridden by content size request).
         self._menu.set_size_request(w, h)
         self.set_size_request(w, h)
+
+    def _apply_closed(self) -> None:
+        self._menu.set_items_visible(False)
+        self._set_input_region(self._fab_rect())
+
+    def _apply_open(self) -> None:
+        self._set_input_region(None)
 
     # ── state control ─────────────────────────────────────────────
 
@@ -132,8 +162,8 @@ class ArcWindow(Gtk.Window):
 
     def open_menu(self) -> None:
         w, h = self._menu.open_size()
-        self._set_surface_size(w, h)
         self._menu.layout_fab(w, h)
+        self._apply_open()
         self._set_keyboard_mode(True)
         self._menu.open(w, h)
 
@@ -144,7 +174,7 @@ class ArcWindow(Gtk.Window):
         self._menu.close(w, h)
 
     def _on_menu_closed(self) -> None:
-        self._apply_closed_size()
+        self._apply_closed()
         self._set_keyboard_mode(False)
 
     def _on_run(self, entry: dict) -> None:
@@ -208,7 +238,11 @@ class ArcWindow(Gtk.Window):
         if self._cfg.get("use_pywal", True):
             self._setup_wal_monitor()
 
-        self._apply_closed_size()
+        # Re-apply the (possibly changed) constant surface size and closed state.
+        w, h = self._menu.open_size()
+        self._set_surface_size(w, h)
+        self._menu.layout_fab(w, h)
+        self._apply_closed()
         self._set_keyboard_mode(False)
         self.show_all()
 
