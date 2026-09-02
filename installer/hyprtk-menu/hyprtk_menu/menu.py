@@ -54,6 +54,9 @@ POWER_CONFIRM = ("logout", "reboot", "shutdown", "hibernate")
 # Actions that get danger styling (red tint) in the power bar.
 POWER_DANGER = ("reboot", "shutdown")
 
+# Actions visible when the power bar is collapsed; the rest appear on hover.
+POWER_COLLAPSED = ("logout", "reboot", "shutdown")
+
 CONFIRM_LABELS = {
     "logout": "Log Out",
     "reboot": "Restart",
@@ -1246,7 +1249,15 @@ class MenuWindow(Gtk.Window):
 
         bar.pack_start(left, True, True, 0)
 
+        # Collapsing power group: collapsed shows a subset, expands on hover.
+        group = Gtk.EventBox()
+        group.get_style_context().add_class("power-group")
+        group_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        group_box.get_style_context().add_class("power-group-box")
+        group.add(group_box)
+
         power = self.config.get("power", {})
+        self._power_extra = []
         for action in ("lock", "logout", "reboot", "shutdown", "suspend", "hibernate"):
             command = power.get(action)
             if not command:
@@ -1259,7 +1270,15 @@ class MenuWindow(Gtk.Window):
             image = self._make_power_icon(action)
             button.add(image)
             button.connect("clicked", self._on_power, action)
-            bar.pack_end(button, False, False, 0)
+            group_box.pack_end(button, False, False, 0)
+            if action not in POWER_COLLAPSED:
+                button.set_no_show_all(True)
+                button.hide()
+                self._power_extra.append(button)
+
+        group.connect("enter-notify-event", self._on_power_expand)
+        group.connect("leave-notify-event", self._on_power_collapse)
+        bar.pack_end(group, False, False, 0)
 
         # Corner resize grip
         grip = Gtk.EventBox()
@@ -1279,6 +1298,16 @@ class MenuWindow(Gtk.Window):
         bar.pack_end(grip, False, False, 0)
         self.grip = grip
         return bar
+
+    def _on_power_expand(self, _widget, _event):
+        """Show the hidden power options on hover."""
+        for button in self._power_extra:
+            button.show()
+
+    def _on_power_collapse(self, _widget, _event):
+        """Hide the extra power options when the pointer leaves the group."""
+        for button in self._power_extra:
+            button.hide()
 
     def _build_footer(self):
         """Shared bottom bar: user avatar (left) + powerbar (settings/power/resize)."""
