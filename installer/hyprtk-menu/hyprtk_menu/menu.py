@@ -54,9 +54,6 @@ POWER_CONFIRM = ("logout", "reboot", "shutdown", "hibernate")
 # Actions that get danger styling (red tint) in the power bar.
 POWER_DANGER = ("reboot", "shutdown")
 
-# Actions visible when the power bar is collapsed; the rest appear on hover.
-POWER_COLLAPSED = ("logout", "reboot", "shutdown")
-
 CONFIRM_LABELS = {
     "logout": "Log Out",
     "reboot": "Restart",
@@ -1249,16 +1246,12 @@ class MenuWindow(Gtk.Window):
 
         bar.pack_start(left, True, True, 0)
 
-        # Collapsing power group: collapsed shows a subset, expands on hover.
-        group = Gtk.EventBox()
+        # Power buttons: always-visible fixed set (lock, logout, restart, shutdown).
+        group = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         group.get_style_context().add_class("power-group")
-        group_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        group_box.get_style_context().add_class("power-group-box")
-        group.add(group_box)
-
+        group.get_style_context().add_class("power-group-box")
         power = self.config.get("power", {})
-        self._power_extra = []
-        for action in ("lock", "logout", "reboot", "shutdown", "suspend", "hibernate"):
+        for action in ("lock", "logout", "reboot", "shutdown"):
             command = power.get(action)
             if not command:
                 continue
@@ -1270,17 +1263,7 @@ class MenuWindow(Gtk.Window):
             image = self._make_power_icon(action)
             button.add(image)
             button.connect("clicked", self._on_power, action)
-            group_box.pack_end(button, False, False, 0)
-            if action not in POWER_COLLAPSED:
-                button.set_no_show_all(True)
-                button.hide()
-                self._power_extra.append(button)
-
-        group.connect("enter-notify-event", self._on_power_hover)
-        group.connect("leave-notify-event", self._on_power_hover)
-        group.connect("motion-notify-event", self._on_power_hover)
-        group.add_events(Gdk.EventMask.POINTER_MOTION_MASK)
-        self._power_group = group
+            group.pack_start(button, False, False, 0)
         bar.pack_end(group, False, False, 0)
 
         # Corner resize grip
@@ -1301,32 +1284,6 @@ class MenuWindow(Gtk.Window):
         bar.pack_end(grip, False, False, 0)
         self.grip = grip
         return bar
-
-    def _on_power_hover(self, widget, _event=None):
-        """Expand/collapse the power group based on pointer position.
-
-        Uses the pointer's position relative to the group's allocation rather
-        than trusting enter/leave events, which avoids the resize feedback loop
-        (show/hide resizes the group, which would otherwise re-trigger enter/leave
-        and freeze the UI)."""
-        group = self._power_group
-        if group is None:
-            return True
-        allocation = group.get_allocation()
-        win = group.get_window()
-        if win is None:
-            return True
-        x, y, _mods = win.get_device_position(
-            Gdk.Display.get_default().get_default_seat().get_pointer()
-        )
-        inside = 0 <= x < allocation.width and 0 <= y < allocation.height
-        if inside:
-            for button in self._power_extra:
-                button.show_all()
-        else:
-            for button in self._power_extra:
-                button.hide()
-        return True
 
     def _build_footer(self):
         """Shared bottom bar: user avatar (left) + powerbar (settings/power/resize)."""
