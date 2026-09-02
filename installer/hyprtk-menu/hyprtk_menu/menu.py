@@ -1500,7 +1500,6 @@ class MenuWindow(Gtk.Window):
                 (name for name, radio in position_radios.items() if radio.get_active()),
                 "top-left",
             )
-        win.destroy()
 
         # Derive horizontal alignment from the chosen corner, for auto mode.
         if new_position == "auto":
