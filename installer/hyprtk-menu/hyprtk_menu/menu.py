@@ -1420,31 +1420,38 @@ class MenuWindow(Gtk.Window):
             auto_radio.set_active(True)
         content.pack_start(auto_radio, False, False, 0)
 
-        # Monitor grid: a display with a radio at every placeable location.
+        # Monitor grid: a display with a check point + name at each corner and center.
         grid = Gtk.Grid()
         grid.get_style_context().add_class("settings-monitor")
         grid.set_row_homogeneous(True)
         grid.set_column_homogeneous(True)
-        grid.set_row_spacing(8)
-        grid.set_column_spacing(8)
+        grid.set_row_spacing(6)
+        grid.set_column_spacing(6)
         position_radios = {}
-        # (row, col) -> position name
+        # (row, col) -> (position name, display label)
         cells = {
-            (0, 0): "top-left", (0, 1): "top-center", (0, 2): "top-right",
-            (1, 1): "center",
-            (2, 0): "bottom-left", (2, 1): "bottom-center", (2, 2): "bottom-right",
+            (0, 0): ("top-left", "Top Left"),
+            (0, 1): ("top-center", "Top Center"),
+            (0, 2): ("top-right", "Top Right"),
+            (1, 1): ("center", "Center"),
+            (2, 0): ("bottom-left", "Bottom Left"),
+            (2, 1): ("bottom-center", "Bottom Center"),
+            (2, 2): ("bottom-right", "Bottom Right"),
         }
-        for (row, col), name in cells.items():
-            radio = Gtk.RadioButton.new_with_label_from_widget(
-                auto_radio, " "
-            )
+        for (row, col), (name, label) in cells.items():
+            cell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            cell.get_style_context().add_class("settings-pos-cell")
+            radio = Gtk.RadioButton.new_with_label_from_widget(auto_radio, None)
             radio.get_style_context().add_class("settings-pos-radio")
-            radio.set_tooltip_text(name.replace("-", " ").capitalize())
+            text = Gtk.Label(label=label, xalign=0.5)
+            text.get_style_context().add_class("settings-pos-label")
+            cell.pack_start(radio, False, False, 0)
+            cell.pack_start(text, False, False, 0)
             if position == name:
                 radio.set_active(True)
             position_radios[name] = radio
-            grid.attach(radio, col, row, 1, 1)
-        grid.set_size_request(200, 120)
+            grid.attach(cell, col, row, 1, 1)
+        grid.set_size_request(220, 140)
         content.pack_start(grid, False, False, 0)
 
         # Buttons
