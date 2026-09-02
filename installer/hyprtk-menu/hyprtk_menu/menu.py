@@ -3,8 +3,10 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 import pwd
+import urllib.parse
 
 import gi
 
@@ -100,6 +102,52 @@ POSITION_ORDER = [
 
 LAYOUT_ICONS = theme.LAYOUT_ICONS
 LAYOUT_ORDER = theme.LAYOUT_ORDER
+
+TRASH_ROOT = os.path.expanduser("~/.local/share/Trash")
+TRASH_URL = "trash:///"
+
+
+def _read_trashinfo(path):
+    """Return (original_path, deletion_date) from a .trashinfo file."""
+    orig = ""
+    date = ""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("Path="):
+                    orig = urllib.parse.unquote(line[len("Path="):])
+                    if orig.startswith("file://"):
+                        orig = orig[len("file://"):]
+                elif line.startswith("DeletionDate="):
+                    date = line[len("DeletionDate="):]
+    except OSError:
+        pass
+    return orig, date
+
+
+def _trash_items():
+    """List trash contents as dicts: name, file_path, info_path, orig, date."""
+    files_dir = os.path.join(TRASH_ROOT, "files")
+    info_dir = os.path.join(TRASH_ROOT, "info")
+    items = []
+    if not os.path.isdir(files_dir):
+        return items
+    for entry in os.scandir(files_dir):
+        name = entry.name
+        info_path = os.path.join(info_dir, name + ".trashinfo")
+        orig, date = _read_trashinfo(info_path)
+        items.append(
+            {
+                "name": name,
+                "path": entry.path,
+                "info": info_path,
+                "orig": orig,
+                "date": date,
+            }
+        )
+    items.sort(key=lambda it: it["name"].lower())
+    return items
 
 
 class MenuWindow(Gtk.Window):
@@ -758,6 +806,25 @@ class MenuWindow(Gtk.Window):
         path_label.get_style_context().add_class("plasma-nav-path")
         path_label.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
         nav.pack_start(path_label, True, True, 0)
+
+        # Trash actions — only shown while browsing the trash.
+        restore_btn = Gtk.Button(label="Restore")
+        restore_btn.get_style_context().add_class("plasma-nav-btn")
+        restore_btn.get_style_context().add_class("plasma-trash-restore")
+        restore_btn.connect("clicked", self._on_plasma_restore)
+        nav.pack_end(restore_btn, False, False, 0)
+        empty_btn = Gtk.Button(label="Empty Trash")
+        empty_btn.get_style_context().add_class("plasma-nav-btn")
+        empty_btn.get_style_context().add_class("plasma-trash-empty")
+        empty_btn.connect("clicked", self._on_plasma_empty)
+        nav.pack_end(empty_btn, False, False, 0)
+        restore_btn.set_no_show_all(True)
+        empty_btn.set_no_show_all(True)
+        restore_btn.hide()
+        empty_btn.hide()
+        self._plasma_restore_btn = restore_btn
+        self._plasma_empty_btn = empty_btn
+
         self._plasma_nav = nav
         self._plasma_back_btn = back_btn
         self._plasma_up_btn = up_btn
@@ -799,8 +866,9 @@ class MenuWindow(Gtk.Window):
         content_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         browse_list = Gtk.ListBox()
         browse_list.get_style_context().add_class("plasma-places")
-        browse_list.set_selection_mode(Gtk.SelectionMode.NONE)
+        browse_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         browse_list.set_activate_on_single_click(True)
+        browse_list.connect("selected-rows-changed", self._on_plasma_browse_selection)
         self._plasma_browse_list = browse_list
         browse_list.connect("row-activated", self._on_plasma_browse_activated)
         content_scroll.add(browse_list)
@@ -810,6 +878,7 @@ class MenuWindow(Gtk.Window):
         self._plasma_stack.add_named(comp_page, "Computer")
         self._plasma_browse_history: list[str] = []
         self._plasma_current_path: str | None = None
+        self._plasma_trash_mode = False
 
         # ── Recently Used page ──
         rec_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -842,6 +911,9 @@ class MenuWindow(Gtk.Window):
         path = getattr(row, "row_path", None)
         if not path:
             return
+        if path == TRASH_URL:
+            self._plasma_enter_trash()
+            return
         if os.path.isdir(path):
             # Jump to the place, starting a fresh navigation history.
             self._plasma_browse_history = []
@@ -851,6 +923,10 @@ class MenuWindow(Gtk.Window):
 
     def _on_plasma_browse_activated(self, _listbox, row):
         """A content-pane row was clicked — enter subfolder or open file."""
+        if self._plasma_trash_mode:
+            # In trash mode, single-click selects; double-activation restores.
+            self._plasma_restore_selected()
+            return
         path = getattr(row, "row_path", None)
         if not path:
             return
@@ -858,6 +934,12 @@ class MenuWindow(Gtk.Window):
             self._plasma_enter_dir(path)
         else:
             self._plasma_open_external(path)
+
+    def _on_plasma_browse_selection(self, _listbox):
+        """Refresh restore-button state based on trash selection."""
+        if self._plasma_trash_mode and hasattr(self, "_plasma_restore_btn"):
+            selected = self._plasma_browse_list.get_selected_rows()
+            self._plasma_restore_btn.set_sensitive(bool(selected))
 
     def _make_plasma_row(self, label_text: str, icon_name: str, path: str) -> Gtk.ListBoxRow:
         row = Gtk.ListBoxRow()
@@ -878,6 +960,8 @@ class MenuWindow(Gtk.Window):
         path = os.path.abspath(path)
         if not os.path.isdir(path):
             return
+        if self._plasma_trash_mode:
+            self._plasma_leave_trash()
         if self._plasma_current_path is not None:
             self._plasma_browse_history.append(self._plasma_current_path)
         self._plasma_current_path = path
@@ -895,6 +979,10 @@ class MenuWindow(Gtk.Window):
         self.hide_menu()
 
     def _on_plasma_back(self, _btn=None):
+        if self._plasma_trash_mode:
+            self._plasma_leave_trash()
+            self._plasma_show_places()
+            return
         if not self._plasma_browse_history:
             self._plasma_show_places()
             return
@@ -902,6 +990,10 @@ class MenuWindow(Gtk.Window):
         self._plasma_populate_places(self._plasma_current_path)
 
     def _on_plasma_up(self, _btn=None):
+        if self._plasma_trash_mode:
+            self._plasma_leave_trash()
+            self._plasma_show_places()
+            return
         if self._plasma_current_path is None:
             self._plasma_show_places()
             return
@@ -914,9 +1006,20 @@ class MenuWindow(Gtk.Window):
 
     def _plasma_show_places(self):
         """Reset the browser to Home as the default content view."""
+        if self._plasma_trash_mode:
+            self._plasma_leave_trash()
         self._plasma_browse_history = []
         self._plasma_current_path = None
         self._plasma_enter_dir(os.path.expanduser("~"))
+
+    def _plasma_leave_trash(self):
+        """Exit trash mode and hide the trash action buttons."""
+        if not self._plasma_trash_mode:
+            return
+        self._plasma_trash_mode = False
+        self._plasma_restore_btn.hide()
+        self._plasma_empty_btn.hide()
+        self._plasma_browse_list.set_activate_on_single_click(True)
 
     def _plasma_populate_places(self, path):
         """List the contents of *path* in the content pane (dirs first, then files)."""
@@ -952,6 +1055,136 @@ class MenuWindow(Gtk.Window):
         browse.show_all()
         self._plasma_update_nav()
 
+    # -- trash view -------------------------------------------------------
+
+    def _plasma_enter_trash(self):
+        """Show the trash contents in the content pane with restore/empty actions."""
+        self._plasma_trash_mode = True
+        self._plasma_current_path = None
+        self._plasma_browse_history = []
+        # Single-click selects an item; restore happens via the Restore button
+        # or a double-click. Activating on single click would restore instantly.
+        self._plasma_browse_list.set_activate_on_single_click(False)
+        self._plasma_restore_btn.show()
+        self._plasma_empty_btn.show()
+        self._plasma_restore_btn.set_sensitive(False)
+        self._plasma_populate_trash()
+
+    def _plasma_populate_trash(self):
+        browse = self._plasma_browse_list
+        if browse is None:
+            return
+        for child in browse.get_children():
+            browse.remove(child)
+        items = _trash_items()
+        for item in items:
+            row = self._make_plasma_row(
+                item["name"], "user-trash", item["path"]
+            )
+            row.get_style_context().add_class("plasma-place-file")
+            row.trash_item = item
+            if item["orig"]:
+                row.set_tooltip_text(item["orig"])
+            browse.add(row)
+        if not items:
+            empty = Gtk.Label(label="(trash is empty)", xalign=0)
+            empty.get_style_context().add_class("plasma-empty")
+            empty_row = Gtk.ListBoxRow()
+            empty_row.get_style_context().add_class("plasma-place-row")
+            empty_row.set_sensitive(False)
+            empty_row.add(empty)
+            browse.add(empty_row)
+        browse.show_all()
+        self._plasma_update_nav()
+        self._plasma_restore_btn.set_sensitive(False)
+
+    def _plasma_restore_selected(self):
+        """Restore the currently selected trash item(s) to their original path."""
+        rows = self._plasma_browse_list.get_selected_rows()
+        restored = 0
+        for row in rows:
+            item = getattr(row, "trash_item", None)
+            if not item or not item.get("orig"):
+                continue
+            if self._restore_trash_item(item):
+                restored += 1
+        if restored:
+            self._plasma_populate_trash()
+
+    def _restore_trash_item(self, item):
+        """Move a single trashed file back to its original location."""
+        dest = item["orig"]
+        if not dest:
+            return False
+        try:
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            if os.path.exists(dest):
+                dest = self._unique_dest(dest)
+            shutil.move(item["path"], dest)
+            if os.path.exists(item["info"]):
+                os.remove(item["info"])
+            return True
+        except OSError:
+            return False
+
+    def _unique_dest(self, path):
+        base, ext = os.path.splitext(path)
+        counter = 1
+        candidate = "%s.%d%s" % (base, counter, ext)
+        while os.path.exists(candidate):
+            counter += 1
+            candidate = "%s.%d%s" % (base, counter, ext)
+        return candidate
+
+    def _on_plasma_restore(self, _btn=None):
+        self._plasma_restore_selected()
+
+    def _on_plasma_empty(self, _btn=None):
+        """Confirm and permanently delete all trash contents."""
+        if not self._confirm_empty_trash():
+            return
+        files_dir = os.path.join(TRASH_ROOT, "files")
+        info_dir = os.path.join(TRASH_ROOT, "info")
+        try:
+            for name in os.listdir(files_dir):
+                p = os.path.join(files_dir, name)
+                if os.path.isdir(p) and not os.path.islink(p):
+                    shutil.rmtree(p, ignore_errors=True)
+                else:
+                    try:
+                        os.remove(p)
+                    except OSError:
+                        pass
+            for name in os.listdir(info_dir):
+                try:
+                    os.remove(os.path.join(info_dir, name))
+                except OSError:
+                    pass
+        except OSError:
+            pass
+        self._plasma_populate_trash()
+
+    def _confirm_empty_trash(self):
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            modal=True,
+            destroy_with_parent=True,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.NONE,
+            text="Empty Trash?",
+        )
+        dialog.format_secondary_text(
+            "All items in the trash will be permanently deleted. This cannot be undone."
+        )
+        dialog.get_style_context().add_class("confirm-dialog")
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        confirm = dialog.add_button("Empty Trash", Gtk.ResponseType.ACCEPT)
+        confirm.get_style_context().add_class("confirm-accept")
+        dialog.set_default_response(Gtk.ResponseType.CANCEL)
+        response = dialog.run()
+        dialog.destroy()
+        return response == Gtk.ResponseType.ACCEPT
+
     def _plasma_file_icon(self, name: str) -> str:
         ext = os.path.splitext(name)[1].lstrip(".").lower()
         if ext in {"png", "jpg", "jpeg", "webp", "gif", "svg", "bmp"}:
@@ -973,6 +1206,11 @@ class MenuWindow(Gtk.Window):
     def _plasma_update_nav(self):
         """Refresh the browser nav bar (path label + back/up sensitivity)."""
         if not hasattr(self, "_plasma_back_btn"):
+            return
+        if self._plasma_trash_mode:
+            self._plasma_path_label.set_text("Trash")
+            self._plasma_back_btn.set_sensitive(False)
+            self._plasma_up_btn.set_sensitive(False)
             return
         path = self._plasma_current_path
         if path is None:

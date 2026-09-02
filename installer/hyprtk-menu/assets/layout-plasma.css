@@ -121,6 +121,21 @@
     color: alpha(@color1, 0.8);
     padding: 0 6px;
 }
+.layout-plasma .plasma-trash-restore {
+    color: @color6;
+    font-size: 11px;
+}
+.layout-plasma .plasma-trash-restore:disabled {
+    color: alpha(@color1, 0.35);
+}
+.layout-plasma .plasma-trash-empty {
+    color: @color1;
+    font-size: 11px;
+}
+.layout-plasma .plasma-trash-empty:hover {
+    background-color: alpha(@color1, 0.9);
+    color: @background;
+}
 .layout-plasma .plasma-places-paned .plasma-places {
     background-color: transparent;
     border-right: 1px solid alpha(@color4, 0.15);
