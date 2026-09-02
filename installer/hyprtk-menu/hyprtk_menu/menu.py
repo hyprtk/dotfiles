@@ -1276,8 +1276,11 @@ class MenuWindow(Gtk.Window):
                 button.hide()
                 self._power_extra.append(button)
 
-        group.connect("enter-notify-event", self._on_power_expand)
-        group.connect("leave-notify-event", self._on_power_collapse)
+        group.connect("enter-notify-event", self._on_power_hover)
+        group.connect("leave-notify-event", self._on_power_hover)
+        group.connect("motion-notify-event", self._on_power_hover)
+        group.add_events(Gdk.EventMask.POINTER_MOTION_MASK)
+        self._power_group = group
         bar.pack_end(group, False, False, 0)
 
         # Corner resize grip
@@ -1299,15 +1302,31 @@ class MenuWindow(Gtk.Window):
         self.grip = grip
         return bar
 
-    def _on_power_expand(self, _widget, _event):
-        """Show the hidden power options on hover."""
-        for button in self._power_extra:
-            button.show()
+    def _on_power_hover(self, widget, _event=None):
+        """Expand/collapse the power group based on pointer position.
 
-    def _on_power_collapse(self, _widget, _event):
-        """Hide the extra power options when the pointer leaves the group."""
-        for button in self._power_extra:
-            button.hide()
+        Uses the pointer's position relative to the group's allocation rather
+        than trusting enter/leave events, which avoids the resize feedback loop
+        (show/hide resizes the group, which would otherwise re-trigger enter/leave
+        and freeze the UI)."""
+        group = self._power_group
+        if group is None:
+            return True
+        allocation = group.get_allocation()
+        win = group.get_window()
+        if win is None:
+            return True
+        x, y, _mods = win.get_device_position(
+            Gdk.Display.get_default().get_default_seat().get_pointer()
+        )
+        inside = 0 <= x < allocation.width and 0 <= y < allocation.height
+        if inside:
+            for button in self._power_extra:
+                button.show_all()
+        else:
+            for button in self._power_extra:
+                button.hide()
+        return True
 
     def _build_footer(self):
         """Shared bottom bar: user avatar (left) + powerbar (settings/power/resize)."""
