@@ -195,7 +195,9 @@ class MenuWindow(Gtk.Window):
         self._build_ui()
 
         self.connect("key-press-event", self._on_window_key)
+        self.connect("focus-out-event", self._on_window_focus_out)
         self.connect("destroy", Gtk.main_quit)
+        self._modal_open = False
 
     # -- layer shell ------------------------------------------------------
 
@@ -1174,7 +1176,11 @@ class MenuWindow(Gtk.Window):
         confirm = dialog.add_button("Empty Trash", Gtk.ResponseType.ACCEPT)
         confirm.get_style_context().add_class("confirm-accept")
         dialog.set_default_response(Gtk.ResponseType.CANCEL)
-        response = dialog.run()
+        self._modal_open = True
+        try:
+            response = dialog.run()
+        finally:
+            self._modal_open = False
         dialog.destroy()
         return response == Gtk.ResponseType.ACCEPT
 
@@ -1674,6 +1680,17 @@ class MenuWindow(Gtk.Window):
             return True
         return False
 
+    def _on_window_focus_out(self, _widget, _event):
+        """Close the menu when it loses focus (click outside), unless a
+        child surface (settings window or a modal dialog) owns the focus."""
+        if self._modal_open:
+            return False
+        if getattr(self, "_settings_window", None) is not None and self._settings_window.get_visible():
+            return False
+        if self.get_visible():
+            self.hide_menu()
+        return False
+
     def _on_category_activated(self, _sidebar, row):
         category = getattr(row, "category", None)
         if not category:
@@ -1737,7 +1754,11 @@ class MenuWindow(Gtk.Window):
         confirm = dialog.add_button(title, Gtk.ResponseType.ACCEPT)
         confirm.get_style_context().add_class("confirm-accept")
         dialog.set_default_response(Gtk.ResponseType.CANCEL)
-        response = dialog.run()
+        self._modal_open = True
+        try:
+            response = dialog.run()
+        finally:
+            self._modal_open = False
         dialog.destroy()
         return response == Gtk.ResponseType.ACCEPT
 
