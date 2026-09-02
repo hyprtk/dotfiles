@@ -65,12 +65,13 @@ def make_round_button(size: int, icon_name: str, css_class: str, fg_color: str =
 class ArcMenu(Gtk.Fixed):
     """FAB + arc items laid out on a Gtk.Fixed, with open/close animation."""
 
-    def __init__(self, cfg: dict, on_close=None, on_run=None, on_toggle=None, palette: dict | None = None):
+    def __init__(self, cfg: dict, on_close=None, on_run=None, on_toggle=None, on_middle_click=None, palette: dict | None = None):
         super().__init__()
         self.cfg = cfg
         self.on_close = on_close          # callback when menu fully closed
         self.on_run = on_run              # callback(item) when an item is launched
         self.on_toggle = on_toggle        # callback when the FAB is clicked
+        self.on_middle_click = on_middle_click  # callback on middle-click (close)
 
         self._palette = palette or resolve_palette(cfg, None)
         self._css_provider: Optional[Gtk.CssProvider] = None
@@ -138,12 +139,21 @@ class ArcMenu(Gtk.Fixed):
         )
         fab.set_tooltip_text("Menu")
         fab.connect("clicked", lambda _b: self._on_fab_clicked())
+        fab.connect("button-release-event", self._on_middle_click)
         return fab
 
     def _on_fab_clicked(self) -> None:
         # The window owns open/close (it knows the surface sizes), so hand off.
         if self.on_toggle:
             self.on_toggle()
+
+    def _on_middle_click(self, _btn, event) -> bool:
+        """Middle-click closes the menu (consumed; doesn't trigger the action)."""
+        if event.button == Gdk.BUTTON_MIDDLE:
+            if self.on_middle_click:
+                self.on_middle_click()
+            return True
+        return False
 
     def _add_item(self, entry: dict) -> None:
         icon = entry.get("icon", "application-x-executable")
@@ -155,6 +165,7 @@ class ArcMenu(Gtk.Fixed):
             btn.set_tooltip_text(tooltip)
         command = entry.get("command", "")
         btn.connect("clicked", self._on_item_clicked, entry)
+        btn.connect("button-release-event", self._on_middle_click)
         btn.set_opacity(0.0)
         btn.set_no_show_all(True)
         self.put(btn, 0, 0)

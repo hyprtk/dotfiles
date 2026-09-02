@@ -40,6 +40,7 @@ class ArcWindow(Gtk.Window):
             on_close=self._on_menu_closed,
             on_run=self._on_run,
             on_toggle=self.toggle,
+            on_middle_click=self.close_menu,
             palette=resolve_palette(cfg, load_pywal_colors() if cfg.get("use_pywal", True) else None),
         )
         self.add(self._menu)
