@@ -1441,7 +1441,7 @@ class MenuWindow(Gtk.Window):
         for (row, col), (name, label) in cells.items():
             cell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             cell.get_style_context().add_class("settings-pos-cell")
-            radio = Gtk.RadioButton.new_with_label_from_widget(auto_radio, None)
+            radio = Gtk.RadioButton.new_with_label_from_widget(auto_radio, "")
             radio.get_style_context().add_class("settings-pos-radio")
             text = Gtk.Label(label=label, xalign=0.5)
             text.get_style_context().add_class("settings-pos-label")
