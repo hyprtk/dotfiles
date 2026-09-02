@@ -1385,37 +1385,67 @@ class MenuWindow(Gtk.Window):
         content.get_style_context().add_class("settings-content")
         vbox.pack_start(content, True, True, 0)
 
-        def _make_row(label_text):
-            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-            label = Gtk.Label(label=label_text, xalign=0)
-            label.get_style_context().add_class("settings-label")
-            row.pack_start(label, True, True, 0)
-            combo = Gtk.ComboBoxText()
-            combo.get_style_context().add_class("settings-combo")
-            row.pack_end(combo, False, False, 0)
-            content.pack_start(row, False, False, 0)
-            return combo
+        def _section_label(text):
+            label = Gtk.Label(label=text, xalign=0)
+            label.get_style_context().add_class("settings-section")
+            return label
 
-        # Menu theme (layout)
-        layout_combo = _make_row("Menu theme")
-        for name in LAYOUT_ORDER:
-            layout_combo.append_text(name.capitalize())
+        # ── Menu theme: radio list (one selectable per theme) ──
+        content.pack_start(_section_label("Menu Theme"), False, False, 0)
+        theme_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        theme_box.get_style_context().add_class("settings-theme-list")
         layout = self.config.get("layout", "whisker")
-        layout_combo.set_active(max(0, LAYOUT_ORDER.index(layout if layout in LAYOUT_ORDER else "whisker")))
+        theme_radios = {}
+        theme_group = None
+        for name in LAYOUT_ORDER:
+            radio = Gtk.RadioButton.new_with_label_from_widget(theme_group, name.capitalize())
+            radio.get_style_context().add_class("settings-radio")
+            if name == layout:
+                radio.set_active(True)
+            theme_group = radio
+            theme_radios[name] = radio
+            theme_box.pack_start(radio, False, False, 0)
+        content.pack_start(theme_box, False, False, 0)
 
-        # Menu alignment
-        align_combo = _make_row("Alignment")
-        for name in ALIGN_ORDER:
-            align_combo.append_text(name.capitalize())
-        align = self.config.get("align", "left")
-        align_combo.set_active(max(0, ALIGN_ORDER.index(align if align in ALIGN_ORDER else "left")))
-
-        # Menu position
-        position_combo = _make_row("Position")
-        for name in POSITION_ORDER:
-            position_combo.append_text(name.replace("-", " ").capitalize())
+        # ── Alignment + position: visual display grid ──
+        content.pack_start(_section_label("Position"), False, False, 0)
         position = self.config.get("position", "auto")
-        position_combo.set_active(max(0, POSITION_ORDER.index(position if position in POSITION_ORDER else "auto")))
+
+        # Auto option (follow waybar edge)
+        auto_radio = Gtk.RadioButton.new_with_label(
+            None, "Auto (follow waybar)"
+        )
+        auto_radio.get_style_context().add_class("settings-radio")
+        if position == "auto":
+            auto_radio.set_active(True)
+        content.pack_start(auto_radio, False, False, 0)
+
+        # Monitor grid: a display with a radio at every placeable location.
+        grid = Gtk.Grid()
+        grid.get_style_context().add_class("settings-monitor")
+        grid.set_row_homogeneous(True)
+        grid.set_column_homogeneous(True)
+        grid.set_row_spacing(8)
+        grid.set_column_spacing(8)
+        position_radios = {}
+        # (row, col) -> position name
+        cells = {
+            (0, 0): "top-left", (0, 1): "top-center", (0, 2): "top-right",
+            (1, 1): "center",
+            (2, 0): "bottom-left", (2, 1): "bottom-center", (2, 2): "bottom-right",
+        }
+        for (row, col), name in cells.items():
+            radio = Gtk.RadioButton.new_with_label_from_widget(
+                auto_radio, " "
+            )
+            radio.get_style_context().add_class("settings-pos-radio")
+            radio.set_tooltip_text(name.replace("-", " ").capitalize())
+            if position == name:
+                radio.set_active(True)
+            position_radios[name] = radio
+            grid.attach(radio, col, row, 1, 1)
+        grid.set_size_request(200, 120)
+        content.pack_start(grid, False, False, 0)
 
         # Buttons
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -1427,7 +1457,9 @@ class MenuWindow(Gtk.Window):
         apply_btn.get_style_context().add_class("settings-apply")
         apply_btn.connect(
             "clicked",
-            lambda *_: self._apply_settings(win, layout_combo, align_combo, position_combo),
+            lambda *_: self._apply_settings(
+                win, theme_radios, auto_radio, position_radios
+            ),
         )
         buttons.pack_end(apply_btn, False, False, 0)
         buttons.pack_end(cancel_btn, False, False, 0)
@@ -1456,11 +1488,31 @@ class MenuWindow(Gtk.Window):
     def _on_settings_closed(self, *_):
         self._settings_window = None
 
-    def _apply_settings(self, win, layout_combo, align_combo, position_combo):
-        new_layout = LAYOUT_ORDER[layout_combo.get_active()]
-        new_align = ALIGN_ORDER[align_combo.get_active()]
-        new_position = POSITION_ORDER[position_combo.get_active()]
+    def _apply_settings(self, win, theme_radios, auto_radio, position_radios):
+        new_layout = next(
+            (name for name, radio in theme_radios.items() if radio.get_active()),
+            "whisker",
+        )
+        if auto_radio.get_active():
+            new_position = "auto"
+        else:
+            new_position = next(
+                (name for name, radio in position_radios.items() if radio.get_active()),
+                "top-left",
+            )
         win.destroy()
+
+        # Derive horizontal alignment from the chosen corner, for auto mode.
+        if new_position == "auto":
+            new_align = self.config.get("align", "left")
+        elif new_position == "center":
+            new_align = "center"
+        elif new_position.endswith("-left"):
+            new_align = "left"
+        elif new_position.endswith("-right"):
+            new_align = "right"
+        else:
+            new_align = "center"
 
         old_layout = self.config.get("layout", "whisker")
         self.config["layout"] = new_layout

@@ -246,6 +246,28 @@ paned.horizontal > separator:hover {
     color: @text;
     font-size: 13px;
 }
+.settings-content .settings-section {
+    color: @text;
+    font-size: 13px;
+    font-weight: bold;
+    margin-top: 4px;
+}
+.settings-theme-list {
+    padding: 4px 6px;
+}
+.settings-radio {
+    color: @text;
+    font-size: 13px;
+}
+.settings-monitor {
+    border: 1px solid alpha(@accent, 0.35);
+    border-radius: 8px;
+    padding: 12px;
+    background-color: alpha(@background, 0.4);
+}
+.settings-monitor .settings-pos-radio {
+    color: @accent_alt;
+}
 .settings-content .settings-combo {
     min-width: 150px;
 }
