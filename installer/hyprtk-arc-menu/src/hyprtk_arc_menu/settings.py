@@ -1,15 +1,24 @@
 """Settings dialog for editing the hyprtk-arc-menu configuration."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 gi.require_version("GtkLayerShell", "0.1")
 
-from gi.repository import Gdk, Gtk, GtkLayerShell
+from gi.repository import Gdk, GLib, Gtk, GtkLayerShell
 
 from .arc_menu import load_icon_image
 from .config import CORNERS, load, save
+
+APP_DIRS = [
+    Path.home() / ".local/share/applications",
+    Path("/usr/local/share/applications"),
+    Path("/usr/share/applications"),
+    Path("/var/lib/flatpak/exports/share/applications"),
+]
 
 
 def _hex_to_rgba(hex_color: str) -> Gdk.RGBA:
@@ -19,10 +28,154 @@ def _hex_to_rgba(hex_color: str) -> Gdk.RGBA:
     return rgba
 
 
+def _parse_desktop(path: Path) -> dict | None:
+    name = exec_ = icon = comment = None
+    in_section = False
+    for line in path.read_text(errors="ignore").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("["):
+            in_section = line == "[Desktop Entry]"
+            continue
+        if not in_section or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if key == "Name":
+            name = value
+        elif key == "Exec":
+            exec_ = value
+        elif key == "Icon":
+            icon = value
+        elif key == "Comment":
+            comment = value
+        elif key in ("NoDisplay", "Hidden") and value.lower() in ("true", "1"):
+            return None
+    if not name or not exec_:
+        return None
+    clean = " ".join(tok for tok in exec_.split() if not tok.startswith("%"))
+    return {
+        "name": name,
+        "exec": clean,
+        "icon": icon or "application-x-executable",
+        "comment": comment or name,
+    }
+
+
+def load_installed_apps() -> list[dict]:
+    apps: dict[str, dict] = {}
+    for directory in APP_DIRS:
+        if not directory.is_dir():
+            continue
+        for f in sorted(directory.glob("*.desktop")):
+            app = _parse_desktop(f)
+            if app and app["exec"] not in apps:
+                apps[app["exec"]] = app
+    return sorted(apps.values(), key=lambda a: a["name"].lower())
+
+
 def _rgba_to_hex(rgba: Gdk.RGBA) -> str:
     return "#{:02X}{:02X}{:02X}".format(
         int(rgba.red * 255), int(rgba.green * 255), int(rgba.blue * 255)
     )
+
+
+class AppSearchDialog(Gtk.Window):
+    """Search installed applications and pick one to add as a menu item."""
+
+    def __init__(self, parent, on_select):
+        super().__init__(title="Search Applications", transient_for=parent)
+        self._on_select = on_select
+        self._apps = load_installed_apps()
+
+        self.set_decorated(False)
+        self.set_default_size(520, 560)
+        GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
+        GtkLayerShell.set_namespace(self, "hyprtk-arc-menu-appsearch")
+        GtkLayerShell.set_exclusive_zone(self, -1)
+        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
+        self.connect("key-press-event", self._on_key_press)
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        vbox.set_margin_start(12)
+        vbox.set_margin_end(12)
+        vbox.set_margin_top(12)
+        vbox.set_margin_bottom(12)
+        self.add(vbox)
+
+        self._search = Gtk.SearchEntry()
+        self._search.set_placeholder_text("Type to search applications...")
+        self._search.connect("search-changed", lambda _e: self._filter())
+        self._search.connect("activate", lambda _e: self._select_selected())
+        vbox.pack_start(self._search, False, False, 0)
+
+        self._list = Gtk.ListBox()
+        self._list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self._list.connect("row-activated", lambda _l, _r: self._select_selected())
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.add(self._list)
+        vbox.pack_start(scroll, True, True, 0)
+
+        bottom = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        cancel = Gtk.Button(label="Cancel")
+        add = Gtk.Button(label="Add Selected")
+        add.get_style_context().add_class("suggested-action")
+        cancel.connect("clicked", lambda _b: self.destroy())
+        add.connect("clicked", lambda _b: self._select_selected())
+        bottom.pack_end(add, False, False, 0)
+        bottom.pack_end(cancel, False, False, 0)
+        vbox.pack_start(bottom, False, False, 0)
+
+        self._filter()
+        self.show_all()
+        self._search.grab_focus()
+
+    def _filter(self) -> None:
+        for child in self._list.get_children():
+            self._list.remove(child)
+        query = self._search.get_text().strip().lower()
+        for app in self._apps:
+            if query and query not in app["name"].lower() and query not in (app["comment"] or "").lower():
+                continue
+            row = Gtk.ListBoxRow()
+            hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            hbox.set_margin_top(4)
+            hbox.set_margin_bottom(4)
+            hbox.set_margin_start(6)
+            hbox.set_margin_end(6)
+            icon = load_icon_image(app["icon"], 24, "#000000")
+            hbox.pack_start(icon, False, False, 0)
+            labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            title = Gtk.Label(label=app["name"], xalign=0)
+            sub = Gtk.Label(label=app.get("comment") or app["exec"], xalign=0, width_chars=55, ellipsize=True)
+            sub.get_style_context().add_class("dim-label")
+            labels.pack_start(title, False, False, 0)
+            labels.pack_start(sub, False, False, 0)
+            hbox.pack_start(labels, True, True, 0)
+            row.add(hbox)
+            row._app = app
+            self._list.add(row)
+        self._list.show_all()
+
+    def _selected_app(self) -> dict | None:
+        row = self._list.get_selected_row()
+        return getattr(row, "_app", None)
+
+    def _select_selected(self) -> None:
+        app = self._selected_app()
+        if app and self._on_select:
+            self._on_select(app)
+            self.destroy()
+
+    def _on_key_press(self, _widget, event) -> bool:
+        if event.keyval == Gdk.KEY_Escape:
+            self.destroy()
+            return True
+        return False
 
 
 class ItemDialog(Gtk.Dialog):
@@ -65,6 +218,10 @@ class ItemDialog(Gtk.Dialog):
         self._command_entry = field("Command", item.get("command", ""))
         self._action_entry = field("Action", item.get("action", ""))
 
+        search_btn = Gtk.Button(label="Search Applications...")
+        search_btn.connect("clicked", lambda _b: self._open_app_search())
+        box.pack_start(search_btn, False, False, 0)
+
         hint = Gtk.Label(
             label="Icon: theme icon name (e.g. firefox).\n"
             "Action: 'settings' opens the arc menu settings instead of a command.",
@@ -74,6 +231,15 @@ class ItemDialog(Gtk.Dialog):
         hint.set_margin_top(4)
         box.pack_start(hint, False, False, 0)
         self.show_all()
+
+    def _open_app_search(self) -> None:
+        AppSearchDialog(self, on_select=self._fill_from_app)
+
+    def _fill_from_app(self, app: dict) -> None:
+        self._icon_entry.set_text(app["icon"])
+        self._tooltip_entry.set_text(app["name"])
+        self._command_entry.set_text(app["exec"])
+        self._action_entry.set_text("")
 
     def get_item(self) -> dict:
         item = {
@@ -199,14 +365,20 @@ class SettingsDialog(Gtk.Window):
         vbox.pack_start(items_frame, True, True, 0)
 
         # ── bottom buttons ────────────────────────────────────────
-        bottom = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        bottom = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self._status = Gtk.Label(xalign=0)
+        self._status.get_style_context().add_class("dim-label")
+        close_btn = Gtk.Button(label="Close")
         cancel = Gtk.Button(label="Cancel")
         save = Gtk.Button(label="Save")
         save.get_style_context().add_class("suggested-action")
+        close_btn.connect("clicked", lambda _b: self.destroy())
         cancel.connect("clicked", lambda _b: self.destroy())
         save.connect("clicked", self._on_save)
+        bottom.pack_start(self._status, True, True, 0)
         bottom.pack_end(save, False, False, 0)
         bottom.pack_end(cancel, False, False, 0)
+        bottom.pack_end(close_btn, False, False, 0)
         vbox.pack_start(bottom, False, False, 0)
 
         self.show_all()
@@ -311,4 +483,12 @@ class SettingsDialog(Gtk.Window):
         save(self._cfg)
         if self._on_saved:
             self._on_saved()
-        self.destroy()
+        self._status.set_text("Saved")
+        if getattr(self, "_status_timer", None) is not None:
+            GLib.source_remove(self._status_timer)
+        self._status_timer = GLib.timeout_add(2000, self._clear_status)
+
+    def _clear_status(self) -> bool:
+        self._status.set_text("")
+        self._status_timer = None
+        return GLib.SOURCE_REMOVE
