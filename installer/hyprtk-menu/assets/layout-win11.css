@@ -147,20 +147,25 @@
 }
 
 /* ── Footer (user + power) ── */
+.layout-win11 .menu-footer,
 .layout-win11 .win11-footer {
     padding: 6px 12px;
     border-top: 1px solid alpha(@foreground, 0.08);
 }
+.layout-win11 .menu-user,
 .layout-win11 .win11-user {
     padding: 4px 8px;
     border-radius: 6px;
 }
+.layout-win11 .menu-user:hover,
 .layout-win11 .win11-user:hover {
     background-color: @win11_hover;
 }
+.layout-win11 .menu-avatar,
 .layout-win11 .win11-avatar {
     -gtk-icon-style: regular;
 }
+.layout-win11 .menu-username,
 .layout-win11 .win11-username {
     color: @text;
     font-size: 12px;

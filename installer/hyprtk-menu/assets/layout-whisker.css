@@ -32,6 +32,21 @@
     border-bottom-right-radius: 16px;
 }
 
+.layout-whisker .menu-user {
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+.layout-whisker .menu-user:hover {
+    background-color: alpha(@accent_alt, 0.12);
+}
+.layout-whisker .menu-avatar {
+    -gtk-icon-style: regular;
+}
+.layout-whisker .menu-username {
+    color: @text;
+    font-size: 12px;
+}
+
 .layout-whisker .settings-btn,
 .layout-whisker .settings-btn,
 .layout-whisker .resize-grip {

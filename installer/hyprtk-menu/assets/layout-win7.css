@@ -147,10 +147,37 @@
 }
 
 /* ── Power bar (bottom) ── */
+.layout-win7 .win7-bottom {
+    background-color: alpha(@color4, 0.10);
+    border-top: 1px solid alpha(@color4, 0.35);
+}
+.layout-win7 .menu-footer,
+.layout-win7 .win7-footer {
+    padding: 4px 8px;
+}
+.layout-win7 .menu-user,
+.layout-win7 .win7-user {
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+.layout-win7 .menu-user:hover,
+.layout-win7 .win7-user:hover {
+    background-color: alpha(@color4, 0.18);
+}
+.layout-win7 .menu-avatar,
+.layout-win7 .win7-avatar {
+    -gtk-icon-style: regular;
+}
+.layout-win7 .menu-username,
+.layout-win7 .win7-username {
+    color: @foreground;
+    font-size: 12px;
+    font-weight: bold;
+}
 .layout-win7 .powerbar {
     border-radius: 0 0 8px 8px;
-    border-top: 1px solid alpha(@color4, 0.35);
-    background-color: alpha(@color4, 0.10);
+    border-top: none;
+    background-color: transparent;
     padding: 4px 8px;
 }
 .layout-win7 .power-title {

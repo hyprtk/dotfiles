@@ -462,7 +462,7 @@ class MenuWindow(Gtk.Window):
         self.pane_right.connect("accept-position", self._on_paned_changed)
 
         root.pack_start(self.pane_main, True, True, 0)
-        root.pack_end(self._build_powerbar(), False, False, 0)
+        root.pack_end(self._build_footer(), False, False, 0)
         return root
 
     def _build_win7(self):
@@ -473,20 +473,9 @@ class MenuWindow(Gtk.Window):
         paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         paned.get_style_context().add_class("pane")
 
-        # ── Left pane: user profile + favorites + app list ──
+        # ── Left pane: favorites + app list ──
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         left.get_style_context().add_class("win7-left")
-
-        # User profile bar
-        profile = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        profile.get_style_context().add_class("win7-profile")
-        avatar = Gtk.Image.new_from_icon_name("avatar-default", Gtk.IconSize.DIALOG)
-        avatar.get_style_context().add_class("win7-avatar")
-        profile.pack_start(avatar, False, False, 0)
-        username = Gtk.Label(label=pwd.getpwuid(os.getuid()).pw_name, xalign=0)
-        username.get_style_context().add_class("win7-username")
-        profile.pack_start(username, False, False, 0)
-        left.pack_start(profile, False, False, 0)
 
         # Favorites
         left.pack_start(self._make_favorites(), False, False, 0)
@@ -543,12 +532,12 @@ class MenuWindow(Gtk.Window):
         self.pane_main.connect("accept-position", self._on_paned_changed)
         root.pack_start(self.pane_main, True, True, 0)
 
-        # Bottom bar: shutdown button
+        # Bottom bar: shared footer (user + settings + power + resize)
         bottom = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         bottom.get_style_context().add_class("win7-bottom")
-        power = self._build_powerbar()
-        power.get_style_context().add_class("win7-powerbar")
-        bottom.pack_end(power, False, False, 0)
+        footer = self._build_footer()
+        footer.get_style_context().add_class("win7-footer")
+        bottom.pack_start(footer, True, True, 0)
         root.pack_end(bottom, False, False, 0)
         return root
 
@@ -657,19 +646,9 @@ class MenuWindow(Gtk.Window):
         root.pack_start(app_scroll, True, True, 0)
         self._show_win11_home()
 
-        # Footer: user avatar (left) + power button (right)
-        footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        # Footer: user avatar (left) + powerbar (right)
+        footer = self._build_footer()
         footer.get_style_context().add_class("win11-footer")
-        avatar_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        avatar_box.get_style_context().add_class("win11-user")
-        avatar = Gtk.Image.new_from_icon_name("avatar-default", Gtk.IconSize.MENU)
-        avatar.get_style_context().add_class("win11-avatar")
-        avatar_box.pack_start(avatar, False, False, 0)
-        username = Gtk.Label(label=pwd.getpwuid(os.getuid()).pw_name, xalign=0)
-        username.get_style_context().add_class("win11-username")
-        avatar_box.pack_start(username, False, False, 0)
-        footer.pack_start(avatar_box, False, False, 0)
-        footer.pack_end(self._build_powerbar(), False, False, 0)
         root.pack_end(footer, False, False, 0)
 
         return root
@@ -911,10 +890,9 @@ class MenuWindow(Gtk.Window):
 
         root.pack_start(self._plasma_stack, True, True, 0)
 
-        # Footer: power buttons + align/layout controls
-        footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        # Footer: user avatar (left) + powerbar (settings/power/resize)
+        footer = self._build_footer()
         footer.get_style_context().add_class("plasma-footer")
-        footer.pack_start(self._build_powerbar(), True, True, 0)
         root.pack_end(footer, False, False, 0)
 
         self._plasma_stack.set_visible_child_name("Applications")
@@ -1301,6 +1279,22 @@ class MenuWindow(Gtk.Window):
         bar.pack_end(grip, False, False, 0)
         self.grip = grip
         return bar
+
+    def _build_footer(self):
+        """Shared bottom bar: user avatar (left) + powerbar (settings/power/resize)."""
+        footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        footer.get_style_context().add_class("menu-footer")
+        avatar_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        avatar_box.get_style_context().add_class("menu-user")
+        avatar = Gtk.Image.new_from_icon_name("avatar-default", Gtk.IconSize.MENU)
+        avatar.get_style_context().add_class("menu-avatar")
+        avatar_box.pack_start(avatar, False, False, 0)
+        username = Gtk.Label(label=pwd.getpwuid(os.getuid()).pw_name, xalign=0)
+        username.get_style_context().add_class("menu-username")
+        avatar_box.pack_start(username, False, False, 0)
+        footer.pack_start(avatar_box, False, False, 0)
+        footer.pack_end(self._build_powerbar(), False, False, 0)
+        return footer
 
     def _on_grip_press(self, _widget, event):
         if event.button == 1:
