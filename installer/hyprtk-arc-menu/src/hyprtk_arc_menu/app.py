@@ -40,7 +40,6 @@ class ArcWindow(Gtk.Window):
             on_close=self._on_menu_closed,
             on_run=self._on_run,
             on_toggle=self.toggle,
-            on_middle_click=self.close_menu,
             palette=resolve_palette(cfg, load_pywal_colors() if cfg.get("use_pywal", True) else None),
         )
         self.add(self._menu)
@@ -50,6 +49,9 @@ class ArcWindow(Gtk.Window):
 
         self.connect("key-press-event", self._on_key_press)
         self.connect("focus-out-event", self._on_focus_out)
+        # Middle-click anywhere on the menu surface closes it. Handled at the
+        # toplevel window so it works over empty areas and buttons alike.
+        self.connect("button-press-event", self._on_pointer_press)
 
         if cfg.get("use_pywal", True):
             self._setup_wal_monitor()
@@ -159,6 +161,13 @@ class ArcWindow(Gtk.Window):
     def _on_key_press(self, _widget, event) -> bool:
         if event.keyval == Gdk.KEY_Escape and self._menu.is_open():
             self.close_menu()
+            return True
+        return False
+
+    def _on_pointer_press(self, _widget, event) -> bool:
+        # Middle-click anywhere on the menu surface quits the app entirely.
+        if event.button == Gdk.BUTTON_MIDDLE:
+            Gtk.main_quit()
             return True
         return False
 
