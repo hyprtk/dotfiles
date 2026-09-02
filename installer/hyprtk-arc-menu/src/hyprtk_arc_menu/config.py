@@ -61,6 +61,7 @@ DEFAULT_ITEMS = [
 DEFAULTS = {
     "position": "bottom-right",
     "shape": "circle",              # circle | square (square fans items on a square perimeter)
+    "transparent": False,           # transparent button/item backgrounds (icons only)
     "margin": 24,
     "radius": 140,
     "fab_size": 56,
@@ -104,6 +105,8 @@ def validate(cfg: dict) -> dict:
 
     if valid.get("shape") not in ("circle", "square"):
         valid["shape"] = "circle"
+
+    valid["transparent"] = bool(valid.get("transparent", False))
 
     for key in ("margin", "radius", "fab_size", "item_size", "animation_time"):
         try:

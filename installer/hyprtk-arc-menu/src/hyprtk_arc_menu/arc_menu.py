@@ -223,28 +223,40 @@ class ArcMenu(Gtk.Fixed):
     def _apply_css(self) -> None:
         p = self._palette
         radius = "50%" if not self._is_square() else "24%"
+        if self.cfg.get("transparent"):
+            fab_bg = "transparent"
+            item_bg = "transparent"
+            hover = "rgba(255,255,255,0.12)"
+            fab_shadow = "none"
+            item_shadow = "none"
+        else:
+            fab_bg = p["fab_color"]
+            item_bg = p["item_color"]
+            hover = None
+            fab_shadow = "0 2px 8px rgba(0,0,0,0.35)"
+            item_shadow = "0 2px 6px rgba(0,0,0,0.3)"
         css = f"""
         .arc-fab {{
             background-image: none;
-            background-color: {p["fab_color"]};
+            background-color: {fab_bg};
             color: {p["fab_icon_color"]};
             border-radius: {radius};
             border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            box-shadow: {fab_shadow};
         }}
         .arc-fab:hover {{
-            background-color: shade({p["fab_color"]}, 1.1);
+            background-color: {hover or "shade(" + p["fab_color"] + ", 1.1)"};
         }}
         .arc-item {{
             background-image: none;
-            background-color: {p["item_color"]};
+            background-color: {item_bg};
             color: {p["item_icon_color"]};
             border-radius: {radius};
             border: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            box-shadow: {item_shadow};
         }}
         .arc-item:hover {{
-            background-color: shade({p["item_color"]}, 1.1);
+            background-color: {hover or "shade(" + p["item_color"] + ", 1.1)"};
         }}
         """
         provider = Gtk.CssProvider()
