@@ -283,6 +283,11 @@ class SettingsDialog(Gtk.Window):
                 self._position_combo.set_active(i)
                 break
 
+        self._shape_combo = Gtk.ComboBoxText()
+        for shape in ("circle", "square"):
+            self._shape_combo.append_text(shape)
+        self._shape_combo.set_active(0 if cfg.get("shape", "circle") == "circle" else 1)
+
         self._radius_spin = spinner(cfg.get("radius", 140), 40, 600, 10)
         self._margin_spin = spinner(cfg.get("margin", 24), 0, 200, 2)
         self._fab_spin = spinner(cfg.get("fab_size", 56), 24, 120, 4)
@@ -299,6 +304,7 @@ class SettingsDialog(Gtk.Window):
 
         rows = [
             ("Position", self._position_combo),
+            ("Shape", self._shape_combo),
             ("Radius (px)", self._radius_spin),
             ("Margin (px)", self._margin_spin),
             ("Menu button size (px)", self._fab_spin),
@@ -482,6 +488,7 @@ class SettingsDialog(Gtk.Window):
     def _on_save(self, _btn) -> None:
         position_list = list(POSITIONS)
         self._cfg["position"] = position_list[self._position_combo.get_active()]
+        self._cfg["shape"] = "circle" if self._shape_combo.get_active() == 0 else "square"
         self._cfg["radius"] = self._radius_spin.get_value_as_int()
         self._cfg["margin"] = self._margin_spin.get_value_as_int()
         self._cfg["fab_size"] = self._fab_spin.get_value_as_int()

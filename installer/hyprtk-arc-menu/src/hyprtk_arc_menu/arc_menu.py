@@ -93,6 +93,9 @@ class ArcMenu(Gtk.Fixed):
 
     # ── geometry helpers ──────────────────────────────────────────
 
+    def _is_square(self) -> bool:
+        return self.cfg.get("shape") == "square"
+
     def _position_dir(self) -> tuple[int, int, int]:
         p = POSITIONS.get(self.cfg["position"], POSITIONS["bottom-right"])
         return p["dx"], p["dy"], p["fan"]
@@ -123,10 +126,28 @@ class ArcMenu(Gtk.Fixed):
         n = len(self._items)
         if n <= 1:
             return self.radius
+        if self._is_square():
+            return max(self.radius, int(math.ceil(self._square_radius())))
         _, _, fan = self._position_dir()
         delta = math.radians(fan / (n - 1))
         min_radius = (self.item_size + 4) / (2 * math.sin(delta / 2))
         return max(self.radius, int(math.ceil(min_radius)))
+
+    def _square_radius(self) -> float:
+        """Minimum radius for the square-perimeter layout (unit-square spacing)."""
+        n = len(self._items)
+        _, _, fan = self._position_dir()
+        pts = []
+        for i in range(n):
+            ang = math.radians(fan * i / (n - 1)) if n > 1 else math.radians(fan / 2)
+            u, v = math.cos(ang), math.sin(ang)
+            m = max(abs(u), abs(v)) or 1.0
+            pts.append((u / m, v / m))
+        min_dist = min(
+            math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1])
+            for i in range(n - 1)
+        )
+        return (self.item_size + 4) / min_dist
 
     @property
     def animation_time(self) -> int:
@@ -201,12 +222,13 @@ class ArcMenu(Gtk.Fixed):
 
     def _apply_css(self) -> None:
         p = self._palette
+        radius = "50%" if not self._is_square() else "24%"
         css = f"""
         .arc-fab {{
             background-image: none;
             background-color: {p["fab_color"]};
             color: {p["fab_icon_color"]};
-            border-radius: 50%;
+            border-radius: {radius};
             border: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.35);
         }}
@@ -217,7 +239,7 @@ class ArcMenu(Gtk.Fixed):
             background-image: none;
             background-color: {p["item_color"]};
             color: {p["item_icon_color"]};
-            border-radius: 50%;
+            border-radius: {radius};
             border: none;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }}
@@ -261,6 +283,7 @@ class ArcMenu(Gtk.Fixed):
     def layout_items(self, win_w: int, win_h: int, radius: float, opacity: float) -> None:
         cx, cy = self.fab_center(win_w, win_h)
         dx, dy, fan = self._position_dir()
+        square = self._is_square()
         n = len(self._items)
         half = self.item_size / 2
         for idx, item in enumerate(self._items):
@@ -268,8 +291,16 @@ class ArcMenu(Gtk.Fixed):
                 angle = math.radians(fan / 2)
             else:
                 angle = math.radians(fan * idx / (n - 1))
-            ox = dx * radius * math.cos(angle)
-            oy = dy * radius * math.sin(angle)
+            u = math.cos(angle)
+            v = math.sin(angle)
+            if square:
+                # Map the arc angle onto the perimeter of a square so items
+                # encircle the square menu button in a square layout.
+                m = max(abs(u), abs(v)) or 1.0
+                u /= m
+                v /= m
+            ox = dx * radius * u
+            oy = dy * radius * v
             x = cx + ox - half
             y = cy + oy - half
             self.move(item["btn"], int(x), int(y))

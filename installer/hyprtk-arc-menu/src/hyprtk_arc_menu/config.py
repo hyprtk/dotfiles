@@ -60,6 +60,7 @@ DEFAULT_ITEMS = [
 
 DEFAULTS = {
     "position": "bottom-right",
+    "shape": "circle",              # circle | square (square fans items on a square perimeter)
     "margin": 24,
     "radius": 140,
     "fab_size": 56,
@@ -100,6 +101,9 @@ def validate(cfg: dict) -> dict:
     if position not in POSITIONS:
         log.warning("Unknown position %r, using bottom-right", position)
         valid["position"] = "bottom-right"
+
+    if valid.get("shape") not in ("circle", "square"):
+        valid["shape"] = "circle"
 
     for key in ("margin", "radius", "fab_size", "item_size", "animation_time"):
         try:
