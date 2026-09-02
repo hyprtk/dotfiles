@@ -41,10 +41,11 @@ exec "$INSTALL_DIR/venv/bin/python3" -m hyprtk_arc_menu "\$@"
 LAUNCHER
 chmod +x "$BIN_DIR/$APP_NAME"
 
-# Toggle helper (for a Hyprland hotkey)
-cat > "$BIN_DIR/$APP_NAME-toggle" << 'TOGGLE'
+# Toggle helper (for a Hyprland hotkey). Uses a full path so it works even
+# when Hyprland's exec environment PATH does not include ~/.local/bin.
+cat > "$BIN_DIR/$APP_NAME-toggle" << TOGGLE
 #!/bin/bash
-exec hyprtk-arc-menu --toggle "$@"
+exec "$HOME/.local/bin/$APP_NAME" --toggle "\$@"
 TOGGLE
 chmod +x "$BIN_DIR/$APP_NAME-toggle"
 
