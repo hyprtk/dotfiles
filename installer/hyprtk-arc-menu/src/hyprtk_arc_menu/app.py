@@ -10,7 +10,8 @@ gi.require_version("GtkLayerShell", "0.1")
 from gi.repository import Gdk, Gio, GLib, Gtk, GtkLayerShell
 
 from .arc_menu import ArcMenu
-from .config import CORNERS, PYWAL_PATH, load_pywal_colors, resolve_palette
+from .config import CORNERS, PYWAL_PATH, load, load_pywal_colors, resolve_palette
+from .settings import SettingsDialog
 
 log = logging.getLogger("hyprtk_arc_menu.app")
 
@@ -147,6 +148,10 @@ class ArcWindow(Gtk.Window):
         self._set_keyboard_mode(False)
 
     def _on_run(self, entry: dict) -> None:
+        if entry.get("action") == "settings":
+            self.close_menu()
+            self.open_settings()
+            return
         command = entry.get("command")
         if command:
             try:
@@ -155,6 +160,57 @@ class ArcWindow(Gtk.Window):
                 log.warning("Failed to launch %r: %s", command, exc)
         if self._cfg.get("close_on_click", True):
             self.close_menu()
+
+    # ── settings / reload ─────────────────────────────────────────
+
+    def open_settings(self) -> None:
+        """Open the arc menu settings dialog; apply changes on save."""
+        SettingsDialog(load(), on_saved=self.reload)
+
+    def reload(self) -> None:
+        """Reload config from disk and rebuild the menu in place."""
+        self._cfg = load()
+
+        if self._wal_debounce is not None:
+            GLib.source_remove(self._wal_debounce)
+            self._wal_debounce = None
+        if self._wal_monitor is not None:
+            self._wal_monitor.cancel()
+            self._wal_monitor = None
+
+        # Reset all layer-shell anchors, then re-apply the (possibly new) corner.
+        for edge in (
+            GtkLayerShell.Edge.LEFT,
+            GtkLayerShell.Edge.RIGHT,
+            GtkLayerShell.Edge.TOP,
+            GtkLayerShell.Edge.BOTTOM,
+        ):
+            GtkLayerShell.set_anchor(self, edge, False)
+
+        self.remove(self._menu)
+        self._menu.cancel_animation()
+        self._menu.destroy()
+        self._menu = ArcMenu(
+            self._cfg,
+            on_close=self._on_menu_closed,
+            on_run=self._on_run,
+            on_toggle=self.toggle,
+            palette=resolve_palette(
+                self._cfg, load_pywal_colors() if self._cfg.get("use_pywal", True) else None
+            ),
+        )
+        self.add(self._menu)
+
+        corner = CORNERS[self._cfg["corner"]]
+        for edge in corner["edges"]:
+            GtkLayerShell.set_anchor(self, edge, True)
+
+        if self._cfg.get("use_pywal", True):
+            self._setup_wal_monitor()
+
+        self._apply_closed_size()
+        self._set_keyboard_mode(False)
+        self.show_all()
 
     # ── events ────────────────────────────────────────────────────
 

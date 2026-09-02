@@ -49,7 +49,7 @@ DEFAULT_ITEMS = [
     {"icon": "utilities-terminal", "command": "alacritty", "tooltip": "Terminal"},
     {"icon": "system-file-manager", "command": "thunar", "tooltip": "Files"},
     {"icon": "accessories-calculator", "command": "qalculate-gtk", "tooltip": "Calculator"},
-    {"icon": "preferences-system", "command": "xfce4-settings-manager", "tooltip": "Settings"},
+    {"icon": "preferences-system", "action": "settings", "tooltip": "Settings"},
 ]
 
 DEFAULTS = {

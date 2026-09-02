@@ -269,6 +269,11 @@ class ArcMenu(Gtk.Fixed):
     def is_open(self) -> bool:
         return self._open
 
+    def cancel_animation(self) -> None:
+        if self._anim_timer is not None:
+            GLib.source_remove(self._anim_timer)
+            self._anim_timer = None
+
     def open(self, win_w: int, win_h: int) -> None:
         if self._open:
             return
