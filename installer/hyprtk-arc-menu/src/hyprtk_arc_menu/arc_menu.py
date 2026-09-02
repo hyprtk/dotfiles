@@ -22,13 +22,42 @@ def ease_out_cubic(t: float) -> float:
     return 1 - (1 - t) ** 3
 
 
-def make_round_button(size: int, icon_name: str, css_class: str) -> Gtk.Button:
+def _rgba_from_hex(hex_color: str) -> Gdk.RGBA:
+    rgba = Gdk.RGBA()
+    rgba.parse(hex_color if hex_color else "#000000")
+    return rgba
+
+
+def load_icon_image(icon_name: str, pixel: int, fg_hex: str) -> Gtk.Image:
+    """Load an icon theme image at an exact pixel size.
+
+    Colored icons are loaded as-is; symbolic icons are tinted with ``fg_hex`` so
+    they stay readable against any (pywal) background.
+    """
+    theme = Gtk.IconTheme.get_default()
+    info = theme.lookup_icon(icon_name, pixel, 0)
+    if info is None:
+        info = theme.lookup_icon("application-x-executable", pixel, 0)
+    try:
+        if info is not None and info.is_symbolic():
+            fg = _rgba_from_hex(fg_hex)
+            pixbuf = info.load_symbolic(fg, fg, fg, fg)[0]
+        elif info is not None:
+            pixbuf = info.load_icon()
+        else:
+            pixbuf = None
+    except GLib.Error:
+        pixbuf = None
+    if pixbuf is None:
+        return Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+    return Gtk.Image.new_from_pixbuf(pixbuf)
+
+
+def make_round_button(size: int, icon_name: str, css_class: str, fg_color: str = "#000000") -> Gtk.Button:
     btn = Gtk.Button()
     btn.set_size_request(size, size)
     btn.get_style_context().add_class(css_class)
-    icon = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.INVALID)
-    icon.set_pixel_size(max(8, int(size * 0.5)))
-    btn.add(icon)
+    btn.set_image(load_icon_image(icon_name, max(8, int(size * 0.5)), fg_color))
     btn.set_can_focus(False)
     return btn
 
@@ -102,7 +131,10 @@ class ArcMenu(Gtk.Fixed):
 
     def _build_fab(self) -> Gtk.Button:
         fab = make_round_button(
-            self.fab_size, self.cfg.get("fab_icon", "view-grid-symbolic"), "arc-fab"
+            self.fab_size,
+            self.cfg.get("fab_icon", "view-grid-symbolic"),
+            "arc-fab",
+            self._palette["fab_icon_color"],
         )
         fab.set_tooltip_text("Menu")
         fab.connect("clicked", lambda _b: self._on_fab_clicked())
@@ -115,7 +147,9 @@ class ArcMenu(Gtk.Fixed):
 
     def _add_item(self, entry: dict) -> None:
         icon = entry.get("icon", "application-x-executable")
-        btn = make_round_button(self.item_size, icon, "arc-item")
+        btn = make_round_button(
+            self.item_size, icon, "arc-item", self._palette["item_icon_color"]
+        )
         tooltip = entry.get("tooltip") or entry.get("command") or ""
         if tooltip:
             btn.set_tooltip_text(tooltip)
@@ -132,6 +166,23 @@ class ArcMenu(Gtk.Fixed):
         """Re-theme the FAB/items live (e.g. after a pywal update)."""
         self._palette = palette
         self._apply_css()
+        self.refresh_icons()
+
+    def refresh_icons(self) -> None:
+        """Reload icons so symbolic ones pick up the current fg color."""
+        fab_icon = self.cfg.get("fab_icon", "view-grid-symbolic")
+        self._fab.set_image(
+            load_icon_image(
+                fab_icon, max(8, int(self.fab_size * 0.5)), self._palette["fab_icon_color"]
+            )
+        )
+        for item in self._items:
+            icon = item["entry"].get("icon", "application-x-executable")
+            item["btn"].set_image(
+                load_icon_image(
+                    icon, max(8, int(self.item_size * 0.5)), self._palette["item_icon_color"]
+                )
+            )
 
     def _apply_css(self) -> None:
         p = self._palette
