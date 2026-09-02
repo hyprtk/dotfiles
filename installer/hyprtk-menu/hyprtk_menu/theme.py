@@ -22,6 +22,7 @@ LAYOUT_ICONS = {
     "win7": "\uf108",
     "win11": "\uf108",
     "plasma": "\uf042",
+    "arc": "\uf0e7",
 }
 LAYOUT_ORDER = list(cfg.LAYOUTS)
 

@@ -8,7 +8,7 @@ CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "hyprtk-menu")
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "hyprtk-menu")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
-LAYOUTS = ("whisker", "win7", "win11", "plasma")
+LAYOUTS = ("whisker", "win7", "win11", "plasma", "arc")
 
 DEFAULT_CONFIG = {
     "position": "auto",

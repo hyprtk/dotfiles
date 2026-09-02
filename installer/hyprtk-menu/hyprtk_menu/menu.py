@@ -1,6 +1,7 @@
 """Layer-shell menu window for hyprtk-menu."""
 
 import json
+import math
 import os
 import re
 import shutil
@@ -899,6 +900,144 @@ class MenuWindow(Gtk.Window):
         self._plasma_buttons["Applications"].get_style_context().add_class("active")
         return root
 
+    # -- Material Arc Menu ------------------------------------------------
+
+    def _build_arc(self):
+        """Material Arc Menu — central FAB hub + pinned apps on a radial arc.
+
+        Port of saurabharora90/MaterialArcMenu. A central hub (FAB) sits low in
+        the stage and the pinned/favorite apps fan out above it on a circular
+        arc, Material-style (circular buttons, elevation). Search at top filters
+        the full app list; the footer is the shared bottom bar.
+        """
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        root.get_style_context().add_class("menu")
+
+        # Search bar
+        self._make_search()
+        root.pack_start(self.search, False, False, 0)
+
+        # Arc stage: fixed canvas so children sit on a real arc.
+        stage = Gtk.Fixed()
+        stage.get_style_context().add_class("arc-stage")
+        stage.set_size_request(880, 440)
+        self._arc_stage = stage
+        root.pack_start(stage, True, True, 0)
+
+        # Hub (FAB) at bottom-centre of the stage.
+        hub_size = 64
+        hub = Gtk.Button()
+        hub.get_style_context().add_class("arc-hub")
+        hub.set_tooltip_text("Show all apps")
+        hub_img = Gtk.Image.new_from_icon_name("view-app-grid-symbolic", Gtk.IconSize.DND)
+        hub_img.get_style_context().add_class("arc-hub-icon")
+        hub.add(hub_img)
+        hub.set_size_request(hub_size, hub_size)
+        hub.connect("clicked", self._on_arc_hub_clicked)
+        self._arc_hub = hub
+        self._arc_hub_x = (880 - hub_size) // 2
+        self._arc_hub_y = 440 - hub_size - 24
+        stage.put(hub, self._arc_hub_x, self._arc_hub_y)
+        self._arc_pins = []
+
+        # Full app list (for search results); hidden unless the user types.
+        app_scroll = Gtk.ScrolledWindow()
+        app_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        app_scroll.get_style_context().add_class("app-list-scroll")
+        app_scroll.get_style_context().add_class("arc-app-scroll")
+        self._make_app_list()
+        self.app_list.get_style_context().add_class("arc-app-list")
+        app_scroll.add(self.app_list)
+        self._arc_app_scroll = app_scroll
+        root.pack_start(app_scroll, True, True, 0)
+        app_scroll.set_no_show_all(True)
+        app_scroll.hide()
+
+        # Footer
+        footer = self._build_footer()
+        footer.get_style_context().add_class("arc-footer")
+        root.pack_end(footer, False, False, 0)
+
+        self._refresh_arc()
+        return root
+
+    def _refresh_arc(self):
+        """Place the pinned apps on an arc above the hub."""
+        stage = getattr(self, "_arc_stage", None)
+        if stage is None:
+            return
+        for child in self._arc_pins:
+            stage.remove(child)
+        self._arc_pins = []
+
+        pinned = self.pinned if self.pinned else set(DEFAULT_PINNED)
+        entries = [e for e in self.apps if e.id in pinned]
+        entries = entries[:9]  # keep the arc legible
+        if not entries:
+            return
+
+        # Geometry: hub is near the bottom; apps fan in a semicircle above it.
+        button = 56
+        hub_size = 64
+        radius = 190
+        # Hub centre, measured from its top-left anchor.
+        hub_cx = self._arc_hub_x + hub_size / 2.0
+        hub_cy = self._arc_hub_y + hub_size / 2.0
+        n = len(entries)
+        for i, entry in enumerate(entries):
+            frac = i / (n - 1) if n > 1 else 0.5
+            angle = math.pi - frac * math.pi  # 0..pi, left -> right
+            x = hub_cx + radius * math.cos(angle)
+            y = hub_cy - radius * math.sin(angle)
+            x -= button / 2.0
+            y -= button / 2.0
+            btn = self._make_arc_button(entry, button)
+            stage.put(btn, int(x), int(y))
+            self._arc_pins.append(btn)
+
+    def _make_arc_button(self, entry, button):
+        btn = Gtk.Button()
+        btn.get_style_context().add_class("arc-btn")
+        btn.set_size_request(button, button)
+        btn.set_tooltip_text(entry.name)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        box.get_style_context().add_class("arc-btn-box")
+        image = self._make_icon_image(entry, 30)
+        image.get_style_context().add_class("arc-btn-icon")
+        box.pack_start(image, True, True, 0)
+        name = Gtk.Label(label=entry.name, xalign=0.5, ellipsize=Pango.EllipsizeMode.END, max_width_chars=9)
+        name.get_style_context().add_class("arc-btn-label")
+        box.pack_start(name, False, False, 0)
+        btn.add(box)
+        btn.connect("clicked", self._on_arc_launch, entry)
+        btn.connect("button-press-event", self._on_arc_button_press, entry)
+        return btn
+
+    def _on_arc_launch(self, _button, entry):
+        self._launch(entry)
+
+    def _on_arc_button_press(self, _widget, event, entry):
+        if event.button == 3:  # right-click: pin/unpin
+            self._toggle_pin(entry)
+            self._refresh_arc()
+            return True
+        return False
+
+    def _on_arc_hub_clicked(self, _button):
+        """Hub shows the full app list for searching/browsing."""
+        self.search.grab_focus()
+        self.search.select_region(0, -1)
+
+    def _show_arc_search(self, active):
+        if not hasattr(self, "_arc_app_scroll"):
+            return
+        if active:
+            self._arc_app_scroll.show()
+            self._arc_stage.hide()
+        else:
+            self._arc_app_scroll.hide()
+            self._arc_stage.show()
+
     def _on_plasma_place_activated(self, _listbox, row):
         """A places-sidebar entry was clicked — show it in the content pane."""
         path = getattr(row, "row_path", None)
@@ -1698,6 +1837,8 @@ class MenuWindow(Gtk.Window):
                 self._show_win11_apps()
             else:
                 self._show_win11_home()
+        if hasattr(self, "_arc_app_scroll"):
+            self._show_arc_search(bool(self.search.get_text().strip()))
 
     def _on_search_key(self, _widget, event):
         if event.keyval in (Gdk.KEY_Up, Gdk.KEY_Down):
@@ -1836,6 +1977,8 @@ class MenuWindow(Gtk.Window):
         self.show_all()
         if hasattr(self, "_reapply_win11_view"):
             self._reapply_win11_view()
+        if hasattr(self, "_arc_app_scroll"):
+            self._show_arc_search(bool(self.search.get_text().strip()))
         self.present()
         GLib.idle_add(self.search.grab_focus)
         return False
@@ -1848,6 +1991,9 @@ class MenuWindow(Gtk.Window):
         self._refresh_recents()
         if hasattr(self, "_plasma_places"):
             self._plasma_show_places()
+        if hasattr(self, "_arc_stage"):
+            self._show_arc_search(False)
+            self._refresh_arc()
         self.show_all()
         if hasattr(self, "_reapply_win11_view"):
             self._reapply_win11_view()
