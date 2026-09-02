@@ -20,11 +20,6 @@ APP_DIRS = [
     Path("/var/lib/flatpak/exports/share/applications"),
 ]
 
-# Drag target used to reorder menu items in the settings dialog.
-REORDER_TARGETS = [
-    Gtk.TargetEntry.new("application/x-hyprtk-arc-item", Gtk.TargetFlags.SAME_APP, 0)
-]
-
 
 def _hex_to_rgba(hex_color: str) -> Gdk.RGBA:
     rgba = Gdk.RGBA()
@@ -331,9 +326,6 @@ class SettingsDialog(Gtk.Window):
 
         self._list = Gtk.ListBox()
         self._list.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        # Drag-and-drop reordering of menu items.
-        self._list.drag_dest_set(Gtk.DestDefaults.ALL, REORDER_TARGETS, Gdk.DragAction.MOVE)
-        self._list.connect("drag-data-received", self._on_drag_data_received)
         self._populate_items()
         scroll = Gtk.ScrolledWindow()
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -342,12 +334,18 @@ class SettingsDialog(Gtk.Window):
         ivbox.pack_start(scroll, True, True, 0)
 
         btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        up_btn = Gtk.Button(label="Move Up")
+        down_btn = Gtk.Button(label="Move Down")
         add_btn = Gtk.Button(label="Add")
         edit_btn = Gtk.Button(label="Edit")
         remove_btn = Gtk.Button(label="Remove")
+        up_btn.connect("clicked", self._on_move_up)
+        down_btn.connect("clicked", self._on_move_down)
         add_btn.connect("clicked", self._on_add)
         edit_btn.connect("clicked", self._on_edit)
         remove_btn.connect("clicked", self._on_remove)
+        btn_row.pack_start(up_btn, False, False, 0)
+        btn_row.pack_start(down_btn, False, False, 0)
         btn_row.pack_start(add_btn, False, False, 0)
         btn_row.pack_start(edit_btn, False, False, 0)
         btn_row.pack_start(remove_btn, False, False, 0)
@@ -395,38 +393,31 @@ class SettingsDialog(Gtk.Window):
     def _populate_items(self) -> None:
         for child in self._list.get_children():
             self._list.remove(child)
-        for idx, item in enumerate(self._items):
-            row = self._make_item_row(item)
-            row.drag_source_set(
-                Gdk.ModifierType.BUTTON1_MASK, REORDER_TARGETS, Gdk.DragAction.MOVE
-            )
-            row.connect("drag-data-get", self._on_drag_data_get)
-            row._item_index = idx
-            self._list.add(row)
+        for item in self._items:
+            self._list.add(self._make_item_row(item))
         self._list.show_all()
 
-    def _on_drag_data_get(self, row, _context, selection, *_args) -> None:
-        selection.set(selection.get_target(), 8, bytes([row._item_index]))
+    def _select_index(self, index: int) -> None:
+        row = self._list.get_row_at_index(index)
+        if row is not None:
+            self._list.select_row(row)
 
-    def _on_drag_data_received(self, _list, context, x, y, data, _info, time) -> None:
-        dragged = data.get_data()
-        if not dragged:
-            context.finish(False, False, time)
+    def _move_selected(self, delta: int) -> None:
+        idx = self._selected_index()
+        if idx is None:
             return
-        dragged_idx = dragged[0]
-        # Map drop position to a target row index.
-        target = len(self._items)
-        for row in self._list.get_children():
-            alloc = row.get_allocation()
-            if y <= alloc.y + alloc.height // 2:
-                target = row.get_index()
-                break
-        item = self._items.pop(dragged_idx)
-        if target > dragged_idx:
-            target -= 1
-        self._items.insert(target, item)
+        new = idx + delta
+        if new < 0 or new >= len(self._items):
+            return
+        self._items[idx], self._items[new] = self._items[new], self._items[idx]
         self._populate_items()
-        context.finish(True, False, time)
+        self._select_index(new)
+
+    def _on_move_up(self, _btn) -> None:
+        self._move_selected(-1)
+
+    def _on_move_down(self, _btn) -> None:
+        self._move_selected(1)
 
     def _make_item_row(self, item: dict) -> Gtk.ListBoxRow:
         row = Gtk.ListBoxRow()
