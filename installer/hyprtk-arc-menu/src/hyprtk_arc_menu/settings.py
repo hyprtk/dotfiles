@@ -93,7 +93,9 @@ class AppSearchDialog(Gtk.Window):
         self.set_decorated(False)
         self.set_default_size(520, 560)
         GtkLayerShell.init_for_window(self)
-        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
+        # OVERLAY sits above the TOP-layer item dialog so the search window is
+        # never hidden behind it.
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
         GtkLayerShell.set_namespace(self, "hyprtk-arc-menu-appsearch")
         GtkLayerShell.set_exclusive_zone(self, -1)
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
@@ -132,6 +134,7 @@ class AppSearchDialog(Gtk.Window):
 
         self._filter()
         self.show_all()
+        self.present()
         self._search.grab_focus()
 
     def _filter(self) -> None:
@@ -236,6 +239,8 @@ class ItemDialog(Gtk.Dialog):
         AppSearchDialog(self, on_select=self._fill_from_app)
 
     def _fill_from_app(self, app: dict) -> None:
+        if not self.get_realized():
+            return
         self._icon_entry.set_text(app["icon"])
         self._tooltip_entry.set_text(app["name"])
         self._command_entry.set_text(app["exec"])
