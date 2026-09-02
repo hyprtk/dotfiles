@@ -15,7 +15,7 @@ gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gdk, GLib, Gtk
 
-from .config import CORNERS, resolve_palette
+from .config import POSITIONS, resolve_palette
 
 
 def ease_out_cubic(t: float) -> float:
@@ -93,9 +93,9 @@ class ArcMenu(Gtk.Fixed):
 
     # ── geometry helpers ──────────────────────────────────────────
 
-    def _corner_dir(self) -> tuple[int, int]:
-        c = CORNERS.get(self.cfg["corner"], CORNERS["bottom-right"])
-        return c["dx"], c["dy"]
+    def _position_dir(self) -> tuple[int, int, int]:
+        p = POSITIONS.get(self.cfg["position"], POSITIONS["bottom-right"])
+        return p["dx"], p["dy"], p["fan"]
 
     @property
     def fab_size(self) -> int:
@@ -114,15 +114,17 @@ class ArcMenu(Gtk.Fixed):
         return int(self.cfg["radius"])
 
     def effective_radius(self) -> int:
-        """Ring radius that keeps items from overlapping on the 90° arc.
+        """Ring radius that keeps items from overlapping on the arc fan.
 
-        Items are spread over a 90° quadrant; as their count grows they crowd
-        together. Grow the radius so adjacent item edges always keep a small gap.
+        Items are spread over the position's fan (90° corners, 180° centers); as
+        their count grows they crowd together. Grow the radius so adjacent item
+        edges always keep a small gap.
         """
         n = len(self._items)
         if n <= 1:
             return self.radius
-        delta = math.radians(90.0 / (n - 1))
+        _, _, fan = self._position_dir()
+        delta = math.radians(fan / (n - 1))
         min_radius = (self.item_size + 4) / (2 * math.sin(delta / 2))
         return max(self.radius, int(math.ceil(min_radius)))
 
@@ -135,6 +137,9 @@ class ArcMenu(Gtk.Fixed):
         f = self.fab_size
         r = self.effective_radius()
         i = self.item_size
+        if "center" in self.cfg["position"]:
+            # FAB is horizontally centered: items span R + half an item on each side.
+            return 2 * r + i, m + f // 2 + r + i // 2
         return m + f // 2 + r + i // 2, m + f // 2 + r + i // 2
 
     # ── construction ──────────────────────────────────────────────
@@ -234,15 +239,19 @@ class ArcMenu(Gtk.Fixed):
 
     def fab_center(self, win_w: int, win_h: int) -> tuple[int, int]:
         """Center of the FAB in window coords for a given window size."""
-        corner = self.cfg["corner"]
+        position = self.cfg["position"]
         m = self.margin
         f = self.fab_size
-        cx = m + f // 2
-        cy = m + f // 2
-        if "right" in corner:
+        if "center" in position:
+            cx = win_w // 2
+        elif "right" in position:
             cx = win_w - m - f // 2
-        if "bottom" in corner:
+        else:
+            cx = m + f // 2
+        if "bottom" in position:
             cy = win_h - m - f // 2
+        else:
+            cy = m + f // 2
         return cx, cy
 
     def layout_fab(self, win_w: int, win_h: int) -> None:
@@ -251,14 +260,14 @@ class ArcMenu(Gtk.Fixed):
 
     def layout_items(self, win_w: int, win_h: int, radius: float, opacity: float) -> None:
         cx, cy = self.fab_center(win_w, win_h)
-        dx, dy = self._corner_dir()
+        dx, dy, fan = self._position_dir()
         n = len(self._items)
         half = self.item_size / 2
         for idx, item in enumerate(self._items):
             if n == 1:
-                angle = math.radians(45)
+                angle = math.radians(fan / 2)
             else:
-                angle = math.radians(90 * idx / (n - 1))
+                angle = math.radians(fan * idx / (n - 1))
             ox = dx * radius * math.cos(angle)
             oy = dy * radius * math.sin(angle)
             x = cx + ox - half

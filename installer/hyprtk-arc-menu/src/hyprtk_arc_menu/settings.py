@@ -11,7 +11,7 @@ gi.require_version("GtkLayerShell", "0.1")
 from gi.repository import Gdk, GLib, Gtk, GtkLayerShell
 
 from .arc_menu import load_icon_image
-from .config import CORNERS, load, save
+from .config import POSITIONS, load, save
 
 APP_DIRS = [
     Path.home() / ".local/share/applications",
@@ -274,14 +274,13 @@ class SettingsDialog(Gtk.Window):
             spin = Gtk.SpinButton(adjustment=adj)
             return spin
 
-        self._corner_combo = Gtk.ComboBoxText()
-        for corner in CORNERS:
-            self._corner_combo.append_text(corner)
-        self._corner_combo.set_active_id(cfg.get("corner", "bottom-right"))
-        # ComboBoxText.set_active_id needs the ids to be the text; use index instead
-        for i, corner in enumerate(CORNERS):
-            if corner == cfg.get("corner", "bottom-right"):
-                self._corner_combo.set_active(i)
+        self._position_combo = Gtk.ComboBoxText()
+        for position in POSITIONS:
+            self._position_combo.append_text(position)
+        current = cfg.get("position") or cfg.get("corner", "bottom-right")
+        for i, position in enumerate(POSITIONS):
+            if position == current:
+                self._position_combo.set_active(i)
                 break
 
         self._radius_spin = spinner(cfg.get("radius", 140), 40, 600, 10)
@@ -299,7 +298,7 @@ class SettingsDialog(Gtk.Window):
         self._item_color.set_rgba(_hex_to_rgba(cfg.get("item_color", "#22d3ee")))
 
         rows = [
-            ("Corner", self._corner_combo),
+            ("Position", self._position_combo),
             ("Radius (px)", self._radius_spin),
             ("Margin (px)", self._margin_spin),
             ("Menu button size (px)", self._fab_spin),
@@ -481,8 +480,8 @@ class SettingsDialog(Gtk.Window):
     # ── save ─────────────────────────────────────────────────────
 
     def _on_save(self, _btn) -> None:
-        corner_list = list(CORNERS)
-        self._cfg["corner"] = corner_list[self._corner_combo.get_active()]
+        position_list = list(POSITIONS)
+        self._cfg["position"] = position_list[self._position_combo.get_active()]
         self._cfg["radius"] = self._radius_spin.get_value_as_int()
         self._cfg["margin"] = self._margin_spin.get_value_as_int()
         self._cfg["fab_size"] = self._fab_spin.get_value_as_int()

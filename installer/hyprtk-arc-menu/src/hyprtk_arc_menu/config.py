@@ -20,26 +20,32 @@ PYWAL_PATH = Path.home() / ".cache" / "wal" / "colors.json"
 
 log = logging.getLogger("hyprtk_arc_menu.config")
 
-# Corners are keyed by the direction the arc opens into the screen.
-CORNERS = {
+# Menu positions. dx/dy are the arc direction signs, `fan` is the arc spread in
+# degrees (90 for corners, 180 for top/bottom center), `edges` the layer-shell
+# anchors used to pin the surface.
+POSITIONS = {
     "top-left": {
-        "dx": 1,   # items spread right
-        "dy": 1,   # items spread down
+        "dx": 1, "dy": 1, "fan": 90,
         "edges": (GtkLayerShell.Edge.LEFT, GtkLayerShell.Edge.TOP),
     },
+    "top-center": {
+        "dx": 1, "dy": 1, "fan": 180,
+        "edges": (GtkLayerShell.Edge.TOP,),
+    },
     "top-right": {
-        "dx": -1,  # items spread left
-        "dy": 1,   # items spread down
+        "dx": -1, "dy": 1, "fan": 90,
         "edges": (GtkLayerShell.Edge.RIGHT, GtkLayerShell.Edge.TOP),
     },
     "bottom-left": {
-        "dx": 1,   # items spread right
-        "dy": -1,  # items spread up
+        "dx": 1, "dy": -1, "fan": 90,
         "edges": (GtkLayerShell.Edge.LEFT, GtkLayerShell.Edge.BOTTOM),
     },
+    "bottom-center": {
+        "dx": 1, "dy": -1, "fan": 180,
+        "edges": (GtkLayerShell.Edge.BOTTOM,),
+    },
     "bottom-right": {
-        "dx": -1,  # items spread left
-        "dy": -1,  # items spread up
+        "dx": -1, "dy": -1, "fan": 90,
         "edges": (GtkLayerShell.Edge.RIGHT, GtkLayerShell.Edge.BOTTOM),
     },
 }
@@ -53,7 +59,7 @@ DEFAULT_ITEMS = [
 ]
 
 DEFAULTS = {
-    "corner": "bottom-right",
+    "position": "bottom-right",
     "margin": 24,
     "radius": 140,
     "fab_size": 56,
@@ -84,12 +90,16 @@ def _deep_merge(base: dict, override: dict) -> dict:
 
 def validate(cfg: dict) -> dict:
     """Coerce/correct known config fields, falling back to defaults."""
+    # Backwards compatibility: the old key was "corner".
+    if "corner" in cfg and "position" not in cfg:
+        cfg = dict(cfg)
+        cfg["position"] = cfg.pop("corner")
     valid = _deep_merge(DEFAULTS, cfg)
 
-    corner = valid.get("corner", "bottom-right")
-    if corner not in CORNERS:
-        log.warning("Unknown corner %r, using bottom-right", corner)
-        valid["corner"] = "bottom-right"
+    position = valid.get("position", "bottom-right")
+    if position not in POSITIONS:
+        log.warning("Unknown position %r, using bottom-right", position)
+        valid["position"] = "bottom-right"
 
     for key in ("margin", "radius", "fab_size", "item_size", "animation_time"):
         try:

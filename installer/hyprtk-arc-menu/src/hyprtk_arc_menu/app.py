@@ -12,7 +12,7 @@ gi.require_version("GtkLayerShell", "0.1")
 from gi.repository import Gdk, Gio, GLib, Gtk, GtkLayerShell
 
 from .arc_menu import ArcMenu
-from .config import CORNERS, PYWAL_PATH, load, load_pywal_colors, resolve_palette
+from .config import POSITIONS, PYWAL_PATH, load, load_pywal_colors, resolve_palette
 from .settings import SettingsDialog
 
 log = logging.getLogger("hyprtk_arc_menu.app")
@@ -93,11 +93,11 @@ class ArcWindow(Gtk.Window):
     # ── layer shell ───────────────────────────────────────────────
 
     def _init_layer_shell(self) -> None:
-        corner = CORNERS[self._cfg["corner"]]
+        position = POSITIONS[self._cfg["position"]]
         GtkLayerShell.init_for_window(self)
         GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
         GtkLayerShell.set_namespace(self, "hyprtk-arc-menu")
-        for edge in corner["edges"]:
+        for edge in position["edges"]:
             GtkLayerShell.set_anchor(self, edge, True)
         # Do not reserve space; float above windows.
         GtkLayerShell.set_exclusive_zone(self, -1)
@@ -123,9 +123,14 @@ class ArcWindow(Gtk.Window):
         m = self._menu.margin
         f = self._menu.fab_size
         w, h = self._menu.open_size()
-        corner = self._cfg["corner"]
-        x = m if "left" in corner else w - m - f
-        y = m if "top" in corner else h - m - f
+        position = self._cfg["position"]
+        if "center" in position:
+            x = w // 2 - f // 2
+        elif "left" in position:
+            x = m
+        else:
+            x = w - m - f
+        y = m if "top" in position else h - m - f
         rect = Gdk.Rectangle()
         rect.x, rect.y, rect.width, rect.height = x, y, f, f
         return rect
@@ -234,8 +239,8 @@ class ArcWindow(Gtk.Window):
         )
         self.add(self._menu)
 
-        corner = CORNERS[self._cfg["corner"]]
-        for edge in corner["edges"]:
+        position = POSITIONS[self._cfg["position"]]
+        for edge in position["edges"]:
             GtkLayerShell.set_anchor(self, edge, True)
 
         if self._cfg.get("use_pywal", True):
