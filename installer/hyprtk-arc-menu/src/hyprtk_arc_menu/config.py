@@ -62,6 +62,7 @@ DEFAULTS = {
     "position": "bottom-right",
     "shape": "circle",              # circle | square (square fans items on a square perimeter)
     "transparent": False,           # transparent button/item backgrounds (icons only)
+    "follow_waybar": True,          # mirror the active Waybar theme's glass + text colors
     "margin": 24,
     "radius": 140,
     "fab_size": 56,
@@ -107,6 +108,7 @@ def validate(cfg: dict) -> dict:
         valid["shape"] = "circle"
 
     valid["transparent"] = bool(valid.get("transparent", False))
+    valid["follow_waybar"] = bool(valid.get("follow_waybar", True))
 
     for key in ("margin", "radius", "fab_size", "item_size", "animation_time"):
         try:
@@ -168,14 +170,21 @@ def contrast_fg(hex_color: str) -> str:
     return "#000000" if luminance > 140 else "#ffffff"
 
 
-def resolve_palette(cfg: dict, pywal: dict | None = None) -> dict:
-    """Resolve FAB/item colors, overriding with pywal color5/color6 when enabled."""
+def resolve_palette(cfg: dict, pywal: dict | None = None, waybar: dict | None = None) -> dict:
+    """Resolve FAB/item colors.
+
+    Priority: follow_waybar (active Waybar theme glass/text) → pywal color5/color6
+    → explicit config colors.
+    """
     palette = {
         "fab_color": cfg.get("fab_color", "#c084fc"),
         "fab_icon_color": cfg.get("fab_icon_color", "#000000"),
         "item_color": cfg.get("item_color", "#22d3ee"),
         "item_icon_color": cfg.get("item_icon_color", "#000000"),
     }
+    if cfg.get("follow_waybar", True) and waybar:
+        palette.update(waybar)
+        return palette
     if cfg.get("use_pywal", True) and pywal:
         fab = pywal.get("color5") or palette["fab_color"]
         item = pywal.get("color6") or palette["item_color"]

@@ -14,6 +14,7 @@ from gi.repository import Gdk, Gio, GLib, Gtk, GtkLayerShell
 from .arc_menu import ArcMenu
 from .config import POSITIONS, PYWAL_PATH, load, load_pywal_colors, resolve_palette
 from .settings import SettingsDialog
+from .waybar_theme import THEME_STATE, read_theme_palette
 
 log = logging.getLogger("hyprtk_arc_menu.app")
 
@@ -26,6 +27,8 @@ class ArcWindow(Gtk.Window):
         self._cfg = cfg
         self._wal_monitor: Gio.FileMonitor | None = None
         self._wal_debounce: int | None = None
+        self._waybar_monitor: Gio.FileMonitor | None = None
+        self._theme_debounce: int | None = None
 
         self.set_title("hyprtk-arc-menu")
         self.set_decorated(False)
@@ -43,7 +46,7 @@ class ArcWindow(Gtk.Window):
             on_close=self._on_menu_closed,
             on_run=self._on_run,
             on_toggle=self.toggle,
-            palette=resolve_palette(cfg, load_pywal_colors() if cfg.get("use_pywal", True) else None),
+            palette=self._build_palette(),
         )
         self.add(self._menu)
 
@@ -60,10 +63,24 @@ class ArcWindow(Gtk.Window):
         # toplevel window so it works over empty areas and buttons alike.
         self.connect("button-press-event", self._on_pointer_press)
 
+        if cfg.get("follow_waybar", True):
+            self._setup_waybar_monitor()
         if cfg.get("use_pywal", True):
             self._setup_wal_monitor()
 
-    # ── pywal theming ─────────────────────────────────────────────
+    # ── theming (pywal + waybar theme) ───────────────────────────
+
+    def _build_palette(self) -> dict:
+        """Current palette: Waybar theme glass/text, else pywal, else config."""
+        pywal = load_pywal_colors()
+        if self._cfg.get("follow_waybar", True):
+            waybar = read_theme_palette(pywal)
+            if waybar:
+                return resolve_palette(self._cfg, pywal, waybar)
+        return resolve_palette(self._cfg, pywal, None)
+
+    def _apply_current_palette(self) -> None:
+        self._menu.apply_palette(self._build_palette())
 
     def _setup_wal_monitor(self) -> None:
         """Watch ~/.cache/wal/ so a wallpaper change re-themes the menu live."""
@@ -85,9 +102,30 @@ class ArcWindow(Gtk.Window):
 
     def _reload_wal(self) -> bool:
         self._wal_debounce = None
-        pywal = load_pywal_colors()
-        if pywal:
-            self._menu.apply_palette(resolve_palette(self._cfg, pywal))
+        self._apply_current_palette()
+        return GLib.SOURCE_REMOVE
+
+    def _setup_waybar_monitor(self) -> None:
+        """Watch the Waybar theme state file so theme switches re-theme live."""
+        try:
+            self._waybar_monitor = Gio.File.new_for_path(
+                str(THEME_STATE.parent)
+            ).monitor_directory(Gio.FileMonitorFlags.NONE, None)
+        except GLib.Error as exc:
+            log.warning("Could not monitor waybar theme state: %s", exc)
+            return
+        self._waybar_monitor.connect("changed", self._on_waybar_changed)
+
+    def _on_waybar_changed(self, _monitor, file, *_args) -> None:
+        if file.get_basename() != THEME_STATE.name:
+            return
+        if self._theme_debounce is not None:
+            GLib.source_remove(self._theme_debounce)
+        self._theme_debounce = GLib.timeout_add(400, self._reload_theme)
+
+    def _reload_theme(self) -> bool:
+        self._theme_debounce = None
+        self._apply_current_palette()
         return GLib.SOURCE_REMOVE
 
     # ── layer shell ───────────────────────────────────────────────
@@ -209,14 +247,16 @@ class ArcWindow(Gtk.Window):
         """Reload config from disk and rebuild the menu in place."""
         self._cfg = load()
 
-        if self._wal_debounce is not None:
-            GLib.source_remove(self._wal_debounce)
-            self._wal_debounce = None
-        if self._wal_monitor is not None:
-            self._wal_monitor.cancel()
-            self._wal_monitor = None
+        for deb in ("_wal_debounce", "_theme_debounce"):
+            if getattr(self, deb, None) is not None:
+                GLib.source_remove(getattr(self, deb))
+                setattr(self, deb, None)
+        for mon in ("_wal_monitor", "_waybar_monitor"):
+            if getattr(self, mon, None) is not None:
+                getattr(self, mon).cancel()
+                setattr(self, mon, None)
 
-        # Reset all layer-shell anchors, then re-apply the (possibly new) corner.
+        # Reset all layer-shell anchors, then re-apply the (possibly new) position.
         for edge in (
             GtkLayerShell.Edge.LEFT,
             GtkLayerShell.Edge.RIGHT,
@@ -233,9 +273,7 @@ class ArcWindow(Gtk.Window):
             on_close=self._on_menu_closed,
             on_run=self._on_run,
             on_toggle=self.toggle,
-            palette=resolve_palette(
-                self._cfg, load_pywal_colors() if self._cfg.get("use_pywal", True) else None
-            ),
+            palette=self._build_palette(),
         )
         self.add(self._menu)
 
@@ -243,6 +281,8 @@ class ArcWindow(Gtk.Window):
         for edge in position["edges"]:
             GtkLayerShell.set_anchor(self, edge, True)
 
+        if self._cfg.get("follow_waybar", True):
+            self._setup_waybar_monitor()
         if self._cfg.get("use_pywal", True):
             self._setup_wal_monitor()
 

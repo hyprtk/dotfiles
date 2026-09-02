@@ -297,6 +297,9 @@ class SettingsDialog(Gtk.Window):
         self._pywal_switch = Gtk.Switch()
         self._pywal_switch.set_active(bool(cfg.get("use_pywal", True)))
 
+        self._waybar_switch = Gtk.Switch()
+        self._waybar_switch.set_active(bool(cfg.get("follow_waybar", True)))
+
         self._transparent_switch = Gtk.Switch()
         self._transparent_switch.set_active(bool(cfg.get("transparent", False)))
 
@@ -314,6 +317,7 @@ class SettingsDialog(Gtk.Window):
             ("Item size (px)", self._item_spin),
             ("Animation (ms)", self._anim_spin),
             ("Use pywal colors", self._pywal_switch),
+            ("Follow Waybar theme", self._waybar_switch),
             ("Transparent (no background)", self._transparent_switch),
             ("Menu button color", self._fab_color),
             ("Item color", self._item_color),
@@ -499,6 +503,7 @@ class SettingsDialog(Gtk.Window):
         self._cfg["item_size"] = self._item_spin.get_value_as_int()
         self._cfg["animation_time"] = self._anim_spin.get_value_as_int()
         self._cfg["use_pywal"] = self._pywal_switch.get_active()
+        self._cfg["follow_waybar"] = self._waybar_switch.get_active()
         self._cfg["transparent"] = self._transparent_switch.get_active()
         self._cfg["fab_color"] = _rgba_to_hex(self._fab_color.get_rgba())
         self._cfg["item_color"] = _rgba_to_hex(self._item_color.get_rgba())
