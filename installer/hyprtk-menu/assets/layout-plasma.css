@@ -102,9 +102,28 @@
     border: 1px solid alpha(@color4, 0.45);
 }
 
-/* ── Computer tab (places list) ── */
-.layout-plasma .plasma-places {
+/* ── Computer tab (in-menu file browser) ── */
+.layout-plasma .plasma-nav {
+    padding: 4px 10px;
+    border-bottom: 1px solid alpha(@color4, 0.2);
+}
+.layout-plasma .plasma-nav-btn {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+}
+.layout-plasma .plasma-nav-btn:hover {
+    background-color: @plasma_hover;
+}
+.layout-plasma .plasma-nav-path {
+    font-size: 11px;
+    color: alpha(@color1, 0.8);
+    padding: 0 6px;
+}
+.layout-plasma .plasma-places-paned .plasma-places {
     background-color: transparent;
+    border-right: 1px solid alpha(@color4, 0.15);
 }
 .layout-plasma .plasma-place-row {
     padding: 6px 14px;
@@ -113,6 +132,20 @@
 }
 .layout-plasma .plasma-place-row:hover {
     background-color: @plasma_hover;
+}
+.layout-plasma .plasma-place-icon {
+    color: @color4;
+}
+.layout-plasma .plasma-place-dir .plasma-place-icon {
+    color: @color3;
+}
+.layout-plasma .plasma-place-label {
+    font-size: 12px;
+}
+.layout-plasma .plasma-empty {
+    color: alpha(@color1, 0.5);
+    font-style: italic;
+    padding: 6px 2px;
 }
 
 /* ── Recents ── */
@@ -134,15 +167,15 @@
     padding: 6px 8px;
     background-color: alpha(@color4, 0.06);
 }
-.layout-plasma .align-btn,
-.layout-plasma .layout-btn,
+.layout-plasma .settings-btn,
+.layout-plasma .settings-btn,
 .layout-plasma .resize-grip {
     border-radius: 4px;
     background-color: alpha(@color4, 0.1);
     border: 1px solid alpha(@color4, 0.3);
 }
-.layout-plasma .align-btn:hover,
-.layout-plasma .layout-btn:hover,
+.layout-plasma .settings-btn:hover,
+.layout-plasma .settings-btn:hover,
 .layout-plasma .resize-grip:hover {
     background-color: @plasma_hover;
     border-color: @plasma_blue;

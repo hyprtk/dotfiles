@@ -23,11 +23,7 @@ WIN7_PLACES = [
     ("Pictures", "folder-pictures", None),
     ("Music", "folder-music", None),
     ("Games", "applications-games", None),
-    ("Computer", "computer", ""),
-    ("Control Panel", "preferences-system", None),
-    ("Devices and Printers", "drive-multidisk", None),
-    ("Default Programs", "applications-system", None),
-    ("Help and Support", "help-browser", None),
+    ("Computer", "computer", "thunar /"),
 ]
 
 POWER_ICONS = {
@@ -69,6 +65,38 @@ ALIGN_ICONS = {
     "right": "\uf038",
 }
 ALIGN_ORDER = ["left", "center", "right"]
+
+# Shown in the Recommended/Recently Used section until real recents exist.
+DEFAULT_RECOMMENDED = [
+    "Alacritty.desktop",
+    "brave-browser.desktop",
+    "thunar.desktop",
+    "org.pulseaudio.pavucontrol.desktop",
+    "hyprtk-themer.desktop",
+]
+
+# Shown in the Win11 Pinned grid until the user pins apps.
+DEFAULT_PINNED = [
+    "Alacritty.desktop",
+    "brave-browser.desktop",
+    "thunar.desktop",
+    "hyprtk-themer.desktop",
+    "chromium.desktop",
+    "kitty.desktop",
+    "org.pulseaudio.pavucontrol.desktop",
+    "btop.desktop",
+]
+
+POSITION_ORDER = [
+    "auto",
+    "center",
+    "top-left",
+    "top-center",
+    "top-right",
+    "bottom-left",
+    "bottom-center",
+    "bottom-right",
+]
 
 LAYOUT_ICONS = theme.LAYOUT_ICONS
 LAYOUT_ORDER = theme.LAYOUT_ORDER
@@ -229,7 +257,11 @@ class MenuWindow(Gtk.Window):
         window_w = self.get_allocated_width() or int(self.config.get("width", 920))
         sidebar_w = int(self.config.get("sidebar_width", 180))
         recents_w = int(self.config.get("recents_width", 230))
-        self.pane_main.set_position(sidebar_w)
+        if self.config.get("layout") == "win7":
+            # Right places panel stays a fixed default width; apps take the rest.
+            self.pane_main.set_position(max(window_w - 220, 400))
+        else:
+            self.pane_main.set_position(sidebar_w)
         if hasattr(self, "pane_right"):
             self.pane_right.set_position(max(window_w - sidebar_w - recents_w, 120))
 
@@ -411,6 +443,7 @@ class MenuWindow(Gtk.Window):
         # ── Right pane: places + search ──
         right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         right.get_style_context().add_class("win7-right")
+        right.set_size_request(220, -1)
 
         places_scroll = Gtk.ScrolledWindow()
         places_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -551,7 +584,9 @@ class MenuWindow(Gtk.Window):
         self._win11_home = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._win11_home.get_style_context().add_class("win11-home")
         for child in list(root.get_children()):
-            if child is not app_scroll:
+            # Keep the search bar and the app list at root level so they stay
+            # visible in both the home and apps views.
+            if child is not app_scroll and child is not self.search:
                 root.remove(child)
                 self._win11_home.pack_start(child, False, False, 0)
         self._win11_home.set_vexpand(True)
@@ -609,11 +644,12 @@ class MenuWindow(Gtk.Window):
         grid = self._win11_pinned_grid
         for child in grid.get_children():
             grid.remove(child)
+        pinned = self.pinned if self.pinned else DEFAULT_PINNED
         cols = 6
         col = 0
         row = 0
         for entry in self.apps:
-            if entry.id not in self.pinned:
+            if entry.id not in pinned:
                 continue
             tile = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             tile.get_style_context().add_class("win11-tile")
@@ -645,10 +681,19 @@ class MenuWindow(Gtk.Window):
         for child in self.recents_list.get_children():
             self.recents_list.remove(child)
         by_id = {entry.id: entry for entry in self.apps}
+        shown = 0
         for item in self.recents:
             entry = by_id.get(item)
             if entry:
                 self.recents_list.add(self._make_row(entry, 26))
+                shown += 1
+        if shown == 0:
+            # No real recents yet — show a sensible default set so the
+            # Recommended/Recently Used section isn't empty.
+            for item in DEFAULT_RECOMMENDED:
+                entry = by_id.get(item)
+                if entry:
+                    self.recents_list.add(self._make_row(entry, 26))
         self.recents_list.show_all()
 
     def _build_plasma(self):
@@ -667,7 +712,6 @@ class MenuWindow(Gtk.Window):
         self._plasma_stack.set_transition_type(Gtk.StackTransitionType.NONE)
         self._plasma_buttons = {}
         tab_defs = [
-            ("Favorites", "emblem-favorite"),
             ("Applications", "view-grid"),
             ("Computer", "drive-harddisk"),
             ("Recently Used", "document-open-recent"),
@@ -687,34 +731,53 @@ class MenuWindow(Gtk.Window):
             self._plasma_buttons[name] = button
         root.pack_start(tabs, False, False, 0)
 
-        # ── Favorites page: large icon grid ──
-        fav_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        fav_page.get_style_context().add_class("plasma-page")
-        fav_grid = Gtk.Grid()
-        fav_grid.get_style_context().add_class("plasma-fav-grid")
-        fav_grid.set_column_spacing(8)
-        fav_grid.set_row_spacing(8)
-        fav_grid.set_column_homogeneous(True)
-        self._plasma_fav_grid = fav_grid
-        fav_page.pack_start(fav_grid, True, True, 0)
-        self._plasma_stack.add_named(fav_page, "Favorites")
-
         # ── Applications page: category sidebar + app list ──
         app_page = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         app_page.pack1(self._build_sidebar(), False, False)
         app_page.pack2(self._make_center(with_favorites=False), True, True)
         self._plasma_stack.add_named(app_page, "Applications")
 
-        # ── Computer page: places list ──
+        # ── Computer page: in-menu file browser (places sidebar + content) ──
         comp_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         comp_page.get_style_context().add_class("plasma-page")
-        comp_scroll = Gtk.ScrolledWindow()
-        comp_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        comp_list = Gtk.ListBox()
-        comp_list.get_style_context().add_class("plasma-places")
-        comp_list.set_selection_mode(Gtk.SelectionMode.NONE)
-        comp_list.set_activate_on_single_click(True)
-        places_entries = [
+
+        # Navigation bar: back / up / current path (controls the content pane)
+        nav = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        nav.get_style_context().add_class("plasma-nav")
+        back_btn = Gtk.Button.new_from_icon_name("go-previous-symbolic", Gtk.IconSize.MENU)
+        back_btn.get_style_context().add_class("plasma-nav-btn")
+        back_btn.connect("clicked", self._on_plasma_back)
+        back_btn.set_sensitive(False)
+        nav.pack_start(back_btn, False, False, 0)
+        up_btn = Gtk.Button.new_from_icon_name("go-up-symbolic", Gtk.IconSize.MENU)
+        up_btn.get_style_context().add_class("plasma-nav-btn")
+        up_btn.connect("clicked", self._on_plasma_up)
+        up_btn.set_sensitive(False)
+        nav.pack_start(up_btn, False, False, 0)
+        path_label = Gtk.Label(label="Computer", xalign=0)
+        path_label.get_style_context().add_class("plasma-nav-path")
+        path_label.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
+        nav.pack_start(path_label, True, True, 0)
+        self._plasma_nav = nav
+        self._plasma_back_btn = back_btn
+        self._plasma_up_btn = up_btn
+        self._plasma_path_label = path_label
+        comp_page.pack_start(nav, False, False, 0)
+
+        # Two panes: sticky places sidebar + content browser
+        paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
+        paned.get_style_context().add_class("plasma-places-paned")
+
+        # Left: places list (stays visible so other locations stay reachable)
+        places_scroll = Gtk.ScrolledWindow()
+        places_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        places_scroll.set_size_request(150, -1)
+        places_list = Gtk.ListBox()
+        places_list.get_style_context().add_class("plasma-places")
+        places_list.set_selection_mode(Gtk.SelectionMode.NONE)
+        places_list.set_activate_on_single_click(True)
+        self._plasma_places = places_list
+        self._plasma_root_places = [
             ("Home", "user-home", os.path.expanduser("~")),
             ("Desktop", "user-desktop", os.path.expanduser("~/Desktop")),
             ("Documents", "folder-documents", os.path.expanduser("~/Documents")),
@@ -722,25 +785,31 @@ class MenuWindow(Gtk.Window):
             ("Music", "folder-music", os.path.expanduser("~/Music")),
             ("Pictures", "folder-pictures", os.path.expanduser("~/Pictures")),
             ("Videos", "folder-videos", os.path.expanduser("~/Videos")),
-            ("Trash", "user-trash", ""),
-            ("Network", "network-workgroup", ""),
+            ("Trash", "user-trash", "trash:///"),
+            ("Network", "network-workgroup", "network:///"),
         ]
-        for lbl, icon_name, path in places_entries:
-            row = Gtk.ListBoxRow()
-            row.get_style_context().add_class("plasma-place-row")
-            hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-            icon = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.MENU)
-            hbox.pack_start(icon, False, False, 0)
-            label = Gtk.Label(label=lbl, xalign=0)
-            hbox.pack_start(label, True, True, 0)
-            row.add(hbox)
-            row.place_path = path
-            places_list_rows = comp_list
-            row.connect("button-release-event", self._on_plasma_place, path)
-            comp_list.add(row)
-        comp_scroll.add(comp_list)
-        comp_page.pack_start(comp_scroll, True, True, 0)
+        for lbl, icon_name, path in self._plasma_root_places:
+            places_list.add(self._make_plasma_row(lbl, icon_name, path))
+        places_list.connect("row-activated", self._on_plasma_place_activated)
+        places_scroll.add(places_list)
+        paned.pack1(places_scroll, False, False)
+
+        # Right: content browser (current directory contents)
+        content_scroll = Gtk.ScrolledWindow()
+        content_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        browse_list = Gtk.ListBox()
+        browse_list.get_style_context().add_class("plasma-places")
+        browse_list.set_selection_mode(Gtk.SelectionMode.NONE)
+        browse_list.set_activate_on_single_click(True)
+        self._plasma_browse_list = browse_list
+        browse_list.connect("row-activated", self._on_plasma_browse_activated)
+        content_scroll.add(browse_list)
+        paned.pack2(content_scroll, True, True)
+
+        comp_page.pack_start(paned, True, True, 0)
         self._plasma_stack.add_named(comp_page, "Computer")
+        self._plasma_browse_history: list[str] = []
+        self._plasma_current_path: str | None = None
 
         # ── Recently Used page ──
         rec_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -764,55 +833,156 @@ class MenuWindow(Gtk.Window):
         footer.pack_start(self._build_powerbar(), True, True, 0)
         root.pack_end(footer, False, False, 0)
 
-        self._plasma_stack.set_visible_child_name("Favorites")
-        self._plasma_buttons["Favorites"].get_style_context().add_class("active")
+        self._plasma_stack.set_visible_child_name("Applications")
+        self._plasma_buttons["Applications"].get_style_context().add_class("active")
         return root
 
-    def _on_plasma_place(self, row, event, path):
-        """Open a Plasma Computer place."""
-        if path and os.path.isdir(path):
+    def _on_plasma_place_activated(self, _listbox, row):
+        """A places-sidebar entry was clicked — show it in the content pane."""
+        path = getattr(row, "row_path", None)
+        if not path:
+            return
+        if os.path.isdir(path):
+            # Jump to the place, starting a fresh navigation history.
+            self._plasma_browse_history = []
+            self._plasma_enter_dir(path)
+        else:
+            self._plasma_open_external(path)
+
+    def _on_plasma_browse_activated(self, _listbox, row):
+        """A content-pane row was clicked — enter subfolder or open file."""
+        path = getattr(row, "row_path", None)
+        if not path:
+            return
+        if os.path.isdir(path):
+            self._plasma_enter_dir(path)
+        else:
+            self._plasma_open_external(path)
+
+    def _make_plasma_row(self, label_text: str, icon_name: str, path: str) -> Gtk.ListBoxRow:
+        row = Gtk.ListBoxRow()
+        row.get_style_context().add_class("plasma-place-row")
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        icon = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.MENU)
+        icon.get_style_context().add_class("plasma-place-icon")
+        hbox.pack_start(icon, False, False, 0)
+        label = Gtk.Label(label=label_text, xalign=0)
+        label.get_style_context().add_class("plasma-place-label")
+        label.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
+        hbox.pack_start(label, True, True, 0)
+        row.add(hbox)
+        row.row_path = path
+        return row
+
+    def _plasma_enter_dir(self, path):
+        path = os.path.abspath(path)
+        if not os.path.isdir(path):
+            return
+        if self._plasma_current_path is not None:
+            self._plasma_browse_history.append(self._plasma_current_path)
+        self._plasma_current_path = path
+        self._plasma_populate_places(path)
+
+    def _plasma_open_external(self, path):
+        """Open a file or special location (trash:///, network:///) externally."""
+        try:
+            subprocess.Popen(["xdg-open", path], start_new_session=True)
+        except Exception:
             try:
                 subprocess.Popen(["thunar", path], start_new_session=True)
             except Exception:
                 pass
         self.hide_menu()
 
-    def _refresh_plasma_favorites(self):
-        """Populate the Plasma favorites grid with large icon tiles."""
-        if not hasattr(self, "_plasma_fav_grid"):
+    def _on_plasma_back(self, _btn=None):
+        if not self._plasma_browse_history:
+            self._plasma_show_places()
             return
-        grid = self._plasma_fav_grid
-        for child in grid.get_children():
-            grid.remove(child)
-        cols = 4
-        col = 0
-        row = 0
-        for entry in self.apps:
-            if entry.id not in self.pinned:
-                continue
-            tile = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-            tile.get_style_context().add_class("plasma-fav-tile")
-            image = self._make_icon_image(entry, 48)
-            image.get_style_context().add_class("plasma-fav-icon")
-            tile.pack_start(image, False, False, 0)
-            label = Gtk.Label(
-                label=entry.name,
-                ellipsize=Pango.EllipsizeMode.END,
-                max_width_chars=10,
-            )
-            label.get_style_context().add_class("plasma-fav-label")
-            tile.pack_start(label, False, False, 0)
-            btn = Gtk.Button()
-            btn.get_style_context().add_class("plasma-fav-btn")
-            btn.add(tile)
-            btn.set_tooltip_text(entry.name)
-            btn.connect("clicked", self._on_fav_clicked, entry)
-            grid.attach(btn, col, row, 1, 1)
-            col += 1
-            if col >= cols:
-                col = 0
-                row += 1
-        grid.show_all()
+        self._plasma_current_path = self._plasma_browse_history.pop()
+        self._plasma_populate_places(self._plasma_current_path)
+
+    def _on_plasma_up(self, _btn=None):
+        if self._plasma_current_path is None:
+            self._plasma_show_places()
+            return
+        parent = os.path.dirname(self._plasma_current_path)
+        if parent == self._plasma_current_path:
+            return
+        self._plasma_browse_history.append(self._plasma_current_path)
+        self._plasma_current_path = parent
+        self._plasma_populate_places(parent)
+
+    def _plasma_show_places(self):
+        """Reset the browser to Home as the default content view."""
+        self._plasma_browse_history = []
+        self._plasma_current_path = None
+        self._plasma_enter_dir(os.path.expanduser("~"))
+
+    def _plasma_populate_places(self, path):
+        """List the contents of *path* in the content pane (dirs first, then files)."""
+        browse = getattr(self, "_plasma_browse_list", None)
+        if browse is None:
+            return
+        for child in browse.get_children():
+            browse.remove(child)
+        try:
+            entries = list(os.scandir(path))
+        except OSError:
+            entries = []
+        dirs = [e for e in entries if e.is_dir(follow_symlinks=True)]
+        files = [e for e in entries if not e.is_dir(follow_symlinks=True)]
+        dirs.sort(key=lambda e: e.name.lower())
+        files.sort(key=lambda e: e.name.lower())
+        for entry in dirs:
+            row = self._make_plasma_row(entry.name, "folder", entry.path)
+            row.get_style_context().add_class("plasma-place-dir")
+            browse.add(row)
+        for entry in files:
+            row = self._make_plasma_row(entry.name, self._plasma_file_icon(entry.name), entry.path)
+            row.get_style_context().add_class("plasma-place-file")
+            browse.add(row)
+        if not entries:
+            empty = Gtk.Label(label="(empty folder)", xalign=0)
+            empty.get_style_context().add_class("plasma-empty")
+            empty_row = Gtk.ListBoxRow()
+            empty_row.get_style_context().add_class("plasma-place-row")
+            empty_row.set_sensitive(False)
+            empty_row.add(empty)
+            browse.add(empty_row)
+        browse.show_all()
+        self._plasma_update_nav()
+
+    def _plasma_file_icon(self, name: str) -> str:
+        ext = os.path.splitext(name)[1].lstrip(".").lower()
+        if ext in {"png", "jpg", "jpeg", "webp", "gif", "svg", "bmp"}:
+            return "image-x-generic"
+        if ext in {"mp3", "wav", "flac", "ogg", "m4a"}:
+            return "audio-x-generic"
+        if ext in {"mp4", "mkv", "webm", "mov", "avi"}:
+            return "video-x-generic"
+        if ext in {"zip", "tar", "gz", "bz2", "xz", "7z", "rar"}:
+            return "package-x-generic"
+        if ext == "py":
+            return "text-x-python"
+        if ext == "sh":
+            return "text-x-script"
+        if ext == "pdf":
+            return "application-pdf"
+        return "text-x-generic"
+
+    def _plasma_update_nav(self):
+        """Refresh the browser nav bar (path label + back/up sensitivity)."""
+        if not hasattr(self, "_plasma_back_btn"):
+            return
+        path = self._plasma_current_path
+        if path is None:
+            self._plasma_path_label.set_text("Computer")
+            self._plasma_back_btn.set_sensitive(False)
+            self._plasma_up_btn.set_sensitive(False)
+        else:
+            self._plasma_path_label.set_text(path)
+            self._plasma_back_btn.set_sensitive(bool(self._plasma_browse_history))
+            self._plasma_up_btn.set_sensitive(os.path.dirname(path) != path)
 
     def _on_plasma_tab(self, button, name):
         self._plasma_stack.set_visible_child_name(name)
@@ -834,17 +1004,14 @@ class MenuWindow(Gtk.Window):
         title.get_style_context().add_class("power-title")
         left.pack_start(title, False, False, 0)
 
-        self.align_button = Gtk.Button()
-        self.align_button.get_style_context().add_class("align-btn")
-        self.align_button.connect("clicked", self._on_align_clicked)
-        self._update_align_button()
-        left.pack_start(self.align_button, False, False, 0)
-
-        self.layout_button = Gtk.Button()
-        self.layout_button.get_style_context().add_class("layout-btn")
-        self.layout_button.connect("clicked", self._on_layout_clicked)
-        self._update_layout_button()
-        left.pack_start(self.layout_button, False, False, 0)
+        self.settings_button = Gtk.Button()
+        self.settings_button.get_style_context().add_class("settings-btn")
+        self.settings_button.set_tooltip_text("Menu settings")
+        cog = Gtk.Image.new_from_icon_name("preferences-system-symbolic", Gtk.IconSize.MENU)
+        cog.get_style_context().add_class("settings-icon")
+        self.settings_button.add(cog)
+        self.settings_button.connect("clicked", self._open_settings)
+        left.pack_start(self.settings_button, False, False, 0)
 
         bar.pack_start(left, True, True, 0)
 
@@ -930,33 +1097,138 @@ class MenuWindow(Gtk.Window):
         self._refresh_recents()
         self._refresh_apps()
 
-    def _update_align_button(self):
-        align = self.config.get("align", "left")
-        if align not in ALIGN_ICONS:
-            align = "left"
-        icon = ALIGN_ICONS[align]
-        label = Gtk.Label(label=icon)
-        label.get_style_context().add_class("align-icon")
-        child = self.align_button.get_child()
-        if child:
-            self.align_button.remove(child)
-        self.align_button.add(label)
-        self.align_button.set_tooltip_text(
-            "Menu alignment: %s (click to cycle)" % align
-        )
-        self.align_button.show_all()
+    def _open_settings(self, _button):
+        """Open a floating settings window for layout, alignment and position."""
+        win = getattr(self, "_settings_window", None)
+        if win is not None:
+            win.present()
+            return
 
-    def _on_align_clicked(self, _button):
+        win = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+        win.set_title("hyprtk-menu settings")
+        win.set_decorated(False)
+        win.set_keep_above(True)
+        win.set_default_size(360, -1)
+        win.get_style_context().add_class("menu-root")
+        win.get_style_context().add_class("menu")
+        win.get_style_context().add_class("settings-dialog")
+        win.set_position(Gtk.WindowPosition.CENTER)
+        win.connect("destroy", self._on_settings_closed)
+        win.connect("key-press-event", self._on_settings_key)
+        self._settings_window = win
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        vbox.get_style_context().add_class("settings-window")
+
+        # Draggable header
+        header = Gtk.EventBox()
+        header.get_style_context().add_class("settings-header")
+        header.connect("button-press-event", self._on_settings_header_press)
+        title = Gtk.Label(label="Menu Settings")
+        title.get_style_context().add_class("settings-title")
+        header.add(title)
+        vbox.pack_start(header, False, False, 0)
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        content.get_style_context().add_class("settings-content")
+        vbox.pack_start(content, True, True, 0)
+
+        def _make_row(label_text):
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+            label = Gtk.Label(label=label_text, xalign=0)
+            label.get_style_context().add_class("settings-label")
+            row.pack_start(label, True, True, 0)
+            combo = Gtk.ComboBoxText()
+            combo.get_style_context().add_class("settings-combo")
+            row.pack_end(combo, False, False, 0)
+            content.pack_start(row, False, False, 0)
+            return combo
+
+        # Menu theme (layout)
+        layout_combo = _make_row("Menu theme")
+        for name in LAYOUT_ORDER:
+            layout_combo.append_text(name.capitalize())
+        layout = self.config.get("layout", "whisker")
+        layout_combo.set_active(max(0, LAYOUT_ORDER.index(layout if layout in LAYOUT_ORDER else "whisker")))
+
+        # Menu alignment
+        align_combo = _make_row("Alignment")
+        for name in ALIGN_ORDER:
+            align_combo.append_text(name.capitalize())
         align = self.config.get("align", "left")
-        try:
-            index = ALIGN_ORDER.index(align)
-        except ValueError:
-            index = 0
-        next_align = ALIGN_ORDER[(index + 1) % len(ALIGN_ORDER)]
-        self.config["align"] = next_align
+        align_combo.set_active(max(0, ALIGN_ORDER.index(align if align in ALIGN_ORDER else "left")))
+
+        # Menu position
+        position_combo = _make_row("Position")
+        for name in POSITION_ORDER:
+            position_combo.append_text(name.replace("-", " ").capitalize())
+        position = self.config.get("position", "auto")
+        position_combo.set_active(max(0, POSITION_ORDER.index(position if position in POSITION_ORDER else "auto")))
+
+        # Buttons
+        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        buttons.get_style_context().add_class("settings-buttons")
+        cancel_btn = Gtk.Button(label="Cancel")
+        cancel_btn.get_style_context().add_class("settings-cancel")
+        cancel_btn.connect("clicked", lambda *_: win.destroy())
+        apply_btn = Gtk.Button(label="Apply")
+        apply_btn.get_style_context().add_class("settings-apply")
+        apply_btn.connect(
+            "clicked",
+            lambda *_: self._apply_settings(win, layout_combo, align_combo, position_combo),
+        )
+        buttons.pack_end(apply_btn, False, False, 0)
+        buttons.pack_end(cancel_btn, False, False, 0)
+        vbox.pack_end(buttons, False, False, 0)
+
+        win.add(vbox)
+        win.show_all()
+        apply_btn.set_can_default(True)
+        apply_btn.grab_default()
+
+    def _on_settings_header_press(self, _widget, event):
+        """Allow dragging the frameless settings window by its header."""
+        if event.button == 1 and event.type == Gdk.EventType.BUTTON_PRESS:
+            self._settings_window.begin_move_drag(
+                event.button, int(event.x_root), int(event.y_root), event.time
+            )
+            return True
+        return False
+
+    def _on_settings_key(self, _win, event):
+        if event.keyval == Gdk.KEY_Escape:
+            self._settings_window.destroy()
+            return True
+        return False
+
+    def _on_settings_closed(self, *_):
+        self._settings_window = None
+
+    def _apply_settings(self, win, layout_combo, align_combo, position_combo):
+        new_layout = LAYOUT_ORDER[layout_combo.get_active()]
+        new_align = ALIGN_ORDER[align_combo.get_active()]
+        new_position = POSITION_ORDER[position_combo.get_active()]
+        win.destroy()
+
+        old_layout = self.config.get("layout", "whisker")
+        self.config["layout"] = new_layout
+        self.config["align"] = new_align
+        self.config["position"] = new_position
         cfg.save_config(self.config)
-        self._update_align_button()
-        self.reposition()
+
+        if new_layout != old_layout:
+            self._apply_layout_class()
+            try:
+                apply_css(build_css())
+            except Exception as exc:
+                print("hyprtk-menu: layout css update failed: %s" % exc, flush=True)
+            was_visible = self.get_visible()
+            if was_visible:
+                GLib.idle_add(self._rebuild_ui)
+            else:
+                self._rebuild_ui()
+        else:
+            self.reposition()
 
     def _apply_layout_class(self):
         layout = self.config.get("layout", "whisker")
@@ -965,42 +1237,6 @@ class MenuWindow(Gtk.Window):
         for name in LAYOUT_ORDER:
             self.get_style_context().remove_class("layout-%s" % name)
         self.get_style_context().add_class("layout-%s" % layout)
-
-    def _update_layout_button(self):
-        layout = self.config.get("layout", "whisker")
-        if layout not in LAYOUT_ICONS:
-            layout = "whisker"
-        icon = LAYOUT_ICONS[layout]
-        label = Gtk.Label(label=icon)
-        label.get_style_context().add_class("layout-icon")
-        child = self.layout_button.get_child()
-        if child:
-            self.layout_button.remove(child)
-        self.layout_button.add(label)
-        self.layout_button.set_tooltip_text("Menu layout: %s (click to cycle)" % layout)
-        self.layout_button.show_all()
-
-    def _on_layout_clicked(self, _button):
-        layout = self.config.get("layout", "whisker")
-        try:
-            index = LAYOUT_ORDER.index(layout)
-        except ValueError:
-            index = 0
-        next_layout = LAYOUT_ORDER[(index + 1) % len(LAYOUT_ORDER)]
-        self.config["layout"] = next_layout
-        cfg.save_config(self.config)
-        self._apply_layout_class()
-        self._update_layout_button()
-        self._apply_layout_tweaks()
-        try:
-            apply_css(build_css())
-        except Exception as exc:
-            print("hyprtk-menu: layout css update failed: %s" % exc, flush=True)
-        was_visible = self.get_visible()
-        if was_visible:
-            GLib.idle_add(self._rebuild_ui)
-        else:
-            self._rebuild_ui()
 
     def _apply_layout_tweaks(self):
         """CSS-impossible per-layout tweaks. Called on open and layout change."""
@@ -1090,11 +1326,9 @@ class MenuWindow(Gtk.Window):
     # -- refresh ----------------------------------------------------------
 
     def _refresh_favorites(self):
-        # Win11 pinned grid + Plasma fav grid populate regardless of fav_row
+        # Win11 pinned grid populates regardless of fav_row
         if hasattr(self, "_win11_pinned_grid"):
             self._refresh_win11_pinned()
-        if hasattr(self, "_plasma_fav_grid"):
-            self._refresh_plasma_favorites()
         if not hasattr(self, "fav_row"):
             return
         for child in self.fav_row.get_children():
@@ -1302,6 +1536,8 @@ class MenuWindow(Gtk.Window):
         self._refresh_favorites()
         self._refresh_apps()
         self._refresh_recents()
+        if hasattr(self, "_plasma_places"):
+            self._plasma_show_places()
         self.show_all()
         if hasattr(self, "_reapply_win11_view"):
             self._reapply_win11_view()
@@ -1315,6 +1551,8 @@ class MenuWindow(Gtk.Window):
         self.hide()
         self.search.set_text("")
         self.current_category = "All"
+        if getattr(self, "_settings_window", None) is not None:
+            self._settings_window.destroy()
         if hasattr(self, "sidebar"):
             for child in self.sidebar.get_children():
                 if getattr(child, "category", None) == "All":
