@@ -216,13 +216,28 @@ class MenuWindow(Gtk.Window):
             config_path = os.path.expanduser(
                 "~/hyprtk/configs/waybar/themes/%s/config" % theme_name
             )
-            try:
-                with open(config_path, encoding="utf-8") as f:
-                    data = json.loads(re.sub(r"//.*", "", f.read()))
-                position = data.get("position", "top")
-                return "bottom" if position == "bottom" else "top"
-            except (OSError, ValueError):
-                pass
+            edge = self._waybar_config_edge(config_path)
+            if edge:
+                return edge
+        return None
+
+    def _waybar_config_edge(self, config_path):
+        """Read top/bottom from a waybar theme config (position or layer)."""
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                raw = f.read()
+            # Strip // comments and trailing commas so JSON tolerates waybar's style.
+            stripped = re.sub(r"//.*", "", raw)
+            stripped = re.sub(r",(\s*[}\]])", r"\1", stripped)
+            data = json.loads(stripped)
+        except (OSError, ValueError):
+            return None
+        position = data.get("position")
+        if position in ("bottom", "top"):
+            return position
+        layer = data.get("layer")
+        if layer in ("bottom", "top"):
+            return layer
         return None
 
     def _apply_position(self):
