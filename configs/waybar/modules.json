@@ -143,21 +143,22 @@
         "tooltip": false
     },
 
+    // hyprtk-menu
+    "custom/hyprtk-menu": {
+        "format": " Home",
+        "on-click": "$HOME/.local/bin/hyprtk-menu --toggle",
+        "tooltip": true,
+        "tooltip-format": "App Menu (hyprtk-menu)"
+    },
+
     // Rofi Application Launcher
     "custom/appmenu": {
-        "format": " Home",
+        "format": "",
         "on-click": "~/hyprtk/installer/scripts/appsmenu.sh",
         "tooltip": true,
         "tooltip-format": "Application Launcher"
     },
 
-    // hyprtk-menu
-    "custom/hyprtk-menu": {
-        "format": "",
-        "on-click": "$HOME/.local/bin/hyprtk-menu --toggle",
-        "tooltip": true,
-        "tooltip-format": "App Menu (hyprtk-menu)"
-    },
 
     // Power Menu
     "custom/exit": {
