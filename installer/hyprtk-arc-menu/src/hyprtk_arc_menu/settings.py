@@ -334,8 +334,10 @@ class SettingsDialog(Gtk.Window):
         ivbox.pack_start(scroll, True, True, 0)
 
         btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        up_btn = Gtk.Button(label="Move Up")
-        down_btn = Gtk.Button(label="Move Down")
+        up_btn = Gtk.Button.new_from_icon_name("go-up", Gtk.IconSize.BUTTON)
+        down_btn = Gtk.Button.new_from_icon_name("go-down", Gtk.IconSize.BUTTON)
+        up_btn.set_tooltip_text("Move item up")
+        down_btn.set_tooltip_text("Move item down")
         add_btn = Gtk.Button(label="Add")
         edit_btn = Gtk.Button(label="Edit")
         remove_btn = Gtk.Button(label="Remove")
