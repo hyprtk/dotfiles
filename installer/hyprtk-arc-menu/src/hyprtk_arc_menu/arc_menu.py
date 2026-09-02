@@ -317,10 +317,13 @@ class ArcMenu(Gtk.Fixed):
         eased = ease_out_cubic(t)
 
         if self._opening:
+            # Items emerge from the FAB and spread outward while fading in.
             radius = eased * self.effective_radius()
             opacity = eased
         else:
-            radius = (1 - eased) * self.effective_radius()
+            # Items stay in place and simply fade out, so they never bunch up
+            # onto the FAB at the end of the collapse.
+            radius = self.effective_radius()
             opacity = 1 - eased
 
         self.layout_items(win_w, win_h, radius, opacity)
