@@ -113,6 +113,19 @@ class ArcMenu(Gtk.Fixed):
     def radius(self) -> int:
         return int(self.cfg["radius"])
 
+    def effective_radius(self) -> int:
+        """Ring radius that keeps items from overlapping on the 90° arc.
+
+        Items are spread over a 90° quadrant; as their count grows they crowd
+        together. Grow the radius so adjacent item edges always keep a small gap.
+        """
+        n = len(self._items)
+        if n <= 1:
+            return self.radius
+        delta = math.radians(90.0 / (n - 1))
+        min_radius = (self.item_size + 4) / (2 * math.sin(delta / 2))
+        return max(self.radius, int(math.ceil(min_radius)))
+
     @property
     def animation_time(self) -> int:
         return int(self.cfg["animation_time"])
@@ -125,7 +138,7 @@ class ArcMenu(Gtk.Fixed):
     def open_size(self) -> tuple[int, int]:
         m = self.margin
         f = self.fab_size
-        r = self.radius
+        r = self.effective_radius()
         i = self.item_size
         return m + f // 2 + r + i // 2, m + f // 2 + r + i // 2
 
@@ -304,10 +317,10 @@ class ArcMenu(Gtk.Fixed):
         eased = ease_out_cubic(t)
 
         if self._opening:
-            radius = eased * self.radius
+            radius = eased * self.effective_radius()
             opacity = eased
         else:
-            radius = (1 - eased) * self.radius
+            radius = (1 - eased) * self.effective_radius()
             opacity = 1 - eased
 
         self.layout_items(win_w, win_h, radius, opacity)

@@ -20,6 +20,11 @@ APP_DIRS = [
     Path("/var/lib/flatpak/exports/share/applications"),
 ]
 
+# Drag target used to reorder menu items in the settings dialog.
+REORDER_TARGETS = [
+    Gtk.TargetEntry.new("application/x-hyprtk-arc-item", Gtk.TargetFlags.SAME_APP, 0)
+]
+
 
 def _hex_to_rgba(hex_color: str) -> Gdk.RGBA:
     rgba = Gdk.RGBA()
@@ -326,6 +331,9 @@ class SettingsDialog(Gtk.Window):
 
         self._list = Gtk.ListBox()
         self._list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        # Drag-and-drop reordering of menu items.
+        self._list.drag_dest_set(Gtk.DestDefaults.ALL, REORDER_TARGETS, Gdk.DragAction.MOVE)
+        self._list.connect("drag-data-received", self._on_drag_data_received)
         self._populate_items()
         scroll = Gtk.ScrolledWindow()
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -387,10 +395,38 @@ class SettingsDialog(Gtk.Window):
     def _populate_items(self) -> None:
         for child in self._list.get_children():
             self._list.remove(child)
-        for item in self._items:
+        for idx, item in enumerate(self._items):
             row = self._make_item_row(item)
+            row.drag_source_set(
+                Gdk.ModifierType.BUTTON1_MASK, REORDER_TARGETS, Gdk.DragAction.MOVE
+            )
+            row.connect("drag-data-get", self._on_drag_data_get)
+            row._item_index = idx
             self._list.add(row)
         self._list.show_all()
+
+    def _on_drag_data_get(self, row, _context, selection, *_args) -> None:
+        selection.set(selection.get_target(), 8, bytes([row._item_index]))
+
+    def _on_drag_data_received(self, _list, context, x, y, data, _info, time) -> None:
+        dragged = data.get_data()
+        if not dragged:
+            context.finish(False, False, time)
+            return
+        dragged_idx = dragged[0]
+        # Map drop position to a target row index.
+        target = len(self._items)
+        for row in self._list.get_children():
+            alloc = row.get_allocation()
+            if y <= alloc.y + alloc.height // 2:
+                target = row.get_index()
+                break
+        item = self._items.pop(dragged_idx)
+        if target > dragged_idx:
+            target -= 1
+        self._items.insert(target, item)
+        self._populate_items()
+        context.finish(True, False, time)
 
     def _make_item_row(self, item: dict) -> Gtk.ListBoxRow:
         row = Gtk.ListBoxRow()
