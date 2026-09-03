@@ -1,180 +1,152 @@
-# Hyprland Dots
+<div align="center">
 
-This is the configuration for Arch Linux, Arcolinux, Garuda, Manjaro based installations of Hyprland (Wayland) and/or XFCE (Xorg).
+# hyprtk dots
 
-This will work on most flavours of Arch.
+A single installer for a fully themed **Hyprland (Wayland)** desktop on any Arch-based Linux distribution — with **XFCE (Xorg)** kept as a safety net.
 
+**11 distros. One install. One pywal-powered theme.**
 
-## Common Packages
+`Arch` · `Archbang` · `Archcraft` · `Archman` · `BSLX` · `CachyOS` · `EndeavourOS` · `Garuda` · `Kiro` · `Manjaro` · `RebornOS`
 
-- Terminal: alacritty
-- Editor: nvim/ nano
-- Prompt: starship
-- Icons: Font Awesome
-- Menus: Rofi
-- Colorscheme: pywal16 (dynamic)
-- Browsers: chromium (brave optional)
-- Filemanager: Thunar
-- Cursor: Bibata Modern Ice
-- Icons: Papirus-Icon-Theme
-- Virtual Machine: qemu/kvm, vmware workstation, winboat
+---
 
-## Hyprland
+[Install](#install) · [Features](#features) · [Keybindings](#keybindings) · [Applications](#applications) · [Gallery](#gallery)
 
-- Status Bar: waybar
-- Screenshots: grim & slurp
-- Clipboard Manager: cliphist
-- Logout: hyprlogout
-- Screenlock: swaylock-effects
-- Screen Capture: wf-recorder
+</div>
 
-## Templating
+---
 
-Hyprland: Included is a pywal16 configuration that changes the color scheme based on a randomly selected wallpaper. 
+## What is this?
 
-	Keybinding SuperKey + Shift + w you can change the wallpaper.
+A curated, consistent desktop configuration that replaces the default look and feel of Arch Linux with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** — waybar, rofi, the app menu, the lock screen and even your icons all stay in sync.
 
-	Keybinding SuperKey + Ctrl + w opens rofi with a list of installed wallpapers.
+- **Wayland first** — Hyprland with a floating/split hybrid workflow
+- **Xorg fallback** — XFCE stays installed as a safety net
+- **Auto-detected distro** — the installer detects your OS and applies the right tweaks
+- **No manual colour config** — pywal generates a full palette from your wallpaper
 
-	Keybinding SuperKey + w opens matuwall to display all wallpapers on a film roll (Editable)
+## Install
 
-See also the .zshrc and the key bindings on Hyprland and XFCE for more alias definitions.
+> Back up your existing `~/.config` before running.
 
-Hyprland: In addition, you can switch the Waybar Template
+```bash
+git clone https://github.com/hyprtk/dotfiles.git ~/hyprtk
+cd ~/hyprtk
+sh ./1-install.sh
+```
 
-	Keybinding SUPER + CTRL + T or by pressing the _ icon under the picture icon in waybar.
+The installer is a guided `gum` TUI: it detects your distro, then asks about
+package groups, dotfiles and services before installing everything.
 
-The templates are available in ~/dotfiles/waybar/themes. You can add your own personal themes into this folder. The script will read in the folder structure.
+> Every Arch-based system is different — results can vary. Review the prompts before accepting.
+
+## Features
+
+| Area | What you get |
+| --- | --- |
+| **Terminal** | Alacritty + starship prompt |
+| **Editor** | Neovim (Vim fallback) |
+| **App launcher** | Rofi (plus three bundled GTK menus, see below) |
+| **Status bar** | Waybar — 5+ switchable frosted-glass themes |
+| **Theming** | pywal16, live, from your wallpaper |
+| **Wallpaper** | Matuwall film-strip picker + rofi list + random |
+| **Screenshots** | grim & slurp |
+| **Screen recording** | wf-recorder |
+| **Clipboard** | cliphist |
+| **Screen lock** | swaylock-effects |
+| **Logout** | hyprlogout |
+| **Files** | Thunar |
+| **Icons** | Papirus (recolored to match the theme) |
+| **Cursor** | Bibata Modern Ice |
+| **Browser** | Brave / Chromium |
+| **VMs** | QEMU/KVM, VMware |
+
+## Keybindings
+
+`Super` = the Windows key.
+
+### Apps & windows
+
+| Key | Action |
+| --- | --- |
+| `Super + Return` | Terminal (Alacritty) |
+| `Super + Q` | Close window |
+| `Super + D` | App menu (rofi) |
+| `Super + F` | File manager (Thunar) |
+| `Super + B` / `Super + Ctrl + B` | Brave / Chromium |
+| `Super + X` | Exit session |
+| `Super + M` | Toggle fullscreen |
+| `Super + V` | Float / resize / center window |
+| `Super + J` / `Super + K` | Toggle / swap split |
+
+### Workspaces
+
+| Key | Action |
+| --- | --- |
+| `Super + 1..0` | Switch to workspace |
+| `Super + Shift + 1..0` | Move window to workspace |
+
+### Wallpaper & themes
+
+| Key | Action |
+| --- | --- |
+| `Super + W` | Matuwall wallpaper picker |
+| `Super + Shift + W` | Random wallpaper |
+| `Super + Ctrl + W` | Wallpaper list (rofi) |
+| `Super + Ctrl + T` | Switch waybar theme |
+| `Super + Shift + B` | Reload waybar |
+
+### Media & system
+
+| Key | Action |
+| --- | --- |
+| `Super + Print` / `Super + P` | Screenshot |
+| `Super + Shift + Print` | Start screen recording |
+| `Super + Alt + Print` | Stop screen recording |
+| `Super + C` | Color picker (hyprpicker) |
+| `Super + Ctrl + Q` | Power menu (hyprlogout) |
+| `Super + R` | Reload Hyprland config |
 
 ## Applications
 
-The dotfiles bundle three standalone applications, all installed from
-`installer/` by `1-install.sh`. Each is a separate project that reads its own
-config from `~/.config/<name>/` and is themed by pywal / the active waybar
-theme.
+Three standalone GTK apps ship with the installer, each with its own project, config and pywal theming:
+
+| App | What it does | Open with |
+| --- | --- | --- |
+| **theme-gui** | Graphical theme manager — wallpapers, pywal, rofi, waybar, icons, swaylock, SDDM/GRUB | `Super + Alt + T` |
+| **hyprtk-menu** | Whisker-style app menu — search, favorites, recents, power buttons | `Super + Space` |
+| **hyprtk-arc-menu** | Material-style radial launcher | `Super + Ctrl + M` |
+
+See each app's section below for install and config details.
 
 ### theme-gui
 
-GTK4/Adwaita graphical theme manager for the Hyprland desktop. A single window
-with sidebar pages for: Wallpaper, Pywal Colors, Rofi Themes, Waybar Themes,
-Matuwall, Swaylock, Icons, and SDDM & GRUB.
+A single GTK4 window with sidebar pages for every theming component. Apply a wallpaper and it runs the full pipeline: pywal, waybar restart, icon recolor, swaylock, rofi, matuwall and SDDM/GRUB.
 
-- **Install**: `installer/theme-gui/install.sh` → `~/.local/share/theme-gui/`,
-  launchers `theme-gui` / `hyprtk-themer`
-- **Open**: `theme-gui` (keybind `SUPER + ALT + T`)
-- **Config**: `~/.config/theme-gui/config.json`
-
-  ```json
-  {
-    "last_page": "wallpaper",
-    "window_width": 1100,
-    "window_height": 700,
-    "wallpaper_dir": "~/Pictures/Wallpapers",
-    "pywal_backend": "wal"
-  }
-  ```
-
-- **Theming**: applies pywal colors across the whole desktop — runs pywal,
-  restarts waybar with the selected theme, recolors papirus icons, and syncs
-  swaylock, rofi, matuwall, and SDDM/GRUB. Each page targets one component.
+- Config: `~/.config/theme-gui/config.json`
 
 ### hyprtk-menu
 
-Whisker-style application menu (GTK3 + layer-shell) that floats over the
-desktop as a popup — instant search, category sidebar, pin favorites, recents,
-and power buttons.
+A floating popup menu with instant search, category sidebar, pinned favorites, recents and a power bar. Four layouts — `whisker`, `win7`, `win11`, `plasma` — switchable from its settings window. Drag the corner to resize, drag the dividers to rebalance columns.
 
-- **Install**: `installer/hyprtk-menu/install.sh` → `~/.local/share/hyprtk-menu/`,
-  launcher `hyprtk-menu`
-- **Open**: `hyprtk-menu` or `hyprtk-menu --toggle` (keybind `SUPER + SPACE`)
-- **Config**: `~/.config/hyprtk-menu/config.json` (auto-created)
-
-  ```json
-  {
-    "position": "auto",
-    "align": "left",
-    "layout": "whisker",
-    "width": 920,
-    "height": 580,
-    "sidebar_width": 180,
-    "recents_width": 230,
-    "show_recents": true,
-    "max_recents": 10,
-    "power": {
-      "lock": "pidof hyprlock || hyprlock",
-      "logout": "hyprshutdown",
-      "reboot": "systemctl reboot",
-      "shutdown": "systemctl poweroff",
-      "suspend": "systemctl suspend"
-    }
-  }
-  ```
-
-- **Theming**: frosted glass theme driven by pywal (`~/.cache/wal/colors.sh`)
-  with live color updates on wallpaper change. Matches the active waybar theme
-  (reads `~/.cache/.themestyle.sh`) — dark frosted, aero glass, light, clear,
-  glass, inverse, reverse, negative profiles — and re-anchors top↔bottom with
-  the bar. Layouts: `whisker`, `win7`, `win11`, `plasma`.
-- **Resize**: drag the corner grip to resize; drag the column dividers to
-  rebalance the categories/app list/recents widths.
+- Config: `~/.config/hyprtk-menu/config.json`
 
 ### hyprtk-arc-menu
 
-Material-style radial/arc menu (GTK3 + layer-shell). A FAB-style button sits in
-a configurable screen position and fans its items out on click — 180° at the
-top/bottom center, 90° at corners — each item launching a command. Middle-click
-anywhere on it quits the app.
+A FAB-style button that fans its items out on click — 180° at top/bottom center, 90° at corners. Circle or square shapes, transparent mode, live waybar theming. Middle-click anywhere to quit.
 
-- **Install**: `installer/hyprtk-arc-menu/install.sh` → `~/.local/share/hyprtk-arc-menu/`,
-  launchers `hyprtk-arc-menu` (+ `-toggle`)
-- **Open**: `hyprtk-arc-menu` (keybind `SUPER + CTRL + M`); toggle with
-  `hyprtk-arc-menu-toggle`
-- **Config**: `~/.config/hyprtk-arc-menu/config.json`
+- Config: `~/.config/hyprtk-arc-menu/config.json`
 
-  ```json
-  {
-    "position": "bottom-right",
-    "shape": "circle",
-    "transparent": false,
-    "follow_waybar": true,
-    "margin": 24,
-    "radius": 140,
-    "fab_size": 56,
-    "item_size": 48,
-    "animation_time": 300,
-    "items": [
-      { "icon": "firefox", "command": "firefox", "tooltip": "Firefox" }
-    ]
-  }
-  ```
+## Gallery
 
-- **Theming**: mirrors the active waybar theme's glass + text color and updates
-  live on theme switch; keeps pywal `color5`/`color6` accents for the button and
-  items even while following waybar. Options: `shape: square` (items encircle
-  the button on a square perimeter), `transparent: true` (icons only, no
-  backgrounds).
-- **Settings**: the in-menu Settings item opens a dialog to edit everything —
-  position, shape, radius/margin/sizes, animation, pywal / follow-waybar /
-  transparent toggles, colors, and the item list (add/edit/remove, move
-  up/down, search installed apps).
+| | | |
+| --- | --- | --- |
+| ![Arch](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch1.png) | ![Arch](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch2.png) | ![Arch](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch3.png) |
+| ![EndeavourOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour1.png) | ![EndeavourOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour2.png) | ![EndeavourOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour3.png) |
+| ![Garuda](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda1.png) | ![Garuda](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda2.png) | ![Garuda](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda3.png) |
 
-## Getting started
+More screenshots per distro live in [`assets/screenshots/`](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots).
 
-To make it easy for you to get started with my garuda-dots, here's a list of recommended next steps.
+## License
 
-PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIPTS.
-
-
-# Make sure that you're in your home directory
-
-	git clone https://github.com/hyprtk/dotfiles.git ~/hyprtk
-	cd ~/hyprtk
-	sh ./1-install.sh
-
-#Please note that every Arch Linux system is different and I cannot guarantee that everything works fine on your system.
-## Screenshots & Video
-
-Arch Linux
-![MODEL](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch1.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch2.png)
-![Model](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch3.png)
+[GPL-2.0](LICENSE)
