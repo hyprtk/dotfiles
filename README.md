@@ -142,8 +142,16 @@ A FAB-style button that fans its items out on click — 180° at top/bottom cent
 | | | |
 | --- | --- | --- |
 | ![Arch](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch1.png) | ![Arch](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch2.png) | ![Arch](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/arch3.png) |
+| ![Archbang](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archbang1.png) | ![Archbang](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archbang2.png) | ![Archbang](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archbang3.png) |
+| ![Archcraft](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archcraft1.png) | ![Archcraft](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archcraft2.png) | ![Archcraft](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archcraft3.png) |
+| ![Archman](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archman1.png) | ![Archman](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archman2.png) | ![Archman](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/archman3.png) |
+| ![BSLX](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/bslx1.png) | ![BSLX](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/bslx2.png) | ![BSLX](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/bslx3.png) |
+| ![CachyOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/cachy1.png) | ![CachyOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/cachy2.png) | ![CachyOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/cachy3.png) |
 | ![EndeavourOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour1.png) | ![EndeavourOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour2.png) | ![EndeavourOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/endeavour3.png) |
 | ![Garuda](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda1.png) | ![Garuda](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda2.png) | ![Garuda](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/garuda3.png) |
+| ![Kiro](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/kiro1.png) | ![Kiro](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/kiro2.png) | ![Kiro](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/kiro3.png) |
+| ![Manjaro](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/manjaro1.png) | ![Manjaro](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/manjaro2.png) | ![Manjaro](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/manjaro3.png) |
+| ![RebornOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn1.png) | ![RebornOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn2.png) | ![RebornOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn3.png) |
 
 More screenshots per distro live in [`assets/screenshots/`](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots).
 
