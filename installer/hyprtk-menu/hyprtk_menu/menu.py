@@ -221,12 +221,14 @@ class MenuWindow(Gtk.Window):
 
     def _monitor_width(self):
         """Width in px of the monitor the menu surfaces on (primary)."""
-        screen = Gdk.Screen.get_default()
-        if screen is None:
+        display = Gdk.Display.get_default()
+        if display is None or display.get_n_monitors() < 1:
             return 0
-        monitor = screen.get_primary_monitor()
-        if monitor is None:
-            monitor = screen.get_monitor(0)
+        monitor = display.get_primary_monitor()
+        if monitor is None or not hasattr(monitor, "get_geometry"):
+            # This GTK build's Gdk.Screen.get_primary_monitor returns an int;
+            # Gdk.Display.get_primary_monitor is reliable but guard anyway.
+            monitor = display.get_monitor(0)
         if monitor is None:
             return 0
         return monitor.get_geometry().width
