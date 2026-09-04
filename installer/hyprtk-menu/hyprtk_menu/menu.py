@@ -236,11 +236,11 @@ class MenuWindow(Gtk.Window):
     def _bar_geometry(self):
         """Read hyprtk-bar's config and return its on-monitor geometry.
 
-        Returns ``(edge, bar_left, bar_right, bar_height)`` or ``None`` when
+        Returns ``(edge, bar_left, bar_right)`` or ``None`` when
         the bar config/monitor can't be read. ``bar_left``/``bar_right`` are
         the bar pill's horizontal bounds on the monitor (computed from the
-        bar's ``width`` + ``align`` + ``margin``); ``bar_height`` is the full
-        bar surface height (``height`` + 2*``margin``).
+        bar's ``width`` + ``align`` + ``gap``); the vertical offset is handled
+        by the bar's exclusive zone.
         """
         try:
             with open(BAR_CONFIG_FILE, encoding="utf-8") as f:
@@ -253,7 +253,16 @@ class MenuWindow(Gtk.Window):
         total = self._monitor_width()
         if total <= 0:
             return None
-        margin = int(bar.get("margin", 6) or 0)
+        # Horizontal breathing room; legacy ``margin`` was replaced by the
+        # vertical gap_in/gap_out pair but still seeds both when present.
+        margin = 6
+        legacy = bar.get("margin")
+        if isinstance(legacy, (int, float)):
+            margin = int(legacy)
+            gap_in = gap_out = margin
+        else:
+            gap_in = int(bar.get("gap_in", 6) or 6)
+            gap_out = int(bar.get("gap_out", 6) or 6)
         px = _bar_width_px(bar.get("width", "100%"), total)
         if px <= 0 or px >= total:
             left, right = margin, total
@@ -266,8 +275,8 @@ class MenuWindow(Gtk.Window):
             else:
                 left = (total - px) // 2
                 right = left + px
-        height = int(bar.get("height", 40) or 40) + 2 * margin
-        return edge, left, right, height
+        height = int(bar.get("height", 40) or 40) + gap_in + gap_out
+        return edge, left, right
 
     def _bar_config_mtime(self):
         """Nanosecond mtime of the bar config (0 if missing)."""
@@ -297,7 +306,7 @@ class MenuWindow(Gtk.Window):
         if position == "auto":
             geo = self._bar_geometry()
             if geo is not None:
-                edge, bar_left, bar_right, bar_height = geo
+                edge, bar_left, bar_right = geo
                 align = self.config.get("align", "left")
                 horizontal = align if align in ("left", "center", "right") else "left"
                 menu_w = int(self.config.get("width", 920))
@@ -310,7 +319,10 @@ class MenuWindow(Gtk.Window):
                 total = self._monitor_width()
                 if total > 0:
                     x = max(5, min(x, total - menu_w - 5))
-                v_margin = bar_height + BAR_GAP
+                # The bar's exclusive zone already offsets the menu clear of the
+                # bar's full surface (height + gap_in + gap_out); only a small
+                # breathing gap is needed on top of that.
+                v_margin = BAR_GAP
             else:
                 edge = "top"
                 align = self.config.get("align", "left")
