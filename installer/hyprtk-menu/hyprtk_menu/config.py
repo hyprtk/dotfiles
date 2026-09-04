@@ -13,6 +13,8 @@ LAYOUTS = ("whisker", "win7", "win11", "plasma")
 DEFAULT_CONFIG = {
     "position": "auto",
     "align": "left",
+    "gap_in": 4,     # gap between the menu and the bar when following it (px)
+    "gap_out": 5,    # gap between the menu and the screen edge (px)
     "layout": "whisker",
     "width": 920,
     "height": 580,

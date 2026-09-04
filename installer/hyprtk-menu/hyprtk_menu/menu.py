@@ -30,8 +30,18 @@ WIN7_PLACES = [
 # hyprtk-bar config: auto position follows the bar's edge, width, align and height.
 BAR_CONFIG_FILE = os.path.expanduser("~/.config/hyprtk-bar/config.json")
 
-# Breathing room between the menu and the bar/edge when following the bar.
-BAR_GAP = 4
+
+def _gap_value(value, default):
+    """Coerce a gap config value to ``int >= 0``; ``default`` for missing/None.
+
+    Unlike ``value or default``, a stored ``0`` is kept (0 is a valid gap).
+    """
+    if value is None or value == "":
+        return default
+    try:
+        return max(0, int(value))
+    except (TypeError, ValueError):
+        return default
 
 
 def _bar_width_px(width, total):
@@ -261,8 +271,8 @@ class MenuWindow(Gtk.Window):
             margin = int(legacy)
             gap_in = gap_out = margin
         else:
-            gap_in = int(bar.get("gap_in", 6) or 6)
-            gap_out = int(bar.get("gap_out", 6) or 6)
+            gap_in = _gap_value(bar.get("gap_in"), 6)
+            gap_out = _gap_value(bar.get("gap_out"), 6)
         px = _bar_width_px(bar.get("width", "100%"), total)
         if px <= 0 or px >= total:
             left, right = margin, total
@@ -300,7 +310,9 @@ class MenuWindow(Gtk.Window):
 
         edge = "top"
         horizontal = "left"
-        v_margin = 5
+        gap_in = _gap_value(self.config.get("gap_in"), 4)
+        gap_out = _gap_value(self.config.get("gap_out"), 5)
+        v_margin = gap_out
         x = None  # explicit left edge (px) when following the bar
 
         if position == "auto":
@@ -318,11 +330,11 @@ class MenuWindow(Gtk.Window):
                     x = (bar_left + bar_right - menu_w) // 2
                 total = self._monitor_width()
                 if total > 0:
-                    x = max(5, min(x, total - menu_w - 5))
+                    x = max(gap_out, min(x, total - menu_w - gap_out))
                 # The bar's exclusive zone already offsets the menu clear of the
-                # bar's full surface (height + gap_in + gap_out); only a small
-                # breathing gap is needed on top of that.
-                v_margin = BAR_GAP
+                # bar's full surface (height + gap_in + gap_out); only the
+                # configured gap_in breathing gap is needed on top of that.
+                v_margin = gap_in
             else:
                 edge = "top"
                 align = self.config.get("align", "left")
@@ -345,8 +357,8 @@ class MenuWindow(Gtk.Window):
             # Screen-anchored: anchor only the chosen side; unanchored → centered.
             GtkLayerShell.set_anchor(self, left, horizontal == "left")
             GtkLayerShell.set_anchor(self, right, horizontal == "right")
-            GtkLayerShell.set_margin(self, left, 5 if horizontal == "left" else 0)
-            GtkLayerShell.set_margin(self, right, 5 if horizontal == "right" else 0)
+            GtkLayerShell.set_margin(self, left, gap_out if horizontal == "left" else 0)
+            GtkLayerShell.set_margin(self, right, gap_out if horizontal == "right" else 0)
 
         GtkLayerShell.set_margin(self, top, v_margin if edge == "top" else 0)
         GtkLayerShell.set_margin(self, bottom, v_margin if edge == "bottom" else 0)
@@ -1527,6 +1539,38 @@ class MenuWindow(Gtk.Window):
         grid.set_size_request(220, 140)
         content.pack_start(grid, False, False, 0)
 
+        # ── Spacing: menu-to-bar and menu-to-screen-edge gaps ──
+        content.pack_start(_section_label("Spacing"), False, False, 0)
+        spacing_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+
+        gap_in_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        gap_in_label = Gtk.Label(label="Gap in:", xalign=1)
+        gap_in_label.set_size_request(70, -1)
+        gap_in_label.get_style_context().add_class("settings-radio")
+        self._gap_in = Gtk.SpinButton.new_with_range(0, 60, 2)
+        self._gap_in.set_value(_gap_value(self.config.get("gap_in"), 4))
+        gap_in_hint = Gtk.Label(label="px — menu to bar", xalign=0)
+        gap_in_hint.set_opacity(0.7)
+        gap_in_row.pack_start(gap_in_label, False, False, 0)
+        gap_in_row.pack_start(self._gap_in, True, True, 0)
+        gap_in_row.pack_start(gap_in_hint, False, False, 0)
+
+        gap_out_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        gap_out_label = Gtk.Label(label="Gap out:", xalign=1)
+        gap_out_label.set_size_request(70, -1)
+        gap_out_label.get_style_context().add_class("settings-radio")
+        self._gap_out = Gtk.SpinButton.new_with_range(0, 60, 2)
+        self._gap_out.set_value(_gap_value(self.config.get("gap_out"), 5))
+        gap_out_hint = Gtk.Label(label="px — menu to screen edge", xalign=0)
+        gap_out_hint.set_opacity(0.7)
+        gap_out_row.pack_start(gap_out_label, False, False, 0)
+        gap_out_row.pack_start(self._gap_out, True, True, 0)
+        gap_out_row.pack_start(gap_out_hint, False, False, 0)
+
+        spacing_box.pack_start(gap_in_row, False, False, 0)
+        spacing_box.pack_start(gap_out_row, False, False, 0)
+        content.pack_start(spacing_box, False, False, 0)
+
         # Buttons
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         buttons.get_style_context().add_class("settings-buttons")
@@ -1597,6 +1641,10 @@ class MenuWindow(Gtk.Window):
         self.config["layout"] = new_layout
         self.config["align"] = new_align
         self.config["position"] = new_position
+        if hasattr(self, "_gap_in"):
+            self.config["gap_in"] = max(0, int(self._gap_in.get_value()))
+        if hasattr(self, "_gap_out"):
+            self.config["gap_out"] = max(0, int(self._gap_out.get_value()))
         cfg.save_config(self.config)
 
         if new_layout != old_layout:
