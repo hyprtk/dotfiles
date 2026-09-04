@@ -18,7 +18,7 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on any Arch
 
 ## What is this?
 
-A curated, consistent desktop configuration that replaces the default look and feel of Arch Linux with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** — waybar, rofi, the app menu, the lock screen and even your icons all stay in sync.
+A curated, consistent desktop configuration that replaces the default look and feel of Arch Linux with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** — hyprtk-bar, rofi, the app menu, the lock screen and even your icons all stay in sync.
 
 - **Wayland first** — Hyprland with a floating/split hybrid workflow
 - **Xorg fallback** — XFCE stays installed as a safety net

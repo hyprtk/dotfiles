@@ -6,7 +6,6 @@ TMP=$(mktemp -d)
 # Known dead refs — exist in source trees but not in merged layout (by design)
 DEAD_REFS=(
   "/.bashrc"
-  "/configs/waybar/reload.sh"
   "/hypr/conf/nvidia.conf"
   "/hypr/hyprland.conf"
   "/installer/scripts/applauncher.sh"

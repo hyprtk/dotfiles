@@ -29,6 +29,7 @@ hyprtk-merged/
 │   ├── scripts/                 # helper/utility scripts (+ verify/, build-merged.sh)
 │   ├── standalone/              # oh-my-posh, matuwall, awww, papirus-folders, hyprtk-menu, hyprtk-themer, theme-gui
 │   ├── hyprtk-menu/             # vendored app (main.py, hyprtk_menu/, assets/)
+│   ├── hyprtk-arc-menu/         # vendored app (src/, install.sh, pyproject.toml, .desktop)
 │   └── steps/<distro>.sh        # per-distro hooks × 11
 └── distro/<name>/               # per-distro overlays (deltas only, mapped paths)
 ```
@@ -38,7 +39,7 @@ hyprtk-merged/
 | Source top-level | Merged location |
 |---|---|
 | `fonts/`, `Wallpapers/`, `themes/`, `papirus-icons/`, `splash/`, `screenshots/` | `assets/` |
-| `alacritty btop dunst fastfetch figlet gtk hyprlogout hyprpicker matuwall Mousepad nvim ohmyposh oh-my-zsh ranger rofi sddm smb starship swappy swaylock Thunar User-Management vim wal waybar waypaper wob xfce4 zshrc root dracut nvidia grub` | `configs/` |
+| `alacritty btop fastfetch figlet gtk hyprlogout hyprpicker matuwall Mousepad nvim ohmyposh oh-my-zsh ranger rofi sddm smb starship swappy swaylock Thunar User-Management vim wal waypaper wob xfce4 zshrc root dracut nvidia grub` | `configs/` |
 | `hypr/` | `hypr/` |
 | `os-release/`, `scripts/`, `standalone/` | `installer/` |
 | top-level files (`1-install.sh`, `CHANGELOG`, `cheatsheet.md`, `default.png`, `.folder.png`, `.gitattributes`, `LICENSE`, `README.md`, `.zshrc`) | top level |
@@ -90,12 +91,10 @@ them via `REMOVED_EXCLUDE` (see `installer/scripts/verify/verify-completeness.sh
 
 - `configs/root/.local/share/themes/Arc-Azure-dodger-blue*` — 3 GTK themes (large)
 - `configs/root/.config/nwg-look/` + `configs/root/.local/share/nwg-look/`
-- source waybar theme set (`Bottom`, `Top`, `Bottom-Blur`, `Top-Blur`,
-  plain `hyprtk`, `myconfig`, `default/myconfig`) — replaced by the custom
-  `hyprtk-*` theme family
-- `hypr/scripts/generate-aero-colors.sh` was restored from `old/hyprtk-merged`
-  (referenced by `configs/waybar/launch.sh:42`, `wallpaper-colors.sh`,
-  `wal-watcher.sh`, `wallpaper-restore.sh`)
+- `configs/waybar/` + `configs/dunst/` (and the source waybar theme set) —
+  removed outright: hyprtk-bar is the taskbar and owns the notification
+  daemon. `hypr/scripts/generate-aero-colors.sh` (only used by the waybar
+  launcher) is gone too.
 
 ### Standalone wrappers
 
@@ -105,6 +104,11 @@ paths to work on any user account:
 - `hyprtk-menu` → `$HOME/.local/share/hyprtk-menu/main.py`
 - `theme-gui` → `$HOME/.local/share/theme-gui/venv/bin/python3`
 - `hyprtk-themer` → calls `theme-gui` (no path needed)
+
+`hyprtk-arc-menu` does **not** use a `standalone/` wrapper — its own
+`installer/hyprtk-arc-menu/install.sh` writes `~/.local/bin/hyprtk-arc-menu` and
+`hyprtk-arc-menu-toggle` directly (full paths, so they work even when
+Hyprland's exec PATH lacks `~/.local/bin`).
 
 ### hyprtk-menu (added, not in the 11 sources)
 
@@ -121,6 +125,44 @@ GTK4/Adwaita theme manager. Installed to `~/.local/share/theme-gui/` via
 `installer/theme-gui/install.sh`. Standalone wrapper at `installer/standalone/theme-gui`
 symlinked to `~/.local/bin`. `hyprtk-themer` is a thin wrapper that calls `theme-gui`.
 Keybinding: `SUPER+ALT+T` → `theme-gui`.
+
+### hyprtk-arc-menu (added, not in the 11 sources)
+
+Material-style radial/arc menu (GTK3 + gtk-layer-shell). A FAB-style button sits
+in a configurable screen position and fans its items out on click — 180° at the
+top/bottom center, 90° at corners — each item launching a command. Middle-click
+anywhere on the menu quits the app.
+
+Vendored as `installer/hyprtk-arc-menu/` (src/, install.sh, pyproject.toml,
+hyprtk-arc-menu.desktop) and installed by `1-install.sh` via its own
+`install.sh`, exactly like theme-gui. Config at
+`~/.config/hyprtk-arc-menu/config.json`:
+
+```json
+{
+  "position": "bottom-right",
+  "shape": "circle",
+  "transparent": false,
+  "follow_waybar": true,
+  "margin": 24,
+  "radius": 140,
+  "fab_size": 56,
+  "item_size": 48,
+  "animation_time": 300,
+  "items": [
+    { "icon": "firefox", "command": "firefox", "tooltip": "Firefox" }
+  ]
+}
+```
+
+Theming: mirrors the active waybar theme's glass + text color live (watches
+`~/.cache/.themestyle.sh`), keeps pywal `color5`/`color6` accents, and supports
+`shape: square` (items encircle the button on a square perimeter) and
+`transparent: true` (icons only). The in-menu Settings item opens a dialog to
+edit everything, including the item list (add/edit/remove, move up/down, and
+search installed apps).
+
+Keybinding: `SUPER+CTRL+M` → `hyprtk-arc-menu-toggle`.
 
 ## 4. Verification (all PASSED)
 
@@ -164,3 +206,19 @@ Three copies of the installer exist:
 | `~/Documents/GitHub/dotfiles/` | GitHub push target |
 
 Sync flow: merged → live → GitHub. All verified via `md5sum` and `diff -rq`.
+
+## 6. Recent tweaks & additions (2026-09-02)
+
+- **hyprtk-arc-menu project added** — new standalone app vendored at
+  `installer/hyprtk-arc-menu/`, wired into `1-install.sh` (step mirrors
+  theme-gui). See the project section above.
+- **hypr config additions** (in `hypr/`, same in merged + live):
+  - `keybindings.lua` — added
+    `hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("$HOME/.local/bin/hyprtk-arc-menu-toggle"))`
+  - `autostart.lua` — added `hl.exec_cmd("hyprtk-arc-menu")`
+- **README.md** — added an **Applications** section documenting the three
+  bundled apps (theme-gui, hyprtk-menu, hyprtk-arc-menu) with their config
+  JSON and theming notes.
+- **Sync note** — `README.md` and the app bundles are kept identical across
+  merged / live / GitHub. `PLANNING.md` remains merged-only (see sync
+  exclusions).

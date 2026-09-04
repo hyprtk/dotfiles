@@ -63,6 +63,17 @@ hl.window_rule({
     size = "360 400",
 })
 
+-- hyprtk-bar settings window (floating)
+hl.window_rule({
+    name = "windowrule-bar-settings",
+    match = {
+        title = "(^(hyprtk-bar settings)$)",
+    },
+    float = true,
+    center = true,
+    size = "640 540",
+})
+
 -- Specific to launching floating terminal windows
 hl.window_rule({
     name = "windowrule-6",

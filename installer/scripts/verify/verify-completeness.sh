@@ -54,13 +54,8 @@ REMOVED_EXCLUDE=(
   '^configs/root/.local/share/themes/Arc-Azure-dodger-blue'
   '^configs/root/.config/nwg-look(/|$)'
   '^configs/root/.local/share/nwg-look(/|$)'
-  '^configs/waybar/themes/Bottom(/|$)'
-  '^configs/waybar/themes/Bottom-Blur(/|$)'
-  '^configs/waybar/themes/Top(/|$)'
-  '^configs/waybar/themes/Top-Blur(/|$)'
-  '^configs/waybar/themes/hyprtk(/|$)'
-  '^configs/waybar/themes/myconfig$'
-  '^configs/waybar/themes/default/myconfig$'
+  '^configs/waybar(/|$)'   # replaced by hyprtk-bar
+  '^configs/dunst(/|$)'    # replaced by hyprtk-bar notification center
 )
 EXCLUDE_RE="$(IFS='|'; echo "${REMOVED_EXCLUDE[*]}")"
 

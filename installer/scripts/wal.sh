@@ -5,8 +5,6 @@
 
 wal -q -i ~/Pictures/Wallpapers/ 
 
-killall waybar 2>/dev/null; ~/hyprtk/configs/waybar/launch.sh
-
 ~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
 
 exit

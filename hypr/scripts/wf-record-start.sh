@@ -15,8 +15,7 @@ then
     echo "$filepath" > "${tmp_file}"
 
     wf-recorder --audio --file="${filepath}" & disown && \
-        $notify_cmd_shot "Screen Record" "Recording has started." && \
-        pkill -RTMIN+8 waybar
+        $notify_cmd_shot "Screen Record" "Recording has started."
 else
     $notify_cmd_shot "Screen Record" "Recording is already in progress."
 fi

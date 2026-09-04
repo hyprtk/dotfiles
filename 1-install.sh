@@ -434,7 +434,6 @@ else
         _spin "Installing nvim..." "_installSymLink nvim ~/.config/nvim $SCRIPT_DIR/configs/nvim/ ~/.config" "$LOG_FILE"
         _spin "Installing starship..." "_installSymLink starship ~/.config/starship.toml $SCRIPT_DIR/configs/starship/starship.toml ~/.config/starship.toml" "$LOG_FILE"
         _spin "Installing rofi..." "_installSymLink rofi ~/.config/rofi $SCRIPT_DIR/configs/rofi/ ~/.config" "$LOG_FILE"
-        _spin "Installing dunst..." "_installSymLink dunst ~/.config/dunst $SCRIPT_DIR/configs/dunst/ ~/.config" "$LOG_FILE"
         _spin "Installing wal..." "_installSymLink wal ~/.config/wal $SCRIPT_DIR/configs/wal/ ~/.config" "$LOG_FILE"
         _spin "Installing btop..." "_installSymLink btop ~/.config/btop $SCRIPT_DIR/configs/btop/ ~/.config" "$LOG_FILE"
         _ok "General configs installed"
@@ -470,7 +469,6 @@ else
         fi
         _spin "Installing hypr..." "_installSymLink hypr ~/.config/hypr $SCRIPT_DIR/hypr/ ~/.config" "$LOG_FILE"
         _spin "Installing fastfetch..." "_installSymLink fastfetch ~/.config/fastfetch $SCRIPT_DIR/configs/fastfetch/ ~/.config" "$LOG_FILE"
-        _spin "Installing waybar..." "_installSymLink waybar ~/.config/waybar $SCRIPT_DIR/configs/waybar/ ~/.config" "$LOG_FILE"
         _spin "Installing swaylock..." "_installSymLink swaylock ~/.config/swaylock $SCRIPT_DIR/configs/swaylock/ ~/.config" "$LOG_FILE"
         _spin "Installing swappy..." "_installSymLink swappy ~/.config/swappy $SCRIPT_DIR/configs/swappy/ ~/.config" "$LOG_FILE"
         _spin "Installing hyprlogout..." "_installSymLink hyprlogout ~/.config/hyprlogout $SCRIPT_DIR/configs/hyprlogout/ ~/.config" "$LOG_FILE"
@@ -525,6 +523,11 @@ else
         _step "Installing hyprtk-arc-menu"
         _spin "Installing hyprtk-arc-menu..." "bash $SCRIPT_DIR/installer/hyprtk-arc-menu/install.sh" "$LOG_FILE"
         _ok "hyprtk-arc-menu installed"
+
+        # ── hyprtk-bar ──────────────────────────────────────────────
+        _step "Installing hyprtk-bar"
+        _spin "Installing hyprtk-bar..." "bash $SCRIPT_DIR/installer/hyprtk-bar/install.sh" "$LOG_FILE"
+        _ok "hyprtk-bar installed (autostarted by autostart.lua; owns the notification daemon)"
 
         # ── Root user config ─────────────────────────────────────────
         _step "Setting Up Root User Config"

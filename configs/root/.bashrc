@@ -27,7 +27,6 @@ alias ts='~/hyprtk/installer/scripts/snapshot.sh'
 alias matrix='cmatrix'
 alias wifi='nmtui'
 alias od='~/private/onedrive.sh'
-# alias rw='~/hyprtk/configs/waybar/reload.sh'  # File not found
 alias winclass="xprop | grep 'CLASS'"
 alias dot="cd ~/hyprtk"
 

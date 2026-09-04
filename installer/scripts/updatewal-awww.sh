@@ -34,8 +34,6 @@ awww img $wallpaper \
     --transition-duration=0.7 \
     --transition-pos "$( hyprctl cursorpos )"
 
-~/hyprtk/configs/waybar/launch.sh
-
 ~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
 
 # ----------------------------------------------------- 
