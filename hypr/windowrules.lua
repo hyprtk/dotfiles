@@ -71,7 +71,7 @@ hl.window_rule({
     },
     float = true,
     center = true,
-    size = "640 780",
+    size = "620 580",
 })
 
 -- Specific to launching floating terminal windows
