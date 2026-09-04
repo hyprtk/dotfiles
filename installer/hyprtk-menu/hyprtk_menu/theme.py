@@ -25,8 +25,8 @@ LAYOUT_ICONS = {
 }
 LAYOUT_ORDER = list(cfg.LAYOUTS)
 
-# Waybar-theme profiles: semantic token overrides so the menu matches the
-# active waybar theme. Accents stay pywal (@color5 mauve / @color6 cyan).
+# Bar-theme profiles: semantic token overrides so the menu matches the
+# active hyprtk-bar theme. Accents stay pywal (@color5 mauve / @color6 cyan).
 # Token names must match the @define-color defaults in assets/style.css.
 PROFILES = {
     "default": {  # hyprtk dark frosted
@@ -101,7 +101,7 @@ PROFILES = {
         "input_bg": "rgba(255, 255, 255, 0.45)",
         "input_border": "rgba(0, 0, 0, 0.15)",
     },
-    "hyprtk-negative": {  # photo-negative light bar (hardcoded light like waybar)
+    "hyprtk-negative": {  # photo-negative light bar (hardcoded light variant)
         "panel_bg": "rgba(250, 250, 240, 0.88)",
         "panel_border": "rgba(0, 0, 0, 0.12)",
         "text": "rgba(35, 35, 20, 0.95)",
@@ -167,7 +167,7 @@ def _read_wal_colors():
 
 
 def active_theme_name():
-    """Base name of the active waybar theme from ~/.cache/.themestyle.sh."""
+    """Base name of the active bar theme from ~/.cache/.themestyle.sh."""
     try:
         with open(THEME_FILE, encoding="utf-8") as f:
             name = f.read().split(";")[0].strip().strip("/")
@@ -177,7 +177,7 @@ def active_theme_name():
 
 
 def active_profile():
-    """Profile dict for the active waybar theme (falls back to default)."""
+    """Profile dict for the active bar theme (falls back to default)."""
     name = active_theme_name()
     base = name
     for suffix in ("-top", "-bottom"):
@@ -194,7 +194,7 @@ def _palette_to_css(colors):
 
 
 def _profile_to_css(profile):
-    lines = ["/* waybar theme profile */"]
+    lines = ["/* bar theme profile */"]
     for key, value in profile.items():
         lines.append("@define-color %s %s;" % (key, value))
     return "\n".join(lines)

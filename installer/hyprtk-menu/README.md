@@ -18,12 +18,12 @@ recents, and power buttons.
 - **Live color updates** — polls the pywal cache every 2s; when a wallpaper
   change regenerates colors while the menu is open, the theme re-applies in
   place without closing or restarting
-- **Matches the active waybar theme** — reads `~/.cache/.themestyle.sh` and
+- **Follows the active bar theme** — reads `~/.cache/.themestyle.sh` and
   applies a matching profile (hyprtk dark frosted, hyprtk-aero glass,
   hyprtk-light, hyprtk-clear, hyprtk-glass, hyprtk-inverse, hyprtk-reverse,
-  hyprtk-negative). Switching the waybar theme while the menu is open re-themes
-  it live and re-anchors it if the bar moved top↔bottom. Pywal colors drive
-  all accents.
+  hyprtk-negative). Switching the bar theme while the menu is open re-themes
+  it live and re-anchors it if the bar moved, resized, or re-aligned. Pywal
+  colors drive all accents.
 - Single instance; toggle from anywhere via `hyprtk-menu --toggle` (SIGUSR1)
 
 ## Install
@@ -53,19 +53,13 @@ bind = SUPER, SPACE, exec, hyprtk-menu --toggle
 layerrule = blur, hyprtk-menu
 ```
 
-### Waybar button
+### hyprtk-bar button
 
-Replace (or add) an appmenu-style custom module:
+The bar's start button opens the menu (`start_command: "hyprtk-menu"` in
+`~/.config/hyprtk-bar/config.json`). To launch it from anywhere, bind a key:
 
-```json
-"custom/appmenu": {
-    "format": "{icon}",
-    "format-icons": { "": "" },
-    "exec-if": "command -v hyprtk-menu",
-    "exec": "echo '  '",
-    "on-click": "hyprtk-menu --toggle",
-    "tooltip": false
-}
+```ini
+bind = SUPER, SPACE, exec, hyprtk-menu --toggle
 ```
 
 ## Configuration
@@ -96,10 +90,15 @@ Replace (or add) an appmenu-style custom module:
 ```
 
 Positions:
-- `position: "auto"` (default) — reads the active waybar theme from
-  `~/.cache/.themestyle.sh` and anchors the menu on the same edge as waybar
-  (`*-top` themes → menu appears below the top bar; `*-bottom` themes → menu
-  appears above the bottom bar). Re-detected every time the menu opens.
+- `position: "auto"` (default) — follows **hyprtk-bar**: reads
+  `~/.config/hyprtk-bar/config.json` and anchors the menu on the bar's edge
+  (bar `position: "top"` → menu appears below the top bar; `"bottom"` → menu
+  appears above the bottom bar). The menu's `align` is applied relative to
+  the bar's horizontal extent (computed from the bar's `width` + `align`), so
+  a partial-width bar places the menu at the bar's left edge, center, or right
+  edge — not the screen edges — and the menu sits just clear of the bar's
+  `height`. Re-detected every time the menu opens, and live while open if the
+  bar config changes.
 - `align: "left" | "center" | "right"` — horizontal placement used with
   `position: "auto"`. Change it from the alignment icon in the menu's power
   bar (next to the "hyprtk-menu" label); an open menu repositions live.
@@ -108,7 +107,7 @@ Positions:
 - `center` — centered on screen.
 
 The menu is a pure overlay (no exclusive zone), so it never pushes windows —
-it floats above them like a popup, just clear of waybar.
+it floats above them like a popup, just clear of hyprtk-bar.
 
 ## Layouts
 

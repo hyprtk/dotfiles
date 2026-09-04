@@ -27,6 +27,26 @@ WIN7_PLACES = [
     ("Computer", "computer", "thunar /"),
 ]
 
+# hyprtk-bar config: auto position follows the bar's edge, width, align and height.
+BAR_CONFIG_FILE = os.path.expanduser("~/.config/hyprtk-bar/config.json")
+
+# Breathing room between the menu and the bar/edge when following the bar.
+BAR_GAP = 4
+
+
+def _bar_width_px(width, total):
+    """Resolve hyprtk-bar's ``width`` ("NN%" or px) against a monitor width."""
+    if isinstance(width, str) and width.strip().endswith("%"):
+        try:
+            frac = float(width.strip().rstrip("%")) / 100.0
+        except ValueError:
+            return 0
+        return int(total * max(0.0, min(1.0, frac)))
+    try:
+        return int(width)
+    except (TypeError, ValueError):
+        return 0
+
 POWER_ICONS = {
     "lock": "system-lock-screen",
     "logout": "system-log-out",
@@ -189,6 +209,7 @@ class MenuWindow(Gtk.Window):
 
         self._wal_mtime = theme.wal_mtime()
         self._themestyle_prev = theme.themestyle_mtime()
+        self._bar_cfg_prev = self._bar_config_mtime()
         GLib.timeout_add_seconds(2, self._check_wal)
 
         self._build_ui()
@@ -198,58 +219,123 @@ class MenuWindow(Gtk.Window):
 
     # -- layer shell ------------------------------------------------------
 
-    def _detect_waybar_edge(self):
-        """Return 'top' or 'bottom' for the menu's anchor edge.
+    def _monitor_width(self):
+        """Width in px of the monitor the menu surfaces on (primary)."""
+        screen = Gdk.Screen.get_default()
+        if screen is None:
+            return 0
+        monitor = screen.get_primary_monitor()
+        if monitor is None:
+            monitor = screen.get_monitor(0)
+        if monitor is None:
+            return 0
+        return monitor.get_geometry().width
 
-        hyprtk-bar replaced waybar; its config carries the bar edge directly.
+    def _bar_geometry(self):
+        """Read hyprtk-bar's config and return its on-monitor geometry.
+
+        Returns ``(edge, bar_left, bar_right, bar_height)`` or ``None`` when
+        the bar config/monitor can't be read. ``bar_left``/``bar_right`` are
+        the bar pill's horizontal bounds on the monitor (computed from the
+        bar's ``width`` + ``align`` + ``margin``); ``bar_height`` is the full
+        bar surface height (``height`` + 2*``margin``).
         """
-        bar_config = os.path.expanduser("~/.config/hyprtk-bar/config.json")
         try:
-            with open(bar_config, encoding="utf-8") as f:
-                pos = json.load(f).get("position")
-            if pos in ("top", "bottom"):
-                return pos
+            with open(BAR_CONFIG_FILE, encoding="utf-8") as f:
+                bar = json.load(f)
         except (OSError, ValueError):
-            pass
-        return None
+            return None
+        edge = bar.get("position")
+        if edge not in ("top", "bottom"):
+            return None
+        total = self._monitor_width()
+        if total <= 0:
+            return None
+        margin = int(bar.get("margin", 6) or 0)
+        px = _bar_width_px(bar.get("width", "100%"), total)
+        if px <= 0 or px >= total:
+            left, right = margin, total
+        else:
+            align = bar.get("align", "center")
+            if align == "left":
+                left, right = margin, margin + px
+            elif align == "right":
+                left, right = total - px, total
+            else:
+                left = (total - px) // 2
+                right = left + px
+        height = int(bar.get("height", 40) or 40) + 2 * margin
+        return edge, left, right, height
+
+    def _bar_config_mtime(self):
+        """Nanosecond mtime of the bar config (0 if missing)."""
+        try:
+            return os.stat(BAR_CONFIG_FILE).st_mtime_ns
+        except OSError:
+            return 0
 
     def _apply_position(self):
         position = self.config.get("position", "auto")
-        edge = "top"
-        horizontal = "left"
-        if position == "auto":
-            edge = self._detect_waybar_edge() or "top"
-            align = self.config.get("align", "left")
-            horizontal = align if align in ("left", "center", "right") else "left"
-        elif position == "center":
-            edge = "center"
-        else:
-            parts = position.split("-")
-            edge = parts[0] if parts[0] in ("top", "bottom") else "top"
-            horizontal = parts[1] if len(parts) > 1 else "left"
-
         top = GtkLayerShell.Edge.TOP
         bottom = GtkLayerShell.Edge.BOTTOM
         left = GtkLayerShell.Edge.LEFT
         right = GtkLayerShell.Edge.RIGHT
 
-        if edge == "center":
+        if position == "center":
             # No anchors on any edge → the surface is centered on the output.
             for anchor in (top, bottom, left, right):
                 GtkLayerShell.set_anchor(self, anchor, False)
             return
 
+        edge = "top"
+        horizontal = "left"
+        v_margin = 5
+        x = None  # explicit left edge (px) when following the bar
+
+        if position == "auto":
+            geo = self._bar_geometry()
+            if geo is not None:
+                edge, bar_left, bar_right, bar_height = geo
+                align = self.config.get("align", "left")
+                horizontal = align if align in ("left", "center", "right") else "left"
+                menu_w = int(self.config.get("width", 920))
+                if horizontal == "left":
+                    x = bar_left
+                elif horizontal == "right":
+                    x = bar_right - menu_w
+                else:
+                    x = (bar_left + bar_right - menu_w) // 2
+                total = self._monitor_width()
+                if total > 0:
+                    x = max(5, min(x, total - menu_w - 5))
+                v_margin = bar_height + BAR_GAP
+            else:
+                edge = "top"
+                align = self.config.get("align", "left")
+                horizontal = align if align in ("left", "center", "right") else "left"
+        else:
+            parts = position.split("-")
+            edge = parts[0] if parts[0] in ("top", "bottom") else "top"
+            horizontal = parts[1] if len(parts) > 1 else "left"
+
         GtkLayerShell.set_anchor(self, top, edge == "top")
         GtkLayerShell.set_anchor(self, bottom, edge == "bottom")
-        # Horizontal: anchor only the chosen side; unanchored → centered.
-        GtkLayerShell.set_anchor(self, left, horizontal == "left")
-        GtkLayerShell.set_anchor(self, right, horizontal == "right")
 
-        margin = 5
-        GtkLayerShell.set_margin(self, top, margin if edge == "top" else 0)
-        GtkLayerShell.set_margin(self, bottom, margin if edge == "bottom" else 0)
-        GtkLayerShell.set_margin(self, left, 5 if horizontal == "left" else 0)
-        GtkLayerShell.set_margin(self, right, 5 if horizontal == "right" else 0)
+        if x is not None:
+            # Follow the bar: pin the left edge at the computed x.
+            GtkLayerShell.set_anchor(self, left, True)
+            GtkLayerShell.set_anchor(self, right, False)
+            GtkLayerShell.set_margin(self, left, x)
+            GtkLayerShell.set_margin(self, right, 0)
+        else:
+            # Screen-anchored: anchor only the chosen side; unanchored → centered.
+            GtkLayerShell.set_anchor(self, left, horizontal == "left")
+            GtkLayerShell.set_anchor(self, right, horizontal == "right")
+            GtkLayerShell.set_margin(self, left, 5 if horizontal == "left" else 0)
+            GtkLayerShell.set_margin(self, right, 5 if horizontal == "right" else 0)
+
+        GtkLayerShell.set_margin(self, top, v_margin if edge == "top" else 0)
+        GtkLayerShell.set_margin(self, bottom, v_margin if edge == "bottom" else 0)
 
     # -- UI construction --------------------------------------------------
 
@@ -1384,9 +1470,9 @@ class MenuWindow(Gtk.Window):
         content.pack_start(_section_label("Position"), False, False, 0)
         position = self.config.get("position", "auto")
 
-        # Auto option (follow waybar edge)
+        # Auto option (follow hyprtk-bar edge)
         auto_radio = Gtk.RadioButton.new_with_label(
-            None, "Auto (follow waybar)"
+            None, "Auto (follow hyprtk-bar)"
         )
         auto_radio.get_style_context().add_class("settings-radio")
         if position == "auto":
@@ -1775,7 +1861,7 @@ class MenuWindow(Gtk.Window):
     # -- show / hide ------------------------------------------------------
 
     def _check_wal(self):
-        """Live-update pywal colors and waybar-theme profile while open."""
+        """Live-update pywal colors and bar-theme profile while open."""
         changed = False
         wal_mtime = theme.wal_mtime()
         if wal_mtime and wal_mtime != self._wal_mtime:
@@ -1784,6 +1870,10 @@ class MenuWindow(Gtk.Window):
         theme_mtime = theme.themestyle_mtime()
         if theme_mtime != self._themestyle_prev:
             self._themestyle_prev = theme_mtime
+            changed = True
+        bar_mtime = self._bar_config_mtime()
+        if bar_mtime != self._bar_cfg_prev:
+            self._bar_cfg_prev = bar_mtime
             changed = True
         if not changed:
             return True
@@ -1798,7 +1888,7 @@ class MenuWindow(Gtk.Window):
             print("hyprtk-menu: theme css update failed: %s" % exc, flush=True)
         else:
             print("hyprtk-menu: theme updated", flush=True)
-        # The waybar edge (top/bottom) may have changed too — re-anchor.
+        # The bar edge/width/align/height may have changed too — re-anchor.
         self._apply_position()
         if was_visible:
             GLib.idle_add(self._remap_after_update)
