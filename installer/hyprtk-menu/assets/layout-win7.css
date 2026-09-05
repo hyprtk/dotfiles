@@ -9,7 +9,7 @@
 /* ── Overall panel ── */
 .layout-win7 .menu {
     border-radius: 8px;
-    border: 1px solid alpha(@color4, 0.5);
+    border: 2px solid alpha(@color4, 0.5);
 }
 
 /* ── Left pane: user + apps ── */

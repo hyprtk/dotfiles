@@ -9,7 +9,7 @@
 
 .layout-win11 .menu {
     border-radius: 12px;
-    border: 1px solid alpha(@foreground, 0.15);
+    border: 2px solid alpha(@foreground, 0.15);
 }
 
 /* ── Search (pill-shaped, centered) ── */

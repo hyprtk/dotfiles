@@ -7,7 +7,7 @@
 
 .layout-plasma .menu {
     border-radius: 6px;
-    border: 1px solid alpha(@color4, 0.3);
+    border: 2px solid alpha(@color4, 0.3);
 }
 
 /* ── Search ── */
