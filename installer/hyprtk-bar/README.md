@@ -150,6 +150,7 @@ Module ids:
 | Id | Module |
 | --- | --- |
 | `start_button` | Launches your app menu. |
+| `quicklinks` | Launcher buttons with Nerd Font glyphs (terminal, files, apps, browser, wallpaper, clipboard, screenshot). |
 | `workspaces` | Workspace chips. |
 | `tasklist` | Pinned + running application buttons. |
 | `sysmon` | CPU / RAM / disk readout. |
@@ -168,9 +169,19 @@ flags automatically.
 "center": {
   "start_button": true,
   "start_icon": "view-grid-symbolic",
+  "start_glyph": "\uf015",
   "start_command": "hyprtk-menu",
   "pinned": [
     { "class": "firefox", "command": "firefox", "icon": "firefox" }
+  ]
+},
+"quicklinks": {
+  "enabled": true,
+  "glyph_font": "Symbols Nerd Font",
+  "glyph_color": "accent",
+  "icon_size": 0,
+  "links": [
+    { "id": "terminal", "label": "Terminal", "icon": "\uf120", "command": "alacritty" }
   ]
 },
 "workspaces": { "enabled": true, "show_empty": true, "max": 5 },
@@ -188,6 +199,27 @@ flags automatically.
 
 - **pinned** entries: `class` is matched against running windows, `command` is
   launched on click when the app is not running, `icon` overrides the icon.
+- **start_glyph**: the start button's Nerd Font glyph (default `\uf015`, fa-home).
+  Module icons (start button, quick settings, notification bell, keyboard state,
+  system monitor) are all Nerd Font glyphs sized by the Fonts tab's *Icon size*
+  setting (0 = auto with the font size).
+- **quicklinks.links** entries: `icon` is a Nerd Font glyph (any font glyph the
+  bar can render), `label` is the hover tooltip, `command` runs on left-click;
+  optional `command_right` / `command_middle` run on right- / middle-click.
+  `quicklinks.glyph_font` is the font used to render the glyphs (default
+  `Symbols Nerd Font`) — it must be a font that actually contains them, since
+  the system font's glyph fallback renders PUA codepoints as the wrong glyphs
+  (e.g. an apps-menu grid showing as "5"). A link whose `command` is empty (e.g.
+  the default browser link) resolves its launch command from `xdg-settings`.
+  Commands containing shell operators (`&&`, `;`) are run through a shell
+  automatically.
+- **quicklinks.icon_size**: glyph size in px for the quicklink icons (default
+  `0` = follow the global icon size). Editable in the settings window under
+  *Fonts → Quicklink icons*. Glyphs render in pixels (like other module icons),
+  so they scale with the font/icon size settings.
+- **quicklinks.glyph_color**: glyph color (default `accent`, the pywal accent
+  like the other icon modules). Accepts a palette key (`accent`, `fg`/`foreground`,
+  `running`) or an explicit CSS color (hex/rgba).
 - **notifications**: `max_stored` caps the center history; `default_timeout`
   is the toast duration in ms (0 persists). Urgent notifications and those
   with actions persist until dismissed.
@@ -210,6 +242,7 @@ flags automatically.
 | Bell (notifications) | Left-click: open the notification center; the unread badge resets. |
 | Quick settings | Left-click: open the flyout. |
 | Empty bar space | Right-click: bar menu → *Bar settings…* and *Reload config*. |
+| Reload config | Restarts the bar process so the latest source **and** config are loaded (a plain config reload cannot pick up new modules). |
 | Show-desktop strip | Left-click: minimize / restore all windows on the active workspace. |
 
 ### The settings window

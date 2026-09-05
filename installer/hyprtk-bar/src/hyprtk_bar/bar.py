@@ -25,10 +25,11 @@ from .layout import SECTION_ORDER, SectionBox  # noqa: E402
 from .notifications import NotificationCenterButton  # noqa: E402
 from .popup import bind_hover_tooltip  # noqa: E402
 from .quicksettings import QuickSettingsButton  # noqa: E402
+from .quicklinks import QuickLinks  # noqa: E402
 from .sysmon import SysMon  # noqa: E402
 from .tasklist import TaskList  # noqa: E402
 from .tray import Tray, TrayController  # noqa: E402
-from .widgets import HoverButton, spawn  # noqa: E402
+from .widgets import Glyph, HoverButton, spawn  # noqa: E402
 from .window import Window  # noqa: E402
 from .workspaces import Workspaces  # noqa: E402
 
@@ -41,15 +42,12 @@ class StartButton(HoverButton):
         center = cfg.get("center") or {}
         self._ipc = ipc
         self._command = center.get("start_command", "hyprtk-menu")
-        icon = Gtk.Image.new_from_icon_name(
-            center.get("start_icon", "go-home-symbolic"), Gtk.IconSize.INVALID
-        )
         font_cfg = cfg.get("font") or {}
-        self._icon = icon
-        self._icon.set_pixel_size(
+        glyph = Glyph(center.get("start_glyph", "\uf015"), "accent-icon")
+        glyph.set_pixel_size(
             icon_size_for(font_cfg.get("size", 16), font_cfg.get("icon_size", 0))
         )
-        self._icon.get_style_context().add_class("accent-icon")
+        self._icon = glyph
         self.box.pack_start(self._icon, True, True, 0)
         # Keep the start icon clear of the bar's left edge, with the same
         # breathing room as the spacing between the other modules.
@@ -220,6 +218,8 @@ class Bar(Gtk.Box):
         cfg, ipc = self._cfg, self._ipc
         if mid == "start_button":
             return StartButton(cfg, ipc)
+        if mid == "quicklinks":
+            return QuickLinks(cfg, ipc)
         if mid == "workspaces":
             return Workspaces(cfg, ipc)
         if mid == "tasklist":
@@ -364,7 +364,11 @@ class Bar(Gtk.Box):
             self.rebuild_layout()
 
         def reload_config() -> None:
-            self.reload_config()
+            # A full process restart: the bar runs the latest source and re-reads
+            # config.json. An in-place config reload cannot pick up new modules
+            # (their code is already loaded), so it would silently ignore config
+            # that references them.
+            self.restart()
 
         def set_width(value: str) -> None:
             self._width = str(value)
@@ -448,6 +452,15 @@ class Bar(Gtk.Box):
             config_module.save(cfg)
             _theme()
 
+        def set_quicklink_icon_size(size) -> None:
+            try:
+                size = max(0, int(str(size).strip()))
+            except (TypeError, ValueError):
+                size = 0
+            cfg.setdefault("quicklinks", {})["icon_size"] = size
+            config_module.save(cfg)
+            _theme()
+
         def apply_layout(layout: dict) -> None:
             cfg["layout"] = {
                 "left": list(layout.get("left", [])),
@@ -474,6 +487,7 @@ class Bar(Gtk.Box):
             "set_font": set_font,
             "set_font_size": set_font_size,
             "set_icon_size": set_icon_size,
+            "set_quicklink_icon_size": set_quicklink_icon_size,
             "apply_layout": apply_layout,
             "open_settings": open_settings,
         }

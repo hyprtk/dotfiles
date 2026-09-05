@@ -9,6 +9,8 @@ to receive notifications.
 from __future__ import annotations
 
 import logging
+import shutil
+import subprocess
 import time
 
 import gi
@@ -26,7 +28,7 @@ from dbus_next.service import ServiceInterface, method, signal  # noqa: E402
 from .config import icon_size_for  # noqa: E402
 from .popup import Popup, bind_hover_tooltip  # noqa: E402
 from .popup import Popup  # noqa: E402
-from .widgets import HoverButton  # noqa: E402
+from .widgets import Glyph, HoverButton  # noqa: E402
 
 log = logging.getLogger("hyprtk_bar.notifications")
 
@@ -209,9 +211,27 @@ class NotificationController:
             log.warning("could not connect to session bus: %s", exc)
             self._bus = None
             return
+        # The bar is the intended daemon. If another notification daemon
+        # (dunst/mako/swaync/xfce4-notifyd) was D-Bus auto-activated while the
+        # name was briefly free (e.g. during a bar restart), it would keep the
+        # name forever and the built-in center would go inactive. Kill the known
+        # competitors before requesting the name so the bar always owns it.
+        self._kill_competing_daemons()
         self._service = NotificationService(self)
         self._bus.export(PATH, self._service)
         self._bus.request_name(NAME, NameFlag.DO_NOT_QUEUE, self._on_name_reply)
+
+    @staticmethod
+    def _kill_competing_daemons() -> None:
+        for binary in ("dunst", "mako", "swaync", "xfce4-notifyd"):
+            path = shutil.which(binary)
+            if path:
+                try:
+                    subprocess.run(
+                        ["pkill", "-x", binary], capture_output=True, check=False
+                    )
+                except Exception as exc:
+                    log.warning("could not stop competing daemon %s: %s", binary, exc)
 
     def shutdown(self) -> None:
         self._dismiss_toast()
@@ -231,10 +251,22 @@ class NotificationController:
         else:
             self._am_server = False
             log.warning(
-                "another process owns %s — the built-in notification center is "
-                "inactive (disable dunst/mako/swaync)",
+                "another process owns %s — killing it and retrying",
                 NAME,
             )
+            # The name is held by a competing daemon that slipped in (D-Bus
+            # auto-activation during a restart). Stop it and take the name.
+            self._kill_competing_daemons()
+            if self._bus is not None:
+                GLib.timeout_add(
+                    150,
+                    lambda: (
+                        self._bus.request_name(
+                            NAME, NameFlag.DO_NOT_QUEUE, self._on_name_reply
+                        ),
+                        GLib.SOURCE_REMOVE,
+                    )[1],
+                )
 
     # ── UI wiring ─────────────────────────────────────────────────
 
@@ -348,15 +380,11 @@ class NotificationCenterButton(HoverButton):
         self._ctrl = ctrl
         self._popup = NotificationCenter(cfg, ctrl)
 
-        icon = Gtk.Image.new_from_icon_name(
-            "notification-symbolic", Gtk.IconSize.INVALID
-        )
         font_cfg = cfg.get("font") or {}
-        self._icon = icon
+        self._icon = Glyph("\uf0f3", "accent-icon")
         self._icon.set_pixel_size(
             icon_size_for(font_cfg.get("size", 16), font_cfg.get("icon_size", 0))
         )
-        self._icon.get_style_context().add_class("accent-icon")
 
         # Unread indicator: a numbered dot overlaid on the icon's bottom-left
         # corner (mirrors the tasklist running dot) so the bar never resizes.
