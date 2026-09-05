@@ -8,6 +8,13 @@ CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "hyprtk-menu")
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "hyprtk-menu")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
+# hyprtk-bar is the theming source of truth: the menu follows the SAME
+# theme.source (pywal | waybar | manual) and waybar_theme that the bar uses,
+# so the menu and bar share an identical look and feel.
+BAR_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config", "hyprtk-bar", "config.json")
+BAR_THEMES_DIR = os.path.join(os.path.expanduser("~"), ".config", "hyprtk-bar", "themes")
+PYWAL_PATH = os.path.join(os.path.expanduser("~"), ".cache", "wal", "colors.json")
+
 LAYOUTS = ("whisker", "win7", "win11", "plasma")
 
 DEFAULT_CONFIG = {
@@ -61,3 +68,32 @@ def save_config(config):
             json.dump(config, f, indent=2, ensure_ascii=False)
     except OSError:
         pass
+
+
+def load_bar_theme() -> dict:
+    """The bar's ``theme`` block (source + waybar_theme + manual colors).
+
+    Returns ``{}`` when the bar config can't be read. The menu mirrors the
+    bar's theming source so both share the same palette.
+    """
+    try:
+        with open(BAR_CONFIG_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    theme = data.get("theme")
+    return theme if isinstance(theme, dict) else {}
+
+
+def load_pywal_colors() -> dict | None:
+    """Read ~/.cache/wal/colors.json into a ``{name: hex}`` map, or None."""
+    try:
+        with open(PYWAL_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    out = dict(data.get("colors") or {})
+    special = data.get("special") or {}
+    out["background"] = special.get("background")
+    out["foreground"] = special.get("foreground")
+    return out or None

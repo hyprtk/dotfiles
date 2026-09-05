@@ -218,8 +218,8 @@ class MenuWindow(Gtk.Window):
         self._apply_layout_class()
 
         self._wal_mtime = theme.wal_mtime()
-        self._themestyle_prev = theme.themestyle_mtime()
-        self._bar_cfg_prev = self._bar_config_mtime()
+        self._bar_cfg_prev = theme.bar_config_mtime()
+        self._themes_dir_prev = theme.themes_dir_mtime()
         GLib.timeout_add_seconds(2, self._check_wal)
 
         self._build_ui()
@@ -287,13 +287,6 @@ class MenuWindow(Gtk.Window):
                 right = left + px
         height = int(bar.get("height", 40) or 40) + gap_in + gap_out
         return edge, left, right
-
-    def _bar_config_mtime(self):
-        """Nanosecond mtime of the bar config (0 if missing)."""
-        try:
-            return os.stat(BAR_CONFIG_FILE).st_mtime_ns
-        except OSError:
-            return 0
 
     def _apply_position(self):
         position = self.config.get("position", "auto")
@@ -1923,19 +1916,19 @@ class MenuWindow(Gtk.Window):
     # -- show / hide ------------------------------------------------------
 
     def _check_wal(self):
-        """Live-update pywal colors and bar-theme profile while open."""
+        """Live-update the menu palette (pywal + bar theme) while open."""
         changed = False
         wal_mtime = theme.wal_mtime()
         if wal_mtime and wal_mtime != self._wal_mtime:
             self._wal_mtime = wal_mtime
             changed = True
-        theme_mtime = theme.themestyle_mtime()
-        if theme_mtime != self._themestyle_prev:
-            self._themestyle_prev = theme_mtime
-            changed = True
-        bar_mtime = self._bar_config_mtime()
+        bar_mtime = theme.bar_config_mtime()
         if bar_mtime != self._bar_cfg_prev:
             self._bar_cfg_prev = bar_mtime
+            changed = True
+        themes_mtime = theme.themes_dir_mtime()
+        if themes_mtime != self._themes_dir_prev:
+            self._themes_dir_prev = themes_mtime
             changed = True
         if not changed:
             return True

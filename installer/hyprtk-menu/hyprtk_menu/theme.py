@@ -1,4 +1,11 @@
-"""CSS assembly for hyprtk-menu — pywal colors + base glass theme."""
+"""CSS assembly for hyprtk-menu.
+
+The menu shares hyprtk-bar's theming model: it reads the SAME ``theme.source``
+(``pywal`` | ``waybar`` | ``manual``) and ``waybar_theme`` from the bar's config
+so both resolve an identical palette. The resolved palette is then mapped onto
+the menu's semantic tokens (panel_bg, text, accent, ...) that the base
+``assets/style.css`` and layout CSS consume.
+"""
 
 import os
 import re
@@ -11,11 +18,10 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk
 
 from . import config as cfg
+from .waybar_theme import find_themes_dir, list_themes, parse_palette
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STYLE_CSS = os.path.join(BASE_DIR, "assets", "style.css")
-WAL_COLORS_SH = os.path.expanduser("~/.cache/wal/colors.sh")
-THEME_FILE = os.path.expanduser("~/.cache/.themestyle.sh")
 
 LAYOUT_ICONS = {
     "whisker": "\uf0ca",
@@ -24,108 +30,6 @@ LAYOUT_ICONS = {
     "plasma": "\uf042",
 }
 LAYOUT_ORDER = list(cfg.LAYOUTS)
-
-# Bar-theme profiles: semantic token overrides so the menu matches the
-# active hyprtk-bar theme. Accents stay pywal (@color5 mauve / @color6 cyan).
-# Token names must match the @define-color defaults in assets/style.css.
-PROFILES = {
-    "default": {  # hyprtk dark frosted
-        "panel_bg": "rgba(10, 10, 20, 0.88)",
-        "panel_border": "rgba(255, 255, 255, 0.10)",
-        "text": "@foreground",
-        "muted": "alpha(@foreground, 0.6)",
-        "selected_text": "#ffffff",
-        "surface": "rgba(255, 255, 255, 0.05)",
-        "selected_bg": "alpha(@color5, 0.28)",
-        "selected_border": "alpha(@color5, 0.5)",
-        "input_bg": "rgba(255, 255, 255, 0.05)",
-        "input_border": "rgba(255, 255, 255, 0.14)",
-    },
-    "hyprtk-aero": {  # neutral dark glass, white borders, pywal accents
-        "panel_bg": "rgba(10, 10, 20, 0.88)",
-        "panel_border": "alpha(#ffffff, 0.25)",
-        "text": "#ffffff",
-        "muted": "alpha(#ffffff, 0.65)",
-        "selected_text": "#ffffff",
-        "surface": "alpha(#ffffff, 0.06)",
-        "selected_bg": "alpha(@color5, 0.3)",
-        "selected_border": "alpha(#ffffff, 0.35)",
-        "input_bg": "alpha(#ffffff, 0.05)",
-        "input_border": "alpha(#ffffff, 0.25)",
-    },
-    "hyprtk-clear": {  # transparent bar, dark glass pills, light text
-        "panel_bg": "rgba(10, 10, 20, 0.78)",
-        "panel_border": "rgba(255, 255, 255, 0.08)",
-        "text": "rgba(220, 220, 235, 0.95)",
-        "muted": "rgba(220, 220, 235, 0.6)",
-        "selected_text": "#ffffff",
-        "surface": "rgba(255, 255, 255, 0.05)",
-        "selected_bg": "alpha(@color5, 0.28)",
-        "selected_border": "alpha(@color5, 0.5)",
-        "input_bg": "rgba(255, 255, 255, 0.05)",
-        "input_border": "rgba(255, 255, 255, 0.14)",
-    },
-    "hyprtk-glass": {  # transparent bar, sapphire border, muted text
-        "panel_bg": "rgba(10, 10, 20, 0.72)",
-        "panel_border": "alpha(@color4, 0.4)",
-        "text": "rgba(200, 200, 210, 0.9)",
-        "muted": "rgba(180, 180, 190, 0.6)",
-        "selected_text": "#ffffff",
-        "surface": "rgba(255, 255, 255, 0.05)",
-        "selected_bg": "alpha(@color6, 0.14)",
-        "selected_border": "alpha(@color4, 0.5)",
-        "input_bg": "rgba(255, 255, 255, 0.05)",
-        "input_border": "alpha(@color4, 0.3)",
-    },
-    "hyprtk-inverse": {  # transparent bar, dark glass pills, light text + pywal accents
-        "panel_bg": "rgba(20, 20, 30, 0.82)",
-        "panel_border": "rgba(255, 255, 255, 0.08)",
-        "text": "rgba(220, 220, 235, 0.92)",
-        "muted": "rgba(220, 220, 235, 0.6)",
-        "selected_text": "#ffffff",
-        "surface": "rgba(255, 255, 255, 0.06)",
-        "selected_bg": "alpha(@color5, 0.28)",
-        "selected_border": "alpha(@color5, 0.5)",
-        "input_bg": "rgba(255, 255, 255, 0.06)",
-        "input_border": "rgba(255, 255, 255, 0.14)",
-    },
-    "hyprtk-light": {  # light frosted, white glass pills, dark text
-        "panel_bg": "rgba(255, 255, 255, 0.82)",
-        "panel_border": "rgba(255, 255, 255, 0.5)",
-        "text": "rgba(20, 20, 30, 0.95)",
-        "muted": "rgba(20, 20, 30, 0.6)",
-        "selected_text": "#111111",
-        "surface": "rgba(255, 255, 255, 0.35)",
-        "selected_bg": "alpha(@color5, 0.3)",
-        "selected_border": "alpha(@color5, 0.5)",
-        "input_bg": "rgba(255, 255, 255, 0.45)",
-        "input_border": "rgba(0, 0, 0, 0.15)",
-    },
-    "hyprtk-negative": {  # photo-negative light bar (hardcoded light variant)
-        "panel_bg": "rgba(250, 250, 240, 0.88)",
-        "panel_border": "rgba(0, 0, 0, 0.12)",
-        "text": "rgba(35, 35, 20, 0.95)",
-        "muted": "rgba(35, 35, 20, 0.6)",
-        "selected_text": "#000000",
-        "surface": "rgba(0, 0, 0, 0.06)",
-        "selected_bg": "rgba(0, 0, 0, 0.12)",
-        "selected_border": "rgba(0, 0, 0, 0.22)",
-        "input_bg": "rgba(0, 0, 0, 0.04)",
-        "input_border": "rgba(0, 0, 0, 0.12)",
-    },
-    "hyprtk-reverse": {  # light frosted, white glass pills, solid pywal accents
-        "panel_bg": "rgba(255, 255, 255, 0.82)",
-        "panel_border": "rgba(255, 255, 255, 0.45)",
-        "text": "rgba(20, 20, 30, 0.95)",
-        "muted": "rgba(20, 20, 30, 0.6)",
-        "selected_text": "#ffffff",
-        "surface": "rgba(255, 255, 255, 0.4)",
-        "selected_bg": "@color5",
-        "selected_border": "@color5",
-        "input_bg": "rgba(255, 255, 255, 0.4)",
-        "input_border": "alpha(@color5, 0.5)",
-    },
-}
 
 
 # Fallback palette (hyprtk defaults) when the pywal cache is missing.
@@ -151,39 +55,119 @@ FALLBACK = {
 }
 
 
-def _read_wal_colors():
-    """Parse ~/.cache/wal/colors.sh into {name: #hex}. Empty on failure."""
-    colors = {}
-    pattern = re.compile(r"^(background|foreground|color\d+)='(#[0-9a-fA-F]{6,8})'")
+def _contrast_fg(hex_color):
+    """Pick black or white text that contrasts with the given hex background."""
     try:
-        with open(WAL_COLORS_SH, encoding="utf-8") as f:
-            for line in f:
-                match = pattern.match(line.strip())
-                if match:
-                    colors[match.group(1)] = match.group(2)
-    except OSError:
-        pass
-    return colors
+        hex_color = hex_color.lstrip("#")
+        if len(hex_color) == 3:
+            hex_color = "".join(c * 2 for c in hex_color)
+        r, g, b = (int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+    except (ValueError, TypeError):
+        return "#ffffff"
+    luminance = 0.299 * r + 0.587 * g + 0.114 * b
+    return "#000000" if luminance > 140 else "#ffffff"
 
 
-def active_theme_name():
-    """Base name of the active bar theme from ~/.cache/.themestyle.sh."""
+def _rgba(color, alpha):
+    """Convert a #rgb/#rrggbb/#rrggbbaa/rgba()/rgb() color to rgba() string."""
+    color = color.strip()
+    m = re.fullmatch(r"#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})", color)
+    if m:
+        h = m.group(1)
+        if len(h) == 3:
+            h = "".join(c * 2 for c in h)
+        return f"rgba({int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)}, {alpha:.2f})"
+    m = re.search(r"rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)", color, re.I)
+    if m:
+        return f"rgba({int(m.group(1))}, {int(m.group(2))}, {int(m.group(3))}, {alpha:.2f})"
+    m = re.search(r"rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", color, re.I)
+    if m:
+        return f"rgba({int(m.group(1))}, {int(m.group(2))}, {int(m.group(3))}, {alpha:.2f})"
+    return color
+
+
+def _hover_color(color):
+    """Return a translucent hover color, preserving the source's alpha."""
+    color = color.strip()
+    if color.startswith("#"):
+        return _rgba(color, 0.12)
+    if color.lower().startswith("rgb"):
+        return color
+    return "rgba(255, 255, 255, 0.12)"
+
+
+# ── palette resolution (mirrors hyprtk-bar) ─────────────────────
+
+def _import_waybar_palette(theme):
+    """Parse the bar's selected waybar theme into a palette (or None)."""
+    name = theme.get("waybar_theme")
+    if not name:
+        return None
     try:
-        with open(THEME_FILE, encoding="utf-8") as f:
-            name = f.read().split(";")[0].strip().strip("/")
-    except OSError:
-        return ""
-    return name
+        palette = parse_palette(name)
+    except Exception:
+        return None
+    if palette is not None:
+        palette["waybar_theme"] = name
+    return palette
 
 
-def active_profile():
-    """Profile dict for the active bar theme (falls back to default)."""
-    name = active_theme_name()
-    base = name
-    for suffix in ("-top", "-bottom"):
-        if base.endswith(suffix):
-            base = base[: -len(suffix)]
-    return PROFILES.get(base) or PROFILES.get("default")
+def resolve_palette():
+    """Resolve the menu palette from the bar's theme.source.
+
+    Returns a dict with ``background``/``foreground``/``accent``/``hover`` plus
+    optional ``border_color``/``border_radius``/``waybar_theme`` when a waybar
+    theme is active — the same palette hyprtk-bar builds.
+    """
+    theme = cfg.load_bar_theme()
+    source = theme.get("source", "pywal")
+    palette = {
+        "background": theme.get("background", "#1a1b26"),
+        "foreground": theme.get("foreground", "#c0caf5"),
+        "accent": theme.get("accent", "#7aa2f7"),
+        "hover": theme.get("hover", "rgba(255, 255, 255, 0.08)"),
+    }
+
+    if source != "manual":
+        if source == "waybar":
+            imported = _import_waybar_palette(theme)
+            if imported is not None:
+                palette = imported
+        if "background_alpha" not in palette:
+            pywal = cfg.load_pywal_colors()
+            if pywal:
+                palette["background"] = pywal.get("background") or palette["background"]
+                palette["foreground"] = pywal.get("foreground") or palette["foreground"]
+                palette["accent"] = pywal.get("color5") or pywal.get("color4") or palette["accent"]
+                palette["hover"] = _rgba(palette["foreground"], 0.08)
+                palette["border_color"] = palette["accent"]
+    return palette
+
+
+# ── palette -> menu semantic tokens ─────────────────────────────
+
+def _palette_to_tokens(palette, pywal):
+    """Map a resolved palette onto the menu's semantic CSS tokens."""
+    accent = palette.get("accent", "#7aa2f7")
+    fg = palette.get("foreground", "#c0caf5")
+    bg = palette.get("background", "#1a1b26")
+    selected_fg = _contrast_fg(accent)
+    border = palette.get("border_color") or _rgba(accent, 0.35)
+    accent_alt = (pywal or {}).get("color6") or accent
+    return {
+        "panel_bg": _rgba(bg, 0.92),
+        "panel_border": border,
+        "text": fg,
+        "muted": _rgba(fg, 0.6),
+        "selected_text": selected_fg,
+        "accent": accent,
+        "accent_alt": accent_alt,
+        "surface": _rgba(accent, 0.07),
+        "selected_bg": _rgba(accent, 0.28),
+        "selected_border": _rgba(accent, 0.5),
+        "input_bg": _rgba(accent, 0.08),
+        "input_border": _rgba(accent, 0.25),
+    }
 
 
 def _palette_to_css(colors):
@@ -193,9 +177,9 @@ def _palette_to_css(colors):
     return "\n".join(lines)
 
 
-def _profile_to_css(profile):
-    lines = ["/* bar theme profile */"]
-    for key, value in profile.items():
+def _tokens_to_css(tokens):
+    lines = ["/* bar theme tokens */"]
+    for key, value in tokens.items():
         lines.append("@define-color %s %s;" % (key, value))
     return "\n".join(lines)
 
@@ -217,30 +201,38 @@ def layout_css(name):
 
 
 def build_css():
-    """Assemble the final CSS: pywal palette, base rules, theme profile, layout."""
-    colors = _read_wal_colors()
-    if not colors:
-        colors = dict(FALLBACK)
+    """Assemble the final CSS: pywal palette, base rules, tokens, layout."""
+    pywal = cfg.load_pywal_colors()
+    colors = pywal or dict(FALLBACK)
+    palette = resolve_palette()
     parts = [_palette_to_css(colors)]
     with open(STYLE_CSS, encoding="utf-8") as f:
         parts.append(f.read())
-    parts.append(_profile_to_css(active_profile()))
+    parts.append(_tokens_to_css(_palette_to_tokens(palette, pywal)))
     parts.append(layout_css(active_layout()))
     return "\n".join(parts)
 
 
 def wal_mtime():
-    """Nanosecond mtime of the pywal colors file (0 if missing)."""
+    """Nanosecond mtime of the pywal colors.json (0 if missing)."""
     try:
-        return os.stat(WAL_COLORS_SH).st_mtime_ns
+        return os.stat(cfg.PYWAL_PATH).st_mtime_ns
     except OSError:
         return 0
 
 
-def themestyle_mtime():
-    """Nanosecond mtime of the active-theme file (0 if missing)."""
+def bar_config_mtime():
+    """Nanosecond mtime of the bar config (0 if missing)."""
     try:
-        return os.stat(THEME_FILE).st_mtime_ns
+        return os.stat(cfg.BAR_CONFIG_FILE).st_mtime_ns
+    except OSError:
+        return 0
+
+
+def themes_dir_mtime():
+    """Nanosecond mtime of the bar themes dir (0 if missing)."""
+    try:
+        return os.stat(find_themes_dir()).st_mtime_ns
     except OSError:
         return 0
 
