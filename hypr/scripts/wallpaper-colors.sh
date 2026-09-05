@@ -14,7 +14,7 @@ wal -i "$WALLPAPER" -n -q
 cp "$WALLPAPER" ~/.cache/current-wallpaper.png 2>/dev/null
 hyprctl reload 2>/dev/null
 ~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
-# waybar/dunst removed: hyprtk-bar owns the taskbar + notifications bus
+# hyprtk-bar owns the taskbar + notifications bus
 pkill wob 2>/dev/null
 rm -f /tmp/wobpipe
 mkfifo /tmp/wobpipe

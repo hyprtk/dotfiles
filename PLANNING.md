@@ -91,10 +91,10 @@ them via `REMOVED_EXCLUDE` (see `installer/scripts/verify/verify-completeness.sh
 
 - `configs/root/.local/share/themes/Arc-Azure-dodger-blue*` — 3 GTK themes (large)
 - `configs/root/.config/nwg-look/` + `configs/root/.local/share/nwg-look/`
-- `configs/waybar/` + `configs/dunst/` (and the source waybar theme set) —
-  removed outright: hyprtk-bar is the taskbar and owns the notification
-  daemon. `hypr/scripts/generate-aero-colors.sh` (only used by the waybar
-  launcher) is gone too.
+- `configs/waybar/` (and the source waybar theme set) — removed outright:
+  hyprtk-bar is the taskbar and owns the notification daemon.
+  `hypr/scripts/generate-aero-colors.sh` (only used by the waybar launcher) is
+  gone too.
 
 ### Standalone wrappers
 

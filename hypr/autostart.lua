@@ -4,8 +4,7 @@
 
 hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon &")
-    -- dunst disabled: hyprtk-bar owns org.freedesktop.Notifications (built-in
-    -- notification center). Re-enable with: hl.exec_cmd("dunst")
+    -- hyprtk-bar owns org.freedesktop.Notifications (built-in notification center)
     hl.exec_cmd("hyprtk-bar &")
     hl.exec_cmd("hyprctl setcursor Adwaita 24")
     hl.exec_cmd("wl-paste --watch cliphist store")

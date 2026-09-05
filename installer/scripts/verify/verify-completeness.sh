@@ -12,7 +12,6 @@ MAP[splash]=assets/splash
 MAP[screenshots]=assets/screenshots
 MAP[alacritty]=configs/alacritty
 MAP[btop]=configs/btop
-MAP[dunst]=configs/dunst
 MAP[fastfetch]=configs/fastfetch
 MAP[figlet]=configs/figlet
 MAP[gtk]=configs/gtk
@@ -55,7 +54,6 @@ REMOVED_EXCLUDE=(
   '^configs/root/.config/nwg-look(/|$)'
   '^configs/root/.local/share/nwg-look(/|$)'
   '^configs/waybar(/|$)'   # replaced by hyprtk-bar
-  '^configs/dunst(/|$)'    # replaced by hyprtk-bar notification center
 )
 EXCLUDE_RE="$(IFS='|'; echo "${REMOVED_EXCLUDE[*]}")"
 

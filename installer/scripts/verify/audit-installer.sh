@@ -15,7 +15,7 @@ canon() {
   for d in fonts Wallpapers themes papirus-icons splash screenshots; do
     c="${c//~/hyprtk\/$d\//~/hyprtk\/assets\/$d\/}"
   done
-  for d in alacritty btop dunst fastfetch figlet gtk hyprlogout hyprpicker matuwall Mousepad nvim ohmyposh oh-my-zsh ranger rofi sddm smb starship swappy swaylock Thunar User-Management vim wal waybar waypaper wob xfce4 zshrc root scripts standalone; do
+  for d in alacritty btop fastfetch figlet gtk hyprlogout hyprpicker matuwall Mousepad nvim ohmyposh oh-my-zsh ranger rofi sddm smb starship swappy swaylock Thunar User-Management vim wal waybar waypaper wob xfce4 zshrc root scripts standalone; do
     c="${c//~/hyprtk\/$d\//~/hyprtk\/configs\/$d\/}"
   done
   c="${c//~/hyprtk\/themes/~/hyprtk\/assets\/themes}"
