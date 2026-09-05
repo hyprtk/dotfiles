@@ -1,18 +1,15 @@
 #!/bin/bash
-cache_file="$HOME/.cache/.themestyle.sh"
+# sync-rofi-theme.sh — link the rofi variant to match the current hyprtk-bar theme
+
+bar_config="$HOME/.config/hyprtk-bar/config.json"
 variant_dir="$HOME/hyprtk/configs/rofi/variants"
 symlink="$HOME/hyprtk/configs/rofi/variant.rasi"
 
-if [ -f "$cache_file" ]; then
-    content=$(cat "$cache_file")
-    IFS=';' read -ra arr <<< "$content"
-    if [ ${#arr[@]} -ge 1 ] && [ -n "${arr[0]}" ]; then
-        theme="${arr[0]#/}"
-    else
-        theme="hyprtk"
-    fi
-else
-    theme="hyprtk"
+theme="hyprtk"
+
+if [ -f "$bar_config" ]; then
+    waybar_theme=$(python3 -c "import json;d=json.load(open('$bar_config'));print(d.get('theme',{}).get('waybar_theme',''))" 2>/dev/null)
+    [ -n "$waybar_theme" ] && theme="$waybar_theme"
 fi
 
 theme="${theme%-top}"
