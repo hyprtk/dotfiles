@@ -28,7 +28,7 @@
 /* Main frosted glass panel */
 .menu {
     background-color: @panel_bg;
-    border: 1px solid @panel_border;
+    border: 2px solid @panel_border;
     border-radius: 16px;
 }
 
