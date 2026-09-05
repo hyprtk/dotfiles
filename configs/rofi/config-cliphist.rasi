@@ -127,7 +127,7 @@ button {
 }
 
 button selected {
-    background-color:             @color4;
+    background-color:             @color5;
     text-color:                   #ffffff;
 }
 
@@ -178,7 +178,7 @@ element normal.active {
 }
 
 element selected.normal {
-    background-color:            @color4;
+    background-color:            @color5;
     text-color:                  #ffffff;
 }
 

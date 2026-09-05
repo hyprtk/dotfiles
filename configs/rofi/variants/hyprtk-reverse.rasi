@@ -32,7 +32,7 @@ button {
 }
 
 button selected {
-    background-color:            @color4;
+    background-color:            @color5;
     text-color:                  #ffffff;
 }
 
@@ -48,7 +48,7 @@ element normal.active {
 }
 
 element selected.normal {
-    background-color:            @color4;
+    background-color:            @color5;
     text-color:                  #ffffff;
 }
 
@@ -64,7 +64,7 @@ element alternate.active {
 }
 
 message {
-    background-color:            @color4;
+    background-color:            @color5;
     text-color:                  #ffffff;
     border-color:                rgba(0,0,0,0.06);
 }
@@ -74,7 +74,7 @@ textbox {
 }
 
 error-message {
-    background-color:            @color4;
+    background-color:            @color5;
     text-color:                  #ffffff;
     border-color:                @color5;
 }

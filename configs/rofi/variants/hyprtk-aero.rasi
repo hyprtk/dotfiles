@@ -13,7 +13,7 @@ inputbar {
 }
 
 textbox-prompt-colon {
-    background-color:            @color11;
+    background-color:            @color5;
     text-color:                  #ffffff;
 }
 
@@ -32,7 +32,7 @@ button {
 }
 
 button selected {
-    background-color:            @color4;
+    background-color:            @color5;
     text-color:                  #ffffff;
     border-color:                rgba(255,255,255,0.30);
 }
@@ -49,7 +49,7 @@ element normal.active {
 }
 
 element selected.normal {
-    background-color:            @color4;
+    background-color:            @color5;
     text-color:                  #ffffff;
     border-color:                rgba(255,255,255,0.30);
 }
