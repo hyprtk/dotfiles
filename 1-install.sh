@@ -544,6 +544,12 @@ else
             _spin "Configuring sudoers..." "echo 'Defaults env_reset,pwfeedback' | sudo tee -a /etc/sudoers > /dev/null" "$LOG_FILE"
         fi
         _ok "Sudoers configured"
+
+        # ── Bar sudo access (passwordless) ──────────────────────────
+        _step "Configuring Bar Sudo Access"
+        echo -e "${CYAN}  → ${WHITE}Installing hyprtk-bar sudoers (passwordless sudo)${NC}"
+        sudo bash "$SCRIPT_DIR/installer/scripts/setup-sudoers.sh"
+        _ok "Bar passwordless sudo configured"
     fi
 fi
 
