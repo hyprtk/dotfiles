@@ -1,3 +1,67 @@
-alpha 0.1
+# Changelog
 
-install it and see
+All notable changes to hyprtk-merged (the unified dotfiles installer) are
+documented in this file. Dates are in YYYY-MM-DD format.
+
+## [Unreleased] - 2026-09-07
+
+### Changed
+
+- **hyprtk-bar border animation mirrors Hyprland** — vendored hyprtk-bar now
+  animates its pill border at the same pace as Hyprland's `borderangle`
+  (speed = duration in ds, `speed * 100` ms) and exposes an Animations tab
+  (Low / High / Custom; custom speed independent of Hyprland).
+- **hyprtk-bar GPU page supports Intel + NVIDIA** — auto-picks the primary GPU
+  and reads amdgpu sysfs / `nvidia-smi` / Intel i915+xe sysfs (vendored).
+- hyprtk-menu theming shares the bar's theme model (pywal / waybar / manual).
+
+## [0.2.0] - 2026-09-05
+
+### Changed
+
+- **Waybar + dunst fully removed** — replaced by the bundled **hyprtk-bar**
+  (taskbar, system tray, and built-in notification center all in one app).
+  `configs/waybar` (incl. all themes), `configs/dunst`, and the waybar-only
+  color script were deleted; packages, keybindings, wal/wallpaper script
+  launches, RTMIN signals and dunstrc copies removed.
+- hyprtk-bar, hyprtk-menu, hyprtk-arc-menu and theme-gui vendored into
+  `installer/` and wired into `1-install.sh`; gtk3 + desktop-file-utils added
+  to the hyprland package deps.
+- Rofi variants aligned with the bar theme: accent switched to pywal color5,
+  aero variant made pywal-aware, `hyprtk-glass` variant added; the bar syncs
+  the rofi variant on every re-theme.
+- hyprtk-bar + hyprtk-arc-menu autostart fixed (Hyprland autostart PATH lacks
+  `~/.local/bin` — use absolute paths).
+- SDDM/GRUB module (theme-gui) uses pkexec; theme-gui standalone wrapper path
+  fixed.
+
+## [0.1.0] - 2026-08-13
+
+### Added
+
+- **Unified 11-distro installer** — one `1-install.sh` covering Arch, ArchBang,
+  Archcraft, ArchMan, Bluestar, CachyOS, EndeavourOS, Garuda, Kiro, Manjaro and
+  RebornOS, with per-distro hooks in `installer/steps/` (os-release install,
+  boot splash, grub wallpaper/updater, wal re-init, hypr-config backup,
+  sudoers).
+- New 4-category tree layout: `assets/` (fonts, wallpapers, themes, papirus
+  icons, splash, screenshots), `configs/` (all app configs + root),
+  `hypr/` (Hyprland lua config) and `installer/` (os-release variants, scripts,
+  standalone gum, steps). Per-distro overlays under `distro/<name>/`.
+- Gum TUI installer with distro auto-detection (`/etc/os-release`), standalone
+  gum binary, `install.log` logging, and dependency audit.
+- Verification suite: `installer/scripts/verify/` — completeness, reference
+  audit, installer audit, dry-run, and a full end-to-end installer dry-run
+  harness (sandboxed `$HOME`, all system-mutating commands stubbed, per-distro
+  fake os-release).
+
+### Changed
+
+- Merged the 11 source distro trees into one canonical tree (arch-dots is the
+  canonical base; other trees are diff-generated overlays).
+- os-release ×11 + fastfetch ASCII logos for every distro.
+
+### Removed
+
+- Separate per-distro repos: everything is merged into a single `dotfiles`
+  repo (github.com/hyprtk/dotfiles).

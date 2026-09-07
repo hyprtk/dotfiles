@@ -3,6 +3,20 @@
 All notable changes to hyprtk-menu are documented in this file.
 Dates are in YYYY-MM-DD format.
 
+## [0.1.3] - 2026-09-05
+
+### Changed
+
+- **Theming now shares hyprtk-bar's theming model** — the menu reads the
+  bar's `theme.source` (pywal / waybar / manual) + `waybar_theme` from
+  `~/.config/hyprtk-bar/config.json` and resolves the **same palette** the bar
+  uses (new `waybar_theme.py` port of the bar's parser, pointed at the bar's
+  imported themes dir). The hardcoded theme-profile table and the
+  `.themestyle.sh` watcher were dropped; the menu re-themes live on pywal
+  colors, bar config, or theme changes.
+- **2px menu panel border** on all four layouts (base style.css + win7 / win11
+  / plasma layout overrides).
+
 ## [0.1.2] - 2026-09-04
 
 ### Changed
@@ -14,6 +28,10 @@ Dates are in YYYY-MM-DD format.
   the bar) instead of the screen edges. The menu also clears the bar's full
   height (`height` + 2*`margin` + gap) and re-anchors live while open when
   the bar config changes.
+- Menu auto-position now follows hyprtk-bar's **gap_in/gap_out** geometry
+  (the bar's exclusive-zone push), not just its edge; zero gaps are honored.
+- Settings dialogue gained a **Spacing section** (Gap in = menu↔bar, Gap out =
+  menu↔screen edge) replacing the hardcoded margins; zero is a valid gap.
 
 ## [0.1.1] - 2026-09-04
 
