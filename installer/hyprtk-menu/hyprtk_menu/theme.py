@@ -1,7 +1,7 @@
 """CSS assembly for hyprtk-menu.
 
 The menu shares hyprtk-bar's theming model: it reads the SAME ``theme.source``
-(``pywal`` | ``waybar`` | ``manual``) and ``waybar_theme`` from the bar's config
+(``pywal`` | ``imported`` | ``manual``) and ``theme_name`` from the bar's config
 so both resolve an identical palette. The resolved palette is then mapped onto
 the menu's semantic tokens (panel_bg, text, accent, ...) that the base
 ``assets/style.css`` and layout CSS consume.
@@ -19,7 +19,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk
 
 from . import config as cfg
-from .waybar_theme import find_themes_dir, list_themes, parse_palette
+from .theme_import import find_themes_dir, list_themes, parse_palette
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STYLE_CSS = os.path.join(BASE_DIR, "assets", "style.css")
@@ -119,9 +119,9 @@ def _hover_color(color):
 
 # ── palette resolution (mirrors hyprtk-bar) ─────────────────────
 
-def _import_waybar_palette(theme):
-    """Parse the bar's selected waybar theme into a palette (or None)."""
-    name = theme.get("waybar_theme")
+def _import_theme_palette(theme):
+    """Parse the bar's selected imported theme into a palette (or None)."""
+    name = theme.get("theme_name")
     if not name:
         return None
     try:
@@ -129,7 +129,7 @@ def _import_waybar_palette(theme):
     except Exception:
         return None
     if palette is not None:
-        palette["waybar_theme"] = name
+        palette["theme_name"] = name
     return palette
 
 
@@ -137,7 +137,7 @@ def resolve_palette():
     """Resolve the menu palette from the bar's theme.source.
 
     Returns a dict with ``background``/``foreground``/``accent``/``hover`` plus
-    optional ``border_color``/``border_radius``/``waybar_theme`` when a waybar
+    optional ``border_color``/``border_radius``/``theme_name`` when an imported
     theme is active — the same palette hyprtk-bar builds.
     """
     theme = cfg.load_bar_theme()
@@ -150,8 +150,8 @@ def resolve_palette():
     }
 
     if source != "manual":
-        if source == "waybar":
-            imported = _import_waybar_palette(theme)
+        if source == "imported":
+            imported = _import_theme_palette(theme)
             if imported is not None:
                 palette = imported
         if "background_alpha" not in palette:

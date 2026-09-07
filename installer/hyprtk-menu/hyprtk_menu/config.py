@@ -9,7 +9,7 @@ CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "hyprtk-menu")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 # hyprtk-bar is the theming source of truth: the menu follows the SAME
-# theme.source (pywal | waybar | manual) and waybar_theme that the bar uses,
+# theme.source (pywal | imported | manual) and theme_name that the bar uses,
 # so the menu and bar share an identical look and feel.
 BAR_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".config", "hyprtk-bar", "config.json")
 BAR_THEMES_DIR = os.path.join(os.path.expanduser("~"), ".config", "hyprtk-bar", "themes")
@@ -71,7 +71,7 @@ def save_config(config):
 
 
 def load_bar_theme() -> dict:
-    """The bar's ``theme`` block (source + waybar_theme + manual colors).
+    """The bar's ``theme`` block (source + theme_name + manual colors).
 
     Returns ``{}`` when the bar config can't be read. The menu mirrors the
     bar's theming source so both share the same palette.
