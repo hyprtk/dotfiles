@@ -16,7 +16,7 @@ gi.require_version("GtkLayerShell", "0.1")
 from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, GtkLayerShell, Pango
 
 from . import apps, config as cfg, theme
-from .hypr_animations import border_period_ms
+from .hypr_animations import active_border_colors, border_period_ms, lerp_color
 from .theme import apply_border_color, apply_css, build_css
 
 # Win7-style places entries (label, icon_name, command_or_path)
@@ -228,7 +228,7 @@ class MenuWindow(Gtk.Window):
         self._border_anim_period = None
         self._border_anim_id = None
         self._border_hue = 0.0
-        self._border_base = theme.panel_border_base()
+        self._border_colors: tuple | None = None
 
         self._build_ui()
 
@@ -1969,14 +1969,22 @@ class MenuWindow(Gtk.Window):
     # -- border animation --------------------------------------------------
 
     def _start_border_animation(self):
-        """Start the panel-border hue animation if the bar has one enabled."""
+        """Start the panel-border animation if the bar has one enabled.
+
+        Interpolates between Hyprland's two ``active_border`` colours
+        (``color11`` + ``color4``) on a ping-pong loop — mirroring the
+        borderangle gradient, not a full hue wheel.
+        """
         if self._border_anim_id is not None:
             return
         self._border_anim_period = border_period_ms()
         if self._border_anim_period is None:
             return
+        colors = active_border_colors()
+        if not colors:
+            return
+        self._border_colors = colors
         self._border_hue = 0.0
-        self._border_base = theme.panel_border_base()
         self._border_anim_id = GLib.timeout_add(33, self._border_anim_tick)
 
     def _stop_border_animation(self):
@@ -1985,13 +1993,15 @@ class MenuWindow(Gtk.Window):
             self._border_anim_id = None
 
     def _border_anim_tick(self):
-        """Advance the border hue and re-render with the animated color."""
+        """Advance the border blend and re-render with the animated color."""
         if self._border_anim_period is None:
             return False
-        step = 360.0 * 33.0 / self._border_anim_period
-        self._border_hue = (self._border_hue + step) % 360.0
+        # Ping-pong: 0 -> 1 -> 0 over the period (one leg = half the period).
+        self._border_hue = (self._border_hue + 33.0 / (self._border_anim_period / 2.0)) % 2.0
+        t = self._border_hue if self._border_hue <= 1.0 else 2.0 - self._border_hue
+        color = lerp_color(self._border_colors[0], self._border_colors[1], t)
         try:
-            apply_border_color(theme.hue_rotate(self._border_base, self._border_hue))
+            apply_border_color(color)
         except Exception as exc:
             print("hyprtk-menu: border animation update failed: %s" % exc, flush=True)
             return False
