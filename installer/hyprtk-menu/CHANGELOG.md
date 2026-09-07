@@ -3,6 +3,14 @@
 All notable changes to hyprtk-menu are documented in this file.
 Dates are in YYYY-MM-DD format.
 
+## [0.1.4] - 2026-09-07
+
+### Changed
+
+- **Waybar theme schema renamed to hyprtk-native** — reads the bar's
+  `theme.source: "imported"` + `theme.theme_name` keys; `waybar_theme.py` is
+  now `theme_import.py`. Matches the hyprtk-bar schema rename.
+
 ## [0.1.3] - 2026-09-05
 
 ### Changed
