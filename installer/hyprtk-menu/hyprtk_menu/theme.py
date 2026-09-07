@@ -7,6 +7,7 @@ the menu's semantic tokens (panel_bg, text, accent, ...) that the base
 ``assets/style.css`` and layout CSS consume.
 """
 
+import colorsys
 import os
 import re
 
@@ -22,6 +23,26 @@ from .waybar_theme import find_themes_dir, list_themes, parse_palette
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STYLE_CSS = os.path.join(BASE_DIR, "assets", "style.css")
+
+
+def hue_rotate(hex_color: str, degrees: float) -> str:
+    """Rotate a ``#rrggbb`` color's hue by ``degrees`` (loop-friendly)."""
+    hex_color = (hex_color or "").strip()
+    h = hex_color.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    if len(h) != 6:
+        return hex_color
+    try:
+        r, g, b = (int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+    except ValueError:
+        return hex_color
+    hue, lum, sat = colorsys.rgb_to_hls(r, g, b)
+    hue = (hue + (degrees / 360.0)) % 1.0
+    r, g, b = colorsys.hls_to_rgb(hue, lum, sat)
+    return "#{:02x}{:02x}{:02x}".format(
+        int(round(r * 255)), int(round(g * 255)), int(round(b * 255))
+    )
 
 LAYOUT_ICONS = {
     "whisker": "\uf0ca",
@@ -238,6 +259,7 @@ def themes_dir_mtime():
 
 
 _provider = None
+_anim_provider = None
 
 
 def apply_css(css):
@@ -251,3 +273,32 @@ def apply_css(css):
         )
     _provider.load_from_data(css.encode("utf-8"))
     Gtk.StyleContext.reset_widgets(screen)
+
+
+def panel_border_base():
+    """The menu's current panel border color, as a hex (for hue rotation).
+
+    Used as the base for the border animation's hue rotation. Falls back to
+    the accent (hex) when no explicit border color is set.
+    """
+    palette = resolve_palette()
+    return palette.get("border_color") or palette.get("accent", "#7aa2f7")
+
+
+def apply_border_color(color: str):
+    """Override just the menu panel's border-color (for the border animation).
+
+    A dedicated provider loaded after the base one wins the cascade for
+    ``.menu`` border-color, so re-theming the animated border each tick does
+    not rebuild the whole stylesheet.
+    """
+    global _anim_provider
+    screen = Gdk.Screen.get_default()
+    if _anim_provider is None:
+        _anim_provider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_screen(
+            screen, _anim_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
+        )
+    _anim_provider.load_from_data(
+        f".menu {{ border-color: {color}; }}".encode("utf-8")
+    )

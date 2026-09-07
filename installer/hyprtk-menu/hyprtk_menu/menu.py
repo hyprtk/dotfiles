@@ -16,7 +16,8 @@ gi.require_version("GtkLayerShell", "0.1")
 from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, GtkLayerShell, Pango
 
 from . import apps, config as cfg, theme
-from .theme import apply_css, build_css
+from .hypr_animations import border_period_ms
+from .theme import apply_border_color, apply_css, build_css
 
 # Win7-style places entries (label, icon_name, command_or_path)
 WIN7_PLACES = [
@@ -221,6 +222,13 @@ class MenuWindow(Gtk.Window):
         self._bar_cfg_prev = theme.bar_config_mtime()
         self._themes_dir_prev = theme.themes_dir_mtime()
         GLib.timeout_add_seconds(2, self._check_wal)
+
+        # Border animation mirrors the bar's (low/high/custom from the bar
+        # config). Started while the menu is visible.
+        self._border_anim_period = None
+        self._border_anim_id = None
+        self._border_hue = 0.0
+        self._border_base = theme.panel_border_base()
 
         self._build_ui()
 
@@ -1958,6 +1966,37 @@ class MenuWindow(Gtk.Window):
         GLib.idle_add(self.search.grab_focus)
         return False
 
+    # -- border animation --------------------------------------------------
+
+    def _start_border_animation(self):
+        """Start the panel-border hue animation if the bar has one enabled."""
+        if self._border_anim_id is not None:
+            return
+        self._border_anim_period = border_period_ms()
+        if self._border_anim_period is None:
+            return
+        self._border_hue = 0.0
+        self._border_base = theme.panel_border_base()
+        self._border_anim_id = GLib.timeout_add(33, self._border_anim_tick)
+
+    def _stop_border_animation(self):
+        if self._border_anim_id is not None:
+            GLib.source_remove(self._border_anim_id)
+            self._border_anim_id = None
+
+    def _border_anim_tick(self):
+        """Advance the border hue and re-render with the animated color."""
+        if self._border_anim_period is None:
+            return False
+        step = 360.0 * 33.0 / self._border_anim_period
+        self._border_hue = (self._border_hue + step) % 360.0
+        try:
+            apply_border_color(theme.hue_rotate(self._border_base, self._border_hue))
+        except Exception as exc:
+            print("hyprtk-menu: border animation update failed: %s" % exc, flush=True)
+            return False
+        return True
+
     def show_menu(self):
         self._apply_position()
         self._apply_layout_tweaks()
@@ -1974,8 +2013,10 @@ class MenuWindow(Gtk.Window):
             self._layout_initialized = True
             GLib.idle_add(self._apply_saved_layout)
         GLib.idle_add(self.search.grab_focus)
+        self._start_border_animation()
 
     def hide_menu(self):
+        self._stop_border_animation()
         self.hide()
         self.search.set_text("")
         self.current_category = "All"
