@@ -514,11 +514,6 @@ else
         _spin "Installing hyprtk-menu..." "sh $SCRIPT_DIR/installer/scripts/hyprtk-menu-install.sh" "$LOG_FILE"
         _ok "hyprtk-menu installed"
 
-        # ── theme-gui ────────────────────────────────────────────────
-        _step "Installing theme-gui"
-        _spin "Installing theme-gui..." "bash $SCRIPT_DIR/installer/theme-gui/install.sh" "$LOG_FILE"
-        _ok "theme-gui installed"
-
         # ── hyprtk-arc-menu ──────────────────────────────────────────
         _step "Installing hyprtk-arc-menu"
         _spin "Installing hyprtk-arc-menu..." "bash $SCRIPT_DIR/installer/hyprtk-arc-menu/install.sh" "$LOG_FILE"

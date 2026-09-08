@@ -61,7 +61,6 @@ hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/wa
 hl.bind(mainMod .. " + CTRL + RETURN", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/appsmenu.sh"))
 hl.bind(mainMod .. " + CTRL + F", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/filemanager.sh"))
 hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/cliphist.sh"))
-hl.bind(mainMod .. " + ALT + T", hl.dsp.exec_cmd("$HOME/.local/bin/theme-gui"))
 hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("$HOME/.local/bin/hyprtk-arc-menu-toggle"))
 hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-start.sh"))
 hl.bind(mainMod .. " + ALT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))

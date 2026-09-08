@@ -104,7 +104,6 @@ DEFAULT_RECOMMENDED = [
     "brave-browser.desktop",
     "thunar.desktop",
     "org.pulseaudio.pavucontrol.desktop",
-    "hyprtk-themer.desktop",
 ]
 
 # Shown in the Win11 Pinned grid until the user pins apps.
@@ -112,7 +111,6 @@ DEFAULT_PINNED = [
     "Alacritty.desktop",
     "brave-browser.desktop",
     "thunar.desktop",
-    "hyprtk-themer.desktop",
     "chromium.desktop",
     "kitty.desktop",
     "org.pulseaudio.pavucontrol.desktop",

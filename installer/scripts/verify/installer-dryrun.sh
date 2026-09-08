@@ -103,8 +103,7 @@ for d in "${DISTROS[@]}"; do
            "$H/.cache" \
            "$H/Pictures" \
            "$H/Downloads/yay-git/src/hyprviz-bin" \
-           "$H/.local/share/Matuwall/.venv/bin" \
-           "$H/.local/share/theme-gui/venv/bin"
+           "$H/.local/share/Matuwall/.venv/bin"
 
   # Fake Matuwall venv — keeps /usr/bin/python -m venv a no-op and pip stubbed
   printf 'home = /usr/bin\ninclude-system-site-packages = true\nversion = 3.14\n' > "$H/.local/share/Matuwall/.venv/pyvenv.cfg"
@@ -113,12 +112,6 @@ for d in "${DISTROS[@]}"; do
     chmod +x "$H/.local/share/Matuwall/.venv/bin/$p"
   done
   printf '#!/bin/sh\n# no-op activate\n' > "$H/.local/share/Matuwall/.venv/bin/activate"
-
-  # Fake theme-gui venv so its pip/python3 calls are no-ops
-  for p in pip pip3 python3; do
-    printf '#!/bin/sh\nexit 0\n' > "$H/.local/share/theme-gui/venv/bin/$p"
-    chmod +x "$H/.local/share/theme-gui/venv/bin/$p"
-  done
 
   # Repo -> $HOME/hyprtk (hardlinked for speed; break the shared install.log)
   cp -al "$ROOT"/. "$H/hyprtk"/ 2>/dev/null

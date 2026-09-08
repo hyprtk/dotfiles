@@ -43,15 +43,6 @@ hl.window_rule({
     float = false,
 })
 
-hl.window_rule({
-    name = "windowrule-7",
-    match = {
-        class = "dev.hyprtk.theme_gui",
-    },
-    float = true,
-    size = "1100 700",
-})
-
 -- hyprtk-menu settings window (floating)
 hl.window_rule({
     name = "windowrule-settings",

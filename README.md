@@ -109,21 +109,14 @@ package groups, dotfiles and services before installing everything.
 
 ## Applications
 
-Three standalone GTK apps ship with the installer, each with its own project, config and pywal theming:
+Two standalone GTK apps ship with the installer, each with its own project, config and pywal theming. System theming (wallpaper, pywal, rofi, icons, swaylock, SDDM/GRUB) now lives in **hyprtk-bar**'s Theme Manager, opened from the wallpaper glyph in the bar:
 
 | App | What it does | Open with |
 | --- | --- | --- |
-| **theme-gui** | Graphical theme manager — wallpapers, pywal, rofi, waybar, icons, swaylock, SDDM/GRUB | `Super + Alt + T` |
 | **hyprtk-menu** | Whisker-style app menu — search, favorites, recents, power buttons | `Super + Space` |
 | **hyprtk-arc-menu** | Material-style radial launcher | `Super + Ctrl + M` |
 
 See each app's section below for install and config details.
-
-### theme-gui
-
-A single GTK4 window with sidebar pages for every theming component. Apply a wallpaper and it runs the full pipeline: pywal, waybar restart, icon recolor, swaylock, rofi, matuwall and SDDM/GRUB.
-
-- Config: `~/.config/theme-gui/config.json`
 
 ### hyprtk-menu
 

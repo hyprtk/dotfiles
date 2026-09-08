@@ -1,5 +1,5 @@
 #!/bin/bash
-# Non-interactive when -y/--yes is passed (used by theme-gui module)
+# Non-interactive when -y/--yes is passed (used by the Theme Manager)
 AUTO=""
 case "$1" in
     -y|--yes) AUTO=1 ;;
