@@ -54,7 +54,9 @@ hl.window_rule({
     size = "360 400",
 })
 
--- hyprtk-bar settings window (floating)
+-- hyprtk-bar settings window (floating) — the CSS popup-box already draws the
+-- 2px animated border; disable Hyprland's own compositor border so only one
+-- border shows (mirrors the layer-shell dialogs which have no compositor border).
 hl.window_rule({
     name = "windowrule-bar-settings",
     match = {
@@ -63,6 +65,7 @@ hl.window_rule({
     float = true,
     center = true,
     size = "620 580",
+    border_size = 0,
 })
 
 -- Specific to launching floating terminal windows
