@@ -514,15 +514,10 @@ else
         _spin "Installing hyprtk-menu..." "sh $SCRIPT_DIR/installer/scripts/hyprtk-menu-install.sh" "$LOG_FILE"
         _ok "hyprtk-menu installed"
 
-        # ── hyprtk-arc-menu ──────────────────────────────────────────
-        _step "Installing hyprtk-arc-menu"
-        _spin "Installing hyprtk-arc-menu..." "bash $SCRIPT_DIR/installer/hyprtk-arc-menu/install.sh" "$LOG_FILE"
-        _ok "hyprtk-arc-menu installed"
-
         # ── hyprtk-bar ──────────────────────────────────────────────
         _step "Installing hyprtk-bar"
         _spin "Installing hyprtk-bar..." "bash $SCRIPT_DIR/installer/hyprtk-bar/install.sh" "$LOG_FILE"
-        _ok "hyprtk-bar installed (autostarted by autostart.lua; owns the notification daemon)"
+        _ok "hyprtk-bar installed (autostarted by autostart.lua; owns the notification daemon; hosts the arc menu overlay)"
 
         # ── Root user config ─────────────────────────────────────────
         _step "Setting Up Root User Config"

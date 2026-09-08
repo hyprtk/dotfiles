@@ -114,7 +114,8 @@ Two standalone GTK apps ship with the installer, each with its own project, conf
 | App | What it does | Open with |
 | --- | --- | --- |
 | **hyprtk-menu** | Whisker-style app menu — search, favorites, recents, power buttons | `Super + Space` |
-| **hyprtk-arc-menu** | Material-style radial launcher | `Super + Ctrl + M` |
+
+The **arc menu** (a FAB in a screen corner that fans its items out on click) is built into **hyprtk-bar** — no separate app. Toggle it with `Super + Ctrl + M` (or the FAB), configure it from the bar settings dialogue's *Arc Menu* tab.
 
 See each app's section below for install and config details.
 
@@ -123,12 +124,6 @@ See each app's section below for install and config details.
 A floating popup menu with instant search, category sidebar, pinned favorites, recents and a power bar. Four layouts — `whisker`, `win7`, `win11`, `plasma` — switchable from its settings window. Drag the corner to resize, drag the dividers to rebalance columns.
 
 - Config: `~/.config/hyprtk-menu/config.json`
-
-### hyprtk-arc-menu
-
-A FAB-style button that fans its items out on click — 180° at top/bottom center, 90° at corners. Circle or square shapes, transparent mode, live waybar theming. Middle-click anywhere to quit.
-
-- Config: `~/.config/hyprtk-arc-menu/config.json`
 
 ## Gallery
 

@@ -104,14 +104,12 @@ for d in "${DISTROS[@]}"; do
            "$H/Pictures" \
            "$H/Downloads/yay-git/src/hyprviz-bin" \
            "$H/.local/share/Matuwall/.venv/bin" \
-           "$H/.local/share/hyprtk-arc-menu/venv/bin" \
            "$H/.local/share/hyprtk-bar/venv/bin"
 
   # Fake app venvs — python3/pip are stubbed globally, so each app's
   # `python3 -m venv ...` is a no-op and never creates the venv. Pre-seed the
   # venv bin dir with no-op stubs so `.../venv/bin/pip install -e .` succeeds.
   for venv in "$H/.local/share/Matuwall/.venv" \
-              "$H/.local/share/hyprtk-arc-menu/venv" \
               "$H/.local/share/hyprtk-bar/venv"; do
     printf 'home = /usr/bin\ninclude-system-site-packages = true\nversion = 3.14\n' > "$venv/pyvenv.cfg"
     for p in pip pip3 python python3; do
