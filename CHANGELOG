@@ -7,6 +7,11 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Changed
 
+- **hyprtk-bar settings window single border** — the floating bar-settings
+  window previously showed a double border: Hyprland drew its own compositor
+  window border around the plain `Gtk.Window` on top of the CSS `.popup-box`
+  border. Added `border_size = 0` to the `windowrule-bar-settings` rule so only
+  the CSS animated border shows, matching the layer-shell dialogs.
 - **hyprtk-bar border animation mirrors Hyprland** — vendored hyprtk-bar now
   animates its pill border at the same pace as Hyprland's `borderangle`
   (speed = duration in ds, `speed * 100` ms) and exposes an Animations tab
