@@ -8,6 +8,13 @@ pre_hypr_symlink() {
 }
 
 setup_sudoers() {
-    echo -e '
-        Defaults env_reset,pwfeedback'| sudo tee -a /etc/sudoers
+    # Validated drop-in; never append to /etc/sudoers (a partial write there
+    # can lock sudo out entirely).
+    printf 'Defaults env_reset,pwfeedback\n' | sudo tee /etc/sudoers.d/99-hyprtk-reborn >/dev/null
+    sudo chmod 440 /etc/sudoers.d/99-hyprtk-reborn
+    sudo visudo -c >/dev/null 2>&1 || {
+        echo "error: sudoers validation failed; removing invalid drop-in" >&2
+        sudo rm -f /etc/sudoers.d/99-hyprtk-reborn
+        exit 1
+    }
 }

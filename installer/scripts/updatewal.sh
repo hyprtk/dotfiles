@@ -20,12 +20,12 @@ sleep 1
 # Get new theme
 # ----------------------------------------------------- 
 source "$HOME/.cache/wal/colors.sh"
-newwall=$(echo $wallpaper | sed "s|$HOME/Pictures/Wallpapers/||g")
+newwall=$(basename "$wallpaper")
 
 # ----------------------------------------------------- 
 # Copy selected wallpaper into .cache folder
 # ----------------------------------------------------- 
-cp $wallpaper ~/.cache/current-wallpaper.png
+cp "$wallpaper" ~/.cache/current-wallpaper.png
 
 ~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
 

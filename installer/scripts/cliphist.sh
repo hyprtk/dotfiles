@@ -7,7 +7,8 @@ case $1 in
     d) cliphist list | rofi -dmenu -config ~/hyprtk/configs/rofi/config-cliphist.rasi | cliphist delete
        ;;
 
-    w) if [ `echo -e "Clear\nCancel" | rofi -dmenu -config ~/hyprtk/configs/rofi/config-short.rasi` == "Clear" ] ; then
+    w) choice=$(echo -e "Clear\nCancel" | rofi -dmenu -config ~/hyprtk/configs/rofi/config-short.rasi)
+       if [ "$choice" == "Clear" ] ; then
             cliphist wipe
        fi
        ;;

@@ -11,7 +11,7 @@ if [ "$selected" ]; then
 
     echo "Changing theme..."
     # Update wallpaper with pywal16
-    wal -q -i ~/Pictures/Wallpapers/$selected 
+    wal -q -i "$HOME/Pictures/Wallpapers/$selected" 
 
     # Wait for 1 sec
     sleep 1
@@ -19,12 +19,12 @@ if [ "$selected" ]; then
     # Get new theme
     source "$HOME/.cache/wal/colors.sh"
 
-    newwall=$(echo $wallpaper | sed "s|$HOME/Pictures/Wallpapers/||g")
+    newwall=$(basename "$wallpaper")
 
     # ----------------------------------------------------- 
     # Copy selected wallpaper into .cache folder
     # ----------------------------------------------------- 
-    cp $wallpaper ~/.cache/current-wallpaper.png
+    cp "$wallpaper" ~/.cache/current-wallpaper.png
 
     ~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
 

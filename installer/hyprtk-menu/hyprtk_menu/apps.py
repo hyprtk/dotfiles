@@ -2,6 +2,7 @@
 
 import os
 import re
+import shlex
 import subprocess
 
 from gi.repository import Gio
@@ -191,6 +192,33 @@ def _has_bin(name):
     return False
 
 
+def _terminal_argv(term, command_argv):
+    """Wrap a command's argv for a terminal emulator without a shell.
+
+    The fallback launch path never builds a shell string: .desktop Exec= lines
+    are untrusted input and would otherwise be re-parsed by `sh -c`.
+    """
+    if not command_argv:
+        return command_argv
+    name = os.path.basename(shlex.split(term)[0]).lower()
+    if name == "foot":
+        return shlex.split(term) + command_argv
+    if name == "wezterm":
+        return shlex.split(term) + ["start", "--"] + command_argv
+    if name in ("gnome-terminal", "kgx", "ptyxis"):
+        return shlex.split(term) + ["--"] + command_argv
+    return shlex.split(term) + ["-e"] + command_argv
+
+
+def _spawn(argv):
+    """Detach an argv list (never a shell string)."""
+    try:
+        subprocess.Popen(argv, start_new_session=True)
+        return True
+    except Exception:
+        return False
+
+
 def launch_app(entry):
     """Launch an app. Returns True on success."""
     try:
@@ -198,17 +226,17 @@ def launch_app(entry):
             return True
     except Exception:
         pass
-    # Fallback: run the Exec line directly.
+    # Fallback: run the Exec line directly as argv (no shell).
     cmdline = entry.info.get_commandline() or ""
     cmdline = re.sub(r"%[fFuUdDnNickvm]", "", cmdline).strip()
     if not cmdline:
         return False
+    argv = shlex.split(cmdline)
+    if not argv:
+        return False
     if entry.info.get_boolean("Terminal"):
         terminal = _find_terminal()
-        if terminal:
-            cmdline = "%s -e sh -c 'exec %s'" % (terminal, cmdline.replace("'", "'\\''"))
-    try:
-        subprocess.Popen(cmdline, shell=True, start_new_session=True)
-        return True
-    except Exception:
-        return False
+        if not terminal:
+            return False
+        argv = _terminal_argv(terminal, argv)
+    return _spawn(argv)

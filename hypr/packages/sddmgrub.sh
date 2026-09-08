@@ -8,9 +8,6 @@ if [ ! -d /etc/sddm.conf.d/ ]; then
     echo "Folder /etc/sddm.conf.d created."
 fi
 echo ""
-sudo rm -rf /usr/share/grub/themes/*
-sudo rm -rf /boot/grub/themes/*
-echo ""
 sudo cp ~/hyprtk/configs/sddm/sddm.conf /etc/sddm.conf.d/
 echo "File /etc/sddm.conf.d/sddm.conf updated."
 echo ""
@@ -28,21 +25,27 @@ sudo cp ~/.cache/current-wallpaper.png /root/.cache/current-wallpaper.png
 echo ""
 echo " Configure grub theme "
 echo ""
-echo " Enable OS-Prober "
-sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
-echo ""
-sudo sed -i '/^GRUB_BACKGROUND/d' /etc/default/grub
-sudo sed -i '/^GRUB_COLOR_NORMAL/d' /etc/default/grub
-sudo sed -i '/^GRUB_COLOR_HIGHLIGHT/d' /etc/default/grub
-echo ""
-echo ""
-echo -e 'GRUB_BACKGROUND="/root/.cache/current-wallpaper.png"'| sudo tee -a /etc/default/grub
-echo -e 'GRUB_COLOR_NORMAL="white/black"'| sudo tee -a /etc/default/grub
-echo -e 'GRUB_COLOR_HIGHLIGHT="white/dark-gray"'| sudo tee -a /etc/default/grub
-echo ""
-sudo grub-mkconfig -o /boot/grub/grub.cfg
-echo ""
-echo " Disable OS-Prober "
-sudo sed -i 's/GRUB_DISABLE_OS_PROBER=false/#GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
-echo ""
-echo " GRUB & SDDM Updated with current wallpaper "
+# Only touch GRUB when this machine actually boots GRUB; never wipe
+# /usr/share/grub/themes (dropping GRUB_THEME makes GRUB_BACKGROUND apply).
+if command -v grub-mkconfig >/dev/null 2>&1 && [ -f /boot/grub/grub.cfg ]; then
+    echo " Enable OS-Prober "
+    sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+    echo ""
+    sudo sed -i '/^GRUB_BACKGROUND/d' /etc/default/grub
+    sudo sed -i '/^GRUB_COLOR_NORMAL/d' /etc/default/grub
+    sudo sed -i '/^GRUB_COLOR_HIGHLIGHT/d' /etc/default/grub
+    sudo sed -i '/^GRUB_THEME=/d' /etc/default/grub
+    echo ""
+    echo -e 'GRUB_BACKGROUND="/root/.cache/current-wallpaper.png"' | sudo tee -a /etc/default/grub
+    echo -e 'GRUB_COLOR_NORMAL="white/black"' | sudo tee -a /etc/default/grub
+    echo -e 'GRUB_COLOR_HIGHLIGHT="white/dark-gray"' | sudo tee -a /etc/default/grub
+    echo ""
+    sudo grub-mkconfig -o /boot/grub/grub.cfg
+    echo ""
+    echo " Disable OS-Prober "
+    sudo sed -i 's/GRUB_DISABLE_OS_PROBER=false/#GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+    echo ""
+    echo " GRUB & SDDM Updated with current wallpaper "
+else
+    echo " GRUB not detected (no grub-mkconfig / boot/grub/grub.cfg) - skipping GRUB steps "
+fi

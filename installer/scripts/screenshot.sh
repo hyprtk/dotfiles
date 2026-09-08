@@ -9,8 +9,12 @@ mesg="DIR: ~/Pictures/Screenshots"
 
 SAVE_DIR=$(cat ~/hyprtk/installer/scripts/settings/screenshot-folder)
 SAVE_FILENAME=$(cat ~/hyprtk/installer/scripts/settings/screenshot-filename)
-eval screenshot_folder="$SAVE_DIR"
-eval NAME="$SAVE_FILENAME"
+
+# Expand a leading ~ explicitly; never eval settings content.
+screenshot_folder="${SAVE_DIR/#\~/$HOME}"
+# The stored filename is a strftime template (e.g. screenshot_%Y%m%d_%H%M%S.png).
+NAME="$(date +"$SAVE_FILENAME")"
+[[ -n "$NAME" ]] || NAME="screenshot_$(date +%Y%m%d_%H%M%S).png"
 
 # Notifications
 source "$HOME/hyprtk/scripts/notification-handler"
@@ -18,7 +22,7 @@ APP_NAME="Screen Capture"
 NOTIFICATION_ICON="camera-photo-symbolic"
 
 # Screenshot Editor
-export GRIMBLAST_EDITOR="$(cat $HOME/hyprtk/scripts/settings/screenshot-editor)"
+export GRIMBLAST_EDITOR="$(cat "$HOME/hyprtk/scripts/settings/screenshot-editor")"
 
 # Example for keybindings
 # bind = SUPER, p, exec, grimblast save active
@@ -234,10 +238,10 @@ timer() {
 # take shots
 takescreenshot() {
     sleep 1
-    grimblast --notify "$option_chosen" "$option_type_screenshot" $NAME
-    if [ -f $HOME/$NAME ]; then
-        if [ -d $screenshot_folder ]; then
-            mv $HOME/$NAME $screenshot_folder/
+    grimblast --notify "$option_chosen" "$option_type_screenshot" "$NAME"
+    if [ -f "$HOME/$NAME" ]; then
+        if [ -d "$screenshot_folder" ]; then
+            mv "$HOME/$NAME" "$screenshot_folder/"
         fi
     fi
 }
@@ -246,10 +250,10 @@ takescreenshot_timer() {
     sleep 1
     timer
     sleep 1
-    grimblast --notify "$option_chosen" "$option_type_screenshot" $NAME
-    if [ -f $HOME/$NAME ]; then
-        if [ -d $screenshot_folder ]; then
-            mv $HOME/$NAME $screenshot_folder/
+    grimblast --notify "$option_chosen" "$option_type_screenshot" "$NAME"
+    if [ -f "$HOME/$NAME" ]; then
+        if [ -d "$screenshot_folder" ]; then
+            mv "$HOME/$NAME" "$screenshot_folder/"
         fi
     fi
 }
@@ -277,4 +281,7 @@ case ${chosen} in
         ;;
 esac
 
-mv screenshot*.png ~/Pictures/Screenshots
+if ls screenshot*.png >/dev/null 2>&1; then
+    mkdir -p ~/Pictures/Screenshots
+    mv -- screenshot*.png ~/Pictures/Screenshots
+fi

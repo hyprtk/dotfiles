@@ -17,6 +17,18 @@ NC='\033[0m'
 # ── Script directory detection ─────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# _spin/_run run commands through a `bash -c` subshell; an install path with
+# spaces or shell metacharacters would be re-parsed as code there. Refuse it
+# up front rather than let it become injection.
+case "$SCRIPT_DIR" in
+    *[![:alnum:]_/.+-]*)
+        echo -e "${RED}  ✗ ${WHITE}Install path contains spaces or special characters:${NC}" >&2
+        echo -e "${RED}  ✗ ${WHITE}  $SCRIPT_DIR${NC}" >&2
+        echo -e "${RED}  ✗ ${WHITE}Move the repo to a path like ~/hyprtk and re-run.${NC}" >&2
+        exit 1
+        ;;
+esac
+
 # ── Installation log ──────────────────────────────────────────────────────
 LOG_FILE="$SCRIPT_DIR/install.log"
 log() {
@@ -263,7 +275,9 @@ fi
 STEPS="$SCRIPT_DIR/installer/steps/$DISTRO.sh"
 if [ -f "$STEPS" ]; then
     source "$STEPS"
-    # Export hooks so they are visible to the bash -c subshells used by _spin
+    # Export hooks + DISTRO so they are visible to the bash -c subshells used
+    # by _spin (several install_os_release hooks reference $DISTRO).
+    export DISTRO
     export -f pre_install install_os_release install_boot pre_hypr_symlink wal_init grub_wallpaper grudupdater setup_sudoers 2>/dev/null
     log "Sourced distro hooks: $STEPS"
 fi
@@ -357,7 +371,12 @@ fi
 
 # ── Icons root ────────────────────────────────────────────────────────────
 _step "Installing Icons (root)"
-_spin "Installing Papirus icons for root..." "wget -qO- https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh | DESTDIR=/root/.local/share/icons sh" "$LOG_FILE"
+# Download to a temp file and run it locally instead of `wget -qO- ... | sh`:
+# a pipe lets a partial/failed download execute as root with no artifact to
+# inspect. Pin the URL to a specific commit/release when one is available.
+_spin "Installing Papirus icons for root..." \
+    "tmp=\$(mktemp) && wget -qO- --timeout=60 https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh > \"\$tmp\" && DESTDIR=/root/.local/share/icons sh \"\$tmp\"; rc=\$?; rm -f -- \"\$tmp\"; exit \$rc" \
+    "$LOG_FILE"
 _ok "Icons installed for root"
 
 # ── Init pywal16 ─────────────────────────────────────────────────────────
@@ -483,9 +502,18 @@ else
         # ── ZSH ──────────────────────────────────────────────────────
         _step "Installing ZSH"
         _spin "Installing zsh..." "sudo pacman -S zsh --noconfirm" "$LOG_FILE"
-        # oh-my-zsh install needs interactive input - run without spin
+        # oh-my-zsh install needs interactive input - run without spin.
+        # Fetch to a temp file and run it (avoids `sh -c "$(curl ...)"`, which
+        # hides the fetched code and runs a partial download if the fetch fails).
         echo -e "${CYAN}  → ${WHITE}Installing oh-my-zsh${NC}"
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        tmp="$(mktemp)" && curl -fsSL --max-time 90 \
+            https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh \
+            -o "$tmp" && bash "$tmp" --unattended
+        rc=$?
+        rm -f -- "$tmp"
+        if [ "$rc" -ne 0 ]; then
+            _fail "oh-my-zsh install exited $rc (network?)"
+        fi
         _ok "ZSH installed"
 
         _step "Installing ZSH Plugins"
@@ -523,7 +551,9 @@ else
         _step "Setting Up Root User Config"
         echo -e "${CYAN}  → ${WHITE}Copying root config${NC}"
         sudo find /root/.config -type l -delete 2>/dev/null
-        sudo cp -rf "$SCRIPT_DIR"/configs/root/* /
+        # configs/root/ holds hidden root-home files (.bashrc, .config, ...).
+        # Copy its contents into /root/ — never glob `configs/root/*` onto `/`.
+        sudo cp -rf "$SCRIPT_DIR"/configs/root/. /root/ 2>/dev/null || true
         log "Root config copied"
         _ok "Root user config copied"
 
@@ -531,7 +561,10 @@ else
         if type setup_sudoers >/dev/null 2>&1; then
             _spin "Configuring sudoers..." "setup_sudoers" "$LOG_FILE"
         else
-            _spin "Configuring sudoers..." "echo 'Defaults env_reset,pwfeedback' | sudo tee -a /etc/sudoers > /dev/null" "$LOG_FILE"
+            # Defaults appended via a validated drop-in, never `tee -a /etc/sudoers`.
+            _spin "Configuring sudoers..." \
+                "printf 'Defaults env_reset,pwfeedback\n' | sudo tee /etc/sudoers.d/99-hyprtk-defaults >/dev/null && sudo chmod 440 /etc/sudoers.d/99-hyprtk-defaults && sudo visudo -c >/dev/null 2>&1" \
+                "$LOG_FILE"
         fi
         _ok "Sudoers configured"
 
@@ -544,7 +577,9 @@ else
 fi
 
 # ── Cleanup ────────────────────────────────────────────────────────────────
-rm -rf "$HOME/dotfiles" 2>/dev/null
+if [ -n "${HOME:-}" ]; then
+    rm -rf -- "$HOME/dotfiles" 2>/dev/null || true
+fi
 
 # ── Completion ─────────────────────────────────────────────────────────────
 log "=== hyprtk installation completed ==="

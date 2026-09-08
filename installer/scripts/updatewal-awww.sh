@@ -17,17 +17,17 @@ source "$HOME/.cache/wal/colors.sh"
 # ----------------------------------------------------- 
 # Copy selected wallpaper into .cache folder
 # ----------------------------------------------------- 
-cp $wallpaper ~/.cache/current-wallpaper.png
+cp "$wallpaper" ~/.cache/current-wallpaper.png
 
 # ----------------------------------------------------- 
 # get wallpaper iamge name
 # ----------------------------------------------------- 
-newwall=$(echo $wallpaper | sed "s|$HOME/Pictures/Wallpapers/||g")
+newwall=$(basename "$wallpaper")
 
 # ----------------------------------------------------- 
 # Set the new wallpaper
 # ----------------------------------------------------- 
-awww img $wallpaper \
+awww img "$wallpaper" \
     --transition-bezier .43,1.19,1,.4 \
     --transition-fps=60 \
     --transition-type="random" \

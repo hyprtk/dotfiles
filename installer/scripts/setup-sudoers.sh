@@ -1,8 +1,8 @@
 #!/bin/bash
-# ── hyprtk-bar passwordless sudo ──────────────────────────────────────────
+# ── hyprtk-bar least-privilege sudo ───────────────────────────────────────
 # Installs /etc/sudoers.d/hyprtk-bar granting the desktop user passwordless
-# sudo so the system monitor's DIMM readout (and other privileged bar
-# actions) never need an interactive pkexec/sudo prompt.
+# access ONLY to the exact commands the bar invokes non-interactively (the
+# system monitor's dmidecode DIMM readout). Never NOPASSWD: ALL.
 #
 # Usage (as the desktop user, or as root):
 #   sudo bash setup-sudoers.sh
@@ -33,14 +33,13 @@ if [ -z "$TARGET_USER" ] || [ "$TARGET_USER" = "root" ]; then
 fi
 
 CONTENT="# hyprtk-bar: passwordless sudo for the desktop user.
-# Used by the system monitor (dmidecode DIMM readout) and other privileged
-# bar actions. Installed by setup-sudoers.sh.
+# Least privilege: only the system monitor's dmidecode DIMM readout runs via
+# sudo -n (see monitor_data.fetch_dmidecode). Everything else uses pkexec,
+# which still prompts. Installed by setup-sudoers.sh.
 #
-# To restrict to only the monitor's hardware readout instead of full sudo,
-# replace the final line with:
-#   ${TARGET_USER} ALL=(root) NOPASSWD: /usr/bin/dmidecode
-#
-${TARGET_USER} ALL=(ALL) NOPASSWD: ALL"
+# Extend this list ONLY with the exact commands the bar actually invokes
+# non-interactively; never grant NOPASSWD: ALL.
+${TARGET_USER} ALL=(root) NOPASSWD: /usr/bin/dmidecode"
 
 umask 0377
 printf '%s\n' "$CONTENT" > "$SUDOERS_D"
@@ -53,10 +52,10 @@ if ! visudo -c -f "$SUDOERS_D" >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "ok: passwordless sudo configured for '$TARGET_USER' ($SUDOERS_D)"
+echo "ok: scoped passwordless sudo configured for '$TARGET_USER' ($SUDOERS_D)"
 
-if sudo -u "$TARGET_USER" sudo -n true 2>/dev/null; then
-    echo "ok: passwordless sudo verified for '$TARGET_USER'"
+if sudo -u "$TARGET_USER" sudo -n dmidecode -t 17 < /dev/null >/dev/null 2>&1; then
+    echo "ok: passwordless dmidecode verified for '$TARGET_USER'"
 else
-    echo "warn: could not verify passwordless sudo for '$TARGET_USER'"
+    echo "warn: could not verify passwordless dmidecode for '$TARGET_USER'"
 fi

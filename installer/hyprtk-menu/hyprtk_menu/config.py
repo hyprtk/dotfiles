@@ -2,6 +2,7 @@
 
 import json
 import os
+import tempfile
 from copy import deepcopy
 
 CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "hyprtk-menu")
@@ -63,11 +64,20 @@ def load_config():
 
 def save_config(config):
     os.makedirs(CONFIG_DIR, exist_ok=True)
+    # Atomic write (tmp + rename) so a crash/kill can't truncate config.json,
+    # which would otherwise silently reset favorites/recents/settings.
     try:
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        fd, tmp = tempfile.mkstemp(dir=CONFIG_DIR, prefix=".config.", suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, CONFIG_FILE)
     except OSError:
-        pass
+        try:
+            os.unlink(tmp)
+        except (OSError, UnboundLocalError):
+            pass
 
 
 def load_bar_theme() -> dict:

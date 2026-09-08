@@ -42,7 +42,9 @@ SANDBOX_ROOT="$HOME/.cache/hyprtk-dryrun"
 mkdir -p "$SANDBOX_ROOT"
 STUBBIN="$(mktemp -d "$SANDBOX_ROOT/stubs.XXXXXX")"
 [ -d "$STUBBIN" ] || { echo "FATAL: could not create stub dir under $SANDBOX_ROOT" >&2; exit 1; }
-trap 'rm -rf "$STUBBIN" "$SANDBOX_ROOT"' EXIT
+# Remove only this run's own temp dirs on exit (never the shared root — other
+# parallel runs may live there). Guarded so an empty var can never hit rm.
+trap '[ -n "$STUBBIN" ] && rm -rf -- "$STUBBIN"; [ -n "${SB:-}" ] && rm -rf -- "$SB"' EXIT
 
 # ── Stub binaries: any system-mutating command becomes a no-op ──────────────
 stub_bin() {

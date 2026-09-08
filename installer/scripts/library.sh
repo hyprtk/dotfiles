@@ -85,15 +85,17 @@ _installSymLink() {
     linktarget="$4";
     
     if [ -L "${symlink}" ]; then
-        rm -f "${symlink}"
+        rm -f -- "${symlink}"
         ln -s "${linksource}" "${linktarget}"
         echo "Symlink ${linksource} -> ${linktarget} created."
-    elif [ -d "${symlink}" ]; then
-        rm -rf "${symlink}/"
+    elif [ -d "${symlink}" ] && [ ! -L "${symlink}" ]; then
+        # Only reachable for a real directory; never use a trailing slash on
+        # rm -rf (GNU rm would follow a symlink-to-dir and delete its target).
+        rm -rf -- "${symlink}"
         ln -s "${linksource}" "${linktarget}"
         echo "Symlink for directory ${linksource} -> ${linktarget} created."
     elif [ -f "${symlink}" ]; then
-        rm -f "${symlink}"
+        rm -f -- "${symlink}"
         ln -s "${linksource}" "${linktarget}"
         echo "Symlink to file ${linksource} -> ${linktarget} created."
     else

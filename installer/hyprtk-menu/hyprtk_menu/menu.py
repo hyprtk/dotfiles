@@ -2,6 +2,7 @@
 
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import pwd
@@ -30,6 +31,15 @@ WIN7_PLACES = [
 
 # hyprtk-bar config: auto position follows the bar's edge, width, align and height.
 BAR_CONFIG_FILE = os.path.expanduser("~/.config/hyprtk-bar/config.json")
+
+
+def _spawn_argv(argv):
+    """Detach an argv list (never a shell string)."""
+    try:
+        subprocess.Popen(argv, start_new_session=True)
+        return True
+    except Exception:
+        return False
 
 
 def _gap_value(value, default):
@@ -135,6 +145,36 @@ TRASH_ROOT = os.path.expanduser("~/.local/share/Trash")
 TRASH_URL = "trash:///"
 
 
+def _parse_trash_path(value):
+    """Parse a .trashinfo ``Path=`` value into an absolute local path.
+
+    Only local ``file://`` URLs with an empty/localhost host are accepted;
+    anything else (foreign host, ``file://host/...``) is refused.
+    """
+    value = urllib.parse.unquote(value.strip())
+    if value.startswith("file://"):
+        parsed = urllib.parse.urlparse(value)
+        if parsed.netloc not in ("", "localhost"):
+            return ""
+        return parsed.path
+    return value
+
+
+def _safe_trash_restore_dest(orig):
+    """Return a validated restore destination, or None to refuse.
+
+    The original path comes from a .trashinfo file, which must not be able to
+    redirect a restore (or its mkdirs) to an arbitrary location.
+    """
+    if not orig:
+        return None
+    dest = os.path.abspath(orig)
+    home = os.path.expanduser("~")
+    if dest != home and not dest.startswith(home + os.sep):
+        return None
+    return dest
+
+
 def _read_trashinfo(path):
     """Return (original_path, deletion_date) from a .trashinfo file."""
     orig = ""
@@ -144,9 +184,7 @@ def _read_trashinfo(path):
             for line in f:
                 line = line.strip()
                 if line.startswith("Path="):
-                    orig = urllib.parse.unquote(line[len("Path="):])
-                    if orig.startswith("file://"):
-                        orig = orig[len("file://"):]
+                    orig = _parse_trash_path(line[len("Path="):])
                 elif line.startswith("DeletionDate="):
                     date = line[len("DeletionDate="):]
     except OSError:
@@ -212,7 +250,11 @@ class MenuWindow(Gtk.Window):
         GtkLayerShell.set_exclusive_zone(self, 0)
         self._apply_position()
 
-        apply_css(build_css())
+        try:
+            apply_css(build_css())
+        except Exception as exc:
+            # A malformed pywal cache / imported theme must not prevent launch.
+            print("hyprtk-menu: initial css build failed: %s" % exc, flush=True)
         self.get_style_context().add_class("menu-root")
         self._apply_layout_class()
 
@@ -630,11 +672,8 @@ class MenuWindow(Gtk.Window):
         cmd = getattr(row, "place_cmd", None)
         label = getattr(row, "place_label", "")
         if cmd is not None:
-            # Explicit command
-            try:
-                subprocess.Popen(cmd, shell=True, start_new_session=True)
-            except Exception:
-                pass
+            # Explicit command (static value, e.g. "thunar /") — run as argv.
+            _spawn_argv(shlex.split(cmd))
         elif label:
             # Open in file manager
             path = os.path.expanduser("~/%s" % label)
@@ -1190,11 +1229,13 @@ class MenuWindow(Gtk.Window):
 
     def _restore_trash_item(self, item):
         """Move a single trashed file back to its original location."""
-        dest = item["orig"]
+        dest = _safe_trash_restore_dest(item.get("orig") or "")
         if not dest:
             return False
         try:
-            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            parent = os.path.dirname(dest)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
             if os.path.exists(dest):
                 dest = self._unique_dest(dest)
             shutil.move(item["path"], dest)
@@ -1889,10 +1930,11 @@ class MenuWindow(Gtk.Window):
             return
         if action in POWER_CONFIRM and not self._confirm_power(action):
             return
-        try:
-            subprocess.Popen(command, shell=True, start_new_session=True)
-        except Exception:
-            pass
+        # Power commands are the USER'S OWN config strings and legitimately use
+        # shell operators (default lock is `pidof swaylock hyprlock ||
+        # swaylock || hyprlock`), so run them through one explicit `sh -c`.
+        # This is trusted input (the user's config), NOT an untrusted surface.
+        _spawn_argv(["/bin/sh", "-c", command])
         self.hide_menu()
 
     def _confirm_power(self, action):

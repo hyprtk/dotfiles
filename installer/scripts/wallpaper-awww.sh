@@ -15,7 +15,7 @@ if [ "$selected" ]; then
     # ----------------------------------------------------- 
     # Update wallpaper with pywal16
     # ----------------------------------------------------- 
-    wal -q -i ~/Pictures/Wallpapers/$selected 
+    wal -q -i "$HOME/Pictures/Wallpapers/$selected" 
 
     # ----------------------------------------------------- 
     # Get new theme
@@ -25,14 +25,14 @@ if [ "$selected" ]; then
     # ----------------------------------------------------- 
     # Copy selected wallpaper into .cache folder
     # ----------------------------------------------------- 
-    cp $wallpaper ~/.cache/current-wallpaper.png   
+    cp "$wallpaper" ~/.cache/current-wallpaper.png   
 
-    newwall=$(echo $wallpaper | sed "s|$HOME/Pictures/Wallpapers/||g")
+    newwall=$(basename "$wallpaper")
 
     # ----------------------------------------------------- 
     # Set the new wallpaper
     # ----------------------------------------------------- 
-    awww img $wallpaper \
+    awww img "$wallpaper" \
         --transition-bezier .43,1.19,1,.4 \
         --transition-fps=60 \
         --transition-type="random" \
