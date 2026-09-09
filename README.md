@@ -46,8 +46,8 @@ package groups, dotfiles and services before installing everything.
 | --- | --- |
 | **Terminal** | Alacritty + starship prompt |
 | **Editor** | Neovim (Vim fallback) |
-| **App launcher** | Rofi (plus three bundled GTK menus, see below) |
-| **Status bar** | Waybar — 5+ switchable frosted-glass themes |
+| **App launcher** | Rofi (plus the in-bar start menu) |
+| **Status bar** | hyprtk-bar — pywal-themed taskbar with built-in menus |
 | **Theming** | pywal16, live, from your wallpaper |
 | **Wallpaper** | Matuwall film-strip picker + rofi list + random |
 | **Screenshots** | grim & slurp |
@@ -70,6 +70,7 @@ package groups, dotfiles and services before installing everything.
 | Key | Action |
 | --- | --- |
 | `Super + Return` | Terminal (Alacritty) |
+| `Super + Space` | Start menu (in-bar) |
 | `Super + Q` | Close window |
 | `Super + D` | App menu (rofi) |
 | `Super + F` | File manager (Thunar) |
@@ -109,21 +110,14 @@ package groups, dotfiles and services before installing everything.
 
 ## Applications
 
-Two standalone GTK apps ship with the installer, each with its own project, config and pywal theming. System theming (wallpaper, pywal, rofi, icons, swaylock, SDDM/GRUB) now lives in **hyprtk-bar**'s Theme Manager, opened from the wallpaper glyph in the bar:
+All system theming (wallpaper, pywal, rofi, icons, swaylock, SDDM/GRUB) now lives in **hyprtk-bar**'s Theme Manager, opened from the wallpaper glyph in the bar. The **start menu** and **arc menu** are both built into **hyprtk-bar** — no separate apps:
 
-| App | What it does | Open with |
+| Feature | What it does | Open with |
 | --- | --- | --- |
-| **hyprtk-menu** | Whisker-style app menu — search, favorites, recents, power buttons | `Super + Space` |
+| **Start menu** | Whisker/Win7/Win11/Plasma app menu — search, favorites, recents, power buttons | `Super + Space` or the start button |
+| **Arc menu** | FAB in a screen corner that fans its items out on click | `Super + Ctrl + M` (or the FAB) |
 
-The **arc menu** (a FAB in a screen corner that fans its items out on click) is built into **hyprtk-bar** — no separate app. Toggle it with `Super + Ctrl + M` (or the FAB), configure it from the bar settings dialogue's *Arc Menu* tab.
-
-See each app's section below for install and config details.
-
-### hyprtk-menu
-
-A floating popup menu with instant search, category sidebar, pinned favorites, recents and a power bar. Four layouts — `whisker`, `win7`, `win11`, `plasma` — switchable from its settings window. Drag the corner to resize, drag the dividers to rebalance columns.
-
-- Config: `~/.config/hyprtk-menu/config.json`
+Both are configured from the bar settings dialogue (*Menu* and *Arc Menu* tabs) and follow the bar's theme + pywal.
 
 ## Gallery
 

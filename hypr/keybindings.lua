@@ -15,6 +15,7 @@
 local mainMod = "SUPER"
 
 hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd("alacritty"))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hyprtk-bar-menu-toggle.sh"))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("thunar"))

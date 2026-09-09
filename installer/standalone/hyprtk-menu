@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-exec python3 "$HOME/.local/share/hyprtk-menu/main.py" "$@"

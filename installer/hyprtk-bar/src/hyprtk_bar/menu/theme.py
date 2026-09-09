@@ -21,7 +21,10 @@ from gi.repository import Gdk, Gtk
 from . import config as cfg
 from .theme_import import find_themes_dir, list_themes, parse_palette
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# The bar project root holds the menu's assets (copied to the install dir by
+# install.sh). theme.py lives at <root>/src/hyprtk_bar/menu/theme.py, so four
+# parent hops reach the root where assets/ lives.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 STYLE_CSS = os.path.join(BASE_DIR, "assets", "style.css")
 
 

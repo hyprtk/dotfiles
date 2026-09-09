@@ -217,8 +217,19 @@ def _trash_items():
 
 
 class MenuWindow(Gtk.Window):
-    def __init__(self):
+    """Layer-shell start menu owned by the bar process (hyprtk-menu merged in).
+
+    ``bar_cfg`` is the bar's shared config dict; the menu reads/writes its own
+    ``menu`` block inside it (see :mod:`.config`). ``on_settings`` lets the
+    menu's settings button open the bar settings dialogue's "Menu" page instead
+    of a separate floating window.
+    """
+
+    def __init__(self, bar_cfg: dict | None = None, on_settings=None):
         super().__init__(type=Gtk.WindowType.TOPLEVEL)
+        self._bar_cfg = bar_cfg or {}
+        self._on_settings = on_settings
+        cfg.set_bar_cfg(self._bar_cfg)
         self.config = cfg.load_config()
         self.apps = apps.scan_apps()
         self.pinned = set(self.config.get("favorites", []))
@@ -271,9 +282,15 @@ class MenuWindow(Gtk.Window):
         self._border_colors: tuple | None = None
 
         self._build_ui()
+        self._layout_name = self.config.get("layout", "whisker")
 
         self.connect("key-press-event", self._on_window_key)
-        self.connect("destroy", Gtk.main_quit)
+        # Destroying the menu must NOT quit the bar's main loop — it is now a
+        # window inside the bar process, not a standalone app.
+        self.connect("destroy", self._on_menu_destroy)
+
+    def _on_menu_destroy(self, *_args) -> None:
+        self._stop_border_animation()
 
     # -- layer shell ------------------------------------------------------
 
@@ -1475,7 +1492,15 @@ class MenuWindow(Gtk.Window):
         self._refresh_apps()
 
     def _open_settings(self, _button):
-        """Open a floating settings window for layout, alignment and position."""
+        """Open the bar settings dialogue on its "Menu" page.
+
+        hyprtk-menu's settings now live in the bar settings dialogue (the menu
+        is owned by the bar process). If no bar-settings callback was wired
+        (standalone/diagnostic use), fall back to the old floating window.
+        """
+        if self._on_settings is not None:
+            self._on_settings()
+            return
         win = getattr(self, "_settings_window", None)
         if win is not None:
             win.present()
@@ -2092,3 +2117,29 @@ class MenuWindow(Gtk.Window):
         self._apply_position()
         if was_visible:
             GLib.idle_add(self._remap_after_update)
+
+    def reload_from_cfg(self):
+        """Rebuild/re-theme after the bar settings edited the ``menu`` block.
+
+        The bar settings dialogue mutates the shared bar config and calls this
+        (via the bar's ``set_menu`` action) so layout/position/alignment/gaps
+        apply live — mirroring how the arc menu reloads after its settings.
+        """
+        self.config = cfg.load_config()
+        new_layout = self.config.get("layout", "whisker")
+        old_layout = getattr(self, "_layout_name", None)
+        self._layout_name = new_layout
+        self._apply_layout_class()
+        try:
+            apply_css(build_css())
+        except Exception as exc:
+            print("hyprtk-menu: layout css update failed: %s" % exc, flush=True)
+        was_visible = self.get_visible()
+        if new_layout != old_layout and old_layout is not None:
+            self._rebuild_ui()
+            if not was_visible:
+                self.hide_menu()
+        else:
+            self._apply_position()
+            if was_visible:
+                self._remap_after_update()

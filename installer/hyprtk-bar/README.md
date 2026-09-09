@@ -33,7 +33,7 @@ all themed live from your pywal16 palette.
   and restores every window on the active workspace.
 - **Multi-monitor** — one bar per monitor when configured, each with its own
   active workspace; the tray and notification daemon stay on the primary bar.
-- **Start button** — launches your app menu (hyprtk-menu by default).
+- **Start button** — toggles the in-bar start menu (hyprtk-menu merged in).
 - **Floating settings window** — drag it by its header, change everything
   live, everything applies without restarting the bar.
 
@@ -170,7 +170,7 @@ flags automatically.
   "start_button": true,
   "start_icon": "view-grid-symbolic",
   "start_glyph": "\uf015",
-  "start_command": "hyprtk-menu",
+  "start_command": "~/hyprtk/installer/scripts/hyprtk-bar-menu-toggle.sh",
   "pinned": [
     { "class": "firefox", "command": "firefox", "icon": "firefox" }
   ]

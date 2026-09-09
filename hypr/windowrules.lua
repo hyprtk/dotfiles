@@ -43,17 +43,6 @@ hl.window_rule({
     float = false,
 })
 
--- hyprtk-menu settings window (floating)
-hl.window_rule({
-    name = "windowrule-settings",
-    match = {
-        title = "(^(hyprtk-menu settings)$)",
-    },
-    float = true,
-    center = true,
-    size = "360 400",
-})
-
 -- hyprtk-bar settings window (floating) — the CSS popup-box already draws the
 -- 2px animated border; disable Hyprland's own compositor border so only one
 -- border shows (mirrors the layer-shell dialogs which have no compositor border).

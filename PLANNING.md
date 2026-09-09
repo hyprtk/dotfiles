@@ -27,9 +27,7 @@ hyprtk-merged/
 │   ├── library.sh               # shared helpers
 │   ├── os-release/              # os-release-<distro> × 11 + cachyos-branding
 │   ├── scripts/                 # helper/utility scripts (+ verify/, build-merged.sh)
-│   ├── standalone/              # oh-my-posh, matuwall, awww, papirus-folders, hyprtk-menu, hyprtk-themer, theme-gui
-│   ├── hyprtk-menu/             # vendored app (main.py, hyprtk_menu/, assets/)
-│   ├── hyprtk-arc-menu/         # vendored app (src/, install.sh, pyproject.toml, .desktop)
+│   ├── standalone/              # oh-my-posh, matuwall, awww, papirus-folders, hyprtk-bar
 │   └── steps/<distro>.sh        # per-distro hooks × 11
 └── distro/<name>/               # per-distro overlays (deltas only, mapped paths)
 ```
@@ -99,70 +97,45 @@ them via `REMOVED_EXCLUDE` (see `installer/scripts/verify/verify-completeness.sh
 ### Standalone wrappers
 
 All standalone scripts in `installer/standalone/` use `$HOME` instead of hardcoded
-paths to work on any user account:
+paths to work on any user account.
 
-- `hyprtk-menu` → `$HOME/.local/share/hyprtk-menu/main.py`
-- `theme-gui` → `$HOME/.local/share/theme-gui/venv/bin/python3`
-- `hyprtk-themer` → calls `theme-gui` (no path needed)
+### hyprtk-menu (removed 2026-09-09 — merged into hyprtk-bar)
 
-`hyprtk-arc-menu` does **not** use a `standalone/` wrapper — its own
-`installer/hyprtk-arc-menu/install.sh` writes `~/.local/bin/hyprtk-arc-menu` and
-`hyprtk-arc-menu-toggle` directly (full paths, so they work even when
-Hyprland's exec PATH lacks `~/.local/bin`).
+The start menu is now built into hyprtk-bar: vendored at `installer/hyprtk-bar/src/
+hyprtk_bar/menu/`, owned by the bar process, toggled by the start button or
+`Super + Space` (`installer/scripts/hyprtk-bar-menu-toggle.sh` → SIGUSR1).
+Its settings live in the bar config under `menu` (first-run migration imports
+`~/.config/hyprtk-menu/config.json`) and are edited from the bar settings
+dialogue's *Menu* tab. The standalone app, its vendored tree, install script and
+PATH wrapper were removed; the hyprtk-menu GitHub repo is archived.
 
-### hyprtk-menu (added, not in the 11 sources)
+### theme-gui (removed 2026-09-08 — superseded by hyprtk-bar's Theme Manager)
 
-The app menu launcher. Vendored as `installer/hyprtk-menu/` (main.py, hyprtk_menu/,
-assets/) and deployed by `installer/scripts/hyprtk-menu-install.sh`, invoked from
-`1-install.sh` right after the standalone symlink step. The PATH wrapper lives at
-`installer/standalone/hyprtk-menu` (symlinked to `~/.local/bin` by
-`_installSymLink standalone`); it execs `$HOME/.local/share/hyprtk-menu/main.py`.
-Waybar module `custom/hyprtk-menu` calls `$HOME/.local/bin/hyprtk-menu --toggle`.
+Theme-gui was archived and its functionality moved into hyprtk-bar's Theme
+Manager (opened from the wallpaper glyph). The vendored `installer/theme-gui/`,
+its `installer/standalone/{theme-gui,hyprtk-themer}` wrappers, the
+`SUPER+ALT+T` keybinding, and the `windowrules.lua` rule were all removed.
 
-### theme-gui + hyprtk-themer (added, not in the 11 sources)
+### hyprtk-arc-menu (merged into hyprtk-bar 2026-09-08 — no separate app)
 
-GTK4/Adwaita theme manager. Installed to `~/.local/share/theme-gui/` via
-`installer/theme-gui/install.sh`. Standalone wrapper at `installer/standalone/theme-gui`
-symlinked to `~/.local/bin`. `hyprtk-themer` is a thin wrapper that calls `theme-gui`.
-Keybinding: `SUPER+ALT+T` → `theme-gui`.
+The arc menu (Material-style radial launcher: a FAB-style button in a screen
+corner that fans its items out on click — 180° at top/bottom center, 90° at
+corners — each item launching a command) is now built into **hyprtk-bar**. The
+standalone app, its vendored `installer/hyprtk-arc-menu/` tree, its
+`install.sh` step, its autostart line, and the `hyprtk-arc-menu-toggle` wrapper
+were all removed.
 
-### hyprtk-arc-menu (added, not in the 11 sources)
-
-Material-style radial/arc menu (GTK3 + gtk-layer-shell). A FAB-style button sits
-in a configurable screen position and fans its items out on click — 180° at the
-top/bottom center, 90° at corners — each item launching a command. Middle-click
-anywhere on the menu quits the app.
-
-Vendored as `installer/hyprtk-arc-menu/` (src/, install.sh, pyproject.toml,
-hyprtk-arc-menu.desktop) and installed by `1-install.sh` via its own
-`install.sh`, exactly like theme-gui. Config at
-`~/.config/hyprtk-arc-menu/config.json`:
-
-```json
-{
-  "position": "bottom-right",
-  "shape": "circle",
-  "transparent": false,
-  "follow_waybar": true,
-  "margin": 24,
-  "radius": 140,
-  "fab_size": 56,
-  "item_size": 48,
-  "animation_time": 300,
-  "items": [
-    { "icon": "firefox", "command": "firefox", "tooltip": "Firefox" }
-  ]
-}
-```
-
-Theming: mirrors the active waybar theme's glass + text color live (watches
-`~/.cache/.themestyle.sh`), keeps pywal `color5`/`color6` accents, and supports
-`shape: square` (items encircle the button on a square perimeter) and
-`transparent: true` (icons only). The in-menu Settings item opens a dialog to
-edit everything, including the item list (add/edit/remove, move up/down, and
-search installed apps).
-
-Keybinding: `SUPER+CTRL+M` → `hyprtk-arc-menu-toggle`.
+- The overlay window is owned by the bar process (`src/hyprtk_bar/arcmenu.py`):
+  created when the `arcmenu` config block is enabled, themed from the bar's
+  resolved palette + live pywal, rebuilt live from the settings dialogue.
+- Config lives under `arcmenu` in `~/.config/hyprtk-bar/config.json`; a first-run
+  migration imports the legacy `~/.config/hyprtk-arc-menu/config.json` if present.
+- Settings live in the bar settings dialogue's **Arc Menu** tab (position,
+  shape, sizes, colours, toggles, and the item list with add/edit/remove,
+  move up/down, and installed-app search).
+- Toggle: `SUPER+CTRL+M` → `installer/scripts/hyprtk-bar-arc-toggle.sh`
+  (signals the running bar with SIGUSR2), or click the FAB. Escape closes,
+  middle-click closes.
 
 ## 4. Verification (all PASSED)
 
@@ -222,3 +195,34 @@ Sync flow: merged → live → GitHub. All verified via `md5sum` and `diff -rq`.
 - **Sync note** — `README.md` and the app bundles are kept identical across
   merged / live / GitHub. `PLANNING.md` remains merged-only (see sync
   exclusions).
+
+## 7. Recent tweaks & additions (2026-09-08)
+
+- **hyprtk-arc-menu merged into hyprtk-bar** — the standalone app (vendored
+  `installer/hyprtk-arc-menu/`, its `1-install.sh` step, the autostart line,
+  and the `-toggle` wrapper) was removed. The arc menu overlay now lives in the
+  bar (`src/hyprtk_bar/arcmenu.py`), themed + toggled by the bar, configured
+  from the bar settings dialogue's **Arc Menu** tab, with config under
+  `arcmenu` in the bar config (legacy config auto-imported on first run).
+- **hypr config** — `keybindings.lua` now binds `SUPER+CTRL+M` to
+  `installer/scripts/hyprtk-bar-arc-toggle.sh` (signals the bar with SIGUSR2);
+  the `hyprtk-arc-menu` autostart line was removed (the bar owns the overlay).
+- **new script** — `installer/scripts/hyprtk-bar-arc-toggle.sh`.
+
+## 8. Recent tweaks & additions (2026-09-09)
+
+- **hyprtk-menu merged into hyprtk-bar** — the standalone app (vendored
+  `installer/hyprtk-menu/`, its `1-install.sh` step, the
+  `hyprtk-menu-install.sh` script, and the `installer/standalone/hyprtk-menu`
+  PATH wrapper) was removed. The start menu now lives in the bar
+  (`src/hyprtk_bar/menu/` subpackage), owned by the bar process, themed + pywal
+  following the bar, configured from the bar settings dialogue's **Menu** tab,
+  with config under `menu` in the bar config (legacy `~/.config/hyprtk-menu/
+  config.json` auto-imported on first run).
+- **toggle** — the start button toggles the in-bar menu; `Super + Space`
+  (`installer/scripts/hyprtk-bar-menu-toggle.sh`) signals the bar with SIGUSR1.
+- **hypr config** — `keybindings.lua` adds `SUPER+SPACE` → the menu toggle;
+  the dead `hyprtk-menu settings` floating windowrule was removed from
+  `windowrules.lua`.
+- **new script** — `installer/scripts/hyprtk-bar-menu-toggle.sh`.
+- **hyprtk-menu GitHub repo archived.**

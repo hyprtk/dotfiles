@@ -537,11 +537,6 @@ else
         _spin "Installing oh-my-zsh..." "_installSymLink oh-my-zsh ~/.oh-my-zsh/oh-my-zsh.sh $SCRIPT_DIR/configs/oh-my-zsh/oh-my-zsh.sh ~/.oh-my-zsh" "$LOG_FILE"
         _ok "Standalone apps installed"
 
-        # ── hyprtk-menu ──────────────────────────────────────────────
-        _step "Installing hyprtk-menu"
-        _spin "Installing hyprtk-menu..." "sh $SCRIPT_DIR/installer/scripts/hyprtk-menu-install.sh" "$LOG_FILE"
-        _ok "hyprtk-menu installed"
-
         # ── hyprtk-bar ──────────────────────────────────────────────
         _step "Installing hyprtk-bar"
         _spin "Installing hyprtk-bar..." "bash $SCRIPT_DIR/installer/hyprtk-bar/install.sh" "$LOG_FILE"
