@@ -57,6 +57,18 @@ hl.window_rule({
     border_size = 0,
 })
 
+-- hyprtk-bar About window (floating) — themed popup-box border, no compositor border.
+hl.window_rule({
+    name = "windowrule-bar-about",
+    match = {
+        title = "(^(hyprtk-bar about)$)",
+    },
+    float = true,
+    center = true,
+    size = "360 260",
+    border_size = 0,
+})
+
 -- Specific to launching floating terminal windows
 hl.window_rule({
     name = "windowrule-6",
