@@ -16,7 +16,6 @@ MAP[screenshots]=assets/screenshots
 MAP[alacritty]=configs/alacritty
 MAP[btop]=configs/btop
 MAP[fastfetch]=configs/fastfetch
-MAP[figlet]=configs/figlet
 MAP[gtk]=configs/gtk
 MAP[hyprlogout]=configs/hyprlogout
 MAP[hyprpicker]=configs/hyprpicker

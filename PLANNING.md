@@ -37,7 +37,7 @@ hyprtk-merged/
 | Source top-level | Merged location |
 |---|---|
 | `fonts/`, `Wallpapers/`, `themes/`, `papirus-icons/`, `splash/`, `screenshots/` | `assets/` |
-| `alacritty btop fastfetch figlet gtk hyprlogout hyprpicker matuwall Mousepad nvim ohmyposh oh-my-zsh ranger rofi sddm smb starship swappy swaylock Thunar User-Management vim wal waypaper wob xfce4 zshrc root dracut nvidia grub` | `configs/` |
+| `alacritty btop fastfetch gtk hyprlogout hyprpicker matuwall Mousepad nvim ohmyposh oh-my-zsh ranger rofi sddm smb starship swappy swaylock Thunar User-Management vim wal waypaper wob xfce4 zshrc root dracut nvidia grub` | `configs/` |
 | `hypr/` | `hypr/` |
 | `os-release/`, `scripts/`, `standalone/` | `installer/` |
 | top-level files (`1-install.sh`, `CHANGELOG`, `cheatsheet.md`, `default.png`, `.folder.png`, `.gitattributes`, `LICENSE`, `README.md`, `.zshrc`) | top level |

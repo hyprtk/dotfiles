@@ -57,7 +57,6 @@ alias wallp='~/hyprtk/installer/scripts/updatewal.sh'
 # alias gr='python ~/hyprtk/installer/scripts/growthrate.py'  # File not found
 alias ChatGPT='python ~/mychatgpt/mychatgpt.py'
 alias chat='python ~/mychatgpt/mychatgpt.py'
-alias ascii='~/hyprtk/installer/scripts/figlet.sh'
 
 # -----------------------------------------------------
 # VIRTUAL MACHINE
