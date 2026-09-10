@@ -56,7 +56,6 @@ hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hy
 hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hyprtk-bar-arc-toggle.sh"))
 hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-start.sh"))
 hl.bind(mainMod .. " + ALT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))
-hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-start.sh"))
 hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))
 
 hl.bind(mainMod .. " + 1", hl.dsp.focus({ workspace = 1 }))
