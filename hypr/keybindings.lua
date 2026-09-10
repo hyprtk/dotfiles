@@ -52,7 +52,7 @@ hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/u
 hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/wallpaper-awww.sh"))
 hl.bind(mainMod .. " + CTRL + RETURN", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/appsmenu.sh"))
 hl.bind(mainMod .. " + CTRL + F", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/filemanager.sh"))
-hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/cliphist.sh"))
+hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hyprtk-bar-clipboard-toggle.sh"))
 hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hyprtk-bar-arc-toggle.sh"))
 hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-start.sh"))
 hl.bind(mainMod .. " + ALT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))
