@@ -6,7 +6,7 @@
 local mainMod = "SUPER"
 
 hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd("alacritty"))
-hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hyprtk-bar-menu-toggle.sh"))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-menu-toggle.sh"))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("thunar"))
@@ -52,8 +52,8 @@ hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/u
 hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/wallpaper-awww.sh"))
 hl.bind(mainMod .. " + CTRL + RETURN", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/appsmenu.sh"))
 hl.bind(mainMod .. " + CTRL + F", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/filemanager.sh"))
-hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hyprtk-bar-clipboard-toggle.sh"))
-hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/hyprtk-bar-arc-toggle.sh"))
+hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-clipboard-toggle.sh"))
+hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-arc-toggle.sh"))
 hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-start.sh"))
 hl.bind(mainMod .. " + ALT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))
 hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))
