@@ -1,5 +1,6 @@
 #!/bin/bash
 # sync-rofi-theme.sh — link the rofi variant to match the current hyprtk-bar theme
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 #
 # The bar's ``theme.source`` selects the rofi variant:
 #   pywal    -> hyprtk-pywal (the dynamic pywal variant; re-tints on wallpaper change)
@@ -8,8 +9,10 @@
 # Missing variants fall back to hyprtk.
 
 bar_config="$HOME/.config/hyprtk-bar/config.json"
-variant_dir="$HOME/hyprtk/configs/rofi/variants"
-symlink="$HOME/hyprtk/configs/rofi/variant.rasi"
+variant_dir="$SCRIPT_DIR/rofi/variants"
+[ -d "$variant_dir" ] || variant_dir="$HOME/hyprtk/configs/rofi/variants"
+symlink="$HOME/.config/rofi/variant.rasi"
+[ -d "$(dirname "$symlink")" ] || symlink="$HOME/hyprtk/configs/rofi/variant.rasi"
 
 theme="hyprtk"
 
@@ -27,7 +30,7 @@ theme="${theme%-top}"
 theme="${theme%-bottom}"
 
 if [ -f "$variant_dir/$theme.rasi" ]; then
-    ln -sf "variants/$theme.rasi" "$symlink"
+    ln -sf "$variant_dir/$theme.rasi" "$symlink"
 else
-    ln -sf "variants/hyprtk.rasi" "$symlink"
+    ln -sf "$variant_dir/hyprtk.rasi" "$symlink"
 fi

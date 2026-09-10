@@ -3,6 +3,7 @@
 #
 # by hyprtk (Kori Tk) (2026)
 # ----------------------------------------------------- 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # ----------------------------------------------------- 
 # Select random wallpaper and create color scheme
@@ -34,7 +35,7 @@ awww img "$wallpaper" \
     --transition-duration=0.7 \
     --transition-pos "$( hyprctl cursorpos )"
 
-~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
+"$SCRIPT_DIR/change-icons.sh"
 
 # ----------------------------------------------------- 
 # Send notification
