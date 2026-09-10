@@ -4,6 +4,8 @@
 
 hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon &")
+    -- hyprsunset gamma provides screen brightness on monitors without a backlight
+    hl.exec_cmd("hyprsunset --identity &")
     -- hyprtk-bar owns org.freedesktop.Notifications (built-in notification center)
     hl.exec_cmd("~/.local/bin/hyprtk-bar &")
     hl.exec_cmd("hyprctl setcursor Adwaita 24")
