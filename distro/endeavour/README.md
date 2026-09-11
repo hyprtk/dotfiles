@@ -55,7 +55,7 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 
 # Make sure that you're in your home directory
 
-	git clone https://github.com/hyprtk/endeavour-dots.git ~/hyprtk
+	git clone https://github.com/hyprtk/dotfiles.git ~/hyprtk
 	cd ~/hyprtk
 	sh ./1-install.sh
 
@@ -64,6 +64,6 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 ## Screenshots & Video
 
 EndeavourOS
-![Model](https://github.com/hyprtk/endeavour-dots/blob/main/screenshots/endeavour1.png)
-![Model](https://github.com/hyprtk/endeavour-dots/blob/main/screenshots/endeavour2.png)
-![MODEL](https://github.com/hyprtk/endeavour-dots/blob/main/screenshots/endeavour3.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/endeavour1.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/endeavour2.png)
+![MODEL](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/endeavour3.png)

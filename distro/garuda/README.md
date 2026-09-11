@@ -55,7 +55,7 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 
 # Make sure that you're in your home directory
 
-	git clone https://github.com/hyprtk/garuda-dots.git ~/hyprtk
+	git clone https://github.com/hyprtk/dotfiles.git ~/hyprtk
 	cd ~/hyprtk
 	sh ./1-install.sh
 
@@ -64,6 +64,6 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 ## Screenshots & Video
 
 Garuda
-![Model](https://github.com/hyprtk/garuda-dots/blob/main/screenshots/garuda1.png)
-![Model](https://github.com/hyprtk/garuda-dots/blob/main/screenshots/garuda2.png)
-![MODEL](https://github.com/hyprtk/garuda-dots/blob/main/screenshots/garuda3.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/garuda1.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/garuda2.png)
+![MODEL](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/garuda3.png)

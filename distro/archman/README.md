@@ -55,7 +55,7 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 
 # Make sure that you're in your home directory
 
-	git clone https://github.com/hyprtk/archman-dots.git ~/hyprtk
+	git clone https://github.com/hyprtk/dotfiles.git ~/hyprtk
 	cd ~/hyprtk
 	sh ./1-install.sh
 
@@ -64,6 +64,6 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 ## Screenshots & Video
 
 Archman Linux
-![MODEL](https://github.com/hyprtk/archman-dots/blob/main/screenshots/archman1.png)
-![Model](https://github.com/hyprtk/archman-dots/blob/main/screenshots/archman2.png)
-![Model](https://github.com/hyprtk/archman-dots/blob/main/screenshots/archman3.png)
+![MODEL](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/archman1.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/archman2.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/archman3.png)

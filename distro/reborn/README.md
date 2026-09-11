@@ -55,7 +55,7 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 
 # Make sure that you're in your home directory
 
-	git clone https://github.com/hyprtk/reborn-dots.git ~/hyprtk
+	git clone https://github.com/hyprtk/dotfiles.git ~/hyprtk
 	cd ~/hyprtk
 	sh ./1-install.sh
 
@@ -64,6 +64,6 @@ PLEASE BACKUP YOUR EXISTING .config WITH YOUR DOTFILES BEFORE STARTING THE SCRIP
 ## Screenshots & Video
 
 RebornOS
-![MODEL](https://github.com/hyprtk/reborn-dots/blob/main/screenshots/reborn1.png)
-![Model](https://github.com/hyprtk/reborn-dots/blob/main/screenshots/reborn2.png)
-![Model](https://github.com/hyprtk/reborn-dots/blob/main/screenshots/reborn3.png)
+![MODEL](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/reborn1.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/reborn2.png)
+![Model](https://raw.githubusercontent.com/hyprtk/dotfiles/main/assets/screenshots/reborn3.png)
