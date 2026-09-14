@@ -455,14 +455,14 @@ if type grudupdater >/dev/null 2>&1; then
     _spin "Running grub updater..." "grudupdater" "$LOG_FILE"
 fi
 
-# ── Pywal16 ───────────────────────────────────────────────────────────────
-_step "Installing Pywal16"
-if [ -f /usr/bin/wal ]; then
-    _ok "pywal16 already installed"
-else
-    _spin "Installing pywal16..." "yay --noconfirm -S python-pywal16-git" "$LOG_FILE"
-    _ok "pywal16 installed"
-fi
+# ── Pywal16 (bundled in hyprtk-bar) ───────────────────────────────────────
+# pywal16 is vendored inside hyprtk-bar (vendor/pywal16) and exposed as `wal`
+# by the bar's installer — no separate AUR/PyPI download. It is provisioned
+# here, early, because the pywal init steps below (and the dotfiles' wal
+# templates) run before the full bar install near the end of this script.
+_step "Installing Pywal16 (bundled)"
+_spin "Provisioning bundled pywal16..." "bash $SCRIPT_DIR/installer/hyprtk-bar/install.sh --wal-only" "$LOG_FILE"
+_ok "pywal16 ready (bundled wal)"
 
 # ── Icons root ────────────────────────────────────────────────────────────
 _step "Installing Icons (root)"
