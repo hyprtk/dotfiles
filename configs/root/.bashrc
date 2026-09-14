@@ -54,7 +54,6 @@ alias gcheck="git checkout"
 # -----------------------------------------------------
 
 alias wallp='~/hyprtk/installer/scripts/updatewal.sh'
-# alias gr='python ~/hyprtk/installer/scripts/growthrate.py'  # File not found
 alias ChatGPT='python ~/mychatgpt/mychatgpt.py'
 alias chat='python ~/mychatgpt/mychatgpt.py'
 
@@ -63,7 +62,6 @@ alias chat='python ~/mychatgpt/mychatgpt.py'
 # -----------------------------------------------------
 
 alias vm='~/private/launchvm.sh'
-# alias lg='~/hyprtk/installer/scripts/looking-glass.sh'  # File not found
 alias vmstart='virsh --connect qemu:///system start win11'
 alias vmstop='virsh --connect qemu:///system destroy win11'
 
@@ -71,8 +69,6 @@ alias vmstop='virsh --connect qemu:///system destroy win11'
 # EDIT CONFIG FILES
 # -----------------------------------------------------
 
-# alias confq='nvim ~/hyprtk/configs/qtile/config.py'  # File not found
-# alias confp='nvim ~/hyprtk/configs/picom/picom.conf'  # File not found
 alias confb='nvim ~/hyprtk/configs/root/.bashrc'
 
 # -----------------------------------------------------

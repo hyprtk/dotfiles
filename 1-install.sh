@@ -97,12 +97,69 @@ die() {
     exit 1
 }
 
+# Terminal width, used to keep the spinner's detail line from wrapping (a wrapped
+# title breaks gum's cursor accounting, so the spinner redraws over itself).
+_term_width() {
+    local w
+    w=$(tput cols 2>/dev/null)
+    if [ -n "$w" ] && [ "$w" -gt 0 ] 2>/dev/null; then
+        printf '%s' "$w"
+    else
+        printf '80'
+    fi
+}
+
+# Trim a detail string so "  → <detail>" fits on one terminal line.
+_fit_detail() {
+    local detail="$1"
+    local max=$(( $(_term_width) - 6 ))
+    [ "$max" -lt 8 ] && max=8
+    if [ "${#detail}" -gt "$max" ]; then
+        printf '%s…' "${detail:0:$((max - 1))}"
+    else
+        printf '%s' "$detail"
+    fi
+}
+
+# List the package names a hypr/packages/<name>.sh script installs via
+# `pacman -S` / `yay -S`, for the spinner's detail line. Dynamic arguments
+# (command substitutions) and flags are skipped.
+_script_packages() {
+    local script="$1"
+    [ -f "$script" ] || return 0
+    awk '
+        { sub(/#.*/, ""); collecting = 0 }
+        {
+            n = split($0, f, /[[:space:]]+/)
+            for (i = 1; i <= n; i++) {
+                tok = f[i]
+                if (collecting) {
+                    if (tok ~ /^[&|;>]+/) { collecting = 0; continue }
+                    gsub(/\\/, "", tok)
+                    gsub(/^[&|;>]+/, "", tok)
+                    if (tok == "" || tok ~ /^-/) continue
+                    if (tok ~ /[()$]/) continue
+                    if (!(tok in seen)) { seen[tok] = 1; out = out tok " " }
+                    continue
+                }
+                if (tok == "-S" || tok == "--sync") collecting = 1
+            }
+        }
+        END { sub(/ $/, "", out); printf "%s", out }
+    ' "$script"
+}
+
 _spin() {
     local title="$1"
     local cmd="$2"
     local logfile="$3"
-    log "SPIN: $title"
-    $GUM spin --spinner dot --title "$title" -- bash -c "$cmd >> '$logfile' 2>&1"
+    local detail="${4:-}"
+    local shown="$title"
+    if [ -n "$detail" ]; then
+        shown="$title"$'\n'"  → $detail"
+    fi
+    log "SPIN: $title${detail:+ | $detail}"
+    $GUM spin --spinner dot --title "$shown" -- bash -c "$cmd >> '$logfile' 2>&1"
     local rc=$?
     if [ $rc -ne 0 ]; then
         log "SPIN FAILED (exit $rc): $title"
@@ -126,6 +183,37 @@ _run() {
         log "RUN OK: $title"
     fi
     return $rc
+}
+
+# ── Sudo credentials ───────────────────────────────────────────────────────
+# Package steps run inside `gum spin`, which hides the terminal and would bury a
+# native sudo password prompt (the install then looks like it hangs on yay).
+# Ask for the password up front — visibly — then keep the cached credential
+# alive in the background so a long build can't expire the timestamp mid-spin.
+SUDO_KEEPALIVE_PID=""
+_cleanup_keepalive() {
+    if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
+        kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+    fi
+}
+trap _cleanup_keepalive EXIT
+
+_sudo_auth() {
+    if sudo -n true 2>/dev/null; then
+        log "SUDO: credentials already valid"
+    else
+        echo -e "${WHITE}  Enter your password to authorise the installation:${NC}"
+        echo ""
+        if ! sudo -v; then
+            die "sudo authentication failed"
+        fi
+        log "SUDO: credentials cached"
+    fi
+
+    if [ -z "$SUDO_KEEPALIVE_PID" ] || ! kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
+        ( while true; do sudo -n true 2>/dev/null; sleep 50; done ) &
+        SUDO_KEEPALIVE_PID=$!
+    fi
 }
 
 # ── Preflight ──────────────────────────────────────────────────────────────
@@ -283,6 +371,8 @@ if [ -f "$STEPS" ]; then
 fi
 
 # ── Pre-install (distro-specific cleanup) ─────────────────────────────────
+# Authenticate once, visibly, before any spinner hides the terminal.
+_sudo_auth
 _step "Removing leftover Packages"
 if type pre_install >/dev/null 2>&1; then
     pre_install
@@ -308,7 +398,10 @@ _step "Installing Yay"
 if sudo pacman -Qs yay > /dev/null 2>&1; then
     _ok "yay already installed"
 else
-    _spin "Installing yay..." "_installPackagesPacman base-devel && git clone https://aur.archlinux.org/yay-git.git ~/Downloads/yay-git && cd ~/Downloads/yay-git && makepkg -si --noconfirm && cd $SCRIPT_DIR" "$LOG_FILE"
+    # makepkg -si (and base-devel) need sudo; make sure the cached credential
+    # is fresh and prompt visibly rather than under the spinner.
+    _sudo_auth
+    _spin "Installing yay..." "_installPackagesPacman base-devel && git clone https://aur.archlinux.org/yay-git.git ~/Downloads/yay-git && cd ~/Downloads/yay-git && makepkg -si --noconfirm && cd $SCRIPT_DIR" "$LOG_FILE" "base-devel + yay-git (AUR build)"
     _ok "yay installed"
 fi
 
@@ -334,7 +427,9 @@ fi
 # ── Core packages ─────────────────────────────────────────────────────────
 _step "Installing Core Packages"
 for pkg in hyprland xfce4 filetools webtools printers network media terminaltools systemtools system sddm-check sddmgrub matuwall; do
-    _spin "Installing $pkg..." "sh $SCRIPT_DIR/hypr/packages/$pkg.sh" "$LOG_FILE"
+    pkg_script="$SCRIPT_DIR/hypr/packages/$pkg.sh"
+    pkg_detail="$(_fit_detail "$(_script_packages "$pkg_script")")"
+    _spin "Installing $pkg..." "sh $pkg_script" "$LOG_FILE" "$pkg_detail"
     _ok "$pkg installed"
 done
 

@@ -3,7 +3,7 @@
 # NVIDIA Users
 
 if you are using an NVIDIA GPU or a laptop with NVIDIA GPU,
-please read the ~/hyprtk/hypr/conf/nvidia.conf for setup and configuration of your GPU
+please read the ~/hyprtk/hypr/nvidia.lua for setup and configuration of your GPU
 
 # AMDGPU Users
 

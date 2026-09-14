@@ -17,7 +17,7 @@ pre_hypr_symlink() {
 }
 
 grudupdater() {
-    # Kiro's original installer ran ~/hyprtk/installer/scripts/grudupdater.sh here, but that
-    # script has no source in any of the 11 distro trees. Skipped by design.
+    # Kiro's original installer ran a grub updater here, but that script has no
+    # source in any of the 11 distro trees. Skipped by design.
     :
 }
