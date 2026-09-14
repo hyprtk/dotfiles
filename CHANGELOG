@@ -7,6 +7,16 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Changed
 
+- **pywal16 bundled — the AUR dependency is gone** — pywal16 is now vendored
+  inside hyprtk-bar (`installer/hyprtk-bar/vendor/pywal16/`; MIT, v3.8.15,
+  commit `a04c3e3`) and exposed as `wal` (`venv/bin/wal`, symlinked into
+  `~/.local/bin`). `1-install.sh` provisions it early with
+  `installer/hyprtk-bar/install.sh --wal-only`, replacing the
+  `yay -S python-pywal16-git` step; `python-pywal16-git` was removed from the
+  AUR extras. The bar and its scripts resolve the bundled `wal` first
+  (`HYPRTK_WAL` → `~/.local/bin` → beside-install → PATH), so a stale system
+  `wal` cannot shadow it. See `installer/hyprtk-bar/BUNDLING.md` and
+  `installer/hyprtk-bar/vendor/pywal16/VENDOR.md`.
 - **hyprtk-bar settings window single border** — the floating bar-settings
   window previously showed a double border: Hyprland drew its own compositor
   window border around the plain `Gtk.Window` on top of the CSS `.popup-box`

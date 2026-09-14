@@ -18,12 +18,13 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on any Arch
 
 ## What is this?
 
-A curated, consistent desktop configuration that replaces the default look and feel of Arch Linux with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** — hyprtk-bar, rofi, the app menu, the lock screen and even your icons all stay in sync.
+A curated, consistent desktop configuration that replaces the default look and feel of Arch Linux with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** (bundled) — hyprtk-bar, rofi, the app menu, the lock screen and even your icons all stay in sync.
 
 - **Wayland first** — Hyprland with a floating/split hybrid workflow
 - **Xorg fallback** — XFCE stays installed as a safety net
 - **Auto-detected distro** — the installer detects your OS and applies the right tweaks
 - **No manual colour config** — pywal generates a full palette from your wallpaper
+- **No AUR dependency for pywal** — pywal16 is bundled inside hyprtk-bar (`vendor/pywal16`), so colours work out of the box
 
 ## Install
 
@@ -48,7 +49,7 @@ package groups, dotfiles and services before installing everything.
 | **Editor** | Neovim (Vim fallback) |
 | **App launcher** | Rofi (plus the in-bar start menu) |
 | **Status bar** | hyprtk-bar — pywal-themed taskbar with built-in menus |
-| **Theming** | pywal16, live, from your wallpaper |
+| **Theming** | pywal16 (bundled), live, from your wallpaper |
 | **Wallpaper** | Matuwall film-strip picker + rofi list + random |
 | **Screenshots** | grim & slurp |
 | **Screen recording** | wf-recorder |
