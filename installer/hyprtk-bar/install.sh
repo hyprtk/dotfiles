@@ -110,7 +110,7 @@ declare -A DEPS
 DEPS[pacman]="gtk3 gtk-layer-shell gdk-pixbuf2 pango cairo gobject-introspection-runtime python python-gobject python-cairo python-pip"
 DEPS[apt]="gir1.2-gtk-3.0 gir1.2-gtklayershell-0.1 gir1.2-gdkpixbuf-2.0 gir1.2-pango-1.0 gir1.2-cairo-1.0 gir1.2-xlib-2.0 python3-gi python3-gi-cairo python3-venv python3-pip"
 DEPS[dnf]="gtk3 gtk-layer-shell gdk-pixbuf2 pango cairo gobject-introspection python3-gobject python3-cairo python3-pip"
-DEPS[zypper]="typelib-1_0-Gtk-3_0 typelib-1_0-GtkLayerShell-0_1 typelib-1_0-GdkPixbuf-2_0 typelib-1_0-Pango-1_0 typelib-1_0-cairo-1_0 typelib-1_0-xlib-2_0 python3-gobject python3-gobject-Gdk python3-gobject-cairo python3-pip"
+DEPS[zypper]="typelib-1_0-Gtk-3_0 typelib-1_0-GtkLayerShell-0_1 typelib-1_0-GdkPixbuf-2_0 typelib-1_0-Pango-1_0 girepository-1_0 python3-gobject python3-gobject-Gdk python3-gobject-cairo python3-pip"
 # Void/Alpine ship the GI typelibs in the -devel/-dev subpackages, not the base
 # lib packages.
 DEPS[xbps]="gtk+3-devel gtk-layer-shell-devel gdk-pixbuf-devel pango-devel cairo-devel gobject-introspection python3-gobject python3-cairo python3-pip"
@@ -124,9 +124,9 @@ DEPS[nix]="gtk3 gtk-layer-shell gdk-pixbuf pango cairo gobject-introspection pyt
 # tool is missing, so a partial install is still a working bar.
 declare -A EXTRAS
 EXTRAS[pacman]="networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber brightnessctl hyprsunset dmidecode pciutils cliphist wl-clipboard rofi libnotify wob papirus-icon-theme polkit awww matugen"
-EXTRAS[apt]="network-manager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme policykit-1"
-EXTRAS[dnf]="NetworkManager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit"
-EXTRAS[zypper]="NetworkManager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit"
+EXTRAS[apt]="network-manager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify-bin papirus-icon-theme polkitd pkexec"
+EXTRAS[dnf]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit"
+EXTRAS[zypper]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify-tools papirus-icon-theme polkit"
 EXTRAS[xbps]="NetworkManager bluez pipewire wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit"
 EXTRAS[apk]="networkmanager bluez pipewire wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit"
 EXTRAS[emerge]="net-misc/networkmanager net-wireless/bluez media-video/pipewire media-video/wireplumber x11-misc/rofi gui-apps/wl-clipboard x11-libs/libnotify"

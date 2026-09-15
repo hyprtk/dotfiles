@@ -25,6 +25,23 @@ Dates are in YYYY-MM-DD format.
 - `derivation.nix` installs the vendored tree and wraps a `wal` executable;
   the flake devShell exposes `wal` from the source tree.
 
+### Fixed
+
+- **openSUSE deps use valid package names.** `DEPS[zypper]` requested
+  `typelib-1_0-cairo-1_0` and `typelib-1_0-xlib-2_0`, which do not exist on
+  openSUSE Tumbleweed (there is no per-namespace GIR package for cairo/xlib).
+  Both `cairo-1.0.typelib` and `xlib-2.0.typelib` — the latter required by
+  `deps_ok` to import Gtk — are provided by **`girepository-1_0`**, so the
+  zypper list now requests that instead.
+- **Debian/Ubuntu extras use valid package names.** `EXTRAS[apt]` requested
+  `libnotify` and `policykit-1`, which do not exist on Ubuntu 26.04
+  (`libnotify` has no candidate; `policykit-1` was superseded by `polkitd` +
+  `pkexec`). The apt list now installs `libnotify-bin` (which provides
+  `notify-send`) and `polkitd pkexec`.
+- **Fedora/openSUSE extras corrected.** `pipewire-pulse` is a Debian name; Fedora
+  and openSUSE ship `pipewire-pulseaudio`. openSUSE's `notify-send` lives in
+  `libnotify-tools`, not `libnotify`. Fixed in `EXTRAS[dnf]`/`EXTRAS[zypper]`.
+
 ## [0.1.0] - 2026-09-12
 
 ### Added
