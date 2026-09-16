@@ -475,8 +475,17 @@ _spin "Installing Papirus icons for root..." \
 _ok "Icons installed for root"
 
 # ── Init pywal16 ─────────────────────────────────────────────────────────
+# pywal reads the palette with `magick … -unique-colors txt:-`. ImageMagick 7
+# denies the TXT coder by policy, in which case the command exits 0 with no
+# output and ~/.cache/wal/colors.json is never written (a silent no-result
+# "success"). The bundled bar script removes TXT from whatever IM policy is
+# present. `wal -n` skips pywal's own wallpaper setting — this installer sets
+# the wallpaper separately, and letting pywal also set it can block forever.
 _step "Initiating Pywal16"
-_spin "Initializing pywal16..." "wal -i $SCRIPT_DIR/assets/Wallpapers/default.png" "$LOG_FILE"
+_spin "Allowing pywal's ImageMagick TXT coder (if restricted)..." \
+    "bash $SCRIPT_DIR/installer/hyprtk-bar/scripts/fix-imagemagick-policy.sh" \
+    "$LOG_FILE"
+_spin "Initializing pywal16..." "wal -n -i $SCRIPT_DIR/assets/Wallpapers/default.png" "$LOG_FILE"
 _ok "pywal16 initiated"
 
 _spin "Setting default wallpaper..." "cp $SCRIPT_DIR/assets/Wallpapers/default.png ~/.cache/current-wallpaper.png && sudo cp ~/.cache/current-wallpaper.png /root/.cache/current-wallpaper.png" "$LOG_FILE"
@@ -557,7 +566,7 @@ else
         if type wal_init >/dev/null 2>&1; then
             _spin "Running wal_init..." "wal_init" "$LOG_FILE"
         else
-            _spin "Initializing pywal16..." "wal -i $SCRIPT_DIR/assets/Wallpapers/default.png" "$LOG_FILE"
+            _spin "Initializing pywal16..." "wal -n -i $SCRIPT_DIR/assets/Wallpapers/default.png" "$LOG_FILE"
         fi
         _ok "Pywal16 templates initiated"
 
