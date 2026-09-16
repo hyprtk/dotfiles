@@ -29,6 +29,19 @@ case "$SCRIPT_DIR" in
         ;;
 esac
 
+# User-local bin dirs. Some distros (and minimal/non-login shells) do not put
+# ~/.local/bin on PATH, so bare `wal`/`hyprtk-bar`/standalone tools would be
+# "command not found". Prepend both, idempotently.
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) PATH="$HOME/.local/bin:$PATH" ;;
+esac
+case ":$PATH:" in
+    *":/usr/local/bin:"*) ;;
+    *) PATH="$PATH:/usr/local/bin" ;;
+esac
+export PATH
+
 # ── Installation log ──────────────────────────────────────────────────────
 LOG_FILE="$SCRIPT_DIR/install.log"
 log() {
@@ -492,7 +505,10 @@ _spin "Setting default wallpaper..." "cp $SCRIPT_DIR/assets/Wallpapers/default.p
 if type grub_wallpaper >/dev/null 2>&1; then
     _spin "Updating grub wallpaper..." "grub_wallpaper" "$LOG_FILE"
 fi
-_spin "Updating user directories..." "xdg-user-dirs-update --force && xdg-user-dirs-gtk-update --force" "$LOG_FILE"
+# xdg-user-dirs-gtk-update needs a running desktop session; a headless/SSH run
+# (or a VM with no display) makes it exit 1. Attempt both, but never fail the
+# step over it.
+_spin "Updating user directories..." "xdg-user-dirs-update --force || true; xdg-user-dirs-gtk-update --force || true" "$LOG_FILE"
 _ok "Default wallpaper set"
 
 # ── Confirm Hyprland config ──────────────────────────────────────────────
@@ -502,7 +518,9 @@ if ! $GUM confirm --prompt.foreground=5 "Configure Hyprland now?"; then
 else
     # ── Thunar xfconf ────────────────────────────────────────────────────
     _step "Launching Thunar to generate xfconf"
-    _spin "Generating xfconf..." "thunar & sleep 3 && killall thunar" "$LOG_FILE"
+    # Thunar must run once to write its xfconf. Without a display it exits
+    # immediately and `killall` finds nothing — don't fail the step for that.
+    _spin "Generating xfconf..." "thunar >/dev/null 2>&1 & sleep 3; killall thunar 2>/dev/null || true" "$LOG_FILE"
     _ok "Thunar xfconf generated"
 
     # ── Bluetooth ────────────────────────────────────────────────────────
@@ -629,10 +647,10 @@ else
         # ── .zshrc ────────────────────────────────────────────────────
         _step "Updating .zshrc"
         _spin "Installing .zshrc..." "_installSymLink .zshrc ~/.zshrc $SCRIPT_DIR/.zshrc ~/.zshrc" "$LOG_FILE"
-        # chsh needs password - run without spin
-        echo -e "${CYAN}  → ${WHITE}Setting default shell to zsh${NC}"
-        sudo chsh -s /bin/zsh
-        chsh -s /bin/zsh
+        # chsh needs a password; use sudo (already authorised). Never fall back
+        # to a non-root `chsh`: it prompts on /dev/tty, which is invisible under
+        # the installer, so it would hang forever waiting for input.
+        sudo chsh -s /bin/zsh || true
         _ok ".zshrc updated"
 
         # ── Standalone apps ──────────────────────────────────────────
