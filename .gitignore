@@ -5,3 +5,8 @@ __pycache__/
 install.log
 configs/root/.cache/
 configs/root/.config/sublime-text/
+
+# Generated artifacts / internal docs — never published
+output.html
+PLANNING.md
+installer/scripts/verify/
