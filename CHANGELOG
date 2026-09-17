@@ -16,6 +16,14 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Fixed
 
+- **matuwall was silently never installed.** Upstream rewrote Matuwall as a
+  C11 + meson app, but `hypr/packages/matuwall.sh` still ran the old
+  `pip install .`, which failed and was ignored — so no `matuwall` binary
+  existed. The script now uses the AUR package on Arch (helper present) or
+  builds from source with meson/ninja, verifies the binary and fails the step if
+  it is missing, and `configs/matuwall/config.toml` replaces the obsolete
+  `config.json` (upstream now reads TOML; its own `example.toml` is stale — the
+  grid keys belong under `[grid]`).
 - **A dead lockscreen no longer leaves the session unrecoverable.** Locking can
   hit an upstream aquamarine DRM page-flip race (`drm: Cannot commit when a
   page-flip is awaiting`) that hangs the compositor; the dotfiles cannot fix the
