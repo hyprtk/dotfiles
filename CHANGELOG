@@ -23,7 +23,12 @@ documented in this file. Dates are in YYYY-MM-DD format.
   builds from source with meson/ninja, verifies the binary and fails the step if
   it is missing, and `configs/matuwall/config.toml` replaces the obsolete
   `config.json` (upstream now reads TOML; its own `example.toml` is stale — the
-  grid keys belong under `[grid]`).
+  grid keys belong under `[grid]`). The new config carries the old settings over
+  (`directory`, `position = "left"`, `columns = 4`, `mouse = true`,
+  `close_on_focus_loss = false`, 300px thumbnails) and a pywal template
+  (`configs/wal/templates/matuwall-config.toml`) renders the `[colors]` and panel
+  background from the live palette; the installer points
+  `~/.config/matuwall/config.toml` at the rendered file (static fallback).
 - **A dead lockscreen no longer leaves the session unrecoverable.** Locking can
   hit an upstream aquamarine DRM page-flip race (`drm: Cannot commit when a
   page-flip is awaiting`) that hangs the compositor; the dotfiles cannot fix the
