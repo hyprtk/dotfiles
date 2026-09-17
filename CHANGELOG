@@ -16,6 +16,15 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Fixed
 
+- **matuwall was launched as the old Python app.** The autostart and the SUPER+W
+  toggle still used `~/.local/share/Matuwall/.venv`, `matuwall --toggle` and the
+  gtk4-layer-shell `LD_PRELOAD` — all Python-era. The new C matuwall is a
+  one-shot layer-shell client with no venv/toggle, so the picker never came up.
+  The autostart no longer launches it and `matuwall-toggle.sh` now just
+  starts/kills the `matuwall` binary.
+- **hyprtk-bar: content was inset twice on the left** (a 6px spacer plus the
+  pill's 6px CSS margin) — at 100% the content looked pushed right. Vendored from
+  hyprtk-bar `dd246fe`.
 - **matuwall was silently never installed.** Upstream rewrote Matuwall as a
   C11 + meson app, but `hypr/packages/matuwall.sh` still ran the old
   `pip install .`, which failed and was ignored — so no `matuwall` binary
