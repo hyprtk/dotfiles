@@ -5,6 +5,15 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ## [Unreleased] - 2026-09-17
 
+### Added
+
+- **Dynamic swaylock colours (pywal).** A new pywal template
+  (`configs/wal/templates/swaylock-config`) renders the lock-screen colours from
+  the live palette on every `wal` run; the installer now points
+  `~/.config/swaylock/config` at the rendered file (falling back to the static
+  repo config), so the lock screen follows the wallpaper instead of a frozen
+  palette.
+
 ### Fixed
 
 - **`_installSymLink` created the link at the wrong path.** It ran

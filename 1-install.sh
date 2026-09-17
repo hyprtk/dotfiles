@@ -610,7 +610,13 @@ else
         fi
         _spin "Installing hypr..." "_installSymLink hypr ~/.config/hypr $SCRIPT_DIR/hypr/ ~/.config" "$LOG_FILE"
         _spin "Installing fastfetch..." "_installSymLink fastfetch ~/.config/fastfetch $SCRIPT_DIR/configs/fastfetch/ ~/.config" "$LOG_FILE"
-        _spin "Installing swaylock..." "_installSymLink swaylock ~/.config/swaylock $SCRIPT_DIR/configs/swaylock/ ~/.config" "$LOG_FILE"
+        # swaylock reads ~/.config/swaylock/config. Point it at the pywal-rendered
+        # config (configs/wal/templates/swaylock-config) so the lock screen
+        # follows the wallpaper; the static repo config is the fallback when
+        # pywal has not rendered yet.
+        _swaylock_rendered="$HOME/.cache/wal/swaylock-config"
+        [ -f "$_swaylock_rendered" ] || _swaylock_rendered="$SCRIPT_DIR/configs/swaylock/config"
+        _spin "Installing swaylock..." "if [ -L ~/.config/swaylock ]; then rm -f ~/.config/swaylock; fi; mkdir -p ~/.config/swaylock; _installSymLink swaylock-config ~/.config/swaylock/config $_swaylock_rendered ~/.config/swaylock" "$LOG_FILE"
         _spin "Installing swappy..." "_installSymLink swappy ~/.config/swappy $SCRIPT_DIR/configs/swappy/ ~/.config" "$LOG_FILE"
         _spin "Installing hyprlogout..." "_installSymLink hyprlogout ~/.config/hyprlogout $SCRIPT_DIR/configs/hyprlogout/ ~/.config" "$LOG_FILE"
         _spin "Installing waypaper..." "_installSymLink waypaper ~/.config/waypaper $SCRIPT_DIR/configs/waypaper/ ~/.config" "$LOG_FILE"
