@@ -28,8 +28,9 @@ documented in this file. Dates are in YYYY-MM-DD format.
 - **matuwall was silently never installed.** Upstream rewrote Matuwall as a
   C11 + meson app, but `hypr/packages/matuwall.sh` still ran the old
   `pip install .`, which failed and was ignored — so no `matuwall` binary
-  existed. The script now uses the AUR package on Arch (helper present) or
-  builds from source with meson/ninja, verifies the binary and fails the step if
+  existed. The script now builds the upstream C version from source with
+  meson/ninja (there is no package for the C rewrite — the AUR `matuwall` is
+  still the old Python app), verifies the binary and fails the step if
   it is missing, and `configs/matuwall/config.toml` replaces the obsolete
   `config.json` (upstream now reads TOML; its own `example.toml` is stale — the
   grid keys belong under `[grid]`). The new config carries the old settings over
