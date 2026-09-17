@@ -3,6 +3,18 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [Unreleased] - 2026-09-17
+
+### Fixed
+
+- **`_installSymLink` created the link at the wrong path.** It ran
+  `ln -s "$linksource" "$linktarget"` instead of using the explicit link path
+  (`$2`), so `ln` named the link after the source's basename. Harmless for every
+  call whose source folder matched the wanted name, but the multi-distro
+  plain-swaylock variant (`configs/swaylock-plain/`) produced
+  `~/.config/swaylock-plain`, so swaylock never read `~/.config/swaylock/config`
+  (no wallpaper image, no pywal colours). It now creates the link at `$2`.
+
 ## [Unreleased] - 2026-09-07
 
 ### Changed
