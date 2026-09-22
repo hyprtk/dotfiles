@@ -113,7 +113,8 @@ hl.window_rule({
     },
     float = true,
     center = true,
-    size = "720 580",
+    size = "720 600",
+    border_size = 0,
 })
 
 hl.window_rule({
@@ -123,6 +124,7 @@ hl.window_rule({
     },
     float = true,
     center = true,
-    size = "720 580",
+    size = "720 600",
+    border_size = 0,
 })
 
