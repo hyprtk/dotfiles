@@ -60,6 +60,7 @@ package groups, dotfiles and services before installing everything.
 | **Icons** | Papirus (recolored to match the theme) |
 | **Cursor** | Bibata Modern Ice |
 | **Browser** | Brave / Chromium |
+| **USB writer** | hyprtk-usb — write a hyprtk ISO to a USB stick (+ optional persistence); CLI/TUI + GTK GUI |
 | **VMs** | QEMU/KVM, VMware |
 
 ## Keybindings

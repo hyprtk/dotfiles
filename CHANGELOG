@@ -7,6 +7,13 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Added
 
+- **hyprtk-usb.** The installer now ships the hyprtk ISO USB writer: a
+  single-file CLI/TUI zipapp vendored at `installer/standalone/hyprtk-usb`, and a
+  GTK GUI installed by `installer/hyprtk-usb/install.sh` (a venv with system
+  site-packages + `hyprtk-usb-gui` / `hyprtk-usb-helper` launchers + a desktop
+  entry). The GUI runs unprivileged and elevates only the write, via `pkexec`.
+  Source: <https://github.com/hyprtk/hyprtk-usb>.
+
 - **Dynamic swaylock colours (pywal).** A new pywal template
   (`configs/wal/templates/swaylock-config`) renders the lock-screen colours from
   the live palette on every `wal` run; the installer now points
