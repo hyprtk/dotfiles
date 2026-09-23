@@ -2,78 +2,59 @@
 #
 #
 # by hyprtk (Kori Tk) (2026)
-# ----------------------------------------------------- 
+# -----------------------------------------------------
+# Multi-distro package helpers. The package layer now delegates to
+# installer/scripts/pkgmanager.sh (pacman/apt/dnf/zypper/xbps/apk/…), while the
+# historic _isInstalled* / _installPackages* names are kept so existing callers
+# (1-install.sh, installupdates.sh) keep working.
+
+# shellcheck source=installer/scripts/pkgmanager.sh
+. "$(dirname "${BASH_SOURCE[0]}")/pkgmanager.sh"
 
 # ------------------------------------------------------
-# Function: Is package installed
+# Is package installed  (echoes 0 == true / 1 == false)
 # ------------------------------------------------------
 _isInstalledPacman() {
-    package="$1";
-    check="$(sudo pacman -Qs --color always "${package}" | grep "local" | grep "${package} ")";
-    if [ -n "${check}" ] ; then
-        echo 0; #'0' means 'true' in Bash
-        return; #true
-    fi;
-    echo 1; #'1' means 'false' in Bash
-    return; #false
+    if pkg_is_installed "$1"; then
+        echo 0
+    else
+        echo 1
+    fi
 }
 
+# Historical AUR check — now just "is the package installed", so it works on any
+# package manager. AUR-only packages simply report not-installed off Arch.
 _isInstalledYay() {
-    package="$1";
-    check="$(yay -Qs --color always "${package}" | grep "local" | grep "${package} ")";
-    if [ -n "${check}" ] ; then
-        echo 0; #'0' means 'true' in Bash
-        return; #true
-    fi;
-    echo 1; #'1' means 'false' in Bash
-    return; #false
+    _isInstalledPacman "$1"
 }
 
 # ------------------------------------------------------
-# Function Install all package if not installed
+# Install all packages that are not already present
 # ------------------------------------------------------
 _installPackagesPacman() {
-    toInstall=();
+    local toInstall=()
+    local pkg
+    for pkg in "$@"; do
+        if pkg_is_installed "$pkg"; then
+            echo "${pkg} is already installed."
+            continue
+        fi
+        toInstall+=("$pkg")
+    done
 
-    for pkg; do
-        if [[ $(_isInstalledPacman "${pkg}") == 0 ]]; then
-            echo "${pkg} is already installed.";
-            continue;
-        fi;
+    if [ "${#toInstall[@]}" -eq 0 ]; then
+        return
+    fi
 
-        toInstall+=("${pkg}");
-    done;
-
-    if [[ "${toInstall[@]}" == "" ]] ; then
-        # echo "All pacman packages are already installed.";
-        return;
-    fi;
-
-    printf "Packages not installed:\n%s\n" "${toInstall[@]}";
-    sudo pacman --noconfirm -S "${toInstall[@]}";
+    printf "Packages not installed:\n%s\n" "${toInstall[*]}"
+    pkg_install "${toInstall[@]}"
 }
 
+# Repository-equivalent of the old AUR helper path. Callers that need real AUR
+# packages use pkgmanager's aur_install directly.
 _installPackagesYay() {
-    toInstall=();
-
-    for pkg; do
-        if [[ $(_isInstalledYay "${pkg}") == 0 ]]; then
-            echo "${pkg} is already installed.";
-            continue;
-        fi;
-
-        toInstall+=("${pkg}");
-    done;
-
-    if [[ "${toInstall[@]}" == "" ]] ; then
-        # echo "All packages are already installed.";
-        return;
-    fi;
-
-    printf "AUR ackages not installed:\n%s\n" "${toInstall[@]}";
-    yay --noconfirm -S "${toInstall[@]}";
+    _installPackagesPacman "$@"
 }
-
 
 # ------------------------------------------------------
 # Create symbolic links
@@ -83,7 +64,7 @@ _installSymLink() {
     symlink="$2";
     linksource="$3";
     linktarget="$4";
-    
+
     if [ -L "${symlink}" ]; then
         rm -f -- "${symlink}"
         ln -s "${linksource}" "${symlink}"

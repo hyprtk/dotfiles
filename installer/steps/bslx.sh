@@ -3,8 +3,8 @@
 # os-release to /usr/lib/ (no splash/bootctl), backs up existing hypr config.
 
 pre_install() {
-    sudo pacman -Rcs plasma-meta kde-applications-meta --noconfirm
-    sudo pacman -Rcs plasma kde-applications --noconfirm
+    . "$SCRIPT_DIR/installer/scripts/pkgmanager.sh"
+    pkg_remove plasma-meta kde-applications-meta plasma kde-applications
 }
 
 grub_wallpaper() {

@@ -83,7 +83,24 @@ alias notes='vim ~/notes.txt'
 
 alias update-grub='~/hyprtk/installer/scripts/update-grub.sh'
 alias setkb='setxkbmap gb;echo "Keyboard set back to gb."'
-alias update='sudo pacman -Syu --noconfirm && yay -Syu --noconfirm'
+# Distro-aware system update
+update() {
+  if command -v pacman >/dev/null 2>&1; then
+    sudo pacman -Syu --noconfirm && { command -v yay >/dev/null 2>&1 && yay -Syu --noconfirm; }
+  elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update && sudo apt-get upgrade -y
+  elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf upgrade -y
+  elif command -v zypper >/dev/null 2>&1; then
+    sudo zypper --non-interactive update
+  elif command -v xbps-install >/dev/null 2>&1; then
+    sudo xbps-install -Su
+  elif command -v apk >/dev/null 2>&1; then
+    sudo apk update && sudo apk upgrade
+  else
+    echo "Unknown package manager"
+  fi
+}
 
 # -----------------------------------------------------
 # SCREEN RESOLUTINS

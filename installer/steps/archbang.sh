@@ -3,9 +3,8 @@
 # no splash/bootctl step, backs up existing hypr config.
 
 pre_install() {
-    sudo pacman -Rns plasma-meta kde-applications-meta --noconfirm
-    sudo pacman -Rns plasma kde-applications --noconfirm
-    sudo pacman -Rns swaylock --noconfirm
+    . "$SCRIPT_DIR/installer/scripts/pkgmanager.sh"
+    pkg_remove plasma-meta kde-applications-meta plasma kde-applications swaylock
 }
 
 install_os_release() {

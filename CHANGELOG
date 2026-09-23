@@ -3,64 +3,527 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.0.0] - 2026-09-23
+
+### Added
+
+- **Vendored `hyprtk-usb` (+ GUI).** The single-file zipapp (Python, `rich`
+  bundled) lands in `installer/standalone/hyprtk-usb` and is exposed as
+  `hyprtk-usb` through the existing `installer/standalone` → `~/.local/bin`
+  symlink, so the CLI/TUI is available after install with no extra step. The
+  installer also runs `installer/hyprtk-usb/install.sh`, which builds a venv
+  (system site-packages, so GTK/PyGObject is visible), installs the package and a
+  `.desktop` entry, and links **`hyprtk-usb-gui`** / `hyprtk-usb-helper`. The GUI
+  runs unprivileged and elevates only the write, via `pkexec`. Source:
+  <https://github.com/hyprtk/hyprtk-usb>.
+- **Void: Hyprland + the hyprwm library chain from source.** Void packages neither
+  Hyprland nor its libraries. `installer/scripts/hyprland-src-install.sh` gained an
+  `xbps` branch that builds the pinned `v0.56.2` release and the chain it needs
+  (`hyprland-protocols`, `hyprutils`, `hyprlang`, `hyprcursor`, `hyprgraphics`,
+  `hyprwire`, `aquamarine`; `hyprwayland-scanner` only when the Void package ships
+  no CMake config) at the exact revisions Hyprland's `flake.lock` pins, so the ABI
+  matches; `glaze` is fetched by Hyprland's own CMake. The step now runs **before**
+  `srcapps-install.sh` so `hyprsunset`/`hyprpicker` link the same chain, and
+  `hyprutils`/`hyprlang` (Void ships 0.11.0 / an old release) are version-checked
+  and rebuilt from the pinned revision first so every consumer links one
+  `libhyprutils`. Verified on Void: Hyprland 0.56.2 + `hyprctl` build and run.
+- **Void/GCC 14 libstdc++ compatibility patches.** Void's GCC 14.2 predates several
+  C++23/26 library features Hyprland 0.56 uses: `std::vector::append_range`
+  (hyprwire, 16×) and `insert_range` (Hyprland) are replaced by a local helper;
+  `std::ranges::starts_with` and the `cond ? class : nullptr` type in `XWM.hpp` are
+  patched inline; `std::string + std::string_view` (C++26 P2591) is supplied by the
+  new `installer/scripts/hyprtk-gcc14-compat.hpp` (force-included); `#embed` is
+  re-emitted as a raw string literal. All are no-ops on GCC 15+.
+- **Void: `wob` from source.** The volume/brightness overlay is unpackaged on
+  Void; `srcapps-install.sh` now builds it (meson) via `install_wob` — xbps-only,
+  a no-op elsewhere.
+- **Void: runit services enabled.** `hypr/packages/system.sh` now links
+  `udevd`/`dbus`/`elogind`/`polkitd`/`sddm` into the runsvdir for xbps (previously
+  only Alpine's OpenRC was handled), and the `XDG_RUNTIME_DIR` profile fallback
+  now covers runit as well as OpenRC — without these there is no seat and no
+  greeter on the next boot.
+- **D-Bus session bus for the compositor session (non-systemd).** systemd distros
+  get a per-session bus from `pam_systemd`; Void/runit (and OpenRC) start none at
+  all, which broke GSettings/dconf (hyprcursor's cursor-theme lookup → compositor
+  deadlock), `xdg-desktop-portal` and notifications. New
+  `installer/scripts/hyprtk-session.sh` + `/usr/local/bin/hyprtk-session` launcher
+  (installed and wired into the Hyprland session `.desktop` by
+  `hypr/packages/sddmgrub.sh`); it runs the session under `dbus-run-session` only
+  when `DBUS_SESSION_BUS_ADDRESS` is unset, so it is a no-op on systemd. The wrap
+  step is gated to the non-systemd families (`apk`/`xbps`) so the package-owned
+  session file on Arch/Fedora/Debian/openSUSE is never touched. Verified on Void:
+  `org.freedesktop.Notifications` is now owned on the session bus and
+  `hyprctl setcursor` returns instead of blocking.
+
+### Fixed
+
+- **Void: Papirus-icons-for-root step failed (exit 127).** It used `wget`, which
+  Void does not ship; the step now prefers `curl -fsSL` (a core-package dependency)
+  and falls back to `wget` only on systems that have neither.
+- **Void: `qt6-5compat` is the wrong package name.** The SDDM Sugar-Candy Qt6
+  compat modules are `qt6-qt5compat`/`qt6-virtualkeyboard` on Void, so the theme's
+  `Qt5Compat.GraphicalEffects` import failed and SDDM silently fell back to its
+  built-in theme (`hypr/packages/sddmgrub.sh`).
+- **Void: Bluetooth not enabled.** The bluetooth step only knew systemd/OpenRC; it
+  now also enables `/etc/sv/bluetoothd` on runit.
+- **`std::ranges::starts_with` patch is not Alpine-only.** Void's GCC 14.2
+  libstdc++ lacks it as well, so the Hyprland source patch now applies whenever the
+  source contains the call.
+- **Black screen on login where there is no D-Bus session bus.** `hypr/autostart.lua`
+  ran `hyprctl setcursor Adwaita 24`; that drives hyprcursor's GSettings/dconf
+  lookup on the compositor's main thread, which blocks forever on a system with no
+  session bus (Void/runit) and leaves the session on a black screen. The cursor
+  theme/size are now set via `XCURSOR_THEME`/`XCURSOR_SIZE` in `hypr/environment.lua`
+  and the runtime `hyprctl setcursor` call is removed (it was never needed — the env
+  is what Hyprland reads at startup).
+- **Debian/openSUSE: wrong libjpeg dev package names.** `matuwall.sh` used the
+  Ubuntu name `libjpeg-turbo8-dev` for apt (missing on Debian, which ships
+  `libjpeg62-turbo-dev`) and `libjpeg-turbo-devel` for zypper (missing on
+  openSUSE, which ships `libjpeg8-devel`), so the matuwall source build silently
+  lacked the libjpeg-turbo headers it requires (`JCS_EXT_BGRA`). The apt entry now
+  uses `libjpeg-dev` (the turbo dev meta, present on both Debian and Ubuntu), and
+  zypper uses `libjpeg8-devel` (also corrected in the srcapps zypper chain list).
+  `container-matrix.sh` is green again: 1284 resolvable, 0 unexpected.
+- **Leftovers and a hardcoded path found by the new link audit.**
+  - `configs/root/.config/alacritty/alacritty.yml.bak` was a committed stray file
+    (nothing references it) — removed.
+  - The btop pywal theme used a committed **absolute** symlink *and* an absolute
+    `color_theme`, both hardcoded to `/home/hyprtk`; so btop had no theme for any
+    other user. `color_theme` is now the portable name `btopwal`, and the installer
+    creates a per-user `themes/btopwal.theme` symlink to the pywal-rendered file
+    (`configs/btop/themes/btopwal.theme` is now generated/gitignored).
+  - `matuwall.sh` now removes the orphaned Python-era `~/.local/share/Matuwall/.venv`
+    on sight, so upgrading from the old venv app leaves nothing behind.
+- **Papirus-root step still failed on Void (exit 127).** The Papirus `install.sh`
+  it downloads uses `wget` internally, and Void ships none — the earlier curl change
+  only fixed fetching the script. `wget` is now a core package (`wget2-wget` on
+  Fedora, which no longer ships a `wget` package), so the step completes (found by
+  the real Void re-run).
+- **btop theme link failed on a fresh clone.** `~/.config/btop` was a directory
+  symlink into the repo, so the generated theme link had to be written into the
+  clone (read-only in the dry-run) and failed when `configs/btop/themes/` did not
+  exist. `~/.config/btop` is now a real directory with a linked `btop.conf` and a
+  per-user `themes/btopwal.theme` link, so nothing generated touches the repo.
+- **openSUSE: `zsh` never installed, then the shell change failed.** The zsh step
+  calls `_installPackagesPacman` → `pkg_install` from a `gum spin` `bash -c`
+  subshell, but only some helpers were exported — so on zypper
+  `hyprtk_zypper_pyname` (and on apt `_apt`) were "command not found", the package
+  name was dropped, and zypper ran `install` with no argument ("Nothing to do") →
+  false success. All `pkgmanager.sh` helpers are now exported. The shell change
+  now uses `usermod -s` (with a `chsh` fallback and a leading `--`): openSUSE's
+  run0-sudo has its own `-s` ("run a shell") flag that shadows chsh's, and chsh
+   also fails under run0's PAM session. Found by the real openSUSE re-run.
+- **pywal template errors — unescaped braces in comments.** `wal` parses `{…}`
+  markers everywhere, including in comments, so the literal examples in
+  `configs/wal/templates/matuwall-config.toml` (`{path}`) and the swaylock
+  templates (`{colorN.strip}`) logged `[E] Color '…' not found in colors
+  dictionary` on every render. The examples are now escaped (`{{…}}`) or
+  reworded; the rendered files were already correct, so this was log-noise only
+  (found on the fedora/openSUSE re-tests).
+- **hyprtk-usb installed its icon into the repo.** `installer/hyprtk-usb/install.sh`
+  wrote `hyprtk-usb.svg` into `~/.local/share/icons/hicolor/…`, but the dotfiles
+  symlink that whole dir to the repo's papirus theme — so the icon landed inside
+  the repo clone (and failed outright on the read-only dry-run mount). The icon
+  now lives under `~/.local/share/hyprtk-usb/` and the `.desktop` entry uses an
+  absolute `Icon=` path. The container dry-run also pre-seeds the hyprtk-usb venv
+  (it stubs `python3`, so `python3 -m venv` is a no-op) like the bar/matuwall
+  venvs — the newly-vendored step had regressed T2 on every family.
+
+### Verification
+
+- Cross-distro check after these changes. `installer/scripts/verify/container-dryrun.sh`
+  (the whole installer with every mutating command stubbed) passes on all ten family
+  variants — arch; debian bookworm/trixie; ubuntu 24.04/26.04; mint 22; fedora;
+  openSUSE; void; alpine — and `container-matrix.sh` reports **1284 resolvable / 0
+  unexpected** (the three pre-existing matuwall jpeg gaps above are fixed).
+  `audit-installer.sh`, `audit-references.sh` and `verify-completeness.sh` all pass.
+  A pre/post matrix run on the same host confirms the changes add no missing package
+  on any family; the only deltas are the intended xbps-only ones.
+- New `installer/scripts/verify/verify-install-links.sh` (dev tooling): audits the
+  hyprtk-owned paths for dangling symlinks, temp/leftover files, core configs that
+  are not symlinks, stray `.git` dirs and known-obsolete artifacts, plus the
+  expected runtime files. It caught the two leftovers and the btop hardcoded path
+  above on real installs.
+- **Real re-installs on the four test VMs** (Void, Alpine, fedora44, openSUSE),
+  each driven end-to-end: **0 failed steps** and `verify-install-links.sh` **PASS**
+  on all four. These found the real-only bugs above that the stubbed container
+  checks could not: the missing `wget` (Papirus), the empty btop themes dir, the
+  unexported `pkgmanager` helpers (zsh never installed on zypper/apt) and the
+  openSUSE `chsh`/run0 failure.
+- **Release re-run (2026-09-23, `v1.0.0`):** `fedora44` and
+  `opensusetumbleweed` each completed end-to-end with **68 SPIN OK / 0 failed
+  steps**; the packaged `hyprtk-usb` (CLI + GUI) step verified on both.
+  `output.html` regenerated: **0 Extra (TODO) / 0 Unexpected** on all six
+  families.
+
 ## [Unreleased] - 2026-09-17
 
 ### Added
 
-- **hyprtk-usb.** The installer now ships the hyprtk ISO USB writer: a
-  single-file CLI/TUI zipapp vendored at `installer/standalone/hyprtk-usb`, and a
-  GTK GUI installed by `installer/hyprtk-usb/install.sh` (a venv with system
-  site-packages + `hyprtk-usb-gui` / `hyprtk-usb-helper` launchers + a desktop
-  entry). The GUI runs unprivileged and elevates only the write, via `pkexec`.
-  Source: <https://github.com/hyprtk/hyprtk-usb>.
-
-- **Dynamic swaylock colours (pywal).** A new pywal template
-  (`configs/wal/templates/swaylock-config`) renders the lock-screen colours from
-  the live palette on every `wal` run; the installer now points
-  `~/.config/swaylock/config` at the rendered file (falling back to the static
-  repo config), so the lock screen follows the wallpaper instead of a frozen
-  palette.
+- **Dynamic swaylock colours (pywal).** New pywal templates
+  `configs/wal/templates/swaylock-config` (swaylock-effects) and
+  `swaylock-plain-config` render the lock-screen colours from the live palette on
+  every `wal` run; the installer now points `~/.config/swaylock/config` at the
+  rendered file (falling back to the static repo config), so the lock screen
+  follows the wallpaper instead of a frozen palette.
+- **doas-only systems (Alpine).** The installer was hard-wired to `sudo`.
+  `installer/scripts/pkgmanager.sh` now exports a `sudo`→`doas` compatibility
+  function and `hyprtk_run_root` falls back to `doas`; `1-install.sh`'s
+  `_sudo_bootstrap` gained a doas branch that authenticates once and installs a
+  temporary `/etc/doas.d/99-hyprtk-install.conf` nopass drop-in (removed on
+  exit — doas.d is last-match, so it must sort last). Validated on Alpine with
+  `sudo` removed entirely.
+- **Hyprland ≥ 0.55 from source where the distro is older.** Hyprland 0.55
+  switched the config language to Lua, and the dotfiles are entirely Lua-based,
+  but Alpine (3.24 **and** edge) ships 0.54.3. The new
+  `installer/scripts/hyprland-src-install.sh` builds the pinned upstream
+  release (`v0.56.2`) into `/usr` — idempotent (skips when already ≥ 0.55) and
+  non-fatal — pulling in `wayland-protocols` 1.49 and `hyprutils` 0.14.2
+  (Alpine is too old for both) and patching the one C++23 call Alpine's
+  libstdc++ lacks (`std::ranges::starts_with`). Verified on Alpine: Hyprland
+  0.56.2 runs with `hyprctl configerrors` empty and 65 binds from the Lua
+  config (vs 48 stock).
 
 ### Fixed
 
 - **matuwall was launched as the old Python app.** The autostart and the SUPER+W
-  toggle still used `~/.local/share/Matuwall/.venv`, `matuwall --toggle` and the
-  gtk4-layer-shell `LD_PRELOAD` — all Python-era. The new C matuwall is a
-  one-shot layer-shell client with no venv/toggle, so the picker never came up.
-  The autostart no longer launches it and `matuwall-toggle.sh` now just
+  toggle still `source`d `~/.local/share/Matuwall/.venv` and called
+  `matuwall --toggle` with the gtk4-layer-shell `LD_PRELOAD` — all Python-era.
+  The new C matuwall is a one-shot layer-shell client with no venv and no
+  toggle flag, so the picker never came up. `hypr/autostart.lua` no longer
+  launches it at login and `hypr/scripts/matuwall-toggle.sh` now just
   starts/kills the `matuwall` binary.
 - **hyprtk-bar: content was inset twice on the left** (a 6px spacer plus the
-  pill's 6px CSS margin) — at 100% the content looked pushed right. Vendored from
-  hyprtk-bar `dd246fe`.
+  pill's 6px CSS margin), so at 100% the content looked pushed right. Vendored
+  from hyprtk-bar `dd246fe`.
 - **matuwall was silently never installed.** Upstream rewrote Matuwall as a
   C11 + meson app, but `hypr/packages/matuwall.sh` still ran the old
-  `pip install .`, which failed and was ignored — so no `matuwall` binary
-  existed. The script now builds the upstream C version from source with
-  meson/ninja (there is no package for the C rewrite — the AUR `matuwall` is
-  still the old Python app), verifies the binary and fails the step if
-  it is missing, and `configs/matuwall/config.toml` replaces the obsolete
-  `config.json` (upstream now reads TOML; its own `example.toml` is stale — the
-  grid keys belong under `[grid]`). The new config carries the old settings over
+  `pip install .`, which failed (`Neither 'setup.py' nor 'pyproject.toml' found`)
+  and was ignored — so no `matuwall` binary existed. It also now reads a TOML
+  config (`~/.config/matuwall/config.toml`), not the shipped `config.json`. The
+  script builds the upstream C version from source with meson/ninja on every
+  family (there is no package for the C rewrite — the AUR `matuwall` is still the
+  old Python app); per-family build deps:
+  wayland/xkbcommon/libpng/libjpeg-turbo/libwebp + meson/ninja), verifies the
+  binary and **fails the step** if it is missing. `configs/matuwall/config.toml`
+  replaces `config.json` — note upstream's own `config/example.toml` is stale
+  (the grid keys belong under `[grid]`) — with an `[hooks] on_apply` that runs
+  `wal -i {path} -n`. The new config **carries the old settings over**
   (`directory`, `position = "left"`, `columns = 4`, `mouse = true`,
-  `close_on_focus_loss = false`, 300px thumbnails) and a pywal template
-  (`configs/wal/templates/matuwall-config.toml`) renders the `[colors]` and panel
-  background from the live palette; the installer points
-  `~/.config/matuwall/config.toml` at the rendered file (static fallback).
+  `close_on_focus_loss = false`, 300px thumbnails), and a new pywal template
+  (`configs/wal/templates/matuwall-config.toml`) renders the `[colors]` and the
+  panel background from the live palette; the installer points
+  `~/.config/matuwall/config.toml` at the rendered file (static config as
+  fallback), so the picker follows the wallpaper like the old Python version.
+  Upstream dropped the `wall_awww_flags` transition and the panel exclusive
+  zone, so those have no equivalent.
 - **A dead lockscreen no longer leaves the session unrecoverable.** Locking can
   hit an upstream aquamarine DRM page-flip race (`drm: Cannot commit when a
-  page-flip is awaiting`) that hangs the compositor; the dotfiles cannot fix the
-  hang, but they keep it recoverable: `hypr/misc.lua` sets
-  `misc.allow_session_lock_restore = true` and the logout menu locks through the
-  new `hypr/scripts/lock.sh`, which restarts swaylock after an abnormal exit. A
-  crashed lock client previously left the session locked with Hyprland refusing
-  a replacement (recoverable only by reboot).
+  page-flip is awaiting` — hyprwm/Hyprland#15469, hyprwm/aquamarine#343) that
+  hangs the compositor; the dotfiles cannot fix the hang, but they now keep it
+  recoverable: `hypr/misc.lua` sets `misc.allow_session_lock_restore = true` and
+  the logout menu locks through the new `hypr/scripts/lock.sh`, which restarts
+  swaylock after an abnormal exit. Previously a crashed lock client left the
+  session locked with Hyprland refusing a replacement — recoverable only by
+  reboot. Verified on the Alpine VM: SIGKILLing the lockscreen brings a new one
+  up automatically.
 - **`_installSymLink` created the link at the wrong path.** It ran
   `ln -s "$linksource" "$linktarget"` instead of using the explicit link path
-  (`$2`), so `ln` named the link after the source's basename. Harmless for every
-  call whose source folder matched the wanted name, but the multi-distro
-  plain-swaylock variant (`configs/swaylock-plain/`) produced
-  `~/.config/swaylock-plain`, so swaylock never read `~/.config/swaylock/config`
-  (no wallpaper image, no pywal colours). It now creates the link at `$2`.
+  (`$2`), so `ln` named the link after the source's basename. Every existing
+  call happened to have matching names except the plain-swaylock variant
+  (`configs/swaylock-plain/`), which produced `~/.config/swaylock-plain` —
+  swaylock then never read `~/.config/swaylock/config` (no wallpaper image, no
+  pywal colours). It now creates the link at `$2`. Verified on the Alpine VM:
+  the lock screen applies the config's image and colours.
+- **Alpine: SDDM would not launch and tty sessions died with
+  "XDG_RUNTIME_DIR is not set".** Root cause: busybox mdev never applies the
+  elogind udev rules, so the DRM card is not tagged `master-of-seat`
+  (`CanGraphical=no`), and no OpenRC services were enabled. `system.sh` now
+  installs eudev and enables `udev`/`udev-trigger`/`udev-settle`/
+  `udev-postmount` (removing mdev from sysinit), enables `dbus`/`elogind`/`sddm`
+  at boot, and writes an `XDG_RUNTIME_DIR` fallback to
+  `/etc/profile.d/`. Verified: SDDM launches its greeter at boot and a session
+  gets `/run/user/<uid>`.
+- **Alpine: the bundled `gum` is a glibc binary** that cannot execute on musl,
+  and the dotfiles symlink it into `~/.local/bin` (on PATH), so `command -v gum`
+  resolved to the broken copy and the installer aborted at the first prompt.
+  `check_gum` now runs every candidate and falls back to a working system gum.
+- **Alpine: Sugar-Candy silently fell back to SDDM's built-in theme** (Qt6 SDDM
+  looked for the missing Qt5 greeter). `sddmgrub.sh` now appends `QtVersion=6`
+  to the theme metadata alongside the QML import patch.
+- **SDDM greeter: could not type the password.** The X11 greeter had no X input
+  driver (`xorg-server` alone is not enough; on Alpine Xorg logged "No input
+  driver specified" for every keyboard/pointer). `sddmgrub.sh` now installs
+  `xserver-xorg-input-libinput` / `xorg-x11-drv-libinput` / `xf86-input-libinput`
+  alongside the X server on every off-Arch family.
+- **SDDM greeter: black box behind the user icon, and login always failed with
+  an empty username** (Sugar-Candy under Qt6, seen on Alpine/Fedora/openSUSE).
+  `Components/Input.qml` is patched to give the user-icon `Button` a transparent
+  background and to fall back to the user selector's `currentText` when the
+  username TextField's `ForceLastUser` binding is empty at click time.
+- **Alpine install steps**: the root Papirus icon install runs via `sudo` with
+  `DESTDIR`; `/root/.cache` is created before copying the root wallpaper;
+  bluetooth and samba use OpenRC (`rc-service`/`rc-update`) where systemd is
+  absent; cockpit is skipped with a warning on non-systemd systems.
+- **Re-runs**: the oh-my-zsh upstream installer is skipped when `~/.oh-my-zsh`
+  already exists (it exits non-zero on an existing install).
+
+## [Unreleased] - 2026-09-14
+
+### Added
+
+- **Cross-distro package audit (2026-09-17).** New
+  `installer/scripts/verify/package-audit.sh` resolves every native name the
+  installer requests (via each `hypr/packages/*.sh --list` plus the vendored
+  bar's DEPS/EXTRAS) against live repository metadata in throwaway containers
+  and emits a per-name TSV; `installer/scripts/verify/package-audit-html.py`
+  renders it to `output.html` (per-distro tables + an action list).
+  Result across pacman/apt(×5)/dnf/zypper/xbps/apk: **1165 in-repo, 16 AUR,
+  78 allow-listed gaps, 0 unexpected**. The actionable gaps are the extra repos
+  the installer does not add yet — Fedora NVIDIA/mesa need **RPMFusion**,
+  Debian needs **non-free**, Void/Alpine need their **nonfree** repos — plus
+  genuinely unpackaged extras (cockpit on Void/Alpine, cliphist on Alpine,
+  hyprsunset on Void, polkit-gnome on Fedora, gvfs-nfs on Void).
+  `manual_package_installs.sh` lost its `hyprtk-pkglist` marker and is excluded
+  from the audit/matrix, so it no longer counts toward the installer surface.
+- **Extra repositories + source fallbacks (2026-09-17).** The audit's "Extra
+  (TODO)" gaps are now wired up:
+  - `pkgmanager.sh` gained `hyprtk_enable_extra_repos`, run by the new
+    `installer/scripts/enable-extra-repos.sh` before the core packages:
+    **RPMFusion** free+nonfree on Fedora, **contrib/non-free/non-free-firmware**
+    on Debian, and the **nonfree** repo on Void. Alpine ships no nonfree repo,
+    so its NVIDIA/unrar genuinely cannot be installed.
+  - Fedora AMD now requests `mesa-va-drivers-freeworld` (RPMFusion) instead of
+    the non-existent `mesa-va-drivers`.
+  - `polkit-gnome` → `mate-polkit` on Fedora and Debian 13, with a new
+    `hypr/scripts/polkit-agent.sh` that launches whichever agent exists (the
+    session previously called the polkit-gnome path unconditionally).
+  - `freerdp3-x11` → `freerdp2-x11` fallback on Debian 12; dropped `gvfs-nfs`
+    on Void (its gvfs is monolithic).
+  - `srcapps-install.sh` now builds `cliphist` (go), `eza` (cargo), `ipp-usb`
+    (go + libusb + avahi, with its udev rule), and — via a from-source build of
+    the **Hyprland library chain** (`hyprland-protocols`, `hyprutils`,
+    `hyprwayland-scanner`, plus `hyprlang` for sunset) — `hyprpicker` on Alpine
+    and `hyprsunset` on Void, where neither the apps nor their libraries are
+    packaged. Both chains were verified to build and run in their target distro.
+  - After the change the audit's **Extra (TODO) column is 0 on every family**,
+    and the buildable gap is closed. The 7 remaining gaps are not buildable in
+    practice:
+    - Alpine: `nvidia`/`nvidia-settings` (binary-only driver), `unrar`
+      (non-free), `nss-mdns` (**glibc-only** — needs `<nss.h>`, cannot build
+      against musl), `cockpit` (large Python/JS app).
+    - Void: `cockpit`, `nvidia-settings` (not packaged).
+
+- **Fedora install fixes (2026-09-17, found on a live F44 Xfce VM).**
+  - `hyprland.sh` enables a Hyprland COPR on Fedora/RHEL
+    (`lionheartp/Hyprland`, falling back to `solopasha/hyprland`). Hyprland is
+    not in the Fedora base repos, so it silently never installed and the
+    compositor could not start from a TTY. The COPR also supplies `nwg-look`
+    and `hyprsunset`.
+  - `sddmgrub.sh` fixes two SDDM 0.21 faults: the Wayland greeter died on
+    Fedora (now `DisplayServer=x11` off-Arch via a `zz-` drop-in, keeping Arch's
+    Wayland path) and the Qt5 Sugar-Candy theme failed to load under Qt6 (QML
+    imports rewritten to `Qt5Compat.GraphicalEffects` / versionless
+    `QtQuick.VirtualKeyboard`, with the Qt5-compat QML modules installed).
+  - `fonts.sh` decided on directory existence rather than content, so an empty
+    `~/.local/share/fonts` (seen on openSUSE) skipped the clone; it now clones
+    into an empty dir and `git pull`s an existing clone.
+  - `awww-install.sh` installs the distro Rust toolchain when it meets the MSRV,
+    falling back to rustup only when it does not — avoiding the rustup download
+    on Fedora/openSUSE.
+  - `manual_package_installs.sh` removed from the core loop: it is a manual,
+    opt-in helper, not part of `1-install.sh`.
+- **More Fedora fixes (2026-09-17, second pass on the same VM).**
+  - `installer/standalone/awww` (the wrapper that lands on PATH) hardcoded
+    `REAL_AWW=/usr/bin/awww`, so on Fedora — where awww is a `/usr/local/bin`
+    source build — every wallpaper change failed silently. It now resolves the
+    real awww/swww at runtime, and both it and `awww-wrapper.sh` pick the image
+    argument that names a real file (flags may follow the path).
+  - `hypr/scripts/wallpaper-colors.sh` no longer calls `awww img`: the wrapper
+    already applied the wallpaper before invoking it, so the call made the
+    wrapper recurse on every change.
+  - `1-install.sh` runs `chsh` with an explicit target user (`SUDO_USER`); with
+    no user argument `chsh` under sudo changed **root**'s shell, so the user's
+    login shell stayed bash. zsh is also ensured present in `/etc/shells`.
+  - New `configs/swaylock-plain/config` and a capability check in `1-install.sh`
+    (`swaylock --help | grep -- --effect-pixelate`): plain swaylock rejects the
+    effects-only options (`clock`, `timestr`, `datestr`, `fade-in`,
+    `effect-pixelate`, bare `indicator`) and refused to lock, so non-effects
+    builds now get the plain variant while Arch keeps the effects config.
+  - New `installer/scripts/xdg-autostart-cleanup.sh`, run during configuration:
+    uwsm sessions run `systemd-xdg-autostart`, so distro defaults for another
+    desktop also launch under Hyprland. Fedora Xfce's `dnfdragora-updater`
+    crashes there (python SIGABRT) and pops an ABRT "Oops!" dialog at every
+    login; it is suppressed per-user with a `Hidden=true` override.
+- **Brave + preferred-app defaults (2026-09-17).**
+  - `webtools.sh` installs Brave on Fedora/RHEL and openSUSE from Brave's
+    official RPM repo (`brave-browser`), matching the existing apt-repo and AUR
+    paths. Previously Brave only installed on Arch (AUR) and Debian/Ubuntu, so
+    the Fedora/openSUSE installs had no browser.
+  - New `installer/scripts/set-default-apps.sh` (run during dotfiles setup) and
+    `TERMINAL=alacritty` in `hypr/environment.lua`. hyprtk-bar's quick links
+    resolve "System default" from XDG (`xdg-mime`/`xdg-settings`) and `$TERMINAL`;
+    a fresh distro pointed those at its own apps (Fedora: `kitty` for
+    `inode/directory`, `firefox` for web, `xdg-terminal-exec` for the terminal),
+    so the terminal/file-manager/browser links never showed alacritty/thunar/brave.
+
+- **Container package-name matrix (T1).** New
+  `installer/scripts/verify/container-matrix.sh` resolves every native name from
+  `hypr/packages/*.sh` + the vendored bar in a throwaway rootless-podman
+  container per family (pacman/apt/dnf/zypper/xbps/apk; apt on Debian 12/13 and
+  Ubuntu 24.04/26.04) without installing. Arch misses are checked against the
+  AUR; expected gaps live in `container-matrix.allow`. Result: **1059
+  resolvable, 21 AUR, 67 allow-listed, 0 unexpected** (Ubuntu 26.04 alone leaves
+  just `brave-browser`, `hyprsunset`, `nvidia-driver`). Renames this surfaced:
+  - pacman: `ttf-font-awesome` → `otf-font-awesome`; `exa` → `eza`; resolver now
+    accepts pacman **groups** (`xfce4`, `xfce4-goodies`).
+  - dnf: `ffmpeg` → `ffmpeg-free`; `intel-media-driver` →
+    `libva-intel-media-driver`; `fontawesome-fonts` → `fontawesome-fonts-all`;
+    `xorg-x11-server-utils` → `xhost`.
+  - zypper: `gtk-layer-shell` → `libgtk-layer-shell0`, `gtk4-layer-shell` →
+    `libgtk4-layer-shell0`; dropped `xfce4-goodies`.
+  - xbps: `fira-code` → `font-firacode`, `font-manager` → `fontmanager`,
+    `mesa-va-drivers` → `mesa-vaapi`, `xfce4-goodies` → `xfce4-plugins`.
+  - apk: `fira-code` → `font-fira-code-nerd`, `mesa-vulkan-radeon` →
+    `mesa-vulkan-ati`, `xfce4-plugins` → `xfce4-panel`.
+  - `graphics-card.sh` gained a `--list` guard (it carried package lists but was
+    never enumerable); `3dprinting.sh` `--list` no longer emits its AUR slicers
+    on non-Arch families.
+- **Full installer dry-run in containers (T2).** New
+  `installer/scripts/verify/container-dryrun.sh` runs the whole installer in a
+  throwaway container per family/variant (arch, Debian 12/13, Ubuntu 24.04/26.04,
+  Fedora, openSUSE, Void, Alpine; Gentoo/NixOS advisory) with every mutating
+  command + the family PM stubbed and `HYPRTK_DRYRUN=1`. Result: **12/12** (ten
+  installable rows — Arch, Debian 12/13, Ubuntu 24.04/26.04, **Linux Mint 22.3**,
+  Fedora, openSUSE, Void, Alpine — complete cleanly; Gentoo/NixOS complete with
+  package deps skipped).
+- **Source-built apps (`srcapps-install.sh`).** Apps absent from a family's
+  archives are now built from source / installed from upstream when the native
+  package is missing: **gtk4-layer-shell** (meson `v1.3.0`; also creates
+  `/usr/lib/libgtk4-layer-shell.so` for matuwall's `LD_PRELOAD`), **swappy**
+  (meson `v1.8.0`; `grim.sh`'s editor), **nwg-look** (`go build` `v1.1.1`) and
+  **starship** (upstream installer `v1.26.0`). Idempotent, non-fatal and
+  `HYPRTK_DRYRUN`-aware; per-family build-dep maps. Verified with real builds in
+  Linux Mint 22.3, Alpine and Fedora.
+- **Linux Mint 22.3 (Ubuntu-24.04 family) support.** Added Mint to the T1 matrix
+  and the T2 dry-run. New `pkgmanager.sh` helpers — `hyprtk_apt_add_ppa`,
+  `hyprtk_ubuntu_codename`, `hyprtk_is_ubuntu_family` — add a Launchpad PPA by
+  explicit keyring + `sources.list.d` (no `add-apt-repository`/Launchpad API).
+  `hyprland.sh` uses it for **cppiber/hyprland** (Hyprland `0.56.2` +
+  hyprpicker/hyprsunset) and `terminaltools.sh` for **zhangsongcui3371/fastfetch**
+  (noble has no `fastfetch`).
+- **awww source build validated in containers (T3).** Ubuntu 24.04, Fedora and
+  openSUSE Tumbleweed build `awww 0.12.1`. Debian 12 cannot (libwayland 1.21 <
+  the required 1.22); `awww-install.sh` now checks `wayland-client` up front and
+  fails fast with a clear reason instead of downloading rustup first.
+- **Package-name audit.** Corrected package names that silently failed to
+  install (findings: Ubuntu 26.04 VM + Fedora/openSUSE/Void repo metadata):
+  - **apt (Ubuntu 26.04)** — `gtk-layer-shell` → `libgtk-layer-shell0`,
+    `gtk4-layer-shell` → `libgtk4-layer-shell0`, `cups-pdf` →
+    `printer-driver-cups-pdf`, `fonts-fira-code` → `fonts-firacode`,
+    `freerdp2-x11` → `freerdp3-x11`; removed `mission-center` and
+    `thunar-shares-plugin` (not packaged on Ubuntu). All apt lists now resolve
+    cleanly (`apt-get install -s`).
+  - **Fedora** — `p7zip` → `7zip`, `thunar` → `Thunar`, `libusb` → `libusb1`;
+    dropped `thunar-shares-plugin`, `mission-center`, `xfce4-goodies`.
+  - **openSUSE** — `micro` → `micro-editor`, dropped `mission-center`; bar extras
+    `pipewire-pulse` → `pipewire-pulseaudio`, `libnotify` → `libnotify-tools`.
+  - **Void** — `thunar` → `Thunar`, dropped `mission-center`.
+  - **bar** — `EXTRAS[apt]` `libnotify`/`policykit-1` → `libnotify-bin`/
+    `polkitd pkexec`.
+- **`manual_package_installs.sh` and `3dprinting.sh` wired into the core loop**
+  (both were never invoked, so their packages/extras silently never installed).
+- **Multi-distro install — hyprtk now installs on any Linux distribution.**
+  New `installer/scripts/pkgmanager.sh` detects the host package manager
+  (pacman/apt/dnf/zypper/xbps/apk/emerge/nix) and provides
+  `pkg_install`/`pkg_remove`/`pkg_is_installed`/`aur_install` wrappers. Every
+  `hypr/packages/*.sh` script now carries an exhaustive per-family package list
+  (Arch, Debian/Ubuntu, Fedora/RHEL, openSUSE, Void, Alpine) with an Arch AUR
+  list, and supports `--list` for the installer's spinner preview.
+- `1-install.sh` detects Debian/Ubuntu, Fedora/RHEL, openSUSE, Void, Alpine,
+  Gentoo and NixOS (via `ID`/`ID_LIKE`) in addition to the 11 Arch-based
+  distros, with a family/manager readout and an expanded manual-selection menu.
+- `PORTABILITY.md` documenting the family matrix, Arch-only features and
+  per-family gotchas.
+- **Cross-distro awww** — new `installer/scripts/awww-install.sh` acquires the
+  wallpaper daemon without the AUR: native `swww` on Void/Alpine, otherwise a
+  pinned source build of `LGFae/awww` (`v0.12.1`, GPL-3) via `cargo build
+  --release`, with rustup bootstrapped when the distro's `rustc` is older than
+  upstream's 1.89 MSRV. Binaries install to `/usr/local/bin` with `swww`
+  compatibility symlinks; `1-install.sh` runs it (before the wrapper) and the
+  step is non-fatal with manual instructions when no route exists.
+- **Hyprland ≥ 0.55 on Ubuntu** — the dotfiles' config is Lua-based, which
+  Hyprland only reads from 0.55 onward, but Ubuntu 26.04's archive ships 0.53.3
+  (which silently generates a stock `hyprland.conf` and ignores the Lua config).
+  `hypr/packages/hyprland.sh` now adds the community `cppiber/hyprland` PPA
+  (0.56.2 for resolute) on Ubuntu and installs with
+  `-o Dpkg::Options::=--force-overwrite` to clear the PPA's overlapping file
+  lists with the archive `libhyprcursor0`/`libudis86-0`. Debian (no PPA) warns
+  and keeps the archive package.
+
+### Changed
+
+- The AUR helper (`yay`) step runs only on Arch; other families skip it.
+- `library.sh` delegates to the abstraction while keeping the historic
+  `_installPackages*`/`_isInstalled*` names; the pkgmanager primitives are
+  exported for the installer's `bash -c` spinner subshells.
+- Package scripts and misc helpers are invoked with `bash` explicitly (they use
+  arrays), not `sh`.
+- Misc system scripts are now PM-aware: `rm-dm-managers.sh`, `cleanup.sh`,
+  `installupdates.sh`, `updates.sh` (distro-agnostic), `snapper-setup.sh`,
+  `vmware-setup.sh`, `qemu-virt-setup.sh`, `appimage-setup.sh`.
+- `graphics-card.sh` installs the Intel/AMD/NVIDIA stack per family and guards
+  the `mkinitcpio`/GRUB steps; `sddmgrub.sh`/`sddm-check.sh` use repo-relative
+  paths and `hyprtk_run_root`.
+- Root `.bashrc`'s `update` alias is now a distro-aware function.
+
+### Fixed
+
+- **Installer "went stale" in the apt package phase on Linux Mint / Ubuntu.**
+  The `system.sh` batch (the largest apt step) could hang invisibly inside the
+  `gum spin`: Mint's background updaters (mintupdate, unattended-upgrades,
+  packagekit, apt-daily) can hold the dpkg/apt lock, and debconf/needrestart can
+  prompt. `pkgmanager.sh` now routes every apt call through an `_apt` wrapper
+  (`DEBIAN_FRONTEND=noninteractive`, `NEEDRESTART_MODE=a`,
+  `-o DPkg::Lock::Timeout=600`, dpkg `--force-confdef/--force-confold`), and
+  `1-install.sh` calls a new `hyprtk_apt_wait_lock` before the core package loop
+  that waits visibly (flock poll, 5s steps, 10-min cap) and announces a held
+  lock. `hyprland.sh`/`webtools.sh` use `_apt` too.
+- **Void Linux: Hyprland availability documented.** Void does not package
+  `hyprland` (a packaging-philosophy conflict). `hypr/packages/hyprland.sh` now
+  prints the community-repo steps (void-land/hyprland-void-packages,
+  `xdg-desktop-portal-hyprland`) when the compositor is still missing on xbps, and
+  `PORTABILITY.md` marks Void as ⚠️ community-repo (and Fedora as ⚠️ COPR). The
+  installer does not add a third-party repo by itself.
+- **Choosing "Nvidia" in `graphics-card.sh` installed the AMD stack.** The menu
+  `case` arms were ordered `1)` / `2|*)` / `3)`, so the `*` catch-all matched `3`
+  and the Nvidia arm was unreachable. Reordered to `1)` / `3)` / `2|*)`, and the
+  apt Nvidia arm gained a **versioned fallback** — Ubuntu/Mint ship no generic
+  `nvidia-driver` meta, so the newest `nvidia-driver-5xx` is selected instead
+  (Mint 22.3 → `nvidia-driver-610`).
+- **Hyprland (and hyprpicker/hyprsunset) never installed on Ubuntu 24.04 /
+  Linux Mint 22.3.** `add-apt-repository -y ppa:cppiber/hyprland` fails there
+  ("This codename isn't currently supported") — it needs a reachable Launchpad
+  API and `software-properties-common`. The PPA *does* publish `noble`; it is now
+  added by explicit keyring + source (`hyprtk_apt_add_ppa`), with
+  `add-apt-repository` only as a fallback. This restores the core compositor.
+- **os-release single-quoted values broke distro detection.** `1-install.sh`
+  `_detect_distro` (and `hyprland.sh`'s `_hyprtk_is_ubuntu`) stripped only double
+  quotes, so Gentoo's `ID='gentoo'` was not recognised. Both now strip `"` and
+  `'`. Found by the T2 container dry-run on Gentoo.
+- **Vendored bar `DEPS[zypper]` used non-existent openSUSE packages**
+  (`typelib-1_0-cairo-1_0`, `typelib-1_0-xlib-2_0`). Fixed upstream in
+  `hyprtk-bar` (→ `girepository-1_0`, which provides both `cairo-1.0` and
+  `xlib-2.0` typelibs) and re-vendored into `installer/hyprtk-bar/` here and in
+  `hyprtk-merged`. Verified: openSUSE resolves 118/118 and the bar's
+  `--no-extras` install + Gtk/GtkLayerShell import passes.
+- `hyprviz.sh` builds in a dedicated dir and skips cleanly off Arch.
+- `fonts.sh`/`wallpapers.sh`/`matuwall.sh` resolve repo-relative asset paths and
+  use `python3`.
+- **awww wrapper no longer assumes `/usr/bin/awww`** — `awww-wrapper.sh`
+  resolves the real binary (AUR `/usr/bin`, source-build `/usr/local/bin`, or a
+  Void/Alpine `swww`) instead of hardcoding the AUR path, so it no longer fails
+  on non-Arch installs where awww was never installed.
 
 ## [Unreleased] - 2026-09-07
 

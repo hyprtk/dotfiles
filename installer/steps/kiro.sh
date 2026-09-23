@@ -4,10 +4,10 @@
 # grudupdater.sh is NOT shipped in any source tree — omitted (guarded no-op).
 
 pre_install() {
-    sudo pacman -Rns plasma-meta kde-applications-meta --noconfirm
-    sudo pacman -Rns plasma kde-applications --noconfirm
-    sudo pacman -Rns xfce4 xfce4-goodies thunar catfish thunar-shares-plugin --noconfirm
-    yay -Rns sddm-git fastfetch-git --noconfirm
+    . "$SCRIPT_DIR/installer/scripts/pkgmanager.sh"
+    pkg_remove plasma-meta kde-applications-meta plasma kde-applications \
+               xfce4 xfce4-goodies thunar catfish thunar-shares-plugin \
+               sddm-git fastfetch-git
     sleep 5
 }
 

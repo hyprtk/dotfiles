@@ -21,7 +21,8 @@ while true; do
             else
                 mkdir ~/Pictures/Wallpapers
             fi
-            cp ~/hyprtk/assets/Wallpapers/* ~/Pictures/Wallpapers
+            _PKGDIR="$(cd "$(dirname "$0")" && pwd)"
+            cp "$_PKGDIR/../../assets/Wallpapers/"* ~/Pictures/Wallpapers
             echo "Default wallpapers installed."
         break;;
         * ) echo "Please answer yes or no.";;

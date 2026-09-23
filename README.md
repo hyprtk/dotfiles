@@ -2,15 +2,15 @@
 
 # hyprtk dots
 
-A single installer for a fully themed **Hyprland (Wayland)** desktop on any Arch-based Linux distribution — with **XFCE (Xorg)** kept as a safety net.
+A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Linux distribution** — with **XFCE (Xorg)** kept as a safety net.
 
-**11 distros. One install. One pywal-powered theme.**
+**Any distro. One install. One pywal-powered theme.**
 
-`Arch` · `Archbang` · `Archcraft` · `Archman` · `BSLX` · `CachyOS` · `EndeavourOS` · `Garuda` · `Kiro` · `Manjaro` · `RebornOS`
+`Arch` · `Archbang` · `Archcraft` · `Archman` · `BSLX` · `CachyOS` · `EndeavourOS` · `Garuda` · `Kiro` · `Manjaro` · `RebornOS` · `Debian/Ubuntu` · `Fedora/RHEL` · `openSUSE` · `Void` · `Alpine` · `Gentoo` · `NixOS`
 
 ---
 
-[Install](#install) · [Features](#features) · [Keybindings](#keybindings) · [Applications](#applications) · [Gallery](#gallery)
+[Install](#install) · [Features](#features) · [Portability](#portability) · [Keybindings](#keybindings) · [Applications](#applications) · [Gallery](#gallery)
 
 </div>
 
@@ -22,7 +22,7 @@ A curated, consistent desktop configuration that replaces the default look and f
 
 - **Wayland first** — Hyprland with a floating/split hybrid workflow
 - **Xorg fallback** — XFCE stays installed as a safety net
-- **Auto-detected distro** — the installer detects your OS and applies the right tweaks
+- **Auto-detected distro** — the installer detects your OS and package manager (pacman/apt/dnf/zypper/xbps/apk) and applies the right tweaks
 - **No manual colour config** — pywal generates a full palette from your wallpaper
 - **No AUR dependency for pywal** — pywal16 is bundled inside hyprtk-bar (`vendor/pywal16`), so colours work out of the box
 
@@ -39,7 +39,26 @@ sh ./1-install.sh
 The installer is a guided `gum` TUI: it detects your distro, then asks about
 package groups, dotfiles and services before installing everything.
 
-> Every Arch-based system is different — results can vary. Review the prompts before accepting.
+> Every system is different — results can vary. Review the prompts before accepting.
+
+## Portability
+
+The installer works across distribution families via a single package-manager
+abstraction (`installer/scripts/pkgmanager.sh`): **Arch** (pacman + AUR),
+**Debian/Ubuntu** (apt), **Fedora/RHEL** (dnf), **openSUSE** (zypper), **Void**
+(xbps) and **Alpine** (apk), with **Gentoo** and **NixOS** supported as
+manual/declarative installs. Arch-only features (AUR packages, `mkinitcpio`
+splash, os-release branding) are skipped with a warning elsewhere. The
+wallpaper daemon is the exception — **awww** comes from the AUR on Arch, the
+native `swww` package on Void/Alpine, and is otherwise built from source by the
+installer. On Ubuntu the installer also adds a PPA so **Hyprland ≥ 0.55** (which
+the Lua config requires) is installed. Where a distro ships no **Hyprland ≥ 0.55**
+and no hyprwm libraries — **Alpine** (0.54.3) and **Void** (packages neither) —
+the installer builds the pinned upstream release **and** the library chain from
+source (plus `wob` on Void). On systems without a systemd user session
+(**Void/runit**, **Alpine/OpenRC**) it also launches the compositor through a
+`dbus-run-session` wrapper so D-Bus — portals, notifications and cursor theming —
+works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 
 ## Features
 
@@ -50,7 +69,7 @@ package groups, dotfiles and services before installing everything.
 | **App launcher** | Rofi (plus the in-bar start menu) |
 | **Status bar** | hyprtk-bar — pywal-themed taskbar with built-in menus |
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
-| **Wallpaper** | Matuwall film-strip picker + rofi list + random |
+| **Wallpaper** | Matuwall film-strip picker + rofi list + random (awww daemon, installed automatically) |
 | **Screenshots** | grim & slurp |
 | **Screen recording** | wf-recorder |
 | **Clipboard** | cliphist |
@@ -58,7 +77,7 @@ package groups, dotfiles and services before installing everything.
 | **Logout** | hyprlogout |
 | **Files** | Thunar |
 | **Icons** | Papirus (recolored to match the theme) |
-| **Cursor** | Bibata Modern Ice |
+| **Cursor** | Adwaita (session theme via `XCURSOR_THEME`/`XCURSOR_SIZE`) |
 | **Browser** | Brave / Chromium |
 | **USB writer** | hyprtk-usb — write a hyprtk ISO to a USB stick (+ optional persistence); CLI/TUI + GTK GUI |
 | **VMs** | QEMU/KVM, VMware |

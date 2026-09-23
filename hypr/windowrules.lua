@@ -103,26 +103,3 @@ hl.window_rule({
     size = "1000 650",
 })
 
--- hyprtk-usb (the ISO -> USB stick writer GUI) — float and centre it rather
--- than tiling. Match the Wayland app-id (the Gtk.Application id), with a title
--- fallback for anything that only sets the window title.
-hl.window_rule({
-    name = "windowrule-hyprtk-usb",
-    match = {
-        class = "org.hyprtk.usb",
-    },
-    float = true,
-    center = true,
-    size = "720 600",
-})
-
-hl.window_rule({
-    name = "windowrule-hyprtk-usb-title",
-    match = {
-        title = "^(hyprtk-usb)$",
-    },
-    float = true,
-    center = true,
-    size = "720 600",
-})
-
