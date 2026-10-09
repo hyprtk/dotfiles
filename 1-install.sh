@@ -732,13 +732,13 @@ if type grudupdater >/dev/null 2>&1; then
     _spin "Running grub updater..." "grudupdater" "$LOG_FILE"
 fi
 
-# ── Pywal16 (bundled in hyprtk-bar) ───────────────────────────────────────
-# pywal16 is vendored inside hyprtk-bar (vendor/pywal16) and exposed as `wal`
+# ── Pywal16 (bundled in hyprtk-bar-qt) ────────────────────────────────────
+# pywal16 is vendored inside hyprtk-bar-qt (vendor/pywal16) and exposed as `wal`
 # by the bar's installer — no separate AUR/PyPI download. It is provisioned
 # here, early, because the pywal init steps below (and the dotfiles' wal
 # templates) run before the full bar install near the end of this script.
 _step "Installing Pywal16 (bundled)"
-_spin "Provisioning bundled pywal16..." "bash $SCRIPT_DIR/installer/hyprtk-bar/install.sh --wal-only" "$LOG_FILE"
+_spin "Provisioning bundled pywal16..." "bash $SCRIPT_DIR/installer/hyprtk-bar-qt/install.sh --wal-only" "$LOG_FILE"
 _ok "pywal16 ready (bundled wal)"
 
 # ── Icons root ────────────────────────────────────────────────────────────
@@ -763,7 +763,7 @@ _ok "Icons installed for root"
 # wallpaper via awww, and letting pywal also set it can block forever.
 _step "Initiating Pywal16"
 _spin "Allowing pywal's ImageMagick TXT coder (if restricted)..." \
-    "bash $SCRIPT_DIR/installer/hyprtk-bar/scripts/fix-imagemagick-policy.sh" \
+    "bash $SCRIPT_DIR/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.sh" \
     "$LOG_FILE"
 _spin "Initializing pywal16..." "wal -n -i $SCRIPT_DIR/assets/Wallpapers/default.png" "$LOG_FILE"
 _ok "pywal16 initiated"
@@ -914,13 +914,15 @@ else
         fi
         _spin "Installing hypr..." "_installSymLink hypr ~/.config/hypr $SCRIPT_DIR/hypr/ ~/.config" "$LOG_FILE"
         _spin "Installing fastfetch..." "_installSymLink fastfetch ~/.config/fastfetch $SCRIPT_DIR/configs/fastfetch/ ~/.config" "$LOG_FILE"
-        # swaylock-effects is AUR-only, so most families get plain swaylock,
-        # which rejects the effects config (clock/timestr/datestr, fade-in,
-        # effect-pixelate) and refuses to lock. Pick the variant the installed
-        # binary accepts, and point ~/.config/swaylock/config at the
-        # pywal-rendered config (configs/wal/templates/swaylock[-plain]-config)
-        # so the lock screen follows the wallpaper; the static repo config is the
-        # fallback when pywal has not rendered yet.
+        # Fallback locker config. hyprlock is preferred (hypr/scripts/lock.sh
+        # picks hyprlock when present); this swaylock config is only used when
+        # the hyprlock package is absent. swaylock-effects is AUR-only, so most
+        # families get plain swaylock, which rejects the effects config
+        # (clock/timestr/datestr, fade-in, effect-pixelate) and refuses to lock.
+        # Pick the variant the installed binary accepts, and point
+        # ~/.config/swaylock/config at the pywal-rendered config
+        # (configs/wal/templates/swaylock[-plain]-config); the static repo config
+        # is the fallback when pywal has not rendered yet.
         if command -v swaylock >/dev/null 2>&1 && swaylock --help 2>&1 | grep -q -- '--effect-pixelate'; then
             _swaylock_src="$SCRIPT_DIR/configs/swaylock/config"
             _swaylock_rendered="$HOME/.cache/wal/swaylock-config"
@@ -929,7 +931,18 @@ else
             _swaylock_rendered="$HOME/.cache/wal/swaylock-plain-config"
         fi
         [ -f "$_swaylock_rendered" ] || _swaylock_rendered="$_swaylock_src"
-        _spin "Installing swaylock..." "if [ -L ~/.config/swaylock ]; then rm -f ~/.config/swaylock; fi; mkdir -p ~/.config/swaylock; _installSymLink swaylock-config ~/.config/swaylock/config $_swaylock_rendered ~/.config/swaylock" "$LOG_FILE"
+        _spin "Installing swaylock (fallback)..." "if [ -L ~/.config/swaylock ]; then rm -f ~/.config/swaylock; fi; mkdir -p ~/.config/swaylock; _installSymLink swaylock-config ~/.config/swaylock/config $_swaylock_rendered ~/.config/swaylock" "$LOG_FILE"
+        # hyprlock (preferred) is part of the hypr/ config dir installed above.
+        # It reads its colours from the pywal fragment
+        # ~/.cache/wal/hyprlock-colors.conf, rendered by wal_init from
+        # configs/wal/templates/hyprlock-colors.conf. A `source=` in
+        # hyprlock.conf that matches no file is a config error, so verify the
+        # fragment rendered (hyprlock.conf keeps static fallbacks regardless).
+        if [ -f "$HOME/.cache/wal/hyprlock-colors.conf" ]; then
+            _ok "hyprlock colors rendered"
+        else
+            _warn "hyprlock colors fragment missing — lock screen will use fallback colors"
+        fi
         _spin "Installing swappy..." "_installSymLink swappy ~/.config/swappy $SCRIPT_DIR/configs/swappy/ ~/.config" "$LOG_FILE"
         _spin "Installing hyprlogout..." "_installSymLink hyprlogout ~/.config/hyprlogout $SCRIPT_DIR/configs/hyprlogout/ ~/.config" "$LOG_FILE"
         _spin "Installing waypaper..." "_installSymLink waypaper ~/.config/waypaper $SCRIPT_DIR/configs/waypaper/ ~/.config" "$LOG_FILE"
@@ -1010,14 +1023,23 @@ else
         _ok "Standalone apps installed"
 
         # ── hyprtk-bar ──────────────────────────────────────────────
-        _step "Installing hyprtk-bar"
-        _spin "Installing hyprtk-bar..." "bash $SCRIPT_DIR/installer/hyprtk-bar/install.sh" "$LOG_FILE"
-        _ok "hyprtk-bar installed (autostarted by autostart.lua; owns the notification daemon; hosts the arc menu overlay)"
+        _step "Installing hyprtk-bar-qt"
+        _spin "Installing hyprtk-bar-qt..." "bash $SCRIPT_DIR/installer/hyprtk-bar-qt/install.sh" "$LOG_FILE"
+        _ok "hyprtk-bar-qt installed (autostarted by autostart.lua; owns the notification daemon; hosts the arc menu overlay)"
 
         # ── hyprtk-usb (GUI) ────────────────────────────────────────
         _step "Installing hyprtk-usb"
         _spin "Installing hyprtk-usb..." "bash $SCRIPT_DIR/installer/hyprtk-usb/install.sh" "$LOG_FILE"
         _ok "hyprtk-usb installed (CLI/TUI zipapp + hyprtk-usb-gui)"
+
+        # ── hyprtk-iso-creator (GUI; Arch-only — drives mkarchiso) ──
+        if [ "$DISTRO_FAMILY" = arch ]; then
+            _step "Installing Hyprtk ISO Creator"
+            _spin "Installing hyprtk-iso-creator..." "bash $SCRIPT_DIR/installer/hyprtk-iso-creator/install.sh" "$LOG_FILE"
+            _ok "hyprtk-iso-creator installed (GTK 4 GUI over hyprtk-iso-builder.sh)"
+        else
+            echo -e "${CYAN}  → ${WHITE}Skipping Hyprtk ISO Creator (Arch-only: needs mkarchiso)${NC}"
+        fi
 
         # ── Root user config ─────────────────────────────────────────
         _step "Setting Up Root User Config"
@@ -1044,7 +1066,7 @@ else
 
         # ── Bar sudo access (passwordless) ──────────────────────────
         _step "Configuring Bar Sudo Access"
-        echo -e "${CYAN}  → ${WHITE}Installing hyprtk-bar sudoers (passwordless sudo)${NC}"
+        echo -e "${CYAN}  → ${WHITE}Installing hyprtk-bar-qt sudoers (passwordless sudo)${NC}"
         if sudo bash "$SCRIPT_DIR/installer/scripts/setup-sudoers.sh"; then
             _ok "Bar passwordless sudo configured"
         else
