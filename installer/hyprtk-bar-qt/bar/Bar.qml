@@ -2,6 +2,7 @@
 // Config.layoutLeft / layoutCenter / layoutRight. Right-click opens the menu.
 import QtQuick
 import QtQuick.Layouts
+import Qt.labs.qmlmodels
 import Quickshell
 import "../theme"
 import "../config"
@@ -38,7 +39,10 @@ Rectangle {
         ColorAnimation { to: Theme.accent; duration: Chrome.periodMs; easing.type: Easing.InOutSine }
     }
 
-    // Maps a layout entry to its module component.
+    // Maps a layout entry to its module component. DelegateChooser lives in
+    // Qt.labs.qmlmodels on Qt < 6.9 (it only joined QtQml.Models in 6.9), so the
+    // module is imported explicitly to stay portable across distro Qt versions
+    // (e.g. the Qt 6.8 bundled with the prebuilt Quickshell on Debian/Mint).
     component ModuleChooser: DelegateChooser {
         role: "modelData"
         DelegateChoice { roleValue: "start_button"; delegate: StartButton {} }

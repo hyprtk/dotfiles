@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.41.14 — unreleased
+
+- **Fix**: the bar failed to load on distros with Qt < 6.9 (e.g. the Qt 6.8
+  bundled with the prebuilt Quickshell on Debian/Ubuntu/Mint) with
+  `DelegateChooser is not a type`. `Bar.qml` used `DelegateChooser` without
+  importing its module — it only resolved by accident on Qt ≥ 6.9, where the
+  type moved into `QtQml.Models` (pulled in transitively by `QtQuick`). The
+  module is now imported explicitly as `Qt.labs.qmlmodels`, where the type lives
+  on Qt 6.0–6.8, so it resolves on every supported Qt version.
+
 ## 0.41.13 — unreleased
 
 - **Fix**: the tray context-menu popup (0.41.12) opened on top of the bar instead

@@ -31,6 +31,13 @@ documented in this file. Dates are in YYYY-MM-DD format.
   xbps/apk), which made the whole package install abort on the unknown name and
   leave the Qt6/python deps uninstalled; the name is now dropped there (it is
   source-built instead).
+- **The bar no longer fails to load on Qt < 6.9 distros** (`hyprtk-bar-qt 0.41.14`
+  re-vendored). `bar/Bar.qml` used `DelegateChooser` without importing its module
+  — it only resolved by accident on Qt ≥ 6.9, where the type moved into
+  `QtQml.Models` (pulled in transitively by `QtQuick`). On the Qt 6.8 bundled with
+  the prebuilt Quickshell (Debian 12 / Ubuntu 24.04 / Mint 22) the shell aborted
+  with `DelegateChooser is not a type`; the module is now imported explicitly as
+  `Qt.labs.qmlmodels`, where the type lives on Qt 6.0–6.8.
 
 ## [Unreleased] - 2026-10-15
 
