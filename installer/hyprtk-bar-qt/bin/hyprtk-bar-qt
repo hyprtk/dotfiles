@@ -16,4 +16,20 @@ root="$(cd "$here/.." && pwd)"
 # carries over before the two diverge.
 python3 "$root/backend/hyprtk_bar_qt/paths.py" >/dev/null 2>&1 || true
 
-exec qs -p "$root" "$@"
+# Resolve Quickshell without trusting the session PATH: on distros where qs
+# isn't packaged (Qt < 6.6 → the installer fetches a prebuilt bundle), the
+# launcher lives in ~/.local/bin, which is often absent from the compositor's
+# autostart environment (DMs start Hyprland with a minimal PATH), so a bare
+# `exec qs` fails at login even though it works from a terminal.
+qs_bin="$(command -v qs || command -v quickshell || true)"
+if [ -z "$qs_bin" ]; then
+    for cand in "$HOME/.local/bin/qs" "$HOME/.local/bin/quickshell"; do
+        if [ -x "$cand" ]; then qs_bin="$cand"; break; fi
+    done
+fi
+if [ -z "$qs_bin" ]; then
+    echo "hyprtk-bar-qt: Quickshell (qs) not found on PATH or in ~/.local/bin" >&2
+    exit 127
+fi
+
+exec "$qs_bin" -p "$root" "$@"

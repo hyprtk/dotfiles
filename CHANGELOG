@@ -48,6 +48,14 @@ documented in this file. Dates are in YYYY-MM-DD format.
   `Repeater` logged `Delegate must be of Item type` and created no items. The
   chooser now lives in its own file, `bar/ModuleChooser.qml`, which resolves on
   every supported Qt version (6.0–6.8 and ≥ 6.9).
+- **The bar now autostarts on distros where Quickshell is not packaged**
+  (`hyprtk-bar-qt` re-vendored). The launcher did a bare `exec qs`; on Qt < 6.6
+  distros (Debian/Ubuntu/Mint) the installer places the prebuilt Quickshell
+  launcher in `~/.local/bin`, which is absent from a DM-started Hyprland session's
+  minimal PATH — so `hyprland.start` hit `qs: command not found` and the bar
+  never appeared, even though launching it from a terminal (with `~/.local/bin`
+  on PATH) worked. The launcher now resolves `qs` via PATH first, then falls back
+  to `~/.local/bin/qs`/`quickshell`.
 
 ## [Unreleased] - 2026-10-15
 
