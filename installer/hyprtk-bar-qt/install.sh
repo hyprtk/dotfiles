@@ -104,18 +104,31 @@ detect_pkg_manager() {
 # The bar is a Quickshell (Qt6) app: it needs the `qs` binary plus the Qt6 QML
 # modules (QtQuick, Layouts, Controls) and SVG for icons. The Python backend is
 # stdlib-only; the venv provisioned below exists only to run the bundled pywal16
-# `wal` CLI. Package names are best-effort per family — on families that do not
-# package Quickshell, build it from source (installer/scripts/srcapps-install.sh
-# in the merged tree) and rerun with --no-deps.
+# `wal` CLI. Only families that actually package Quickshell (Arch, Gentoo, Nix)
+# list it here; on the others it is NOT in the archive, so it is git-cloned and
+# built from source (see QS_BUILD_DEPS + build_quickshell_from_source below) —
+# omit it here so the package step does not fail on an unknown name.
 declare -A DEPS
 DEPS[pacman]="quickshell qt6-base qt6-declarative qt6-svg python python-pip"
-DEPS[apt]="quickshell qt6-base-dev qt6-declarative-dev libqt6svg6-dev python3 python3-venv python3-pip"
-DEPS[dnf]="quickshell qt6-qtbase qt6-qtdeclarative qt6-qtsvg python3 python3-pip"
-DEPS[zypper]="quickshell libQt6Core6 libQt6Gui6 libQt6Qml6 libQt6Quick6 libQt6Svg6 python3 python3-pip"
-DEPS[xbps]="quickshell qt6-base qt6-declarative qt6-svg python3 python3-pip python3-virtualenv"
-DEPS[apk]="quickshell qt6-qtbase qt6-qtdeclarative qt6-qtsvg python3 py3-pip py3-virtualenv"
+DEPS[apt]="qt6-base-dev qt6-declarative-dev libqt6svg6-dev python3 python3-venv python3-pip"
+DEPS[dnf]="qt6-qtbase qt6-qtdeclarative qt6-qtsvg python3 python3-pip"
+DEPS[zypper]="libQt6Core6 libQt6Gui6 libQt6Qml6 libQt6Quick6 libQt6Svg6 python3 python3-pip"
+DEPS[xbps]="qt6-base qt6-declarative qt6-svg python3 python3-pip python3-virtualenv"
+DEPS[apk]="qt6-qtbase qt6-qtdeclarative qt6-qtsvg python3 py3-pip py3-virtualenv"
 DEPS[emerge]="gui-apps/quickshell dev-qt/qtbase dev-qt/qtdeclarative dev-qt/qtsvg dev-lang/python"
 DEPS[nix]="quickshell qt6.qtbase qt6.qtdeclarative qt6.qtsvg python3"
+
+# Quickshell build deps (Qt6/CMake + private headers, Wayland, cli11, jemalloc).
+# Only reached on families that do not package Quickshell. Quickshell needs
+# Qt >= 6.6, so the build only succeeds where the system Qt is new enough (e.g.
+# Fedora/openSUSE/Void); Debian 12 / Ubuntu 24.04 / Mint 22 ship Qt 6.4 and the
+# build will fail there with a clear warning.
+declare -A QS_BUILD_DEPS
+QS_BUILD_DEPS[apt]="git build-essential cmake ninja-build pkg-config qt6-base-dev qt6-base-private-dev qt6-declarative-dev qt6-declarative-private-dev qt6-wayland-dev libqt6svg6-dev qt6-shadertools-dev libspirv-tools-dev libcli11-dev libjemalloc-dev libdrm-dev libgbm-dev libegl1-mesa-dev libwayland-dev wayland-protocols libxcb1-dev"
+QS_BUILD_DEPS[dnf]="git gcc-c++ cmake ninja-build pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsvg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
+QS_BUILD_DEPS[zypper]="git gcc-c++ cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
+QS_BUILD_DEPS[xbps]="git base-devel cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11 jemalloc-devel libdrm-devel wayland-devel wayland-protocols libxcb-devel"
+QS_BUILD_DEPS[apk]="git build-base cmake ninja pkgconf qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qtsvg-dev cli11 jemalloc-dev libdrm-dev wayland-dev wayland-protocols libxcb-dev"
 
 # Optional feature dependencies — external binaries the bar shells out to. Each
 # feature degrades gracefully when its tool is missing (skip with --no-extras).
@@ -259,6 +272,57 @@ provision_wal() {
     "$BIN_DIR/wal" -v >/dev/null 2>&1
 }
 
+# ── Quickshell from source ──────────────────────────────────────────────────
+# Distros that do not package Quickshell (Debian/Ubuntu/Mint/Fedora/openSUSE/Void)
+# get it built from source: git clone quickshell-mirror/quickshell, cmake+ninja,
+# install into /usr. It needs Qt >= 6.6 plus private Qt headers, so it only
+# succeeds where the system Qt is new enough (the message on failure says so).
+# The vendored-prebuilt alternative was dropped — the bundle was too large for
+# the GitHub repos.
+have_qs() { command -v qs >/dev/null 2>&1 || command -v quickshell >/dev/null 2>&1; }
+
+build_quickshell_from_source() {
+    have_qs && return 0
+    if [ -z "${QS_BUILD_DEPS[$PM]:-}" ]; then
+        echo ":: NOTE: no Quickshell source recipe for '$PM' — install qs manually." >&2
+        return 1
+    fi
+    if [ "$SKIP_DEPS" -eq 1 ]; then
+        echo ":: NOTE: --no-deps — not building Quickshell from source." >&2
+        return 1
+    fi
+    if ! command -v cmake >/dev/null 2>&1 || ! command -v ninja >/dev/null 2>&1 \
+       || ! command -v git >/dev/null 2>&1; then
+        echo ":: WARN: cmake/ninja/git missing — cannot build Quickshell." >&2
+        return 1
+    fi
+    echo ":: Quickshell is not packaged here — installing build deps + building from source ..."
+    read -ra qdeps <<<"${QS_BUILD_DEPS[$PM]}"
+    install_pkgs "$PM" "${qdeps[@]}" || true
+    local tmp; tmp="$(mktemp -d)" || return 1
+    local src="$tmp/quickshell" build
+    build="$src/build"
+    echo ":: Cloning + building Quickshell (needs Qt >= 6.6) ..."
+    if git clone --depth=1 https://github.com/quickshell-mirror/quickshell.git "$src" >/dev/null 2>&1 \
+       && cmake -S "$src" -B "$build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr -DDISTRIBUTOR=hyprtk >/dev/null 2>&1 \
+       && cmake --build "$build" -j"$(nproc 2>/dev/null || echo 2)" >/dev/null 2>&1 \
+       && run_root cmake --install "$build" >/dev/null 2>&1; then
+        run_root ldconfig >/dev/null 2>&1 || true
+        hash -r 2>/dev/null || true
+        rm -rf "$tmp"
+        if have_qs; then
+            echo ":: Quickshell built + installed ($(command -v qs))."
+            return 0
+        fi
+    fi
+    rm -rf "$tmp"
+    echo ":: WARN: Quickshell build failed — it needs Qt >= 6.6 + private Qt headers." >&2
+    echo "::       Debian 12 / Ubuntu 24.04 / Mint 22 ship Qt 6.4, so the build cannot succeed there;" >&2
+    echo "::       install Quickshell another way, or use a distro with Qt >= 6.6." >&2
+    return 1
+}
+
 PM="$(detect_pkg_manager)"
 
 # ── Dry run ─────────────────────────────────────────────────────────────────
@@ -283,6 +347,9 @@ if [ "$DRY_RUN" -eq 1 ]; then
     else
         echo ":: Bundled pywal16: MISSING (vendor/pywal16)"
     fi
+    if [ -n "${QS_BUILD_DEPS[$PM]:-}" ]; then
+        echo ":: Quickshell: not packaged for $PM — cloned + built from source when missing (needs Qt >= 6.6)"
+    fi
     if [ "$PM" != "none" ]; then
         echo ":: System packages that would be installed: ${DEPS[$PM]:-}"
     fi
@@ -306,9 +373,14 @@ if [ "$SKIP_DEPS" -eq 0 ]; then
         read -ra pkgs <<<"${DEPS[$PM]:-}"
         if ! install_pkgs "$PM" "${pkgs[@]}"; then
             echo ":: WARN: could not install all system dependencies via $PM (see above)." >&2
-            echo "::       The bar will not start until Quickshell (qs) is available." >&2
         fi
     fi
+fi
+
+# Quickshell fallback: if no system qs/quickshell is available (e.g. a distro
+# that does not package it), clone + build it from source.
+if ! have_qs; then
+    build_quickshell_from_source || true
 fi
 
 # ── Optional feature dependencies ─────────────────────────────────────────
@@ -489,20 +561,6 @@ if [ ! -f "$CONFIG_FILE" ] && [ -f "$CONFIG_DIR/config.json.bak" ]; then
     echo ":: Restored config from backup"
 fi
 
-# ── Self-test ───────────────────────────────────────────────────────────────
-if deps_ok; then
-    echo ":: Environment check passed ($( { command -v qs || command -v quickshell; } 2>/dev/null ))."
-else
-    echo ":: WARN: Quickshell (qs) not found — the bar cannot start until it is installed." >&2
-fi
-if [ -x "$BIN_DIR/wal" ]; then
-    if "$BIN_DIR/wal" -v >/dev/null 2>&1; then
-        echo ":: Bundled wal ready ($("$BIN_DIR/wal" -v 2>&1))."
-    else
-        echo ":: WARN: bundled wal self-test failed — pywal theming unavailable." >&2
-    fi
-fi
-
 # ── Make the launcher reachable ────────────────────────────────────────────
 if ! on_path "$BIN_DIR"; then
     linked=0
@@ -518,6 +576,21 @@ if ! on_path "$BIN_DIR"; then
         fi
     fi
     [ "$linked" -eq 0 ] && echo ":: NOTE: add $BIN_DIR to PATH, or run $BIN_DIR/$APP_NAME"
+fi
+
+# ── Self-test ───────────────────────────────────────────────────────────────
+# Runs after the launcher/qs links are in place so a PATH-based check is accurate.
+if deps_ok; then
+    echo ":: Environment check passed ($( { command -v qs || command -v quickshell; } 2>/dev/null ))."
+else
+    echo ":: WARN: Quickshell (qs) not found — the bar cannot start until it is installed." >&2
+fi
+if [ -x "$BIN_DIR/wal" ]; then
+    if "$BIN_DIR/wal" -v >/dev/null 2>&1; then
+        echo ":: Bundled wal ready ($("$BIN_DIR/wal" -v 2>&1))."
+    else
+        echo ":: WARN: bundled wal self-test failed — pywal theming unavailable." >&2
+    fi
 fi
 
 echo ":: Installed to $BIN_DIR/$APP_NAME"

@@ -24,6 +24,26 @@ via `PYTHONPATH` — no `pip install`, no build, no network. See
 `vendor/pywal16/VENDOR.md`. Do not edit the vendored tree; fixes belong in the
 bar, not upstream copies.
 
+## Quickshell
+
+Quickshell is **not** bundled — the prebuilt relocatable bundle (bundled Qt) was
+~59 MB stripped / 141 MB raw, too large for the GitHub repos. Instead, where the
+distro does not package it (Debian/Ubuntu/Mint/Fedora/openSUSE/Void), `install.sh`
+(`build_quickshell_from_source`) installs the build deps and clones + builds it
+from source:
+
+```sh
+git clone --depth=1 https://github.com/quickshell-mirror/quickshell.git
+cmake -S quickshell -B quickshell/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build quickshell/build -j"$(nproc)"
+sudo cmake --install quickshell/build && sudo ldconfig
+```
+
+It needs **Qt ≥ 6.6** plus private Qt headers, so the build only succeeds where
+the system Qt is new enough; on Debian 12 / Ubuntu 24.04 / Mint 22 (Qt 6.4) it
+fails with a clear warning. On Arch/Gentoo/Nix the packaged `quickshell` is used
+and nothing is built.
+
 ## Re-vendoring into hyprtk-multi-distro / merged
 
 The bar is vendored byte-identically:

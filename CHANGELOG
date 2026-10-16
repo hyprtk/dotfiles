@@ -3,6 +3,31 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [Unreleased] - 2026-10-16
+
+### Changed
+
+- **The bar installer builds Quickshell from source** (`hyprtk-bar-qt`
+  re-vendored). Distros that do not package Quickshell (Debian/Ubuntu/Mint,
+  Fedora/openSUSE/Void — and, if `qs` is ever absent, any host) now `git clone`
+  quickshell-mirror/quickshell and build it (cmake + ninja, install to `/usr`)
+  when no system `qs`/`quickshell` is found, instead of relying only on the
+  `srcapps-install.sh` build. This replaces the earlier prebuilt-bundle approach
+  (the relocatable Quickshell bundle was ~59 MB stripped / 141 MB raw — too large
+  for the GitHub repos). The build needs **Qt ≥ 6.6** plus private Qt headers, so
+  it succeeds on Fedora/openSUSE/Void but not on Debian 12 / Ubuntu 24.04 /
+  Mint 22 (Qt 6.4), where it now prints a clear warning. Arch/Gentoo/Nix use the
+  packaged Quickshell and build nothing.
+
+### Fixed
+
+- **The bar's system-dependency step no longer fails on the unpackaged
+  `quickshell` name** (`hyprtk-bar-qt` re-vendored). `install.sh`'s `DEPS` listed
+  `quickshell` for families that do not have it in their archive (apt/dnf/zypper/
+  xbps/apk), which made the whole package install abort on the unknown name and
+  leave the Qt6/python deps uninstalled; the name is now dropped there (it is
+  source-built instead).
+
 ## [Unreleased] - 2026-10-15
 
 ### Added
