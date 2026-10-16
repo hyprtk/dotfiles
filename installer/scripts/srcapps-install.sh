@@ -410,10 +410,33 @@ install_starship() {
 
 have_quickshell() { have qs || have quickshell; }
 
+# System Qt6 version (pkg-config, then qmake/qtpaths fallbacks).
+qt6_version() {
+    pkg-config --modversion Qt6Core 2>/dev/null && return 0
+    local q
+    for q in qmake6 qmake-qt6 qtpaths6 qtpaths; do
+        command -v "$q" >/dev/null 2>&1 || continue
+        "$q" -query QT_VERSION 2>/dev/null || "$q" --qt-version 2>/dev/null
+        return 0
+    done
+    return 1
+}
+
 # The bar (hyprtk-bar-qt) runs on Quickshell. Arch packages it; elsewhere build
 # the Qt6/CMake project from source. Heavy — best-effort, warns on failure.
 install_quickshell() {
     if have_quickshell; then say "quickshell: already present"; return 0; fi
+
+    # Quickshell needs Qt >= 6.6 (with private Qt headers). Where the distro Qt is
+    # older (Debian 12 / Ubuntu 24.04 / Mint 22 ship 6.4) the build cannot
+    # succeed, so skip it — the bar installer (installer/hyprtk-bar-qt) fetches a
+    # prebuilt relocatable bundle in that case.
+    local qtver; qtver="$(qt6_version || true)"
+    if [ -n "$qtver" ] && [ "$(printf '%s\n%s\n' "6.6.0" "$qtver" | sort -V | head -n1)" != "6.6.0" ]; then
+        say "quickshell: system Qt is $qtver (< 6.6) — skipping source build; hyprtk-bar-qt will fetch a prebuilt"
+        return 1
+    fi
+
     [ -n "${QS_DEPS[$HYPRTK_PM]:-}" ] && pkg_install ${QS_DEPS[$HYPRTK_PM]} || true
     if ! have cmake || ! have ninja || ! have git; then
         say "quickshell: cmake/ninja/git unavailable — hyprtk-bar-qt cannot run" >&2

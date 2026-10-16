@@ -62,6 +62,10 @@ if [ "$DO_UNINSTALL" -eq 1 ]; then
     echo ":: Uninstalling $APP_NAME..."
     rm -rf "${INSTALL_DIR:?}" "${QS_DIR:?}" "${CACHE_DIR:?}"
     rm -f "$BIN_DIR/wal"
+    # Remove the prebuilt-Quickshell launcher only if it is ours (never a system qs).
+    if [ -f "$BIN_DIR/qs" ] && grep -q 'hyprtk-bar-qt prebuilt Quickshell launcher' "$BIN_DIR/qs" 2>/dev/null; then
+        rm -f "$BIN_DIR/qs"
+    fi
     for h in "$SCRIPT_DIR"/bin/*; do
         [ -f "$h" ] || continue
         rm -f "$BIN_DIR/$(basename "$h")"
@@ -79,9 +83,9 @@ if [ "$DO_UNINSTALL" -eq 1 ]; then
         fi
     done
     if [ "$(id -u)" -eq 0 ]; then
-        rm -f /usr/local/bin/$APP_NAME /usr/local/bin/wal /usr/local/bin/$APP_NAME-* 2>/dev/null || true
+        rm -f /usr/local/bin/$APP_NAME /usr/local/bin/wal /usr/local/bin/qs /usr/local/bin/$APP_NAME-* 2>/dev/null || true
     elif command -v sudo >/dev/null 2>&1; then
-        sudo rm -f /usr/local/bin/$APP_NAME /usr/local/bin/wal /usr/local/bin/$APP_NAME-* 2>/dev/null || true
+        sudo rm -f /usr/local/bin/$APP_NAME /usr/local/bin/wal /usr/local/bin/qs /usr/local/bin/$APP_NAME-* 2>/dev/null || true
     fi
     echo ":: Done. $APP_NAME has been uninstalled."
     exit 0
@@ -272,14 +276,29 @@ provision_wal() {
     "$BIN_DIR/wal" -v >/dev/null 2>&1
 }
 
-# ── Quickshell from source ──────────────────────────────────────────────────
+# ── Quickshell provisioning ─────────────────────────────────────────────────
 # Distros that do not package Quickshell (Debian/Ubuntu/Mint/Fedora/openSUSE/Void)
-# get it built from source: git clone quickshell-mirror/quickshell, cmake+ninja,
-# install into /usr. It needs Qt >= 6.6 plus private Qt headers, so it only
-# succeeds where the system Qt is new enough (the message on failure says so).
-# The vendored-prebuilt alternative was dropped — the bundle was too large for
-# the GitHub repos.
+# need it obtained at install time. Two routes, chosen by the system Qt:
+#   * Qt >= 6.6 → git clone quickshell-mirror/quickshell + cmake/ninja build → /usr
+#   * Qt <  6.6 → fetch a prebuilt relocatable bundle (bundles its own Qt) from
+#                 the upstream releases at install time (nothing committed to git)
+# Qt 6.4 and older cannot build Quickshell — Debian 12 / Ubuntu 24.04 / Mint 22.
 have_qs() { command -v qs >/dev/null 2>&1 || command -v quickshell >/dev/null 2>&1; }
+
+# System Qt6 version (pkg-config, then qmake/qtpaths fallbacks).
+qt6_version() {
+    pkg-config --modversion Qt6Core 2>/dev/null && return 0
+    local q
+    for q in qmake6 qmake-qt6 qtpaths6 qtpaths; do
+        command -v "$q" >/dev/null 2>&1 || continue
+        "$q" -query QT_VERSION 2>/dev/null || "$q" --qt-version 2>/dev/null
+        return 0
+    done
+    return 1
+}
+
+# True when version $1 < $2 (e.g. 6.4.2 < 6.6.0).
+version_lt() { [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -n1)" = "$1" ] && [ "$1" != "$2" ]; }
 
 build_quickshell_from_source() {
     have_qs && return 0
@@ -317,9 +336,81 @@ build_quickshell_from_source() {
         fi
     fi
     rm -rf "$tmp"
-    echo ":: WARN: Quickshell build failed — it needs Qt >= 6.6 + private Qt headers." >&2
-    echo "::       Debian 12 / Ubuntu 24.04 / Mint 22 ship Qt 6.4, so the build cannot succeed there;" >&2
-    echo "::       install Quickshell another way, or use a distro with Qt >= 6.6." >&2
+    echo ":: WARN: Quickshell source build failed (needs Qt >= 6.6 + private Qt headers)." >&2
+    return 1
+}
+
+# Choose how to obtain Quickshell when none is installed: build from source where
+# the system Qt is new enough, otherwise fetch a prebuilt bundle (bundled Qt).
+install_quickshell_fallback() {
+    have_qs && return 0
+    local qt; qt="$(qt6_version || true)"
+    if [ -n "$qt" ] && ! version_lt "$qt" 6.6.0; then
+        build_quickshell_from_source && return 0
+    else
+        echo ":: Quickshell: system Qt is ${qt:-none} (< 6.6) — fetching a prebuilt bundle instead of building." >&2
+    fi
+    fetch_prebuilt_quickshell
+}
+
+# Fetch a prebuilt relocatable Quickshell (bundles its own Qt) from the upstream
+# releases at install time — used where the system Qt is too old to build (e.g.
+# Debian 12 / Ubuntu 24.04 / Mint 22). Nothing is committed to git.
+fetch_prebuilt_quickshell() {
+    have_qs && return 0
+    if [ "$(uname -m)" != "x86_64" ]; then
+        echo ":: NOTE: prebuilt Quickshell is amd64-only (host is $(uname -m)) — install qs manually." >&2
+        return 1
+    fi
+    local dl; dl="$(command -v curl || command -v wget || true)"
+    [ -n "$dl" ] || { echo ":: WARN: curl/wget missing — cannot fetch a prebuilt Quickshell." >&2; return 1; }
+    echo ":: Fetching a prebuilt Quickshell (bundled Qt) ..."
+    local api json url=""
+    api="https://api.github.com/repos/actions-precompiled/quickshell-bin/releases/latest"
+    case "$dl" in
+        *curl) json="$(curl -fsSL "$api" 2>/dev/null || true)" ;;
+        *)     json="$(wget -qO- "$api" 2>/dev/null || true)" ;;
+    esac
+    if [ -n "$json" ] && command -v python3 >/dev/null 2>&1; then
+        url="$(printf '%s' "$json" | python3 -c 'import sys,json
+try:
+    d=json.load(sys.stdin)
+    print(next((a["browser_download_url"] for a in d.get("assets",[]) if a["name"].endswith("-linux-amd64.tar.gz")), ""))
+except Exception:
+    print("")' 2>/dev/null)"
+    fi
+    if [ -z "$url" ]; then
+        echo ":: WARN: could not resolve a prebuilt Quickshell download (network/API)." >&2
+        return 1
+    fi
+    local tmp; tmp="$(mktemp -d)" || return 1
+    local ok=1
+    case "$dl" in
+        *curl) curl -fsSL -o "$tmp/qs.tar.gz" "$url" && ok=0 ;;
+        *)     wget -qO "$tmp/qs.tar.gz" "$url" && ok=0 ;;
+    esac
+    if [ "$ok" -ne 0 ]; then echo ":: WARN: download failed ($url)." >&2; rm -rf "$tmp"; return 1; fi
+    local dest="$INSTALL_DIR/vendor/quickshell"
+    rm -rf "$dest"; mkdir -p "$dest"
+    if ! tar -xzf "$tmp/qs.tar.gz" -C "$dest" --strip-components=1 || [ ! -x "$dest/bin/quickshell" ]; then
+        echo ":: WARN: could not unpack the prebuilt Quickshell bundle." >&2; rm -rf "$tmp"; return 1
+    fi
+    rm -rf "$tmp"
+    # The bundle's bin/quickshell wrapper resolves its root from BASH_SOURCE, so
+    # exec it by real path via a launcher (a symlink into BIN_DIR would break it).
+    mkdir -p "$BIN_DIR"
+    cat > "$BIN_DIR/qs" << QS_LAUNCHER
+#!/usr/bin/env bash
+# hyprtk-bar-qt prebuilt Quickshell launcher — do not edit (reinstalled on upgrade)
+exec "$dest/bin/quickshell" "\$@"
+QS_LAUNCHER
+    chmod +x "$BIN_DIR/qs"
+    hash -r 2>/dev/null || true
+    if "$BIN_DIR/qs" --version >/dev/null 2>&1; then
+        echo ":: prebuilt Quickshell ready: $("$BIN_DIR/qs" --version 2>&1)"
+        return 0
+    fi
+    echo ":: WARN: the prebuilt Quickshell failed to run." >&2
     return 1
 }
 
@@ -348,7 +439,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
         echo ":: Bundled pywal16: MISSING (vendor/pywal16)"
     fi
     if [ -n "${QS_BUILD_DEPS[$PM]:-}" ]; then
-        echo ":: Quickshell: not packaged for $PM — cloned + built from source when missing (needs Qt >= 6.6)"
+        echo ":: Quickshell: not packaged for $PM — built from source where Qt >= 6.6, else a prebuilt bundle is fetched"
     fi
     if [ "$PM" != "none" ]; then
         echo ":: System packages that would be installed: ${DEPS[$PM]:-}"
@@ -377,10 +468,10 @@ if [ "$SKIP_DEPS" -eq 0 ]; then
     fi
 fi
 
-# Quickshell fallback: if no system qs/quickshell is available (e.g. a distro
-# that does not package it), clone + build it from source.
+# Quickshell fallback: if no system qs/quickshell is available, build it from
+# source where the system Qt is new enough, else fetch a prebuilt bundle.
 if ! have_qs; then
-    build_quickshell_from_source || true
+    install_quickshell_fallback || true
 fi
 
 # ── Optional feature dependencies ─────────────────────────────────────────
@@ -572,6 +663,7 @@ if ! on_path "$BIN_DIR"; then
                 run_root ln -sf "$script" "/usr/local/bin/$(basename "$script")" 2>/dev/null || true
             done
             [ -x "$BIN_DIR/wal" ] && run_root ln -sf "$BIN_DIR/wal" "/usr/local/bin/wal" 2>/dev/null || true
+            [ -x "$BIN_DIR/qs" ] && run_root ln -sf "$BIN_DIR/qs" "/usr/local/bin/qs" 2>/dev/null || true
             echo ":: $BIN_DIR is not on PATH — linked $APP_NAME into /usr/local/bin"
         fi
     fi

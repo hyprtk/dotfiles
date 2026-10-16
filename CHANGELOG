@@ -7,20 +7,24 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Changed
 
-- **The bar installer builds Quickshell from source** (`hyprtk-bar-qt`
-  re-vendored). Distros that do not package Quickshell (Debian/Ubuntu/Mint,
-  Fedora/openSUSE/Void — and, if `qs` is ever absent, any host) now `git clone`
-  quickshell-mirror/quickshell and build it (cmake + ninja, install to `/usr`)
-  when no system `qs`/`quickshell` is found, instead of relying only on the
-  `srcapps-install.sh` build. This replaces the earlier prebuilt-bundle approach
-  (the relocatable Quickshell bundle was ~59 MB stripped / 141 MB raw — too large
-  for the GitHub repos). The build needs **Qt ≥ 6.6** plus private Qt headers, so
-  it succeeds on Fedora/openSUSE/Void but not on Debian 12 / Ubuntu 24.04 /
-  Mint 22 (Qt 6.4), where it now prints a clear warning. Arch/Gentoo/Nix use the
-  packaged Quickshell and build nothing.
+- **The bar installer obtains Quickshell without a vendored copy**
+  (`hyprtk-bar-qt` re-vendored). Distros that do not package Quickshell
+  (Debian/Ubuntu/Mint, Fedora/openSUSE/Void) now pick a route by the system Qt
+  when no `qs`/`quickshell` is found: **build from source** (git clone
+  quickshell-mirror/quickshell + cmake/ninja → `/usr`) where Qt ≥ 6.6
+  (Fedora/openSUSE/Void), else **fetch a prebuilt relocatable bundle** (bundles
+  its own Qt) from `actions-precompiled/quickshell-bin` at install time and drop
+  a `~/.local/bin/qs` launcher. Nothing is committed to git, so the ~59 MB
+  stripped bundle that was too large for the GitHub repos is gone — and Debian 12
+  / Ubuntu 24.04 / Mint 22 (Qt 6.4) still get a working bar. Arch/Gentoo/Nix use
+  the packaged Quickshell and obtain nothing.
 
 ### Fixed
 
+- **`srcapps-install.sh` no longer attempts a doomed Quickshell build on old-Qt
+  distros.** When the system Qt is < 6.6 it now skips the source build (with a
+  message pointing at the bar's prebuilt fetch) instead of spending time on a
+  build that cannot succeed (Debian 12 / Ubuntu 24.04 / Mint 22).
 - **The bar's system-dependency step no longer fails on the unpackaged
   `quickshell` name** (`hyprtk-bar-qt` re-vendored). `install.sh`'s `DEPS` listed
   `quickshell` for families that do not have it in their archive (apt/dnf/zypper/

@@ -26,11 +26,12 @@ bar, not upstream copies.
 
 ## Quickshell
 
-Quickshell is **not** bundled — the prebuilt relocatable bundle (bundled Qt) was
-~59 MB stripped / 141 MB raw, too large for the GitHub repos. Instead, where the
-distro does not package it (Debian/Ubuntu/Mint/Fedora/openSUSE/Void), `install.sh`
-(`build_quickshell_from_source`) installs the build deps and clones + builds it
-from source:
+Quickshell is **not vendored** — the prebuilt relocatable bundle (bundled Qt) was
+~59 MB stripped / 141 MB raw, too large for the GitHub repos. Where the distro
+does not package it (Debian/Ubuntu/Mint/Fedora/openSUSE/Void), `install.sh`
+obtains it at install time, choosing by the system Qt:
+
+**Qt ≥ 6.6 → build from source** (`build_quickshell_from_source`):
 
 ```sh
 git clone --depth=1 https://github.com/quickshell-mirror/quickshell.git
@@ -39,10 +40,15 @@ cmake --build quickshell/build -j"$(nproc)"
 sudo cmake --install quickshell/build && sudo ldconfig
 ```
 
-It needs **Qt ≥ 6.6** plus private Qt headers, so the build only succeeds where
-the system Qt is new enough; on Debian 12 / Ubuntu 24.04 / Mint 22 (Qt 6.4) it
-fails with a clear warning. On Arch/Gentoo/Nix the packaged `quickshell` is used
-and nothing is built.
+**Qt < 6.6 → fetch a prebuilt bundle** (`fetch_prebuilt_quickshell`). Quickshell
+needs Qt ≥ 6.6 plus private Qt headers, so Debian 12 / Ubuntu 24.04 / Mint 22
+(Qt 6.4) cannot build it. There, `install.sh` downloads the relocatable bundle
+(bundles its own Qt) from
+[actions-precompiled/quickshell-bin](https://github.com/actions-precompiled/quickshell-bin)
+on demand, unpacks it to `~/.local/share/hyprtk-bar-qt/vendor/quickshell/`, and
+drops a `qs` launcher in `~/.local/bin`. Nothing is committed to git.
+
+On Arch/Gentoo/Nix the packaged `quickshell` is used and neither path runs.
 
 ## Re-vendoring into hyprtk-multi-distro / merged
 
