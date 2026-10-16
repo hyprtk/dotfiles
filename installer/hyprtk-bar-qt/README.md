@@ -15,6 +15,7 @@ QML and any logic that is awkward in QML lives in a toolkit-free Python backend.
 shell.qml                     Quickshell entry — bar per screen + surfaces
 bar/
   Bar.qml                     the frosted panel + module row
+  ModuleChooser.qml           maps layout entries to module components (file-based DelegateChooser)
   modules/
     Workspaces.qml            Hyprland workspaces (Quickshell.Hyprland), click to switch
     Tasklist.qml              open windows (Toplevel): activate / middle-click close

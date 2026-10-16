@@ -38,6 +38,16 @@ documented in this file. Dates are in YYYY-MM-DD format.
   the prebuilt Quickshell (Debian 12 / Ubuntu 24.04 / Mint 22) the shell aborted
   with `DelegateChooser is not a type`; the module is now imported explicitly as
   `Qt.labs.qmlmodels`, where the type lives on Qt 6.0–6.8.
+- **The bar no longer renders empty on Qt < 6.9 distros** (`hyprtk-bar-qt 0.41.15`
+  re-vendored). 0.41.14 fixed the `DelegateChooser is not a type` error but the
+  bar still came up with no module glyphs: `bar/Bar.qml` declared the chooser as
+  an inline `component ModuleChooser: DelegateChooser { … }` used directly as a
+  `Repeater` delegate, and on Qt < 6.9 (the Qt 6.8 bundled with the prebuilt
+  Quickshell on Debian 12 / Ubuntu 24.04 / Mint 22) an inline component whose
+  root is a `DelegateChooser` is not recognised as a delegate component — every
+  `Repeater` logged `Delegate must be of Item type` and created no items. The
+  chooser now lives in its own file, `bar/ModuleChooser.qml`, which resolves on
+  every supported Qt version (6.0–6.8 and ≥ 6.9).
 
 ## [Unreleased] - 2026-10-15
 

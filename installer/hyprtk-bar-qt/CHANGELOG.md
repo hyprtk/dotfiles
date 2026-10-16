@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.41.15 — unreleased
+
+- **Fix**: the bar rendered **empty** (no module glyphs at all) on Qt < 6.9 —
+  e.g. the Qt 6.8 bundled with the prebuilt Quickshell on Debian/Ubuntu/Mint.
+  `Bar.qml` declared the module chooser as an inline component
+  (`component ModuleChooser: DelegateChooser { … }`) used directly as a
+  `Repeater` delegate. On Qt < 6.9 an inline component whose root is a
+  `DelegateChooser` is not recognised as a delegate component, so the `Repeater`
+  logged `Delegate must be of Item type` and created no items (0.41.14 resolved
+  the earlier `DelegateChooser is not a type` error but not this). The chooser
+  now lives in its own file, `bar/ModuleChooser.qml`, which resolves on every
+  supported Qt version (6.0–6.8 and ≥ 6.9).
+
 ## 0.41.14 — unreleased
 
 - **Fix**: the bar failed to load on distros with Qt < 6.9 (e.g. the Qt 6.8
