@@ -1098,6 +1098,7 @@ PanelWindow {
                                                 visible: wcard.modelData === "disk"
                                                 WOpt { label: "bar"; TCheckBox { checked: win.widgetVal(wcard.modelData, "show_bar", true); onToggled: win.setWidget(wcard.modelData, "show_bar", checked) } }
                                                 WOpt { label: "rates"; TCheckBox { checked: win.widgetVal(wcard.modelData, "show_rates", true); onToggled: win.setWidget(wcard.modelData, "show_rates", checked) } }
+                                                WOpt { label: "columns"; TSpinBox { from: 1; to: 2; value: win.widgetVal(wcard.modelData, "columns", 1); onValueModified: win.setWidget(wcard.modelData, "columns", value) } }
                                                 WOpt { label: "max drives"; TSpinBox { from: 1; to: 16; value: win.widgetVal(wcard.modelData, "drives_max", 4); onValueModified: win.setWidget(wcard.modelData, "drives_max", value) } }
                                             }
                                             Flow {

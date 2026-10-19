@@ -7,6 +7,12 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Added
 
+- **Disk widget: optional two-column layout (`hyprtk-bar-qt 0.41.18`
+  re-vendored).** New `columns` option (1 or 2, default 1). Two-column mode
+  renders drives in a grid and moves each drive's used/total size under the
+  model name, keeping long names readable at half width; the default width
+  becomes 470 px when `columns=2` and no explicit width is set. Exposed in
+  **Settings → Widgets → Disk** and the widget's cog dialog.
 - **Per-widget settings dialog (`hyprtk-bar-qt 0.41.16` re-vendored).** Every
   desktop widget now shows a small cog in its bottom-right corner. Clicking it
   opens a dedicated layer-shell dialog for that widget — placement, colours and

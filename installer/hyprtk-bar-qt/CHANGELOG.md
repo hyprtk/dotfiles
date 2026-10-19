@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.41.18 — unreleased
+
+- **Disk widget: optional two-column layout.** New `columns` option (1 or 2,
+  default 1). In two-column mode the drives render in a grid and each drive's
+  used/total size moves under the model name — a one-line glyph + name row
+  keeps long model names readable at half width. When no explicit `width` is
+  set, the widget defaults to 470 px in two-column mode (300 px otherwise).
+  Exposed on **Settings → Widgets → Disk** and in the widget's cog dialog.
+
 ## 0.41.17 — unreleased
 
 - **Fix**: snapped desktop widgets no longer get oversized type. A snap group

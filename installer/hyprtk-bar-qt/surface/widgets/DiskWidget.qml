@@ -15,7 +15,7 @@ WidgetFrame {
     marginX: block.margin_x !== undefined ? block.margin_x : 40
     marginY: block.margin_y !== undefined ? block.margin_y : 40
     layer: block.layer || "bottom"
-    widgetWidth: block.width || 300
+    widgetWidth: block.width || (win.columns > 1 ? 470 : 300)
     widgetHeight: block.height || 0
     widgetOpacity: block.opacity !== undefined ? block.opacity : 0.75
     radius: block.radius || 16
@@ -28,6 +28,12 @@ WidgetFrame {
     readonly property bool showBar: block.show_bar !== false
     readonly property bool showRates: block.show_rates !== false
     readonly property int drivesMax: block.drives_max || 3
+    // 1 (list) or 2 (grid) — two columns halve the width per drive, so widen the
+    // widget's default width when no explicit width is set.
+    readonly property int columns: {
+        const c = Number(block.columns);
+        return (c >= 2) ? 2 : 1;
+    }
 
     function visibleDrives() {
         return (WidgetData.drives || []).slice(0, win.drivesMax);
@@ -36,45 +42,65 @@ WidgetFrame {
         const denom = (d.used_b || 0) + (d.free_b || 0);
         return denom > 0 ? (d.used_b || 0) / denom : 0;
     }
+    function sizeText(d) {
+        return d.size_b > 0
+            ? MonitorData.fmtBytes(d.used_b) + " / " + MonitorData.fmtBytes(d.size_b)
+            : "\u2014";
+    }
 
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Math.round(8 * win.effScale)
 
-        Repeater {
-            model: win.visibleDrives()
-            delegate: ColumnLayout {
-                id: cell
-                required property var modelData
-                Layout.fillWidth: true
-                spacing: Math.round(3 * win.effScale)
-                RowLayout {
+        GridLayout {
+            Layout.fillWidth: true
+            columns: win.columns
+            columnSpacing: Math.round(12 * win.effScale)
+            rowSpacing: Math.round(8 * win.effScale)
+
+            Repeater {
+                model: win.visibleDrives()
+                delegate: ColumnLayout {
+                    id: cell
+                    required property var modelData
                     Layout.fillWidth: true
-                    spacing: 6
-                    Text { text: cell.modelData.glyph || ""; color: win.widgetAccent; font.family: BarConfig.glyphFont; font.pixelSize: Math.round(16 * win.textScale) }
-                    Text {
-                        text: cell.modelData.model || cell.modelData.name || ""
-                        color: win.widgetForeground
-                        font.bold: true
-                        font.pixelSize: Math.round(12 * win.textScale)
+                    spacing: Math.round(3 * win.effScale)
+                    RowLayout {
                         Layout.fillWidth: true
-                        elide: Text.ElideRight
+                        spacing: 6
+                        Text { text: cell.modelData.glyph || ""; color: win.widgetAccent; font.family: BarConfig.glyphFont; font.pixelSize: Math.round(16 * win.textScale) }
+                        Text {
+                            text: cell.modelData.model || cell.modelData.name || ""
+                            color: win.widgetForeground
+                            font.bold: true
+                            font.pixelSize: Math.round(12 * win.textScale)
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            text: win.sizeText(cell.modelData)
+                            visible: win.columns === 1
+                            color: win.widgetForeground
+                            opacity: 0.85
+                            font.pixelSize: Math.round(11 * win.textScale)
+                        }
                     }
                     Text {
-                        text: cell.modelData.size_b > 0
-                            ? MonitorData.fmtBytes(cell.modelData.used_b) + " / " + MonitorData.fmtBytes(cell.modelData.size_b)
-                            : "\u2014"
+                        Layout.fillWidth: true
+                        visible: win.columns > 1
+                        text: win.sizeText(cell.modelData)
+                        horizontalAlignment: Text.AlignRight
                         color: win.widgetForeground
                         opacity: 0.85
                         font.pixelSize: Math.round(11 * win.textScale)
                     }
-                }
-                MeterBar {
-                    visible: win.showBar && modelData.size_b > 0
-                    height: Math.round(6 * win.effScale)
-                    fraction: win.frac(cell.modelData)
-                    trackColor: Qt.rgba(win.widgetForeground.r, win.widgetForeground.g, win.widgetForeground.b, 0.15)
-                    fillColor: win.widgetAccent
+                    MeterBar {
+                        visible: win.showBar && modelData.size_b > 0
+                        height: Math.round(6 * win.effScale)
+                        fraction: win.frac(cell.modelData)
+                        trackColor: Qt.rgba(win.widgetForeground.r, win.widgetForeground.g, win.widgetForeground.b, 0.15)
+                        fillColor: win.widgetAccent
+                    }
                 }
             }
         }

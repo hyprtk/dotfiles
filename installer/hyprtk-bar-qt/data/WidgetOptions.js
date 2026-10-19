@@ -105,6 +105,7 @@ const PER_WIDGET = {
     disk: [
         { key: "show_bar", label: "bar", type: "bool", section: "Options", def: true },
         { key: "show_rates", label: "rates", type: "bool", section: "Options", def: true },
+        { key: "columns", label: "columns", type: "int", section: "Options", min: 1, max: 2, def: 1 },
         { key: "drives_max", label: "max drives", type: "int", section: "Options", min: 1, max: 16, def: 3 }
     ],
     network: [
