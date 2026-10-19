@@ -33,6 +33,11 @@ PanelWindow {
     // (GTK parity). ``snapScale`` is 0 unless the widget is in a live snap group.
     readonly property real snapScale: (frame.snapOver && frame.snapOver.scale > 0) ? frame.snapOver.scale : 0
     readonly property real effScale: frame.snapScale > 0 ? frame.snapScale : frame.scale
+    // Snap groups scale a member's content up to fill the uniform cell. Text
+    // must not inflate with it: a narrower member (disk/network) would then
+    // show larger type than its neighbours. Geometry still fills the cell;
+    // fonts cap at the widget's base size.
+    readonly property real textScale: Math.min(frame.effScale, 1.0)
 
     // Global rect (single monitor origin) for hit-testing a move.
     function _gx() {

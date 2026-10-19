@@ -33,6 +33,13 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Fixed
 
+- **Snapped desktop widgets no longer get oversized type (`hyprtk-bar-qt
+  0.41.17` re-vendored).** Snap groups scale a member's content to fill the
+  uniform cell, so narrower widgets (Disk/Network at 300 px vs a ~430 px cell)
+  had their fonts inflated ~1.4x while System Info and Resources looked normal.
+  Fonts and glyph icons now cap at the widget's base size (`textScale =
+  min(effScale, 1.0)`); geometry, bars and graphs still fill the cell, so every
+  snap member shares the same typography.
 - **`srcapps-install.sh` no longer attempts a doomed Quickshell build on old-Qt
   distros.** When the system Qt is < 6.6 it now skips the source build (with a
   message pointing at the bar's prebuilt fetch) instead of spending time on a

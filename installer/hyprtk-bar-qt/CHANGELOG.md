@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.41.17 — unreleased
+
+- **Fix**: snapped desktop widgets no longer get oversized type. A snap group
+  scales each member's content to fill the uniform cell, so a narrower widget
+  such as **Disk** or **Network** (300 px vs a ~430 px cell) had its fonts
+  inflated by the same ~1.4x factor while **System Info** and **Resources**
+  looked normal. Fonts (and glyph icons) now use a `textScale` capped at the
+  widget's base size (`min(effScale, 1.0)`); geometry, bars and graphs still
+  scale to fill the cell. Applied to every text-bearing widget, so all snap
+  members share the same type aesthetic.
+
 ## 0.41.16 — unreleased
 
 - **Per-widget settings.** Every desktop widget now shows a small cog in its

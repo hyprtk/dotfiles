@@ -108,7 +108,7 @@ WidgetFrame {
                 text: win.data.code !== undefined ? win.nowGlyph() : "\ue33d"
                 color: win.widgetAccent
                 font.family: BarConfig.glyphFont
-                font.pixelSize: Math.round(34 * win.effScale)
+                font.pixelSize: Math.round(34 * win.textScale)
             }
             ColumnLayout {
                 Layout.fillWidth: true
@@ -118,14 +118,14 @@ WidgetFrame {
                     text: win.data.temp !== undefined && win.data.temp !== null
                         ? Math.round(win.data.temp) + "\u00b0" : "--"
                     color: win.widgetForeground
-                    font.pixelSize: Math.round(34 * win.effScale)
+                    font.pixelSize: Math.round(34 * win.textScale)
                     font.bold: true
                 }
                 Text {
                     text: win.data.city ? win.data.city + (win.data.country ? ", " + win.data.country : "") : win.city
                     color: win.widgetForeground
                     opacity: 0.85
-                    font.pixelSize: Math.round(13 * win.effScale)
+                    font.pixelSize: Math.round(13 * win.textScale)
                 }
             }
         }
@@ -135,7 +135,7 @@ WidgetFrame {
             visible: block.show_condition !== false && win.data.code !== undefined
             text: win.data.code !== undefined ? win.describe(win.data.code)[0] : ""
             color: win.widgetAccent
-            font.pixelSize: Math.round(14 * win.effScale)
+            font.pixelSize: Math.round(14 * win.textScale)
         }
 
         Text {
@@ -143,7 +143,7 @@ WidgetFrame {
             visible: (block.show_feels_like !== false || block.show_humidity !== false || block.show_wind !== false) && win.data.temp !== undefined
             color: win.widgetForeground
             opacity: 0.85
-            font.pixelSize: Math.round(12 * win.effScale)
+            font.pixelSize: Math.round(12 * win.textScale)
             text: {
                 const parts = [];
                 const unit = win.data.unit || "\u00b0C";
@@ -174,7 +174,7 @@ WidgetFrame {
                         text: fcell.modelData.date ? Qt.formatDate(new Date(fcell.modelData.date), "ddd") : ""
                         color: win.widgetForeground
                         opacity: 0.8
-                        font.pixelSize: Math.round(11 * win.effScale)
+                        font.pixelSize: Math.round(11 * win.textScale)
                     }
                     Text {
                         width: parent.width
@@ -182,7 +182,7 @@ WidgetFrame {
                         text: win.describe(fcell.modelData.code)[1]
                         color: win.widgetAccent
                         font.family: BarConfig.glyphFont
-                        font.pixelSize: Math.round(13 * win.effScale)
+                        font.pixelSize: Math.round(13 * win.textScale)
                     }
                     Text {
                         width: parent.width
@@ -191,7 +191,7 @@ WidgetFrame {
                             + (fcell.modelData.lo !== null ? Math.round(fcell.modelData.lo) : "--") + "\u00b0"
                         color: win.widgetForeground
                         font.bold: true
-                        font.pixelSize: Math.round(12 * win.effScale)
+                        font.pixelSize: Math.round(12 * win.textScale)
                     }
                 }
             }

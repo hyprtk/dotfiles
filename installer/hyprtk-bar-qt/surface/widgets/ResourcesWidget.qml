@@ -51,8 +51,8 @@ WidgetFrame {
         spacing: Math.round(3 * win.effScale)
         RowLayout {
             Layout.fillWidth: true
-            Text { text: m.label; color: win.widgetForeground; opacity: 0.9; font.pixelSize: Math.round(12 * win.effScale); Layout.fillWidth: true }
-            Text { text: m.value; color: win.widgetAccent; font.bold: true; font.pixelSize: Math.round(13 * win.effScale) }
+            Text { text: m.label; color: win.widgetForeground; opacity: 0.9; font.pixelSize: Math.round(12 * win.textScale); Layout.fillWidth: true }
+            Text { text: m.value; color: win.widgetAccent; font.bold: true; font.pixelSize: Math.round(13 * win.textScale) }
         }
         MeterBar {
             height: Math.round(6 * win.effScale)
@@ -102,7 +102,7 @@ WidgetFrame {
             text: win.meta()
             color: win.widgetForeground
             opacity: 0.8
-            font.pixelSize: Math.round(11 * win.effScale)
+            font.pixelSize: Math.round(11 * win.textScale)
         }
     }
 }

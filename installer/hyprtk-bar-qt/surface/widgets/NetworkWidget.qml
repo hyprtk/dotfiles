@@ -36,12 +36,12 @@ WidgetFrame {
         RowLayout {
             Layout.fillWidth: true
             spacing: 6
-            Text { text: WidgetData.net.glyph || "\uf1eb"; color: win.widgetAccent; font.family: BarConfig.glyphFont; font.pixelSize: Math.round(14 * win.effScale) }
+            Text { text: WidgetData.net.glyph || "\uf1eb"; color: win.widgetAccent; font.family: BarConfig.glyphFont; font.pixelSize: Math.round(14 * win.textScale) }
             Text {
                 text: WidgetData.ready ? (WidgetData.net.iface || "\u2014") : "\u2014"
                 color: win.widgetForeground
                 font.bold: true
-                font.pixelSize: Math.round(14 * win.effScale)
+                font.pixelSize: Math.round(14 * win.textScale)
                 Layout.fillWidth: true
             }
         }
@@ -51,7 +51,7 @@ WidgetFrame {
             text: WidgetData.ready ? (WidgetData.net.ip || "no address") : "no address"
             color: win.widgetForeground
             opacity: 0.85
-            font.pixelSize: Math.round(12 * win.effScale)
+            font.pixelSize: Math.round(12 * win.textScale)
         }
         Text {
             Layout.fillWidth: true
@@ -61,7 +61,7 @@ WidgetFrame {
                     + "    \uf093  " + MonitorData.fmtRate(WidgetData.net.up_bps || 0)
                 : "\uf019  --    \uf093  --"
             color: win.widgetAccent
-            font.pixelSize: Math.round(12 * win.effScale)
+            font.pixelSize: Math.round(12 * win.textScale)
         }
         Sparkline {
             visible: win.showGraph

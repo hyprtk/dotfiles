@@ -80,18 +80,18 @@ WidgetFrame {
                 required property var modelData
                 Layout.fillWidth: true
                 spacing: 8
-                Text { text: row.modelData.glyph; color: win.widgetAccent; font.family: BarConfig.glyphFont; font.pixelSize: Math.round(16 * win.effScale) }
+                Text { text: row.modelData.glyph; color: win.widgetAccent; font.family: BarConfig.glyphFont; font.pixelSize: Math.round(16 * win.textScale) }
                 Text {
                     text: row.modelData.label
                     color: win.widgetForeground
                     opacity: 0.7
-                    font.pixelSize: Math.round(12 * win.effScale)
-                    Layout.preferredWidth: Math.round(72 * win.effScale)
+                    font.pixelSize: Math.round(12 * win.textScale)
+                    Layout.preferredWidth: Math.round(72 * win.textScale)
                 }
                 Text {
                     text: row.modelData.value
                     color: win.widgetForeground
-                    font.pixelSize: Math.round(12 * win.effScale)
+                    font.pixelSize: Math.round(12 * win.textScale)
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
