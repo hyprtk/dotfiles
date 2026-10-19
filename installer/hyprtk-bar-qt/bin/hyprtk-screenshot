@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Launch the vendored HyprQuickFrame screenshot overlay via Quickshell.
+#
+# HyprQuickFrame is a separate one-shot Quickshell config (not part of the bar
+# shell), so it is started with `-p <install>/hyprquickframe`. Environment
+# passthrough (HQF_MODE / HQF_ACTION) is inherited; extra args are forwarded.
+set -euo pipefail
+
+src="${BASH_SOURCE[0]}"
+while [ -L "$src" ]; do
+    dir="$(cd -P "$(dirname "$src")" && pwd)"
+    src="$(readlink "$src")"
+    [[ "$src" != /* ]] && src="$dir/$src"
+done
+here="$(cd -P "$(dirname "$src")" && pwd)"
+root="$(cd "$here/.." && pwd)"
+
+# Installed tree, or the dev checkout's own vendor/ when run from the repo.
+hqf="${HYPRQF_DIR:-}"
+if [ -z "$hqf" ]; then
+    for cand in "$root/vendor/hyprquickframe" \
+                "${XDG_DATA_HOME:-$HOME/.local/share}/hyprtk-bar-qt/hyprquickframe" \
+                "$HOME/.local/share/hyprtk-bar-qt/hyprquickframe"; do
+        if [ -f "$cand/shell.qml" ]; then hqf="$cand"; break; fi
+    done
+fi
+if [ -z "$hqf" ] || [ ! -f "$hqf/shell.qml" ]; then
+    echo "hyprtk-screenshot: HyprQuickFrame not found (re-run the bar installer)" >&2
+    exit 1
+fi
+
+if ! command -v grim >/dev/null 2>&1; then
+    echo "hyprtk-screenshot: 'grim' is required (install grim and retry)" >&2
+    exit 127
+fi
+
+# Resolve Quickshell without trusting the session PATH: a DM-started Hyprland
+# session often omits ~/.local/bin, where the prebuilt bundle's qs lives.
+qs_bin="$(command -v qs || command -v quickshell || true)"
+if [ -z "$qs_bin" ]; then
+    for cand in "$HOME/.local/bin/qs" "$HOME/.local/bin/quickshell"; do
+        if [ -x "$cand" ]; then qs_bin="$cand"; break; fi
+    done
+fi
+if [ -z "$qs_bin" ]; then
+    echo "hyprtk-screenshot: Quickshell (qs) not found on PATH or in ~/.local/bin" >&2
+    exit 127
+fi
+
+exec "$qs_bin" -p "$hqf" -n "$@"

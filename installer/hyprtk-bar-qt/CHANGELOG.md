@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.41.19 — unreleased
+
+- **HyprQuickFrame vendored as the screenshot overlay.** The upstream project
+  (MIT, pinned `a411411`) now lives in `vendor/hyprquickframe/` and is installed
+  to `~/.local/share/hyprtk-bar-qt/hyprquickframe`; `bin/hyprtk-screenshot`
+  launches it with `qs -p` (PATH-safe `qs` resolution, `grim` preflight).
+  `grim` and `slurp` are added to EXTRAS for every package family.
+- **No-freeze fallback for unsupported capture paths.** If `ScreencopyView`
+  produces no frame within 2s (known NVIDIA/screencopy failures), the frozen
+  overlay is replaced by a live `grim` + `slurp` capture (focused output/full
+  screen when slurp is unavailable), with notifications and the usual save/temp
+  behaviour. `HQF_FORCE_FALLBACK=1` skips the overlay; `HQF_FALLBACK_GEOM`
+  overrides the selection (scripts/tests). `captureSource` is guarded against
+  stale/phantom outputs.
+- Requirements/design/GPU matrix documented in `PLAN-HYPRQUICKFRAME.md`; the
+  local fallback patch is recorded in
+  `vendor/patches/hyprquickframe-no-freeze-fallback.patch`.
+
 ## 0.41.18 — unreleased
 
 - **Disk widget: optional two-column layout.** New `columns` option (1 or 2,

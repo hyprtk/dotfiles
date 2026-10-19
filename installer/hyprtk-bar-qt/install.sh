@@ -137,14 +137,14 @@ QS_BUILD_DEPS[apk]="git build-base cmake ninja pkgconf qt6-qtbase-dev qt6-qtdecl
 # Optional feature dependencies — external binaries the bar shells out to. Each
 # feature degrades gracefully when its tool is missing (skip with --no-extras).
 declare -A EXTRAS
-EXTRAS[pacman]="networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber brightnessctl hyprsunset dmidecode pciutils cliphist wl-clipboard rofi libnotify wob papirus-icon-theme polkit awww matugen cava imagemagick python-pillow"
-EXTRAS[apt]="network-manager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify-bin papirus-icon-theme polkitd pkexec cava imagemagick python3-pil"
-EXTRAS[dnf]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit cava ImageMagick python3-pillow"
-EXTRAS[zypper]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify-tools papirus-icon-theme polkit cava ImageMagick python3-Pillow"
-EXTRAS[xbps]="NetworkManager bluez pipewire wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit cava ImageMagick python3-Pillow"
-EXTRAS[apk]="networkmanager bluez pipewire wireplumber brightnessctl dmidecode pciutils wl-clipboard rofi libnotify papirus-icon-theme polkit cava imagemagick py3-pillow"
-EXTRAS[emerge]="net-misc/networkmanager net-wireless/bluez media-video/pipewire media-video/wireplumber x11-misc/rofi gui-apps/wl-clipboard x11-libs/libnotify media-sound/cava media-gfx/imagemagick dev-python/pillow"
-EXTRAS[nix]="networkmanager bluez pipewire wireplumber rofi wl-clipboard libnotify cava imagemagick python3Packages.pillow"
+EXTRAS[pacman]="networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber brightnessctl hyprsunset dmidecode pciutils cliphist grim slurp wl-clipboard rofi libnotify wob papirus-icon-theme polkit awww matugen cava imagemagick python-pillow"
+EXTRAS[apt]="network-manager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify-bin papirus-icon-theme polkitd pkexec cava imagemagick python3-pil"
+EXTRAS[dnf]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify papirus-icon-theme polkit cava ImageMagick python3-pillow"
+EXTRAS[zypper]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify-tools papirus-icon-theme polkit cava ImageMagick python3-Pillow"
+EXTRAS[xbps]="NetworkManager bluez pipewire wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify papirus-icon-theme polkit cava ImageMagick python3-Pillow"
+EXTRAS[apk]="networkmanager bluez pipewire wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify papirus-icon-theme polkit cava imagemagick py3-pillow"
+EXTRAS[emerge]="net-misc/networkmanager net-wireless/bluez media-video/pipewire media-video/wireplumber x11-misc/rofi gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-libs/libnotify media-sound/cava media-gfx/imagemagick dev-python/pillow"
+EXTRAS[nix]="networkmanager bluez pipewire wireplumber rofi grim slurp wl-clipboard libnotify cava imagemagick python3Packages.pillow"
 
 # AUR-only extras (Arch) — installed via yay/paru when an AUR helper is present.
 EXTRAS_AUR="papirus-folders"
@@ -566,6 +566,15 @@ if [ -d "$SCRIPT_DIR/scripts" ]; then
     rm -rf "${INSTALL_DIR:?}/scripts"
     cp -a "$SCRIPT_DIR/scripts" "$INSTALL_DIR/scripts"
     chmod +x "$INSTALL_DIR/scripts"/*.sh 2>/dev/null || true
+fi
+
+# ── Vendored HyprQuickFrame (screenshot overlay; launched by hyprtk-screenshot) ──
+if [ -d "$SCRIPT_DIR/vendor/hyprquickframe" ]; then
+    rm -rf "${INSTALL_DIR:?}/hyprquickframe"
+    cp -a "$SCRIPT_DIR/vendor/hyprquickframe" "$INSTALL_DIR/hyprquickframe"
+    echo ":: Installed HyprQuickFrame into $INSTALL_DIR/hyprquickframe"
+else
+    echo ":: WARN: vendored HyprQuickFrame missing — hyprtk-screenshot unavailable." >&2
 fi
 
 # ── Seed the default config on a fresh install ─────────────────────────────

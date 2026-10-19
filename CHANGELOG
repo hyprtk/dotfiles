@@ -7,6 +7,14 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Added
 
+- **HyprQuickFrame screenshot overlay (`hyprtk-bar-qt 0.41.19` re-vendored).**
+  The Quickshell screenshot utility (MIT, pinned `a411411`) is now vendored and
+  launched with `hyprtk-screenshot` (installed to `~/.local/bin`), using
+  `qs -p` and the same PATH-safe resolution as the bar. `grim` and `slurp` are
+  added to the bar's package EXTRAS. If `ScreencopyView` yields no frame
+  (NVIDIA/screencopy failures), it falls back to a no-freeze `grim` + `slurp`
+  capture; `HQF_FORCE_FALLBACK`/`HQF_FALLBACK_GEOM` are available. Design,
+  distro/GPU matrices and phases live in the bar's `PLAN-HYPRQUICKFRAME.md`.
 - **Disk widget: optional two-column layout (`hyprtk-bar-qt 0.41.18`
   re-vendored).** New `columns` option (1 or 2, default 1). Two-column mode
   renders drives in a grid and moves each drive's used/total size under the

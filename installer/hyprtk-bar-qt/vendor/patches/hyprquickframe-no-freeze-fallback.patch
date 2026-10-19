@@ -1,0 +1,196 @@
+--- a/shell.qml
++++ b/shell.qml
+@@ -31,6 +31,12 @@
+     property var theme: themeObj
+     property bool capturing: false
+     property bool overlaysVisible: true
++    // Capture without the frozen overlay. Forced by HQF_FORCE_FALLBACK=1, or
++    // used automatically when ScreencopyView never produces a frame (NVIDIA /
++    // screencopy failures). HQF_FALLBACK_GEOM is an escape hatch for scripts
++    // and tests: when set, slurp is skipped and that geometry is captured.
++    readonly property bool fallbackMode: Quickshell.env("HQF_FORCE_FALLBACK") === "1"
++    property bool fallbackStarted: false
+ 
+     function parseTOML(text) {
+         let result = {
+@@ -86,17 +92,18 @@
+             if (m.name === screenName) { target = m; break; }
+         }
+         if (!target) target = hyprlandMonitor;
++        if (!target || !target.lastIpcObject)
++            return "";
+         const mx = target.lastIpcObject.x;
+         const my = target.lastIpcObject.y;
+         return `${Math.round(x + mx)},${Math.round(y + my)} ${Math.round(width)}x${Math.round(height)}`;
+     }
+ 
+-    function runPostSaveHook() {
++    function postSaveHookCmd(filePath) {
+         const hook = theme.postSaveHook;
+-        if (!hook || !root.lastSavedPath)
+-            return ;
++        if (!hook || !filePath)
++            return "";
+ 
+-        const filePath = root.lastSavedPath;
+         const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+         const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
+         let cmd = hook;
+@@ -104,7 +111,13 @@
+         cmd = cmd.replace(/%n/g, shellEscape(fileName));
+         cmd = cmd.replace(/%d/g, shellEscape(dirPath));
+         cmd = cmd.replace(/%t/g, shellEscape(root.lastTimestamp));
+-        Quickshell.execDetached(["sh", "-c", cmd]);
++        return cmd;
++    }
++
++    function runPostSaveHook() {
++        const cmd = root.postSaveHookCmd(root.lastSavedPath);
++        if (cmd)
++            Quickshell.execDetached(["sh", "-c", cmd]);
+     }
+ 
+     function saveScreenshot(x, y, width, height, screenName) {
+@@ -117,9 +130,12 @@
+         root.lastSavedPath = root.tempActive ? "" : outputPath;
+         const ePicturesDir = shellEscape(picturesDir);
+         const eOutputPath = shellEscape(outputPath);
+-        const eGeom = shellEscape(geom);
++        const eGeom = geom ? shellEscape(geom) : "";
++        const eScreen = root.activeScreenName ? shellEscape(root.activeScreenName) : "";
+ 
+-        const grimRegion = `timeout 5 grim -l 1 -g ${eGeom}`;
++        const grimRegion = geom
++            ? `timeout 5 grim -l 1 -g ${eGeom}`
++            : (eScreen ? `timeout 5 grim -l 1 -o ${eScreen}` : `timeout 5 grim -l 1`);
+ 
+         const shareCmd = "kdeconnect-cli -l | grep 'reachable' | grep -oP '[a-f0-9-]{8,}'"
+             + " | head -1 | xargs -I{} sh -c"
+@@ -171,6 +187,86 @@
+             hideOverlaysTimer.start();
+     }
+ 
++    // ── no-freeze fallback ─────────────────────────────────────────────
++    // A live-screen slurp selection (or the focused output when slurp is not
++    // installed). Used when the frozen overlay cannot capture: NVIDIA /
++    // screencopy failures, or HQF_FORCE_FALLBACK=1.
++    function fallbackCapture() {
++        // Leaves the selection in $geom (empty = focused output). Cancelling
++        // slurp exits the whole pipeline without capturing.
++        return `if command -v slurp >/dev/null 2>&1; then `
++            + `geom=$(slurp -b '#00000080' -c '#888888ff' -w 1) || exit 0; `
++            + `else geom=""; fi; `;
++    }
++
++    function runFallback(reason) {
++        if (root.fallbackStarted)
++            return;
++        root.fallbackStarted = true;
++        root.overlaysVisible = false;
++        console.warn("HyprQuickFrame: using no-freeze fallback" + (reason ? " (" + reason + ")" : ""));
++
++        const picturesBase = Quickshell.env("XDG_PICTURES_DIR") || (Quickshell.env("HOME") + "/Pictures");
++        const picturesDir = picturesBase + "/Screenshots";
++        const timestamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_hh-mm-ss");
++        const outputPath = `${picturesDir}/screenshot-${timestamp}.png`;
++        root.lastTimestamp = timestamp;
++        root.lastSavedPath = root.tempActive ? "" : outputPath;
++
++        const ePicturesDir = shellEscape(picturesDir);
++        const eOutputPath = shellEscape(outputPath);
++        const eScreen = root.activeScreenName ? shellEscape(root.activeScreenName) : "";
++        const forcedGeom = Quickshell.env("HQF_FALLBACK_GEOM") || "";
++        const eForcedGeom = forcedGeom ? shellEscape(forcedGeom) : "";
++        const mkdirCmd = `mkdir -p ${ePicturesDir}`;
++
++        const selectCmd = forcedGeom
++            ? `geom=${eForcedGeom};`
++            : root.fallbackCapture();
++        const captureCmd = (toStdout) => {
++            const out = toStdout ? "-" : eOutputPath;
++            return `if [ -n "$geom" ]; then timeout 5 grim -l 1 -g "$geom" ${out}; `
++                + `else ${eScreen ? `timeout 5 grim -l 1 -o ${eScreen} ${out}` : `timeout 5 grim -l 1 ${out}`}; fi`;
++        };
++
++        const notify = `notify-send -a "HyprQuickFrame"`;
++        let cmd;
++        if (root.tempActive) {
++            cmd = `set -e; ${selectCmd} ${captureCmd(true)} | wl-copy --type image/png `
++                + `&& ${notify} "Screenshot Copied" "Copied to clipboard"`;
++        } else {
++            const hookCmd = root.postSaveHookCmd(outputPath);
++            cmd = `set -e; ${mkdirCmd}; ${selectCmd} ${captureCmd(false)} `
++                + `&& wl-copy --type image/png < ${eOutputPath} `
++                + `&& ${notify} -i ${eOutputPath} -h string:image-path:${eOutputPath} `
++                + `"Screenshot Saved" "Saved to ${picturesDir}"`
++                + (hookCmd ? ` && ${hookCmd}` : "");
++        }
++
++        root._fallbackCmd = cmd;
++        // Let the overlay surfaces unmap before slurp grabs the pointer.
++        fallbackStartTimer.start();
++    }
++
++    property string _fallbackCmd: ""
++
++    Timer {
++        id: fallbackStartTimer
++        interval: 150
++        repeat: false
++        onTriggered: {
++            Quickshell.execDetached(["sh", "-c", root._fallbackCmd]);
++            fallbackQuitTimer.start();
++        }
++    }
++
++    Timer {
++        id: fallbackQuitTimer
++        interval: 400
++        repeat: false
++        onTriggered: Qt.quit()
++    }
++
+     property string _pendingCmd: ""
+ 
+     Timer {
+@@ -191,20 +287,24 @@
+     }
+ 
+     Component.onCompleted: {
++        if (root.fallbackMode) {
++            root.runFallback("HQF_FORCE_FALLBACK");
++            return;
++        }
+         connectivityProcess.running = true;
+         readyWatchdog.start();
+     }
+ 
+     Timer {
+         id: readyWatchdog
+-        interval: 4000
++        interval: 2000
+         repeat: false
+         onTriggered: {
+             for (const w of overlayVariants.instances) {
+                 if (w && w.isReady) return;
+             }
+-            console.error("HyprQuickFrame: screencopy never produced a frame; exiting.");
+-            Qt.quit();
++            console.warn("HyprQuickFrame: screencopy never produced a frame.");
++            root.runFallback("screencopy unavailable");
+         }
+     }
+ 
+--- a/components/FreezeScreen.qml
++++ b/components/FreezeScreen.qml
+@@ -52,7 +52,9 @@
+ 
+     ScreencopyView {
+         id: screencopy
+-        captureSource: root.targetScreen
++        // Guard against phantom/stale outputs: capturing a screen that is no
++        // longer Wayland-backed can crash Hyprland <= 0.56.2 (upstream issues).
++        captureSource: Quickshell.screens.includes(root.targetScreen) ? root.targetScreen : null
+         anchors.fill: parent
+         z: -1
+     }
