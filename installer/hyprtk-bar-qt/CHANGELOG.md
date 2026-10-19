@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.41.16 — unreleased
+
+- **Per-widget settings.** Every desktop widget now shows a small cog in its
+  bottom-right corner. Clicking it opens a dedicated settings dialog for that
+  widget (`surface/WidgetSettings.qml`) — placement (position, layer, margins,
+  size, radius, padding, scale, opacity, snap group/axis/order), colours
+  (background / foreground / accent) and the widget's own options (clock faces
+  and formats, weather city/units/fields, visualizer style/colour/source,
+  disk/network/resources/sysinfo toggles).
+  - Edits are written through `backend/hyprtk_bar_qt/barsettings.py` to the same
+    `widgets.<id>` block used by **Settings → Widgets**, so both views stay in
+    sync and the widget updates live (the config file is watched).
+  - The option catalogue lives in `data/WidgetOptions.js`; `WidgetFrame` is
+    shared, so all seven widgets get the cog without per-widget code.
+  - Kept as a centred layer-shell panel (like the bar's Settings) rather than an
+    anchored popup: QtWayland cannot reliably grab a popup from a layer-shell
+    parent, which broke focus for text fields.
+
 ## 0.41.15 — unreleased
 
 - **Fix**: the bar rendered **empty** (no module glyphs at all) on Qt < 6.9 —

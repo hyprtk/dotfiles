@@ -12,6 +12,8 @@ Singleton {
 
     property bool quickSettingsOpen: false
     property bool settingsOpen: false
+    property bool widgetSettingsOpen: false
+    property string widgetSettingsId: ""
     property bool arcMenuOpen: false
     property bool startMenuOpen: false
     property bool themerOpen: false

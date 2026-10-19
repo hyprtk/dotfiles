@@ -71,6 +71,7 @@ ShellRoot {
 
     QuickSettings {}
     Settings {}
+    WidgetSettings {}
     ArcMenu {}
     BarMenu {}
     StartMenu {}

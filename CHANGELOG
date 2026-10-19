@@ -5,6 +5,18 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ## [Unreleased] - 2026-10-16
 
+### Added
+
+- **Per-widget settings dialog (`hyprtk-bar-qt 0.41.16` re-vendored).** Every
+  desktop widget now shows a small cog in its bottom-right corner. Clicking it
+  opens a dedicated layer-shell dialog for that widget — placement, colours and
+  widget-specific options (clock faces/formats, weather fields, visualizer
+  style/source, disk/network/resources/sysinfo toggles). Edits are written
+  through `barsettings.py` to the same `widgets.<id>` block used by
+  **Settings → Widgets**, so both views stay in sync and the widget updates
+  live. The option catalogue lives in `data/WidgetOptions.js`; the shared
+  `WidgetFrame` adds the cog to all seven widgets.
+
 ### Changed
 
 - **The bar installer obtains Quickshell without a vendored copy**

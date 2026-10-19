@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../../theme"
 import "../../data"
+import "../../state"
 
 PanelWindow {
     id: frame
@@ -108,6 +109,12 @@ PanelWindow {
     property color foregroundOverride: "transparent"
     property color accentOverride: "transparent"
 
+    // Per-widget settings dialog (cog, bottom-right) — surface/WidgetSettings.
+    readonly property bool settingsOpen:
+        UiState.widgetSettingsOpen && UiState.widgetSettingsId === frame.widgetId
+    onVisibleChanged: if (!frame.visible && frame.settingsOpen)
+        UiState.widgetSettingsOpen = false
+
     // Widgets follow the bar's *resolved* theme (manual / imported / pywal), so
     // changing the bar theme repaints them too; a per-widget colour overrides it.
     readonly property color widgetBackground: frame._pick(frame.backgroundOverride, Theme.background, Theme.background)
@@ -191,6 +198,43 @@ PanelWindow {
             anchors.fill: parent
             anchors.margins: frame.padding
             spacing: Math.round(8 * frame.effScale)
+        }
+    }
+
+    // Cog — opens this widget's own settings popup (separate from the bar's
+    // Settings panel). Kept subtle until hovered so it does not fight the
+    // widget content, and it sits inside the bottom-right padding corner.
+    Rectangle {
+        id: cog
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: Math.max(1, Math.round(frame.padding - 16))
+        anchors.bottomMargin: Math.max(1, Math.round(frame.padding - 16))
+        width: 16
+        height: 16
+        radius: 5
+        z: 20
+        color: frame.settingsOpen
+            ? Theme.alpha(Theme.accent2, 0.3)
+            : cogHover.hovered ? Theme.alpha(Theme.accent2, 0.2) : "transparent"
+
+        Text {
+            anchors.centerIn: parent
+            text: "\uf013"
+            color: frame.settingsOpen ? Theme.accent : frame.widgetAccent
+            opacity: frame.settingsOpen || cogHover.hovered ? 0.95 : 0.35
+            font.family: BarConfig.glyphFont
+            font.pixelSize: 10
+        }
+
+        HoverHandler { id: cogHover }
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                UiState.widgetSettingsId = frame.widgetId;
+                UiState.widgetSettingsOpen = !frame.settingsOpen;
+            }
         }
     }
 }

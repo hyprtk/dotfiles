@@ -34,6 +34,7 @@ surface/
   Themer.qml                  theming panel (centred layer-shell; Wallpaper grid, bar themes, import)
   About.qml                   about panel (centred layer-shell; bar menu → About)
   DesktopWidgets.qml          instantiates the enabled desktop widgets
+  WidgetSettings.qml          per-widget settings dialog (the cog on each widget)
   StartMenu.qml               start menu (whisker/win7/win11/plasma, favourites, recents)
 theme/
   Theme.qml                   singleton: live pywal + Qt config colours
@@ -50,6 +51,7 @@ data/
   WidgetData.qml              singleton: telemetry for the sampled desktop widgets
   WidgetLayout.qml            singleton: snap-group layout overrides
   WidgetMove.qml              singleton: cursor-polling widget move mode
+  WidgetOptions.js            per-widget settings catalogue for WidgetSettings
   MenuConfig.qml              singleton: start-menu config (Qt config block)
   BarConfig.qml               singleton: module/font/animation/monitors config (Qt config)
   TrayInfo.qml                singleton: tray-hover info (runs the trayinfo backend, formats tooltip lines)
@@ -143,7 +145,10 @@ flyout, a settings panel, a corner arc menu and a Mission Center-style system
 monitor dialog (CPU / Memory / Disks / Network / GPU / Apps, opened from the
 sysmon module), a notification center (bell + history panel), cliphist
 clipboard history, and free-floating desktop widgets (clock / resources / disk /
-network) driven by the Qt bar's own `widgets` config. Theming reads the live
+network) driven by the Qt bar's own `widgets` config. Each widget has a cog in
+its bottom-right corner that opens a per-widget settings dialog (placement,
+colours and widget-specific options), writing to the same `widgets.<id>` block
+as **Settings → Widgets**. Theming reads the live
 pywal palette and its own config's `theme` block, so it matches the desktop.
 
 `make test` runs the toolkit-free backend unit tests. The arc menu, clipboard,
