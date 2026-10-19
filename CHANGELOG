@@ -56,6 +56,9 @@ documented in this file. Dates are in YYYY-MM-DD format.
   never appeared, even though launching it from a terminal (with `~/.local/bin`
   on PATH) worked. The launcher now resolves `qs` via PATH first, then falls back
   to `~/.local/bin/qs`/`quickshell`.
+- **The bar's Nix derivation no longer reports a stale version**
+  (`hyprtk-bar-qt` re-vendored). `derivation.nix` still declared `0.40.0` while
+  the package was at `0.41.15`; it now tracks `__init__.py`.
 
 ## [Unreleased] - 2026-10-15
 
