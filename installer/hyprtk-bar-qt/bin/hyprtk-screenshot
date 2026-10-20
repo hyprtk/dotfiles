@@ -34,6 +34,15 @@ if ! command -v grim >/dev/null 2>&1; then
     exit 127
 fi
 
+# NVIDIA: ScreencopyView/ICC is unreliable there (dual-GPU races, phantom
+# screens, and a one-shot capture can latch direct scanout). Default to the
+# no-freeze grim+slurp path; HQF_FORCE_OVERLAY=1 opts back into the overlay.
+if [ -z "${HQF_FORCE_OVERLAY:-}" ] && [ -z "${HQF_FORCE_FALLBACK:-}" ]; then
+    if [ -e /proc/driver/nvidia/version ] || command -v nvidia-smi >/dev/null 2>&1; then
+        export HQF_FORCE_FALLBACK=1
+    fi
+fi
+
 # Resolve Quickshell without trusting the session PATH: a DM-started Hyprland
 # session often omits ~/.local/bin, where the prebuilt bundle's qs lives.
 qs_bin="$(command -v qs || command -v quickshell || true)"

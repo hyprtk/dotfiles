@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.41.21 — unreleased
+
+- **NVIDIA best-effort screenshots.** `hyprtk-screenshot` detects NVIDIA
+  (`/proc/driver/nvidia/version` or `nvidia-smi`) and defaults to the no-freeze
+  `grim` + `slurp` path, avoiding the known Quickshell ICC/dual-GPU races,
+  phantom-screen crashes and the direct-scanout latch; `HQF_FORCE_OVERLAY=1`
+  opts back into the frozen overlay. When the installer builds Quickshell from
+  source on NVIDIA it now passes `-DSCREENCOPY_ICC=OFF`, forcing wlr-screencopy.
+  Documented in `PLAN-HYPRQUICKFRAME.md`; no NVIDIA hardware was available to
+  validate this best-effort path.
+
 ## 0.41.20 — unreleased
 
 - **Screenshot editor/sharing hardening.** Probes `satty`, `swappy` and `gradia`

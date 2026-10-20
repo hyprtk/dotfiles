@@ -322,9 +322,18 @@ build_quickshell_from_source() {
     local src="$tmp/quickshell" build
     build="$src/build"
     echo ":: Cloning + building Quickshell (needs Qt >= 6.6) ..."
+    # NVIDIA: the ext-image-copy-capture (ICC) screencopy backend has known
+    # dual-GPU races and phantom-screen crashes; wlr-screencopy is what grim
+    # uses and is reliable there. Only affects this source build (packaged and
+    # prebuilt Quickshell use the overlay's no-freeze fallback instead).
+    local cmake_extra=()
+    if [ -e /proc/driver/nvidia/version ] || command -v nvidia-smi >/dev/null 2>&1; then
+        echo ":: NVIDIA detected — building Quickshell without the ICC screencopy backend ..." >&2
+        cmake_extra+=(-DSCREENCOPY_ICC=OFF)
+    fi
     if git clone --depth=1 https://github.com/quickshell-mirror/quickshell.git "$src" >/dev/null 2>&1 \
        && cmake -S "$src" -B "$build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=/usr -DDISTRIBUTOR=hyprtk >/dev/null 2>&1 \
+            -DCMAKE_INSTALL_PREFIX=/usr -DDISTRIBUTOR=hyprtk "${cmake_extra[@]}" >/dev/null 2>&1 \
        && cmake --build "$build" -j"$(nproc 2>/dev/null || echo 2)" >/dev/null 2>&1 \
        && run_root cmake --install "$build" >/dev/null 2>&1; then
         run_root ldconfig >/dev/null 2>&1 || true

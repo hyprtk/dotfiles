@@ -8,7 +8,7 @@
 
 pkgs.stdenv.mkDerivation rec {
   pname = "hyprtk-bar-qt";
-  version = "0.41.20";
+  version = "0.41.21";
   inherit src;
 
   nativeBuildInputs = [ pkgs.makeWrapper ];

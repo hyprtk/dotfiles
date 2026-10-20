@@ -40,6 +40,14 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Changed
 
+- **NVIDIA screenshot best-effort (`hyprtk-bar-qt 0.41.21` re-vendored).** The
+  launcher now detects NVIDIA (`/proc/driver/nvidia/version` or `nvidia-smi`)
+  and defaults to the no-freeze
+  `grim` + `slurp` path, avoiding the known Quickshell ICC/dual-GPU and phantom
+  screen failures; `HQF_FORCE_OVERLAY=1` opts back into the frozen overlay.
+  When the installer builds Quickshell from source on NVIDIA it now passes
+  `-DSCREENCOPY_ICC=OFF`, forcing wlr-screencopy. Documented in the bar's
+  `PLAN-HYPRQUICKFRAME.md` (no NVIDIA hardware available to validate).
 - **Screenshots use the vendored HyprQuickFrame overlay on every GPU.** The
   `Super+Print` / `Super+P` path (`ssdetect.sh`) no longer splits NVIDIA to the
   old grimblast script and AMD/Intel to `hyprquickframe`; it launches
