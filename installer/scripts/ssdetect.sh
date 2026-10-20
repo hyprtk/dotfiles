@@ -3,29 +3,28 @@
 #                                                      
 #  
 # by hyprtk (Kori Tk) (2026)
-# ----------------------------------------------------- 
+# -----------------------------------------------------
+# Open the hyprtk screenshot overlay (vendored HyprQuickFrame).
+#
+# The overlay is a separate one-shot Quickshell instance, so run it detached
+# and return: the keybind must not block while the user selects a region. The
+# launcher handles the no-freeze fallback for NVIDIA/screencopy failures; there
+# is no GPU split here any more.
 
-# Define the scripts to run
-NVIDIA_SCRIPT="$HOME/hyprtk/installer/scripts/screenshot.sh"
-AMDINTEL_SCRIPT="$HOME/hyprtk/installer/scripts/sshot.sh"
+export PATH="$HOME/.local/bin:$PATH"
 
-# Check if NVIDIA GPU is available
-if nvidia-smi --query-gpu=index --format=csv,noheader 2>/dev/null | grep -q .; then
-    echo "NVIDIA GPU detected. Running GPU script..."
-    if [ -x "$NVIDIA_SCRIPT" ]; then
-        bash "$NVIDIA_SCRIPT"
-    else
-        echo "Error: GPU script '$NVIDIA_SCRIPT' not found or not executable."
-        exit 1
-    fi
-else
-    echo "No NVIDIA GPU detected. Running AMDINTEL script..."
-    if [ -x "$AMDINTEL_SCRIPT" ]; then
-        bash "$AMDINTEL_SCRIPT"
-    else
-        echo "Error: CPU script '$AMDINTEL_SCRIPT' not found or not executable."
-        exit 1
-    fi
+LAUNCHER="$HOME/.local/bin/hyprtk-screenshot"
+if [ ! -x "$LAUNCHER" ]; then
+    LAUNCHER="$HOME/hyprtk/installer/hyprtk-bar-qt/bin/hyprtk-screenshot"
 fi
 
-hyprctl dispatch 'hl.dsp.submap("reset")'
+if [ ! -x "$LAUNCHER" ]; then
+    echo "ssdetect: hyprtk-screenshot not found — re-run the bar installer." >&2
+    command -v notify-send >/dev/null 2>&1 \
+        && notify-send -a "Screenshot" "Screenshot unavailable" \
+            "hyprtk-screenshot is not installed."
+    exit 1
+fi
+
+setsid "$LAUNCHER" "$@" >/dev/null 2>&1 < /dev/null &
+hyprctl dispatch 'hl.dsp.submap("reset")' >/dev/null 2>&1 || true

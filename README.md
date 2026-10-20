@@ -72,7 +72,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
 | **Wallpaper** | Matuwall film-strip picker + rofi list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
-| **Screenshots** | grim & slurp |
+| **Screenshots** | HyprQuickFrame overlay (grim + slurp) |
 | **Screen recording** | wf-recorder |
 | **Clipboard** | cliphist |
 | **Screen lock** | hyprlock (swaylock-effects fallback) |

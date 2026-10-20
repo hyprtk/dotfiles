@@ -953,6 +953,16 @@ else
             _warn "hyprlock colors fragment missing — lock screen will use fallback colors"
         fi
         _spin "Installing swappy..." "_installSymLink swappy ~/.config/swappy $SCRIPT_DIR/configs/swappy/ ~/.config" "$LOG_FILE"
+        # HyprQuickFrame reads ~/.config/hyprquickframe/theme.toml. Point it at
+        # the pywal-rendered theme (configs/wal/templates/hyprquickframe-theme.toml)
+        # so the screenshot overlay follows the wallpaper/bar palette.
+        _hqf_theme="$HOME/.cache/wal/hyprquickframe-theme.toml"
+        [ -f "$_hqf_theme" ] || wal -n -i "$SCRIPT_DIR/assets/Wallpapers/default.png" >/dev/null 2>&1
+        if [ -f "$_hqf_theme" ]; then
+            _spin "Installing HyprQuickFrame theme..." "mkdir -p ~/.config/hyprquickframe; _installSymLink hyprquickframe-theme ~/.config/hyprquickframe/theme.toml $_hqf_theme ~/.config/hyprquickframe" "$LOG_FILE"
+        else
+            _warn "HyprQuickFrame theme not rendered — overlay will use its bundled default colours"
+        fi
         _spin "Installing hyprlogout..." "_installSymLink hyprlogout ~/.config/hyprlogout $SCRIPT_DIR/configs/hyprlogout/ ~/.config" "$LOG_FILE"
         _spin "Installing waypaper..." "_installSymLink waypaper ~/.config/waypaper $SCRIPT_DIR/configs/waypaper/ ~/.config" "$LOG_FILE"
         _spin "Installing zshrc..." "_installSymLink zshrc ~/.config/zshrc $SCRIPT_DIR/configs/zshrc/ ~/.config" "$LOG_FILE"

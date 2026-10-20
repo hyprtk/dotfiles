@@ -1,7 +1,7 @@
 # HyprQuickFrame vendoring — plan & requirements
 
-Status: **Phases 1–3 done.** NVIDIA hardware and fractional-scale validation
-still pending.
+Status: **Phases 1–4 done.** Optional bar action deferred; NVIDIA hardware and
+fractional-scale validation still pending.
 Created 2026-10-19.
 
 Goal: ship [HyprQuickFrame](https://github.com/Ronin-CK/HyprQuickFrame) as the
@@ -169,12 +169,20 @@ NVIDIA hardware validation is still required; containers/AMD cannot prove it.
 - [x] Verified on AMD: edit tab present, `HQF_ACTION=edit` active, no share
       toggle without kdeconnect; swappy capture → Ctrl+S → clipboard round-trip.
 
-### Phase 4 — merged wiring + theming
+### Phase 4 — merged wiring + theming  *(implemented)*
 
-- [ ] `ssdetect.sh` → `hyprtk-screenshot` for all GPUs (keep a no-freeze mode).
-- [ ] pywal template for `theme.toml`; symlink/copy on install and theme change.
-- [ ] Optional bar quicklink/IPC action for screenshots.
-- [ ] Package audit: include `grim`; document optional `satty`/`kdeconnect`.
+- [x] `ssdetect.sh` → `hyprtk-screenshot` for all GPUs; detached launch so the
+      keybind returns, then resets the screenshot submap. `sshot.sh` is now an
+      alias. No NVIDIA/grimblast split.
+- [x] pywal template `configs/wal/templates/hyprquickframe-theme.toml`; installer
+      symlinks `~/.config/hyprquickframe/theme.toml` to the rendered file.
+- [ ] Optional bar quicklink/IPC action for screenshots — deferred (the keybind
+      flow is complete; the overlay is a one-shot Quickshell config, not IPC).
+- [x] Package audit: `grim`/`slurp` are in EXTRAS; optional `satty`/`kdeconnect`
+      documented in §2.
+- [x] Verified: template renders under an isolated `XDG_CONFIG_HOME`; the
+      overlay logs the pywal theme path; `ssdetect.sh` returns in ~6 ms and
+      starts `qs -p .../hyprquickframe` detached.
 
 ### Phase 5 — portability + release
 

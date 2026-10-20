@@ -1,0 +1,37 @@
+# HyprQuickFrame theme — hyprtk (pywal).
+#
+# Rendered by `wal` to ~/.cache/wal/hyprquickframe-theme.toml on every
+# wallpaper change; the installer symlinks
+# ~/.config/hyprquickframe/theme.toml to it, so the screenshot overlay follows
+# the pywal palette. Colours accept #RRGGBBAA; pywal palette keys already
+# include the leading hash.
+accent = "{color5}"
+accentText = "{background}"
+dimOpacity = 0.6
+borderRadius = 10
+outlineThickness = 2
+bottomMargin = 60
+animations = true
+# hyprtk's universal editor (satty is not packaged on Debian/Ubuntu/Mint/
+# Fedora/openSUSE); the overlay falls back to any other installed editor.
+annotationTool = "swappy"
+
+[bar]
+background = "{background}c2"
+border = "{color6}40"
+text = "{foreground}"
+shadow = "#80000000"
+
+[toggle]
+shadow = "#80000000"
+edit = "{color6}"
+temp = "{color2}"
+
+[share]
+connected = "{color4}"
+pending = "{color8}"
+errorIcon = "{background}"
+errorBackground = "{color1}"
+
+[hooks]
+postSaveHook = ""

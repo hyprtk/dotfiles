@@ -40,6 +40,16 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Changed
 
+- **Screenshots use the vendored HyprQuickFrame overlay on every GPU.** The
+  `Super+Print` / `Super+P` path (`ssdetect.sh`) no longer splits NVIDIA to the
+  old grimblast script and AMD/Intel to `hyprquickframe`; it launches
+  `hyprtk-screenshot` detached (so the keybind returns and the screenshot submap
+  is reset) and relies on the overlay's no-freeze fallback for unsupported
+  screencopy paths. `sshot.sh` is now an alias.
+- **Screenshot overlay follows pywal.** New
+  `configs/wal/templates/hyprquickframe-theme.toml` is rendered on every
+  wallpaper change; the installer links `~/.config/hyprquickframe/theme.toml` to
+  it (accent/background/foreground, bar colours, swappy editor).
 - **The bar installer obtains Quickshell without a vendored copy**
   (`hyprtk-bar-qt` re-vendored). Distros that do not package Quickshell
   (Debian/Ubuntu/Mint, Fedora/openSUSE/Void) now pick a route by the system Qt

@@ -4,4 +4,5 @@
 #  
 # by hyprtk (Kori Tk) (2026)
 # ----------------------------------------------------- 
-hyprquickframe
+# Alias for the screenshot overlay entrypoint (kept for old keybinds/scripts).
+exec "$(dirname "$0")/ssdetect.sh" "$@"
