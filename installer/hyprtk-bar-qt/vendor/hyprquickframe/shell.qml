@@ -27,7 +27,7 @@ Scope {
     property int connectivityStatus: 0
     property string lastSavedPath: ""
     property string lastTimestamp: ""
-    readonly property real targetMenuWidth: (modes.length - (editActive ? 1 : 0) - (tempActive ? 1 : 0)) * 100 + 8
+    readonly property real targetMenuWidth: (availableModes.length - (editActive ? 1 : 0) - (tempActive ? 1 : 0)) * 100 + 8
     property var theme: themeObj
     property bool capturing: false
     property bool overlaysVisible: true
@@ -38,6 +38,24 @@ Scope {
     readonly property bool fallbackMode: Quickshell.env("HQF_FORCE_FALLBACK") === "1"
     property bool fallbackStarted: false
 
+    // Capabilities probed at startup: the edit tab only exists when an editor
+    // is installed, and the share toggle only when kdeconnect-cli is present.
+    property var editors: []
+    readonly property bool hasEditor: root.editors.length > 0
+    property bool kdeconnectAvailable: false
+    readonly property var availableModes: root.modes.filter(m => m !== "edit" || root.hasEditor)
+    function resolveEditor() {
+        const preferred = root.theme && root.theme.annotationTool ? root.theme.annotationTool : "";
+        if (preferred && root.editors.indexOf(preferred) >= 0)
+            return preferred;
+        if (root.editors.indexOf("satty") >= 0)
+            return "satty";
+        if (root.editors.indexOf("swappy") >= 0)
+            return "swappy";
+        if (root.editors.indexOf("gradia") >= 0)
+            return "gradia";
+        return "";
+    }
     function parseTOML(text) {
         let result = {
         };
@@ -137,7 +155,9 @@ Scope {
             ? `timeout 5 grim -l 1 -g ${eGeom}`
             : (eScreen ? `timeout 5 grim -l 1 -o ${eScreen}` : `timeout 5 grim -l 1`);
 
-        const shareCmd = "kdeconnect-cli -l | grep 'reachable' | grep -oP '[a-f0-9-]{8,}'"
+        const shareCmd = "kdeconnect-cli -l 2>/dev/null "
+            + "| awk '/reachable/ { for (i = 1; i <= NF; i++) "
+            + "if ($i ~ /^[0-9a-f]+$/ && length($i) >= 8) { print $i; exit } }'"
             + " | head -1 | xargs -I{} sh -c"
             + " 'kdeconnect-cli -d {} --share \"$1\" && sleep 0.2"
             + " && kdeconnect-cli -d {} --send-clipboard' --";
@@ -149,9 +169,17 @@ Scope {
             `${mkdirCmd} && ${grimRegion} - `
             + `| satty --filename - --output-filename ${eOutputPath} --early-exit --init-tool brush --copy-command "wl-copy --type image/png" `
             + `; if [ -f ${eOutputPath} ]; then wl-copy --type image/png < ${eOutputPath}${maybeShare(eOutputPath)}; fi`;
+        const swappyCommand =
+            `${mkdirCmd} && ${grimRegion} ${eOutputPath} `
+            + `&& swappy -f ${eOutputPath} -o ${eOutputPath} `
+            + `; if [ -f ${eOutputPath} ]; then wl-copy --type image/png < ${eOutputPath}${maybeShare(eOutputPath)}; fi`;
+        // Hyprland 0.55+ (Lua) rejects `hyprctl dispatch exec -- ...`; launch
+        // the GUI detached instead and don't block the capture pipeline on it.
         const gradiaCommand =
             `${mkdirCmd} && ${grimRegion} ${eOutputPath} `
-            + `&& hyprctl dispatch exec -- "gradia ${eOutputPath} || flatpak run be.alexandervanhee.gradia ${eOutputPath}"`;
+            + `&& setsid sh -c 'command -v gradia >/dev/null 2>&1 `
+            + `&& exec gradia "$1" || exec flatpak run be.alexandervanhee.gradia "$1"' sh ${eOutputPath} `
+            + `>/dev/null 2>&1 < /dev/null &`;
         const defaultSaveCommand =
             `${mkdirCmd} && ${grimRegion} ${eOutputPath} `
             + `&& wl-copy --type image/png < ${eOutputPath}`
@@ -172,9 +200,17 @@ Scope {
         const defaultTempCommand = root.shareActive ? tempShareCommand : tempPlainCommand;
 
         let cmd;
-        if (root.editActive)
-            cmd = theme.annotationTool === "gradia" ? gradiaCommand : sattyCommand;
-        else if (root.tempActive)
+        if (root.editActive) {
+            const editor = root.resolveEditor();
+            if (editor === "gradia")
+                cmd = gradiaCommand;
+            else if (editor === "swappy")
+                cmd = swappyCommand;
+            else if (editor === "satty")
+                cmd = sattyCommand;
+            else
+                cmd = defaultSaveCommand;
+        } else if (root.tempActive)
             cmd = defaultTempCommand;
         else
             cmd = defaultSaveCommand;
@@ -291,8 +327,37 @@ Scope {
             root.runFallback("HQF_FORCE_FALLBACK");
             return;
         }
-        connectivityProcess.running = true;
+        editorProbe.running = true;
+        shareProbe.running = true;
         readyWatchdog.start();
+    }
+
+    Process {
+        id: editorProbe
+        command: ["sh", "-c", "for t in satty swappy gradia; do command -v \"$t\" >/dev/null 2>&1 && echo \"$t\"; done"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const out = this.text.trim();
+                root.editors = out ? out.split(/\s+/) : [];
+                console.log("HyprQuickFrame: editors:", root.editors.join(",") || "none");
+                // Only clear an env-requested edit mode once the probe is final;
+                // a transient empty probe must not cancel HQF_ACTION=edit.
+                if (root.editors.length === 0)
+                    root.editActive = false;
+            }
+        }
+    }
+
+    Process {
+        id: shareProbe
+        command: ["sh", "-c", "command -v kdeconnect-cli >/dev/null 2>&1"]
+        onExited: (code) => {
+            root.kdeconnectAvailable = (code === 0);
+            if (!root.kdeconnectAvailable)
+                root.shareActive = false;
+            else
+                connectivityProcess.running = true;
+        }
     }
 
     Timer {
@@ -536,7 +601,7 @@ Scope {
                 id: segmentedControl
 
                 visible: overlay.isFocused && overlay.isReady && !root.capturing
-                modes: root.modes
+                modes: root.availableModes
                 mode: root.mode
                 tempActive: root.tempActive
                 editActive: root.editActive
@@ -560,7 +625,7 @@ Scope {
             QuickToggle {
                 id: editToggleButton
 
-                visible: overlay.isFocused && !root.capturing
+                visible: overlay.isFocused && !root.capturing && root.hasEditor
                 active: root.editActive
                 icon: "" // "󰏫"
                 imageSource: Qt.resolvedUrl("assets/icons/edit.svg")
@@ -596,7 +661,7 @@ Scope {
             QuickToggle {
                 id: shareToggleButton
 
-                visible: overlay.isFocused && !root.capturing
+                visible: overlay.isFocused && !root.capturing && root.kdeconnectAvailable
                 active: root.shareActive
                 icon: ""
                 imageSource: root.connectivityStatus === 2 ? Qt.resolvedUrl("assets/icons/share-error.svg") : Qt.resolvedUrl("assets/icons/share.svg")

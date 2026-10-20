@@ -7,6 +7,13 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Added
 
+- **HyprQuickFrame editor/share hardening (`hyprtk-bar-qt 0.41.20`
+  re-vendored).** The screenshot overlay now probes `satty`/`swappy`/`gradia`
+  and adds a **swappy** editor mode (satty is not packaged on Debian/Ubuntu/
+  Mint/Fedora/openSUSE); the Edit tab is hidden when no editor exists. The KDE
+  Connect share toggle is hidden without `kdeconnect-cli`, device-id parsing is
+  POSIX `awk`, and gradia launches detached (no `hyprctl dispatch exec --`,
+  broken on Hyprland 0.55+ Lua). Verified swappy capture → save → clipboard.
 - **HyprQuickFrame screenshot overlay (`hyprtk-bar-qt 0.41.19` re-vendored).**
   The Quickshell screenshot utility (MIT, pinned `a411411`) is now vendored and
   launched with `hyprtk-screenshot` (installed to `~/.local/bin`), using

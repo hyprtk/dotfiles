@@ -10,10 +10,17 @@
 The directory `hyprquickframe/` is the upstream tracked tree at that commit plus
 the documented patch set in `vendor/patches/`:
 
-- `hyprquickframe-no-freeze-fallback.patch` — no-freeze `grim` + `slurp`
-  fallback when `ScreencopyView` produces no frame (NVIDIA/screencopy failures),
-  forced via `HQF_FORCE_FALLBACK=1`; guards `captureSource` against stale
-  outputs; falls back to the focused output when geometry is unavailable.
+- `hyprquickframe-hyprtk.patch` — cumulative hyprtk patch:
+  - no-freeze `grim` + `slurp` fallback when `ScreencopyView` produces no frame
+    (NVIDIA/screencopy failures), forced via `HQF_FORCE_FALLBACK=1`; guards
+    `captureSource` against stale outputs; falls back to the focused output when
+    geometry is unavailable;
+  - editor capability probe + `swappy` mode (satty/gradia optional), edit tab
+    hidden when no editor is installed;
+  - share toggle hidden when `kdeconnect-cli` is absent, POSIX `awk` device-id
+    parsing (no GNU `grep -P`);
+  - gradia launch detached without `hyprctl dispatch exec --` (broken on
+    Hyprland 0.55+ Lua dispatch).
 
 Do not edit the vendored tree without regenerating the patch and updating this
 file. Upstreaming these changes is preferred; re-vendor from the new commit once

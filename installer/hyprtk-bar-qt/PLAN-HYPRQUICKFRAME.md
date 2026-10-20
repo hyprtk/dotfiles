@@ -1,7 +1,7 @@
 # HyprQuickFrame vendoring — plan & requirements
 
-Status: **Phase 1 done; Phase 2 implemented** (no-freeze fallback). NVIDIA
-hardware and fractional-scale validation still pending.
+Status: **Phases 1–3 done.** NVIDIA hardware and fractional-scale validation
+still pending.
 Created 2026-10-19.
 
 Goal: ship [HyprQuickFrame](https://github.com/Ronin-CK/HyprQuickFrame) as the
@@ -156,14 +156,18 @@ NVIDIA hardware validation is still required; containers/AMD cannot prove it.
 - [x] `slurp` added to EXTRAS (verified packaged on all six families).
 - [x] Local patch recorded: `vendor/patches/hyprquickframe-no-freeze-fallback.patch`.
 
-### Phase 3 — editor + optional features
+### Phase 3 — editor + optional features  ✅ done
 
-- [ ] Add `swappy` mode (universal in hyprtk; upstream only has satty/gradia).
-- [ ] Hide/disable the edit toggle when no supported editor exists.
-- [ ] Hide/disable share when `kdeconnect-cli` is absent; POSIX-safe parsing.
-- [ ] Fix the gradia path's `hyprctl dispatch exec --` (broken on Hyprland
-      0.55+ Lua dispatch).
-- [ ] Keep the post-save hook, documented as `sh -c` (user config).
+- [x] Add `swappy` mode (universal in hyprtk; upstream only has satty/gradia).
+- [x] Hide/disable the edit toggle when no supported editor exists
+      (`satty`/`swappy`/`gradia` probed at startup; theme preference honoured).
+- [x] Hide/disable share when `kdeconnect-cli` is absent; POSIX-safe `awk`
+      parsing instead of GNU `grep -oP`.
+- [x] Fix the gradia path's `hyprctl dispatch exec --` (broken on Hyprland
+      0.55+ Lua dispatch) — launch detached via `setsid`.
+- [x] Keep the post-save hook, documented as `sh -c` (user config).
+- [x] Verified on AMD: edit tab present, `HQF_ACTION=edit` active, no share
+      toggle without kdeconnect; swappy capture → Ctrl+S → clipboard round-trip.
 
 ### Phase 4 — merged wiring + theming
 

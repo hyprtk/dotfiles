@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.41.20 — unreleased
+
+- **Screenshot editor/sharing hardening.** Probes `satty`, `swappy` and `gradia`
+  at startup and adds a **swappy** mode (the editor hyprtk installs on every
+  distro; satty is absent from Debian/Ubuntu/Mint/Fedora/openSUSE). The Edit tab
+  and floating toggle are hidden when no editor is installed, and
+  `HQF_ACTION=edit` survives the probe.
+- **KDE Connect share is gated on availability.** The share toggle is hidden
+  when `kdeconnect-cli` is missing, and device-id parsing uses POSIX `awk`
+  instead of GNU `grep -oP` (BusyBox/Alpine safe).
+- **Gradia launch fixed** for Hyprland 0.55+ Lua dispatch: no more
+  `hyprctl dispatch exec --`; it is launched detached with `setsid`.
+- Verified on AMD: Edit tab/visibility, swappy capture → Ctrl+S → clipboard
+  round-trip; no share toggle without kdeconnect. Patch set updated in
+  `vendor/patches/hyprquickframe-hyprtk.patch`; Phase 3 marked done in
+  `PLAN-HYPRQUICKFRAME.md`.
+
 ## 0.41.19 — unreleased
 
 - **HyprQuickFrame vendored as the screenshot overlay.** The upstream project
