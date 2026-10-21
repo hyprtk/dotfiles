@@ -17,11 +17,17 @@ Singleton {
         id: cfgFile
         path: root.home + "/.config/hyprtk-bar-qt/config.json"
         watchChanges: true
+        // Load synchronously so the first frame already has the real layout
+        // (otherwise the bar renders Config's fallback modules, then snaps).
+        blockLoading: true
         printErrors: false
         onLoaded: root._parse()
         onTextChanged: root._parse()
         onFileChanged: reload()
     }
+    // Parse synchronously before the first frame (onLoaded is async even with
+    // blockLoading set).
+    Component.onCompleted: root._parse()
     function _parse() {
         try {
             root.cfg = JSON.parse(cfgFile.text()) || ({});

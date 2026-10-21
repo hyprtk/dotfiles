@@ -33,6 +33,9 @@ Singleton {
         id: walFile
         path: root.home + "/.cache/wal/colors.json"
         watchChanges: true
+        // Load synchronously so the first frame uses the real palette instead of
+        // the fallback colours (prevents the boot-time theme flash).
+        blockLoading: true
         printErrors: false
         onLoaded: root._parseWal()
         onTextChanged: root._parseWal()
@@ -52,6 +55,8 @@ Singleton {
         id: cfgFile
         path: root.home + "/.config/hyprtk-bar-qt/config.json"
         watchChanges: true
+        // Load synchronously so the first frame already has the real theme block.
+        blockLoading: true
         printErrors: false
         onLoaded: root._parseCfg()
         onTextChanged: root._parseCfg()
@@ -63,6 +68,13 @@ Singleton {
         } catch (e) {
             root.config = ({});
         }
+    }
+
+    // Parse both files synchronously before the first frame (onLoaded is async
+    // even with blockLoading set).
+    Component.onCompleted: {
+        root._parseWal();
+        root._parseCfg();
     }
 
     readonly property var colors: root.wal.colors || ({})

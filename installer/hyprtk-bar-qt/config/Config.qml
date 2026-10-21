@@ -104,6 +104,10 @@ Singleton {
         onLoaded: root._load()
     }
 
+    // `blockLoading` only blocks calls to file.text(); onLoaded is still async,
+    // so parse once synchronously before the first frame is rendered.
+    Component.onCompleted: root._load()
+
     function _load() {
         let o = ({});
         try {

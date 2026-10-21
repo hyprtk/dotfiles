@@ -76,6 +76,12 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Fixed
 
+- **No more boot-time theme/module flash (`hyprtk-bar-qt 0.41.23`
+  re-vendored).** The bar drew its first frame before its config and pywal
+  palette had loaded, so every login briefly showed the fallback module layout
+  and default colours before snapping to the real ones. `BarConfig`, `Theme`,
+  `MenuConfig`, `Widgets` and `Config` now load and parse synchronously before
+  the first frame; watchers still handle later edits.
 - **Papirus folders now always update to the nearest pywal colour.** The
   wallpaper auto-match (`assets/papirus-icons/scripts/change-icons.sh`, bar copy
   re-vendored) only knew a hard-coded 56-colour subset of the 81 folder colours
