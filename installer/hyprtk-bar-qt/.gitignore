@@ -16,4 +16,4 @@ htmlcov/
 
 # Dev-only working notes (not shipped).
 PARITY.md
-PLAN.md
+PLAN*.md

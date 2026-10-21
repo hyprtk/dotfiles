@@ -72,7 +72,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
 | **Wallpaper** | Matuwall film-strip picker + rofi list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
-| **Screenshots** | HyprQuickFrame overlay (grim + slurp) |
+| **Screenshots** | HyprQuickFrame overlay — region/window/full/temp, swappy/satty editor, optional KDE share, pywal theme |
 | **Screen recording** | wf-recorder |
 | **Clipboard** | cliphist |
 | **Screen lock** | hyprlock (swaylock-effects fallback) |
@@ -131,6 +131,23 @@ All theming (bar theme, pywal, rofi, icons, lock screen, SDDM/GRUB) is changed f
 | `Super + C` | Color picker (hyprpicker) |
 | `Super + Ctrl + Q` | Power menu (hyprlogout) |
 | `Super + R` | Reload Hyprland config |
+
+### Screenshots
+
+`Super + Print` / `Super + P` opens the vendored **HyprQuickFrame** overlay:
+
+- `r` region, `w` window, `s` full screen, `t` copy-only, `e` edit; `Esc`/`q` quits.
+- Saves to `~/Pictures/Screenshots`, copies to the clipboard and notifies
+  (`XDG_PICTURES_DIR` is honoured).
+- Editor: **swappy** (installed on every hyprtk distro) or satty; the Edit tab
+  appears only when one is available.
+- KDE Connect sharing is optional; the toggle is hidden without
+  `kdeconnect-cli`.
+- **NVIDIA**: defaults to a no-freeze `grim` + `slurp` capture to avoid the known
+  Quickshell screencopy/ICC failures; `HQF_FORCE_OVERLAY=1` opts into the frozen
+  overlay. Source-built Quickshell on NVIDIA disables the ICC backend.
+- The overlay follows pywal via `~/.config/hyprquickframe/theme.toml`, rendered
+  from this repo's wal template.
 
 ### Desktop widgets
 

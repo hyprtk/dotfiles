@@ -104,6 +104,7 @@ bin/hyprtk-bar-qt-themer-toggle    hotkey helper (qs ipc call themer toggle)
 bin/hyprtk-bar-qt-widget-move  desktop-widget move start/stop (Hyprland bind)
 bin/hyprtk-screenshot         vendored HyprQuickFrame overlay launcher
 vendor/hyprquickframe/        vendored screenshot overlay (see .SOURCE.md)
+vendor/patches/               local patches applied to the vendored overlay
 Makefile                      make test / run / install
 install.sh                    copy into the Quickshell config dir
 ```
@@ -139,6 +140,29 @@ hyprtk-bar-qt                # launcher on ~/.local/bin
 # or: qs -c hyprtk-bar-qt
 ```
 
+## Screenshots
+
+`hyprtk-screenshot` (installed to `~/.local/bin`) launches the vendored
+**HyprQuickFrame** overlay:
+
+- **Modes**: `r` region, `w` window, `s` full screen, `t` copy-only, `e` edit;
+  `Esc`/`q` quits.
+- **Output**: saves to `~/Pictures/Screenshots`, copies to the clipboard and
+  notifies; the destination honours `XDG_PICTURES_DIR`.
+- **Editor**: `satty`, `swappy` (installed on every hyprtk distro) or `gradia`;
+  the Edit tab only appears when one is available.
+- **KDE Connect**: optional sharing; the toggle is hidden without
+  `kdeconnect-cli`.
+- **NVIDIA**: the launcher defaults to a no-freeze `grim` + `slurp` capture to
+  avoid the known Quickshell ICC/screencopy failures; `HQF_FORCE_OVERLAY=1` opts
+  into the frozen overlay. Source builds of Quickshell on NVIDIA disable ICC.
+- **Theme**: pywal, via `~/.config/hyprquickframe/theme.toml` (rendered from the
+  dotfiles' wal template).
+
+Requirements: `grim`, `slurp`, `wl-clipboard`, `libnotify`; the editors and
+KDE Connect are optional. The source is pinned in `vendor/hyprquickframe/`
+(provenance in `.SOURCE.md`, local changes in `vendor/patches/`).
+
 ## Status
 
 Working bar: workspaces, tasklist, tray, clock, CPU/memory sparklines and a
@@ -146,12 +170,12 @@ network-rate graph (all fed by the Python backend), plus a quick-settings
 flyout, a settings panel, a corner arc menu and a Mission Center-style system
 monitor dialog (CPU / Memory / Disks / Network / GPU / Apps, opened from the
 sysmon module), a notification center (bell + history panel), cliphist
-clipboard history, and free-floating desktop widgets (clock / resources / disk /
-network) driven by the Qt bar's own `widgets` config. Each widget has a cog in
-its bottom-right corner that opens a per-widget settings dialog (placement,
-colours and widget-specific options), writing to the same `widgets.<id>` block
-as **Settings → Widgets**. Theming reads the live
-pywal palette and its own config's `theme` block, so it matches the desktop.
+clipboard history, and seven free-floating desktop widgets (clock, weather,
+visualizer, disk, network, resources, system info) driven by the Qt bar's own
+`widgets` config. Each widget has a cog for its own settings dialog; widgets can
+snap into groups, the Disk widget has an optional two-column layout, and
+typography stays consistent across snapped cells. Theming reads the live pywal
+palette and its own config's `theme` block, so it matches the desktop.
 
 `make test` runs the toolkit-free backend unit tests. The arc menu, clipboard,
 settings and themer panels can be bound to hotkeys with
@@ -178,5 +202,5 @@ HYPRTK_BAR_QT_NOTIFICATIONS=0 hyprtk-bar-qt
 
 (also settable via `notifications.enabled=false` in the Qt config).
 
-Roadmap (see `CHANGELOG.md`): arc menu, graph widgets, per-display desktop
-widgets, MPRIS media control, and theming to full visual parity.
+Roadmap (see `CHANGELOG.md`): per-display desktop widgets, MPRIS media-control
+polish, and further theme parity.

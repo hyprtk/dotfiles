@@ -40,6 +40,10 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Changed
 
+- **Documentation + planning-note housekeeping.** The README documents the
+  HyprQuickFrame screenshot overlay (modes, save/copy, swappy/satty, optional
+  KDE Connect, pywal theme and the NVIDIA no-freeze fallback). `PLAN*.md` files
+  are gitignored and no longer published; the vendored bar plan was removed.
 - **NVIDIA screenshot best-effort (`hyprtk-bar-qt 0.41.21` re-vendored).** The
   launcher now detects NVIDIA (`/proc/driver/nvidia/version` or `nvidia-smi`)
   and defaults to the no-freeze
@@ -72,6 +76,18 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Fixed
 
+- **Papirus folders now always update to the nearest pywal colour.** The
+  wallpaper auto-match (`assets/papirus-icons/scripts/change-icons.sh`, bar copy
+  re-vendored) only knew a hard-coded 56-colour subset of the 81 folder colours
+  the theme ships, so neutrals drifted to saturated pastels (`#81787E` → a
+  pink) instead of `grey`; it also compared the *light* Papirus hexes while
+  recolouring `Papirus-Dark` and matched in plain RGB. On top of that it skipped
+  the update whenever a cached "last colour" matched, which went stale the
+  moment a colour was applied from the Icons page or a per-colour helper script
+  — old folders then stayed in place across wallpaper changes. The script now
+  builds the palette from the theme's own folder SVGs (all 81, dark hexes),
+  matches in CIE L\*a\*b\*, and reads the colour actually linked in the theme
+  instead of a cache. `test-color.sh` delegates to the same matcher.
 - **Snapped desktop widgets no longer get oversized type (`hyprtk-bar-qt
   0.41.17` re-vendored).** Snap groups scale a member's content to fill the
   uniform cell, so narrower widgets (Disk/Network at 300 px vs a ~430 px cell)

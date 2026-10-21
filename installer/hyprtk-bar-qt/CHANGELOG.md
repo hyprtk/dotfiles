@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.41.22 — unreleased
+
+- **Documentation + housekeeping.** README documents the vendored
+  HyprQuickFrame screenshots (modes, save/clipboard, swappy/satty editors,
+  optional KDE Connect, pywal theme, NVIDIA no-freeze fallback and
+  `HQF_FORCE_OVERLAY=1`), the seven desktop widgets, snap groups, the Disk
+  two-column option and the current roadmap.
+- **Planning notes are no longer shipped.** `PLAN*.md` is gitignored and the
+  vendored `PLAN-HYPRQUICKFRAME.md` is untracked; plans remain local dev notes
+  only.
+
 ## 0.41.21 — unreleased
 
 - **NVIDIA best-effort screenshots.** `hyprtk-screenshot` detects NVIDIA
