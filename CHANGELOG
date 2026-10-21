@@ -7,6 +7,13 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Added
 
+- **Per-distro fastfetch ASCII logos.** Added `ascii.txt` art for ArchBang,
+  ArchMan and Kiro, plus the generic Debian/Ubuntu, Fedora, openSUSE, Void,
+  Alpine, Gentoo and NixOS families — all in the same braille-art format as the
+  Arch logo. `~/.config/fastfetch` is now a real directory (like
+  `~/.config/btop`) with `ascii.txt` linked to the detected distro's art and
+  `config.jsonc` linked to the repo; root's copy gets the same art. Arch remains
+  the fallback.
 - **HyprQuickFrame editor/share hardening (`hyprtk-bar-qt 0.41.20`
   re-vendored).** The screenshot overlay now probes `satty`/`swappy`/`gradia`
   and adds a **swappy** editor mode (satty is not packaged on Debian/Ubuntu/

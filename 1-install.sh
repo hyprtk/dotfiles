@@ -623,7 +623,7 @@ source "$SCRIPT_DIR/installer/scripts/library.sh"
 # Export the library helpers AND the pkgmanager primitives they call, so the
 # `bash -c` subshells used by _spin can resolve them (exported functions do not
 # carry their own dependencies).
-export -f _installSymLink _isInstalledPacman _isInstalledYay _installPackagesPacman _installPackagesYay 2>/dev/null
+export -f _installSymLink _installFastfetch _isInstalledPacman _isInstalledYay _installPackagesPacman _installPackagesYay 2>/dev/null
 export -f hyprtk_detect_pm hyprtk_pm_name hyprtk_run_root pkg_is_installed pkg_install pkg_remove aur_helper aur_available aur_install 2>/dev/null
 _ok "Library loaded"
 
@@ -913,7 +913,7 @@ else
             _spin "Running pre_hypr_symlink..." "pre_hypr_symlink" "$LOG_FILE"
         fi
         _spin "Installing hypr..." "_installSymLink hypr ~/.config/hypr $SCRIPT_DIR/hypr/ ~/.config" "$LOG_FILE"
-        _spin "Installing fastfetch..." "_installSymLink fastfetch ~/.config/fastfetch $SCRIPT_DIR/configs/fastfetch/ ~/.config" "$LOG_FILE"
+        _spin "Installing fastfetch..." "_installFastfetch" "$LOG_FILE"
         # Fallback locker config. hyprlock is preferred (hypr/scripts/lock.sh
         # picks hyprlock when present); this swaylock config is only used when
         # the hyprlock package is absent. swaylock-effects is AUR-only, so most
@@ -1067,6 +1067,8 @@ else
         # configs/root/ holds hidden root-home files (.bashrc, .config, ...).
         # Copy its contents into /root/ — never glob `configs/root/*` onto `/`.
         sudo cp -rf "$SCRIPT_DIR"/configs/root/. /root/ 2>/dev/null || true
+        # Root reads a real ascii.txt, so give it the same distro logo.
+        _installFastfetchLogoRoot 2>/dev/null || true
         log "Root config copied"
         _ok "Root user config copied"
 

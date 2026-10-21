@@ -84,3 +84,30 @@ _installSymLink() {
         echo "New symlink ${linksource} -> ${symlink} created."
     fi
 }
+
+# ------------------------------------------------------
+# Install fastfetch with the per-distro logo
+# ------------------------------------------------------
+# Canonical Arch art lives in configs/fastfetch/ascii.txt; a distro overlay may
+# ship its own at distro/<distro>/configs/fastfetch/ascii.txt. ~/.config/fastfetch
+# is a real directory (like ~/.config/btop) so ascii.txt can point at the right
+# art without writing into the repo clone.
+_installFastfetch() {
+    local cfg="$HOME/.config/fastfetch"
+    local art="$SCRIPT_DIR/distro/$DISTRO/configs/fastfetch/ascii.txt"
+    [ -f "$art" ] || art="$SCRIPT_DIR/configs/fastfetch/ascii.txt"
+    if [ -L "$cfg" ]; then
+        rm -f -- "$cfg"
+    fi
+    mkdir -p "$cfg"
+    ln -sfn "$SCRIPT_DIR/configs/fastfetch/config.jsonc" "$cfg/config.jsonc"
+    ln -sfn "$art" "$cfg/ascii.txt"
+}
+
+# Root keeps a real config copy, so overwrite its ascii.txt with the same art.
+_installFastfetchLogoRoot() {
+    local art="$SCRIPT_DIR/distro/$DISTRO/configs/fastfetch/ascii.txt"
+    [ -f "$art" ] || art="$SCRIPT_DIR/configs/fastfetch/ascii.txt"
+    hyprtk_run_root install -d -m 755 /root/.config/fastfetch 2>/dev/null || true
+    hyprtk_run_root install -m 644 "$art" /root/.config/fastfetch/ascii.txt
+}
