@@ -23,7 +23,10 @@ RowLayout {
 
     // Register our window-relative position so the dialog lines up under us.
     function _register() { BarAnchors.setSysmon(mapToItem(null, 0, 0).x, width, root.screenName); }
-    Component.onCompleted: _register()
+    // Layout-time calls can run before the panel window exists, when
+    // mapToItem(null, …) reports a bogus (negative) x that never gets refreshed
+    // because x/width stop changing. Re-register once the window is up.
+    Component.onCompleted: Qt.callLater(_register)
     onXChanged: _register()
     onWidthChanged: _register()
     onScreenNameChanged: _register()
@@ -55,8 +58,12 @@ RowLayout {
     TapHandler {
         acceptedButtons: Qt.LeftButton
         onTapped: {
-            if (root.monitorEnabled)
+            if (root.monitorEnabled) {
+                // Refresh the anchor at click time: the window is guaranteed to
+                // exist here, so the dialog follows the module on this build.
+                root._register();
                 UiState.sysMonitorOpen = true;
+            }
         }
     }
     HoverHandler {

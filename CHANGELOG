@@ -147,6 +147,29 @@ documented in this file. Dates are in YYYY-MM-DD format.
   (`hyprtk-bar-qt` re-vendored). `derivation.nix` still declared `0.40.0` while
   the package was at `0.41.15`; it now tracks `__init__.py`.
 
+### Fixed
+
+- **Linux Mint (and every non-Arch family) now gets its real fastfetch logo.**
+  `_spin` runs each step through `bash -c`, but `DISTRO` was only exported inside
+  the Arch-family `installer/steps/<distro>.sh` block. On Debian/Ubuntu/Mint/
+  Fedora/openSUSE/Void/Alpine/Gentoo/NixOS the helper therefore saw an empty
+  `DISTRO` and fell back to the canonical `configs/fastfetch/ascii.txt` — the
+  Arch logo. `DISTRO` and the new `DISTRO_ID` (raw os-release ID) are now
+  exported unconditionally after validation.
+- **Linux Mint has its own ASCII art.** Added
+  `distro/linuxmint/configs/fastfetch/ascii.txt` (the Mint roundel) and made the
+  art lookup try `distro/$DISTRO_ID` before the family overlay, so Mint no longer
+  inherits the Debian swirl. Other Debian-family distros still use the generic
+  Debian art.
+- **System Monitor opens under its module on every screen size
+  (`hyprtk-bar-qt 0.41.24` re-vendored).** The dialog used a fixed 920 px width
+  anchored at the module's left edge; when that overflowed the 75%-width bar pill
+  the on-screen clamp shoved the panel to the far-left edge (under the start
+  button). It now sizes to the screen, lines its right edge up with the module
+  for right-side placements, falls back to the bar's right edge when the module
+  never registered, and the module re-registers its anchor at click time so a
+  stale first-frame position cannot persist.
+
 ## [Unreleased] - 2026-10-15
 
 ### Added

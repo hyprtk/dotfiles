@@ -26,14 +26,38 @@ PanelWindow {
     property var targetScreen: null
     screen: Screens.byName(BarAnchors.sysmonScreen) || targetScreen
 
-    readonly property real screenW: win.screen ? win.screen.width : 0
+    // Fall back to the focused screen for sizing if `screen` has not resolved
+    // yet, so the margins never compute against a zero width (which would put
+    // the panel at the far-left, under the start button).
+    readonly property var screenRef: win.screen || Screens.focused()
+    readonly property real screenW: win.screenRef ? win.screenRef.width : 0
+    readonly property real screenH: win.screenRef ? win.screenRef.height : 0
     readonly property var insets: BarGeom.insets(win.screenW)
-    // Left edge under the sysmon module, clamped inside the bar's extent so the
-    // panel never spills past the bar/screen boundary.
-    readonly property real leftMargin: Math.max(
-        win.insets.left,
-        Math.min(win.insets.left + Math.max(0, BarAnchors.sysmonX),
-                 win.screenW - win.insets.right - win.implicitWidth))
+
+    // Screen-relative x of the sysmon module (-1 when it never registered).
+    readonly property real anchorX: (isFinite(BarAnchors.sysmonX) && BarAnchors.sysmonX >= 0)
+        ? win.insets.left + BarAnchors.sysmonX : -1
+    // Fit the panel inside the bar's horizontal extent. The sysmon module is
+    // normally in the right section, so a fixed 920px panel anchored at its
+    // left edge would overflow a 75%-width bar and get clamped to the left
+    // edge; line the panel's right edge up with the module instead.
+    readonly property real availW: win.screenW > 0
+        ? Math.max(640, win.screenW - win.insets.left - win.insets.right - 12) : 920
+    readonly property real availH: win.screenH > 0
+        ? Math.max(360, win.screenH - BarConfig.barHeight - BarConfig.gapOut - BarConfig.gapIn - 18) : 600
+    readonly property real leftMargin: {
+        if (win.screenW <= 0)
+            return 0;
+        const minX = Math.max(0, win.insets.left);
+        const maxX = Math.max(minX, win.screenW - win.insets.right - win.implicitWidth);
+        if (win.anchorX < 0)
+            return maxX;
+        const moduleRight = win.anchorX + Math.max(24, BarAnchors.sysmonW);
+        const barRightHalf = win.anchorX >= minX + BarGeom.width(win.screenW) / 2;
+        if (barRightHalf)
+            return Math.min(maxX, Math.max(minX, moduleRight - win.implicitWidth));
+        return Math.min(Math.max(win.anchorX, minX), maxX);
+    }
 
     anchors.top: BarConfig.barPosition === "top"
     anchors.bottom: BarConfig.barPosition === "bottom"
@@ -41,8 +65,8 @@ PanelWindow {
     margins.top: BarConfig.barPosition === "top" ? BarConfig.barHeight + BarConfig.gapOut + BarConfig.gapIn + 6 : 0
     margins.bottom: BarConfig.barPosition === "bottom" ? BarConfig.barHeight + BarConfig.gapOut + BarConfig.gapIn + 6 : 0
     margins.left: win.leftMargin
-    implicitWidth: 920
-    implicitHeight: 600
+    implicitWidth: Math.min(920, win.availW)
+    implicitHeight: Math.min(600, win.availH)
 
     IpcHandler {
         target: "sysmon"

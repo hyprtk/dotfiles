@@ -405,6 +405,7 @@ echo ""
 
 # ── Distro detection ──────────────────────────────────────────────────────
 DISTRO=""
+DISTRO_ID=""
 DISTRO_NAME=""
 DISTRO_VERSION=""
 
@@ -420,6 +421,10 @@ _detect_distro() {
         distro_pretty=$(grep -E '^PRETTY_NAME=' /etc/os-release | head -1 | cut -d= -f2 | tr -d "\"'")
         distro_like=$(grep -E '^ID_LIKE=' /etc/os-release | head -1 | cut -d= -f2 | tr -d "\"'")
     fi
+
+    # Raw os-release ID (e.g. linuxmint), kept for per-distro art overlays that
+    # do not map 1:1 onto an install family key.
+    DISTRO_ID="$distro_id"
 
     # Handle "Hyprtk on (Arch Linux)" format — extract the distro name
     local clean_name="${distro_pretty:-$distro_name}"
@@ -578,6 +583,7 @@ fi
 
 # Normalise: accept "*-dots" style input
 DISTRO="${DISTRO%-dots}"
+DISTRO_ID="${DISTRO_ID:-$DISTRO}"
 DISTRO_FAMILY="$(_distro_family "$DISTRO")"
 
 # Validate
@@ -585,6 +591,12 @@ case "$DISTRO" in
     arch|archbang|archcraft|archman|bslx|cachy|endeavour|garuda|kiro|manjaro|reborn|debian|fedora|suse|void|alpine|gentoo|nixos|unknown) ;;
     *) die "unsupported distro '$DISTRO'" ;;
 esac
+
+# DISTRO/DISTRO_ID drive helpers that run inside `_spin`'s `bash -c` subshell
+# (e.g. _installFastfetch). Export them unconditionally: the Arch-family steps
+# block below used to be the only exporter, so Debian/Mint installs ran the
+# fastfetch helper with an empty DISTRO and fell back to the Arch logo.
+export DISTRO DISTRO_ID
 
 _ok "Target distro: $DISTRO_NAME ($DISTRO/$DISTRO_FAMILY)"
 
@@ -623,7 +635,7 @@ source "$SCRIPT_DIR/installer/scripts/library.sh"
 # Export the library helpers AND the pkgmanager primitives they call, so the
 # `bash -c` subshells used by _spin can resolve them (exported functions do not
 # carry their own dependencies).
-export -f _installSymLink _installFastfetch _isInstalledPacman _isInstalledYay _installPackagesPacman _installPackagesYay 2>/dev/null
+export -f _installSymLink _fastfetch_art _installFastfetch _isInstalledPacman _isInstalledYay _installPackagesPacman _installPackagesYay 2>/dev/null
 export -f hyprtk_detect_pm hyprtk_pm_name hyprtk_run_root pkg_is_installed pkg_install pkg_remove aur_helper aur_available aur_install 2>/dev/null
 _ok "Library loaded"
 

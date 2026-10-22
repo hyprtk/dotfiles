@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.41.24 — unreleased
+
+- **System Monitor opens under the sysmon module on every screen size.** The
+  dialog used a fixed 920px width anchored at the module's left edge; when that
+  overflowed the bar's 75%-width pill the clamp shoved the panel to the far-left
+  edge (under the start button). It now sizes to the screen and lines its right
+  edge up with the module (left edge when the module is on the left half), and
+  falls back to the bar's right edge if the module never registered. The module
+  also re-registers its anchor at click time, so a stale first-frame position
+  can no longer persist.
+
 ## 0.41.23 — unreleased
 
 - **No more boot-time theme/module flash.** The bar's first frame was drawn
