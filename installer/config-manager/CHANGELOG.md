@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.2 — 2026-10-23 (live monitor output/mode pickers)
+
+- New `monitors.list` RPC: reads every connected output and its
+  `availableModes` from `hyprctl -j monitors all` — the same source
+  nwg-displays uses — normalizes them, removes duplicates and marks active
+  outputs.
+- Monitors page now offers an **Output** dropdown (all connected outputs with
+  make/model/serial, active/inactive and an `auto` entry) and a **Mode**
+  dropdown listing every available WxH@Hz for the selected output. `preferred`
+  and existing custom modes are preserved; without Hyprland the page falls back
+  to the old text fields.
+- 60 tests (monitor parsing/dedup/current-mode coverage).
+
 ## 0.2.1 — 2026-10-23 (bar-qt integration)
 
 - The UI now lives in `surface/App.qml`, shared by two window roots:

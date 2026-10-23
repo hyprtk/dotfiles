@@ -11,6 +11,7 @@ Item {
     property var model: ({})
     property var schemaData: ({})
     property var pending: ({})
+    property var monitorData: []
     signal change(string path, var value, string kind)
     signal itemChange(string key, var descriptor)
 
@@ -123,6 +124,118 @@ Item {
         return (item.fields || []).map(field => ({
             file: item.file, line: item.line, call: call, field: field
         }));
+    }
+
+    // ── live monitor data (hyprctl, same source as nwg-displays) ───────
+    function monitorList() {
+        return page.monitorData || [];
+    }
+    function monitorByName(name) {
+        for (const mon of page.monitorList())
+            if (mon.name === name)
+                return mon;
+        return null;
+    }
+    function itemFieldValue(item, path) {
+        const p = page.pend("field:" + item.file + ":" + item.line + ":" + path);
+        if (p)
+            return p.value;
+        const field = (item.fields || []).find(f => f.path === path);
+        return field ? field.value : "";
+    }
+    function stageItemField(item, path, value, type) {
+        page.stageField(item.file, item.line, { path: path, type: type || "str" }, value, "monitor");
+    }
+
+    function outputValues(item) {
+        const values = [""];
+        for (const mon of page.monitorList())
+            if (values.indexOf(mon.name) < 0)
+                values.push(mon.name);
+        const current = String(page.itemFieldValue(item, "output") || "");
+        if (current && values.indexOf(current) < 0)
+            values.push(current);
+        return values;
+    }
+    function outputLabels(item) {
+        return page.outputValues(item).map(value => {
+            if (value === "")
+                return "auto (all outputs)";
+            const mon = page.monitorByName(value);
+            if (!mon)
+                return value + " (configured)";
+            const desc = mon.description ? " — " + mon.description : "";
+            return value + desc + (mon.active ? "" : " (inactive)");
+        });
+    }
+    function outputIndex(item) {
+        const index = page.outputValues(item).indexOf(String(page.itemFieldValue(item, "output") || ""));
+        return index < 0 ? 0 : index;
+    }
+    function stageOutput(item, index) {
+        page.stageItemField(item, "output", page.outputValues(item)[index], "str");
+    }
+
+    function selectedMonitor(item) {
+        const name = String(page.itemFieldValue(item, "output") || "");
+        if (name)
+            return page.monitorByName(name);
+        const list = page.monitorList();
+        for (const mon of list)
+            if (mon.active)
+                return mon;
+        return list.length > 0 ? list[0] : null;
+    }
+    function sameMode(a, b) {
+        const re = /^(\d+)x(\d+)@([0-9.]+)$/;
+        const ma = re.exec(String(a));
+        const mb = re.exec(String(b));
+        if (!ma || !mb)
+            return String(a) === String(b);
+        return ma[1] === mb[1] && ma[2] === mb[2]
+               && Math.abs(parseFloat(ma[3]) - parseFloat(mb[3])) < 0.01;
+    }
+    function modeValues(item) {
+        const values = ["preferred"];
+        const mon = page.selectedMonitor(item);
+        if (mon) {
+            for (const mode of mon.modes || []) {
+                let duplicate = false;
+                for (const value of values)
+                    if (page.sameMode(value, mode.value)) { duplicate = true; break; }
+                if (!duplicate)
+                    values.push(mode.value);
+            }
+        }
+        const current = String(page.itemFieldValue(item, "mode") || "");
+        if (current) {
+            let duplicate = false;
+            for (const value of values)
+                if (page.sameMode(value, current)) { duplicate = true; break; }
+            if (!duplicate)
+                values.push(current);
+        }
+        return values;
+    }
+    function modeLabels(item) {
+        const mon = page.selectedMonitor(item);
+        return page.modeValues(item).map(value => {
+            if (value === "preferred")
+                return "preferred";
+            const mode = mon ? (mon.modes || []).find(m => page.sameMode(m.value, value)) : null;
+            return mode ? mode.label : value;
+        });
+    }
+    function modeIndex(item) {
+        const current = String(page.itemFieldValue(item, "mode") || "");
+        const values = page.modeValues(item);
+        for (let i = 0; i < values.length; i++)
+            if (page.sameMode(values[i], current))
+                return i;
+        return 0;
+    }
+    function stageMode(item, index) {
+        page.stageItemField(item, "mode", page.modeValues(item)[index], "str");
     }
 
     function requireValue(item) {
@@ -411,8 +524,44 @@ Item {
                             font.pixelSize: Theme.scaled(12)
                             font.bold: true
                         }
+                        RowLayout {
+                            visible: page.monitorData.length > 0
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.preferredWidth: 130
+                                text: "Output"
+                                color: Theme.foreground
+                                font.pixelSize: Theme.scaled(11)
+                            }
+                            TComboBox {
+                                Layout.fillWidth: true
+                                model: page.outputLabels(monCard.item)
+                                currentIndex: page.outputIndex(monCard.item)
+                                onActivated: i => page.stageOutput(monCard.item, i)
+                            }
+                        }
+                        RowLayout {
+                            visible: page.monitorData.length > 0
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                Layout.preferredWidth: 130
+                                text: "Mode"
+                                color: Theme.foreground
+                                font.pixelSize: Theme.scaled(11)
+                            }
+                            TComboBox {
+                                Layout.fillWidth: true
+                                model: page.modeLabels(monCard.item)
+                                currentIndex: page.modeIndex(monCard.item)
+                                onActivated: i => page.stageMode(monCard.item, i)
+                            }
+                        }
                         Repeater {
-                            model: page.cardFields(monCard.item)
+                            model: page.monitorData.length > 0
+                                   ? page.cardFields(monCard.item).filter(f => f.field.path !== "output" && f.field.path !== "mode")
+                                   : page.cardFields(monCard.item)
                             delegate: FieldRow {
                                 Layout.fillWidth: true
                                 field: modelData.field

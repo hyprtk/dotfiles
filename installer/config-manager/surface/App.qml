@@ -17,6 +17,7 @@ Item {
     property var model: ({})
     property var schemaData: ({})
     property var barValues: ({})
+    property var monitorData: []
     property var pending: ({})
     property var targetModel: ({})
     property string targetFile: ""
@@ -73,6 +74,8 @@ Item {
                                 + r.animation_order.length + " animations");
         } else if (method === "bar.get") {
             barValues = r;
+        } else if (method === "monitors.list") {
+            monitorData = (r && r.monitors) || [];
         } else if (method === "module.dump") {
             if (r && r.model) {
                 targetModel = r.model;
@@ -91,6 +94,7 @@ Item {
             call("schema");
             call("dump");
             call("bar.get");
+            call("monitors.list");
             if (targetFile)
                 call("module.dump", { file: targetFile });
         }
@@ -154,6 +158,7 @@ Item {
         call("schema");
         call("dump");
         call("bar.get");
+        call("monitors.list");
         if (targetFile)
             call("module.dump", { file: targetFile });
     }
@@ -283,6 +288,7 @@ Item {
                         model: app.model
                         schemaData: app.schemaData
                         pending: app.pending
+                        monitorData: app.monitorData
                         onChange: (path, value, kind) => app.setPending(path, value, kind)
                         onItemChange: (key, descriptor) => app.stage(key, descriptor)
                     }

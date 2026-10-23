@@ -16,7 +16,7 @@ import traceback
 from pathlib import Path
 from typing import Any, Callable
 
-from . import lua_edit, pages, schema, state, verify
+from . import lua_edit, monitors, pages, schema, state, verify
 from .lua_probe import ProbeError, discover, lua_binary, probe
 from .paths import find_hypr_dir
 from .writers import bar as bar_writer
@@ -151,6 +151,10 @@ def _reload(params: dict) -> dict:
     if proc.returncode != 0:
         raise RpcError((proc.stderr or proc.stdout or "hyprctl reload failed").strip())
     return {"ok": True, "output": (proc.stdout or "").strip()}
+
+
+def _monitors_list(params: dict) -> dict:
+    return monitors.list_monitors()
 
 
 def _module_dump(params: dict) -> dict:
@@ -312,6 +316,7 @@ HANDLERS: dict[str, Callable[[dict], Any]] = {
     "apply": _apply,
     "schema": _schema,
     "module.dump": _module_dump,
+    "monitors.list": _monitors_list,
     "file.read": _file_read,
     "file.save": _file_save,
     "reload": _reload,

@@ -7,6 +7,12 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Added
 
+- **Live monitor output/mode pickers (`config-manager 0.2.2` re-vendored).**
+  The Monitors page now lists every connected output and, per output, all
+  available `WxH@Hz` modes read from `hyprctl -j monitors all` (the same source
+  nwg-displays uses). `preferred` and custom modes are preserved; the app
+  remains text-based when Hyprland is not running.
+
 - **Hyprland Settings app vendored and installed (`config-manager 0.2.1`).**
   The settings GUI from `hyprtk-config-manager` is now vendored under
   `installer/config-manager` and installed by the main installer after the bar,
