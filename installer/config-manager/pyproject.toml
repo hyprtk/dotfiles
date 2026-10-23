@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyprtk-config-manager"
+dynamic = ["version"]
+description = "Hyprland Lua configuration manager — Quickshell QML front end + Python backend"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-2.0-only" }
+dependencies = []
+
+[tool.setuptools]
+package-dir = { "" = "backend" }
+packages = ["config_manager", "config_manager.writers"]
+
+[tool.setuptools.package-data]
+config_manager = ["data/prelude.lua"]
+
+[tool.setuptools.dynamic]
+version = { attr = "config_manager.__version__" }

@@ -1058,6 +1058,11 @@ else
         _spin "Installing hyprtk-bar-qt..." "bash $SCRIPT_DIR/installer/hyprtk-bar-qt/install.sh" "$LOG_FILE"
         _ok "hyprtk-bar-qt installed (autostarted by autostart.lua; owns the notification daemon; hosts the arc menu overlay)"
 
+        # ── hyprtk-config-manager (Hyprland Lua settings GUI) ────────
+        _step "Installing Hyprland Settings (config-manager)"
+        _spin "Installing config-manager..." "bash $SCRIPT_DIR/installer/config-manager/install.sh" "$LOG_FILE"
+        _ok "config-manager installed (opened from the bar's Settings → Hyprland Settings)"
+
         # ── hyprtk-usb (GUI) ────────────────────────────────────────
         _step "Installing hyprtk-usb"
         _spin "Installing hyprtk-usb..." "bash $SCRIPT_DIR/installer/hyprtk-usb/install.sh" "$LOG_FILE"

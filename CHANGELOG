@@ -7,6 +7,13 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 ### Added
 
+- **Hyprland Settings app vendored and installed (`config-manager 0.2.1`).**
+  The settings GUI from `hyprtk-config-manager` is now vendored under
+  `installer/config-manager` and installed by the main installer after the bar,
+  so the bar's **Hyprland Settings** entry works on fresh installs instead of
+  reporting "not installed". It needs Quickshell + python3 (already present)
+  and a standalone Lua 5.4 interpreter, now added to the distro package lists.
+  The app remains independent of the bar; the bar only executes its launcher.
 - **Hyprland Settings from the bar dialogue (`hyprtk-bar-qt 0.41.25`
   re-vendored).** The Settings dialogue now has a separated **Hyprland
   Settings** entry at the bottom of its sidebar. Clicking it launches the

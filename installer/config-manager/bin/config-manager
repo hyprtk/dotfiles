@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# hyprtk-config-manager launcher: CLI and the Quickshell front end.
+set -eu
+SELF=$(readlink -f "$0")
+ROOT=$(CDPATH= cd -- "$(dirname -- "$SELF")/.." && pwd)
+export PYTHONPATH="$ROOT/backend${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m config_manager.cli "$@"
