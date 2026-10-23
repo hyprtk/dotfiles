@@ -3,10 +3,17 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
-## [Unreleased] - 2026-10-16
+## [Unreleased] - 2026-10-23
 
 ### Added
 
+- **Hyprland Settings from the bar dialogue (`hyprtk-bar-qt 0.41.25`
+  re-vendored).** The Settings dialogue now has a separated **Hyprland
+  Settings** entry at the bottom of its sidebar. Clicking it launches the
+  independent `config-manager` app in a layer-shell Overlay, so it opens above
+  the Settings panel instead of behind it; the bar only runs the launcher and
+  shows a clear hint when `config-manager` is not installed. The same action is
+  available to keybinds as `settings:configManager` over Quickshell IPC.
 - **Per-distro fastfetch ASCII logos.** Added `ascii.txt` art for ArchBang,
   ArchMan and Kiro, plus the generic Debian/Ubuntu, Fedora, openSUSE, Void,
   Alpine, Gentoo and NixOS families — all in the same braille-art format as the

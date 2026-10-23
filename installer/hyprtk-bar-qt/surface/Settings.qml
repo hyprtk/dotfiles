@@ -56,6 +56,27 @@ PanelWindow {
         }
     }
 
+    // ── external Hyprland Settings (config-manager) ────────────────────
+    // Launched as a layer-shell overlay so it sits above this dialogue while
+    // staying a fully independent app. Exit 127 = binary not installed.
+    property string cmStatus: ""
+    Process {
+        id: cmProc
+        command: ["sh", "-c", "p=$(command -v config-manager); [ -z \"$p\" ] && p=\"$HOME/.local/bin/config-manager\"; [ -x \"$p\" ] || p=\"$HOME/.local/share/hyprtk-config-manager/bin/config-manager\"; [ -x \"$p\" ] || exit 127; exec \"$p\" open --overlay"]
+        onExited: (code, status) => {
+            if (code === 127)
+                win.cmStatus = "Config Manager is not installed";
+            else if (code !== 0)
+                win.cmStatus = "Could not open Config Manager";
+        }
+    }
+    function openConfigManager() {
+        if (cmProc.running)
+            return;
+        win.cmStatus = "";
+        cmProc.running = true;
+    }
+
     // Keep the desktop widgets' opacity in step with the bar opacity.
     readonly property string wbase:
         Qt.resolvedUrl("../backend/hyprtk_bar_qt/").toString().replace("file://", "")
@@ -338,6 +359,7 @@ PanelWindow {
         function toggle() { UiState.settingsOpen = !UiState.settingsOpen; }
         function open() { UiState.settingsOpen = true; }
         function close() { UiState.settingsOpen = false; }
+        function configManager() { win.openConfigManager(); }
     }
 
 
@@ -383,6 +405,45 @@ PanelWindow {
                         TapHandler { onTapped: win.page = index }
                     }
                 }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 1
+                    color: Theme.alpha(Theme.foreground, 0.10)
+                    Layout.topMargin: 4
+                    Layout.bottomMargin: 4
+                }
+
+                Rectangle {
+                    id: cmEntry
+                    Layout.fillWidth: true
+                    implicitHeight: 30
+                    radius: 8
+                    color: cmHover.hovered ? Theme.alpha(Theme.accent2, 0.15) : "transparent"
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Hyprland Settings"
+                        color: Theme.accent2
+                        font.pixelSize: BarConfig.scaled(10)
+                        elide: Text.ElideRight
+                    }
+                    HoverHandler { id: cmHover }
+                    TapHandler { onTapped: win.openConfigManager() }
+                }
+                Text {
+                    visible: win.cmStatus !== ""
+                    Layout.fillWidth: true
+                    text: win.cmStatus
+                    color: Theme.warn
+                    font.pixelSize: BarConfig.scaled(10)
+                    wrapMode: Text.WordWrap
+                }
+
                 Item { Layout.fillHeight: true }
             }
         }

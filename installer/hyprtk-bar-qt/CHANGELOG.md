@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.41.25 — unreleased
+
+- **Hyprland Settings shortcut in the Settings dialogue.** A separated
+  "Hyprland Settings" entry at the bottom of the sidebar launches the
+  independent config-manager as a layer-shell Overlay, so it opens above this
+  dialogue (which stays on the Top layer) instead of behind it. The entry shows
+  a clear message when config-manager is not installed, and `qs ipc ... settings
+  configManager` can trigger it for keybind/menu integration. The two apps stay
+  independent — the bar only executes the launcher.
+
 ## 0.41.24 — unreleased
 
 - **System Monitor opens under the sysmon module on every screen size.** The
