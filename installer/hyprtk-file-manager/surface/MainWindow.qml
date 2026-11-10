@@ -95,6 +95,8 @@ FloatingWindow {
             { label: "Open Terminal Here", action: function () { pane.openTerminal(); } },
             { label: "Open as Root", action: function () { pane.openAsRoot(); } },
             { label: "Open Trash", action: function () { pane.openTrash(); } },
+            { label: "Add to Places", action: function () { pane.addToPlaces(); } },
+            { label: "Scan Network", action: function () { Ui.requestNetworkScan(); } },
             { label: "Restore from Trash", action: function () { pane.restoreSelection(); } },
             { label: "Empty Trash", action: function () { Ui.askEmptyTrash(); } },
             { label: "Show/Hide Transfers", action: function () { Config.showTransfers = !Config.showTransfers; } },
@@ -239,6 +241,18 @@ FloatingWindow {
         onClosed: win.focusActivePane()
     }
 
+    NetworkAuthDialog {
+        id: networkAuthDialog
+        onAccepted: (uri, username, password, domain) => {
+            Ui.acceptNetworkAuth(uri, username, password, domain);
+            win.focusActivePane();
+        }
+        onCancelled: {
+            Ui.cancelNetworkAuth();
+            win.focusActivePane();
+        }
+    }
+
     ConfirmDialog {
         id: emptyTrashDialog
         onConfirmed: {
@@ -340,6 +354,9 @@ FloatingWindow {
         }
         function onEmptyTrashRequested() {
             emptyTrashDialog.open("Empty Trash?", "Permanently delete all items in the Trash. This cannot be undone.", "Empty Trash");
+        }
+        function onNetworkAuthRequested(uri, name) {
+            networkAuthDialog.open(name || uri, uri);
         }
     }
 

@@ -1,5 +1,121 @@
 # Changelog
 
+## 1.2.8 — 2026-11-10
+
+### Fixed
+
+- **Section headings now actually inset 16px.** The previous `x` values were
+  ignored because the headings sit inside QML positioners; using `leftPadding`
+  makes Places, Devices, and Network align with the row icon edge instead of the
+  window border.
+- 100 tests.
+
+## 1.2.7 — 2026-11-10
+
+### Fixed
+
+- **Section headings align to the Devices row inset (16px).** Places, Devices,
+  and Network no longer hug the window border; all three share the same left
+  edge as the device/place row icons.
+- 100 tests.
+
+## 1.2.6 — 2026-11-10
+
+### Fixed
+
+- **Places, Devices, Network headings share one left inset**, so Places and
+  Network align with Devices instead of hugging the window border.
+- 100 tests.
+
+## 1.2.5 — 2026-11-10
+
+### Changed
+
+- Removed the **+** button from the Places heading. Adding a folder to Places is
+  still available from the folder context menu (**Add to Places**).
+- 100 tests.
+
+## 1.2.4 — 2026-11-10
+
+### Changed
+
+- **Eject now unmounts only.** Ejecting a mounted external device leaves it in
+  Devices as an inactive row with a **mount** action instead of powering the
+  disk off and removing the row. This matches the expected “inactive, not
+  removed” behavior. The eject icon disappears once it is unmounted.
+- 100 tests.
+
+## 1.2.3 — 2026-11-10
+
+### Added
+
+- **File System** entry in Devices, always first, opening the root (`/`) like
+  Thunar.
+- **Eject** button on mounted external volumes. Right-click a device for
+  **Eject Media** as well. Eject unmounts the volume and powers off its disk
+  when the hardware supports it; if power-off is unsupported the volume still
+  unmounts. Browsing inside an ejected mount moves the pane home.
+- 100 tests.
+
+### Changed
+
+- **Places / Devices / Network** section headings align to the sidebar's left
+  edge (items stay indented).
+## 1.2.2 — 2026-11-10
+
+### Changed
+
+- **Devices hides internal unmounted volumes.** A volume is treated as external
+  when its disk reports `rm`, a USB/MMC/SDIO/FireWire transport, or when it is
+  mounted. Internal, non-removable volumes that are not mounted (for example
+  spare NVMe partitions) are hidden. Transport and removable flags are inherited
+  from the parent disk, so an external USB drive that is currently unmounted
+  stays visible with a mount action.
+- Combined with the fstab filter, Devices shows only removable/external or
+  mounted volumes.
+- 96 tests.
+
+## 1.2.1 — 2026-11-10
+
+### Fixed
+
+- **Devices no longer lists fstab-backed volumes.** `/etc/fstab` (and
+  `/etc/fstab.d/*`) is parsed and entries are matched by mountpoint, `/dev`
+  path, UUID, LABEL, PARTUUID, and PARTLABEL. Auto-mounted systems and `/mnt`
+  drives disappear from Devices; non-fstab volumes (USB, spare partitions)
+  remain.
+
+### Added
+
+- **Network login dialogue.** Opening a network host/share now asks for
+  username, password, and workgroup/domain (plus **Guest**). The mount goes
+  through Gio's `MountOperation` with the supplied credentials, so GVfs does not
+  prompt separately.
+- 94 tests.
+
+## 1.2.0 — 2026-11-10
+
+### Added
+
+- Thunar-style sidebar: **Places**, **Devices**, **Network** (the old Bookmarks
+  group is merged into Places).
+- Places: defaults plus GTK bookmarks (shared with Thunar); a **+** button and
+  the pane's **Add to Places** action add the current/selected folder, and
+  custom entries can be removed from the right-click menu.
+- Devices: every block volume from `lsblk` (mounted or not, incl. USB), with
+  click-to-mount through `udisksctl` and a mount hint on unmounted volumes.
+- Network: local `/24` port scan plus Avahi for SMB/NFS/AFP hosts; guest SMB
+  shares are listed; clicking a host or share mounts it through GVfs and browses
+  the mount point.
+- Command palette entries for **Add to Places** and **Scan Network**.
+- 91 tests.
+
+### Notes
+
+- NFS exports are not enumerated without `showmount`; NFS hosts are detected.
+- SMB share listing may need credentials; click the host to authenticate through
+  GVfs.
+
 ## 1.1.3 — 2026-11-09
 
 ### Added

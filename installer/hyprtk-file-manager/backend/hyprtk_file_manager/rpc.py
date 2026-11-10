@@ -12,6 +12,7 @@ from pathlib import Path
 from . import __version__
 from . import launch
 from . import meta
+from . import network as network_mod
 from . import places as places_mod
 from . import preview as preview_mod
 from . import search as search_mod
@@ -68,8 +69,7 @@ def _places(_params: dict) -> dict:
         "kind": "places",
         "home": str(home),
         "places": places_mod.places(home),
-        "bookmarks": places_mod.bookmarks(home),
-        "drives": places_mod.drives(),
+        "devices": places_mod.devices(),
     }
 
 
@@ -113,6 +113,18 @@ def handle(request: dict) -> dict:
             }
         if method == "trash_restore":
             return {"id": rid, "result": trash.restore(str(params.get("path") or ""))}
+        if method == "bookmarks.add":
+            return {
+                "id": rid,
+                "result": places_mod.add_bookmark(
+                    str(params.get("path") or ""), params.get("label"),
+                ),
+            }
+        if method == "bookmarks.remove":
+            return {
+                "id": rid,
+                "result": places_mod.remove_bookmark(str(params.get("path") or "")),
+            }
         if method == "version":
             return {"id": rid, "result": {"kind": "version", "version": __version__}}
         if method.startswith("job."):
@@ -176,6 +188,19 @@ def _serve_async(request: dict) -> None:
                 str(params.get("path") or ""),
                 str(params.get("algo") or "sha256"),
             )
+        elif method == "devices.mount":
+            result = places_mod.mount_device(str(params.get("device") or ""))
+        elif method == "devices.eject":
+            result = places_mod.eject_device(str(params.get("device") or ""))
+        elif method == "network.scan":
+            result = network_mod.scan()
+        elif method == "network.mount":
+            result = network_mod.mount(
+                str(params.get("uri") or ""),
+                str(params.get("username") or ""),
+                str(params.get("password") or ""),
+                str(params.get("domain") or ""),
+            )
         else:
             raise ValueError(f"unknown async method: {method}")
         write_message({"id": rid, "result": result})
@@ -183,7 +208,7 @@ def _serve_async(request: dict) -> None:
         write_message({"id": rid, "error": f"{type(exc).__name__}: {exc}"})
 
 
-ASYNC_METHODS = {"preview", "search", "checksum"}
+ASYNC_METHODS = {"preview", "search", "checksum", "devices.mount", "devices.eject", "network.scan", "network.mount"}
 
 
 def serve() -> int:

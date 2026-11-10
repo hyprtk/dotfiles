@@ -380,6 +380,20 @@ Item {
         Backend.call("open_root", { path: root.launchTarget() });
     }
 
+    function addToPlaces() {
+        let target = root.path;
+        const paths = Object.keys(root.selected);
+        if (paths.length === 1) {
+            const entry = listing.entries.find(function (item) {
+                return root.keyFor(item.name) === paths[0];
+            });
+            if (entry && entry.dir)
+                target = paths[0];
+        }
+        Backend.call("bookmarks.add", { path: target });
+        Ui.refreshPlaces();
+    }
+
     function dragPaths(name) {
         const key = root.keyFor(name);
         return root.selected[key] ? Object.keys(root.selected) : [key];
@@ -460,6 +474,7 @@ Item {
             { label: "Restore from Trash", enabled: root.inTrash() && has, action: function () { root.restoreSelection(); } },
             { label: "Empty Trash…", enabled: root.inTrash(), action: function () { Ui.askEmptyTrash(); } },
             { label: "Open Trash", enabled: true, action: function () { root.openTrash(); } },
+            { label: "Add to Places", enabled: true, action: function () { root.addToPlaces(); } },
             { label: "Select All", enabled: listing.entries.length > 0, action: function () { root.selectAll(); } },
             { label: "Undo", enabled: true, action: function () { root.undoLast(); } },
             { label: "Redo", enabled: true, action: function () { root.redoLast(); } },

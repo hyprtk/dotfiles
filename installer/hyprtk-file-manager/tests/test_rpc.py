@@ -37,7 +37,7 @@ class RpcTests(unittest.TestCase):
         response = rpc.handle({"id": 4, "method": "places"})
         result = response["result"]
         self.assertEqual(result["kind"], "places")
-        for key in ("places", "bookmarks", "drives", "home"):
+        for key in ("places", "devices", "home"):
             self.assertIn(key, result)
 
     def test_unknown_method(self):

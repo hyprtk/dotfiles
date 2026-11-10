@@ -3,6 +3,21 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.70] - 2026-11-10
+
+### Added
+
+- **hyprtk-file-manager 1.2.8 sidebar.** Places, Devices, and Network are now
+  grouped sections aligned to the row icon inset. Devices filters fstab-backed
+  volumes, always includes **File System** (`/`), hides internal unmounted
+  volumes, and keeps removable/external volumes visible with a mount action.
+  Mounted external volumes get an **eject** button and right-click **Eject
+  Media**; eject unmounts only and leaves the device in the list as an inactive
+  row. Network gains LAN scanning, SMB/NFS host and share discovery, and a
+  username/password/workgroup login dialog using Gio/GVfs. Adding a custom
+  place moved to the folder context menu (**Add to Places**), and the 100-test
+  suite passes.
+
 ## [v1.3.68] - 2026-11-10
 
 ### Fixed

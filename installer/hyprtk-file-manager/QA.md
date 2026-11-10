@@ -4,7 +4,7 @@ Automated gate: `make qa` (`scripts/qa.sh`)
 
 | Check | Result |
 |---|---|
-| Unit tests (listing, places, RPC, ops, journal, preview, search, store, watch, meta, launch, trash, CLI) | 81/81 pass |
+| Unit tests (listing, places, RPC, ops, journal, preview, search, store, watch, meta, launch, trash, network, CLI) | 100/100 pass |
 | `python3 -m compileall backend` | pass |
 | `bash -n install.sh`, `sh -n bin/hyprtk-fm` | pass |
 | 10k listing, first page | 43.3 ms (budget 300 ms) |
@@ -38,7 +38,20 @@ End-to-end checks (real UI driven with `wtype`, screenshots reviewed)
 | Properties: Make executable 644 → 755 | pass |
 | Dual pane: `Ctrl+C` in A, `Tab`, `Ctrl+V` in B | pass |
 | Context menu: Open Terminal Here spawns Alacritty in the folder | pass |
-| Trash place in the sidebar + Trash view | pass (23 items) |
+| Trash place in the sidebar + Trash view | pass |
+| Sidebar Places/Devices/Network sections | pass (screenshot) |
+| Places add (palette/+) and remove | pass (add verified) |
+| Network scan (SMB/NFS hosts) | pass (5 hosts found) |
+| fstab volumes hidden from Devices | pass (screenshot) |
+| Internal unmounted volumes hidden from Devices | pass |
+| File System device shown first | pass |
+| Eject icon on mounted external device | pass (screenshot) |
+| Eject Media context menu | pass (code) |
+| Eject leaves device inactive, not removed | pass (tests) |
+| Section headers left-aligned | pass (screenshot) |
+| Places heading has no + button | pass |
+| Places/Devices/Network headings share row-icon inset | pass |
+| Network login dialog (user/pass/workgroup) | pass (screenshot) |
 | Trash restore (.trashinfo) | unit-tested |
 | Empty Trash (confirm + job) | dialog/job verified; command mocked |
 | Show/hide transfers tray (`Ctrl+J`) | pass |
