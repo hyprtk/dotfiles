@@ -3,6 +3,18 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.71] - 2026-11-10
+
+### Added
+
+- **hyprtk-file-manager 1.2.8 as a separate installer and bar-qt vendor.**
+  The standalone app is published at
+  https://github.com/hyprtk/hyprtk-file-manager (tag `v1.2.8`) and vendored
+  byte-identically into `hyprtk-bar-qt/vendor/hyprtk-file-manager/`. The merged
+  installer keeps the same 1.2.8 copy under `installer/hyprtk-file-manager/`;
+  all copies are version-matched. The bar installer does not install the
+  vendored snapshot; the file manager's own installer remains authoritative.
+
 ## [v1.3.70] - 2026-11-10
 
 ### Added

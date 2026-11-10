@@ -17,3 +17,6 @@ htmlcov/
 # Dev-only working notes (not shipped).
 PARITY.md
 PLAN*.md
+
+# Vendored file-manager docs
+!vendor/hyprtk-file-manager/PLAN.md

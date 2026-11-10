@@ -2,6 +2,10 @@
 
 ## 0.41.25 — unreleased
 
+- **hyprtk-file-manager 1.2.8 vendored.** The separate file manager is carried
+  under `vendor/hyprtk-file-manager/` for source completeness; the standalone
+  installer remains the source of truth and the bar installer does not install
+  it.
 - **Hyprland Settings shortcut in the Settings dialogue.** A separated
   "Hyprland Settings" entry at the bottom of the sidebar launches the
   independent config-manager as a layer-shell Overlay, so it opens above this

@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+set -eu
+: "${QT_QPA_PLATFORMTHEME:=gtk3}"
+export QT_QPA_PLATFORMTHEME
+
+SELF=$(readlink -f "$0")
+ROOT=$(CDPATH= cd -- "$(dirname -- "$SELF")/.." && pwd)
+export PYTHONPATH="$ROOT/backend${PYTHONPATH:+:$PYTHONPATH}"
+
+case "${1:-}" in
+  serve|version|places)
+    exec python3 -m hyprtk_file_manager.cli "$@"
+    ;;
+  open)
+    shift
+    ;;
+esac
+
+if [ "$#" -gt 0 ] && [ -d "$1" ]; then
+  HYPRTK_FM_START=$(readlink -f "$1")
+  export HYPRTK_FM_START
+  shift
+fi
+
+exec qs -p "$ROOT" "$@"
