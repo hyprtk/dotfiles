@@ -8,7 +8,7 @@ Item {
     property string uri: ""
     property string targetName: ""
 
-    signal accepted(string uri, string username, string password, string domain)
+    signal accepted(string uri, string username, string password, string domain, bool anonymous)
     signal cancelled()
 
     anchors.fill: parent
@@ -39,12 +39,12 @@ Item {
         const password = passField.text;
         const domain = domainField.text.trim();
         root.dismiss();
-        root.accepted(root.uri, username, password, domain);
+        root.accepted(root.uri, username, password, domain, false);
     }
 
     function guest() {
         root.dismiss();
-        root.accepted(root.uri, "", "", "");
+        root.accepted(root.uri, "", "", "", true);
     }
 
     function cancel() {

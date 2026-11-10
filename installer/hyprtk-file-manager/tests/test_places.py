@@ -68,6 +68,23 @@ class PlacesTests(unittest.TestCase):
         names = [item["name"] for item in places.bookmarks(self.home, self.config)]
         self.assertNotIn("New Place", names)
 
+    def test_network_bookmark(self):
+        uri = "smb://192.168.0.20/Documents"
+        added = places.add_bookmark(uri, label="Docs", home=self.home, config=self.config)
+        self.assertTrue(added["added"])
+        self.assertTrue(added["uri"])
+        items = places.bookmarks(self.home, self.config)
+        match = [item for item in items if item.get("uri")]
+        self.assertEqual([item["name"] for item in match], ["Docs"])
+        self.assertEqual(match[0]["path"], uri)
+        self.assertEqual(match[0]["icon"], "folder-remote")
+        again = places.add_bookmark(uri, home=self.home, config=self.config)
+        self.assertFalse(again["added"])
+        self.assertIn(uri, [item["path"] for item in places.places(self.home, self.config)])
+        removed = places.remove_bookmark(uri, home=self.home, config=self.config)
+        self.assertTrue(removed["removed"])
+        self.assertFalse(any(item.get("uri") for item in places.bookmarks(self.home, self.config)))
+
     def test_parse_devices(self):
         data = [
             {
@@ -117,17 +134,29 @@ class PlacesTests(unittest.TestCase):
         device = places.parse_devices(data)[0]
         self.assertTrue(device["removable"])
         self.assertEqual(device["tran"], "usb")
-        self.assertFalse(places._hide_internal_unmounted(device))
 
-    def test_hide_internal_unmounted(self):
-        self.assertFalse(places._hide_internal_unmounted(
-            {"mounted": False, "removable": True, "tran": "usb"}))
-        self.assertFalse(places._hide_internal_unmounted(
-            {"mounted": False, "removable": False, "tran": "mmc"}))
-        self.assertFalse(places._hide_internal_unmounted(
-            {"mounted": True, "removable": False, "tran": "nvme"}))
-        self.assertTrue(places._hide_internal_unmounted(
-            {"mounted": False, "removable": False, "tran": "nvme"}))
+    def test_is_system_partition(self):
+        for parttype in ("c12a7328-f81f-11d2-ba4b-00a0c93ec93b", "0xef",
+                         "e3c9e316-0b5c-4db8-817d-f92df00215ae",
+                         "de94bba4-06d1-4d40-a16a-bfd50179d6ac",
+                         "21686148-6449-6e6f-744e-656564454649"):
+            self.assertTrue(places._is_system_partition(
+                {"parttype": parttype, "path": None}))
+        self.assertTrue(places._is_system_partition(
+            {"parttype": None, "path": "/boot"}))
+        self.assertTrue(places._is_system_partition(
+            {"parttype": None, "path": "/boot/efi"}))
+        self.assertFalse(places._is_system_partition(
+            {"parttype": "0x7", "path": None}))
+        self.assertFalse(places._is_system_partition(
+            {"parttype": None, "path": "/mnt/Documents"}))
+
+    def test_size_label(self):
+        self.assertEqual(places._size_label("494.1G"), "531 GB Volume")
+        self.assertEqual(places._size_label("155.2G"), "167 GB Volume")
+        self.assertEqual(places._size_label("279.4G"), "300 GB Volume")
+        self.assertEqual(places._size_label("2.7T"), "3.0 TB Volume")
+        self.assertEqual(places._size_label(""), "")
 
     def test_filter_devices_filesystem_and_external(self):
         rules = {"mountpoints": {"/"}, "devices": set(), "uuids": set(),
@@ -153,6 +182,22 @@ class PlacesTests(unittest.TestCase):
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0]["name"], "File System")
         self.assertEqual(out[0]["path"], "/")
+
+    def test_filter_devices_keeps_internal_unmounted_hides_system(self):
+        rules = {"mountpoints": set(), "devices": set(), "uuids": set(),
+                 "labels": set(), "partuuids": set(), "partlabels": set()}
+        base = {"icon": "drive-harddisk", "removable": False, "external": False,
+                "size": "", "mounted": False, "uuid": None, "partuuid": None,
+                "partlabel": None, "tran": "nvme"}
+        windows = {**base, "name": "531 GB Volume", "path": None,
+                   "device": "/dev/nvme1n1p2", "fs": "ntfs",
+                   "parttype": "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"}
+        efi = {**base, "name": "EFI", "path": None, "device": "/dev/nvme1n1p4",
+               "fs": "vfat", "parttype": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"}
+        boot = {**base, "name": "VTOYEFI", "path": None, "device": "/dev/sdc2",
+                "fs": "vfat", "parttype": "0xef"}
+        out = places._filter_devices([windows, efi, boot], rules)
+        self.assertEqual([item["name"] for item in out], ["File System", "531 GB Volume"])
 
     def test_eject_device_unmounts_only(self):
         calls = []

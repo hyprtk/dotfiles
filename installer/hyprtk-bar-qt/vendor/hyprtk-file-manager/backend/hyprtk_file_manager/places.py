@@ -25,6 +25,16 @@ MOUNT_TYPES = {
     "vfat", "exfat", "ntfs", "ntfs3", "iso9660", "udf", "hfsplus", "apfs",
 }
 
+SYSTEM_PART_TYPES = {
+    "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",  # EFI System (GPT)
+    "0xef",                                  # EFI System (MBR)
+    "e3c9e316-0b5c-4db8-817d-f92df00215ae",  # Microsoft Reserved
+    "de94bba4-06d1-4d40-a16a-bfd50179d6ac",  # Windows Recovery
+    "21686148-6449-6e6f-744e-656564454649",  # BIOS boot
+}
+
+SYSTEM_MOUNT_PREFIXES = ("/boot", "/efi")
+
 
 def home_dir() -> Path:
     return Path(os.environ.get("HOME") or Path.home())
@@ -88,15 +98,42 @@ def _write_lines(path: Path, lines: list[str]) -> None:
     os.replace(tmp, path)
 
 
+NETWORK_BOOKMARK_SCHEMES = ("smb://", "nfs://")
+
+
+def _uri_label(uri: str) -> str:
+    tail = uri.rstrip("/").rsplit("/", 1)[-1]
+    return unquote(tail) or uri
+
+
 def bookmarks(home: Path | None = None, config: Path | None = None) -> list[dict]:
     path = _bookmarks_path(home, config)
     out = []
     seen = set()
+    seen_uri = set()
     for line in _read_lines(path):
         line = line.strip()
-        if not line.startswith("file://"):
+        if not line or line.startswith("#"):
             continue
         uri, _, label = line.partition(" ")
+        uri = uri.strip()
+        if uri.lower().startswith(NETWORK_BOOKMARK_SCHEMES):
+            key = uri.rstrip("/")
+            if key in seen_uri:
+                continue
+            seen_uri.add(key)
+            out.append(
+                {
+                    "name": label.strip() or _uri_label(uri),
+                    "path": uri,
+                    "icon": "folder-remote",
+                    "custom": True,
+                    "uri": True,
+                }
+            )
+            continue
+        if not uri.startswith("file://"):
+            continue
         target = Path(unquote(uri[len("file://"):]))
         if not target.is_dir():
             continue
@@ -118,7 +155,15 @@ def bookmarks(home: Path | None = None, config: Path | None = None) -> list[dict
 def places(home: Path | None = None, config: Path | None = None) -> list[dict]:
     items = _default_places(home, config)
     seen = {os.path.realpath(item["path"]) for item in items}
+    seen_uri = set()
     for item in bookmarks(home, config):
+        if item.get("uri"):
+            key = item["path"].rstrip("/")
+            if key in seen_uri:
+                continue
+            seen_uri.add(key)
+            items.append(item)
+            continue
         key = os.path.realpath(item["path"])
         if key in seen:
             continue
@@ -127,39 +172,87 @@ def places(home: Path | None = None, config: Path | None = None) -> list[dict]:
     return items
 
 
-def add_bookmark(path: str, label: str | None = None, home: Path | None = None,
-                 config: Path | None = None) -> dict:
-    target = Path(path).expanduser()
+def _bookmark_target(path: str) -> tuple[str, str, bool]:
+    """Return (wanted, stored_uri, is_network) for a bookmark target."""
+    from .network import is_network_uri, uri_for_path
+
+    raw = uri_for_path(str(path or "").strip())
+    if not raw:
+        raise ValueError("empty bookmark path")
+    if is_network_uri(raw):
+        return raw.rstrip("/"), raw, True
+    target = Path(raw).expanduser()
     if not target.is_dir():
         raise NotADirectoryError(str(target))
+    wanted = str(target)
+    return wanted, "file://" + quote(wanted, safe="/"), False
+
+
+def add_bookmark(path: str, label: str | None = None, home: Path | None = None,
+                 config: Path | None = None) -> dict:
+    wanted, uri, is_network = _bookmark_target(path)
     bookmark_file = _bookmarks_path(home, config)
     lines = _read_lines(bookmark_file)
-    wanted = str(target)
     for line in lines:
-        uri = line.split(" ", 1)[0]
-        if uri.startswith("file://") and unquote(uri[len("file://"):]) == wanted:
+        existing = line.split(" ", 1)[0].strip()
+        if is_network:
+            if existing.rstrip("/") == wanted:
+                return {"kind": "bookmark", "path": wanted, "added": False, "uri": True}
+        elif existing.startswith("file://") and unquote(existing[len("file://"):]) == wanted:
             return {"kind": "bookmark", "path": wanted, "added": False}
-    name = (label or target.name or wanted).strip()
-    uri = "file://" + quote(wanted, safe="/")
+    name = (label or _uri_label(wanted)).strip()
     lines.append(f"{uri} {name}")
     _write_lines(bookmark_file, lines)
-    return {"kind": "bookmark", "path": wanted, "added": True}
+    result = {"kind": "bookmark", "path": wanted, "added": True}
+    if is_network:
+        result["uri"] = True
+    return result
 
 
 def remove_bookmark(path: str, home: Path | None = None, config: Path | None = None) -> dict:
-    target = str(Path(path).expanduser())
+    from .network import is_network_uri, uri_for_path
+
+    raw = uri_for_path(str(path or "").strip().rstrip("/"))
+    network = is_network_uri(raw)
+    target = raw if network else str(Path(raw).expanduser())
     bookmark_file = _bookmarks_path(home, config)
     keep = []
     removed = False
     for line in _read_lines(bookmark_file):
-        uri = line.split(" ", 1)[0]
-        if uri.startswith("file://") and unquote(uri[len("file://"):]) == target:
+        existing = line.split(" ", 1)[0].strip()
+        if network:
+            matched = existing.rstrip("/") == target
+        else:
+            matched = existing.startswith("file://") and unquote(existing[len("file://"):]) == target
+        if matched:
             removed = True
             continue
         keep.append(line)
     if removed:
         _write_lines(bookmark_file, keep)
-    return {"kind": "bookmark", "path": target, "removed": removed}
+    result = {"kind": "bookmark", "path": target, "removed": removed}
+    if network:
+        result["uri"] = True
+    return result
+
+
+def _size_label(size: str) -> str:
+    match = re.fullmatch(r"([0-9.]+)([KMGTPE]?)", (size or "").strip(), re.IGNORECASE)
+    if not match:
+        return ""
+    value = float(match.group(1))
+    unit = match.group(2).upper()
+    power = " KMGTPE".index(unit) if unit else 0
+    total = value * (1024 ** power)
+    gb = total / 1e9
+    if gb >= 1000:
+        return f"{gb / 1000:.1f} TB Volume"
+    if gb >= 1:
+        return f"{round(gb)} GB Volume"
+    mb = total / 1e6
+    if mb >= 1:
+        return f"{round(mb)} MB Volume"
+    return ""
 
 
 def _device_icon(fstype: str, removable: bool) -> str:
@@ -205,11 +298,12 @@ def _device_entry(node: dict, mounts: list[str], fstype: str, parent: dict | Non
                 "uuid": node.get("uuid"),
                 "partuuid": node.get("partuuid"),
                 "partlabel": node.get("partlabel"),
+                "parttype": node.get("parttype"),
                 "tran": tran or None,
             })
     else:
         entries.append({
-            "name": label or name,
+            "name": label or _size_label(size) or name,
             "path": None,
             "icon": icon,
             "device": device,
@@ -222,6 +316,7 @@ def _device_entry(node: dict, mounts: list[str], fstype: str, parent: dict | Non
             "uuid": node.get("uuid"),
             "partuuid": node.get("partuuid"),
             "partlabel": node.get("partlabel"),
+            "parttype": node.get("parttype"),
             "tran": tran or None,
         })
     return entries
@@ -326,14 +421,17 @@ def _is_fstab(entry: dict, rules: dict) -> bool:
 EXTERNAL_TRANSPORTS = {"usb", "mmc", "sdio", "ieee1394"}
 
 
-def _hide_internal_unmounted(entry: dict) -> bool:
-    if entry.get("mounted"):
-        return False
-    if entry.get("removable"):
-        return False
-    if (entry.get("tran") or "").lower() in EXTERNAL_TRANSPORTS:
-        return False
-    return True
+def _is_system_partition(entry: dict) -> bool:
+    parttype = (entry.get("parttype") or "").strip().lower()
+    if parttype in SYSTEM_PART_TYPES:
+        return True
+    path = entry.get("path") or ""
+    if path:
+        norm = os.path.normpath(path)
+        if any(norm == prefix or norm.startswith(prefix + "/")
+               for prefix in SYSTEM_MOUNT_PREFIXES):
+            return True
+    return False
 
 
 def _filesystem_entry(entries: list[dict]) -> dict:
@@ -345,7 +443,7 @@ def _filesystem_entry(entries: list[dict]) -> dict:
         "name": "File System", "path": "/", "icon": "drive-harddisk",
         "device": "", "removable": False, "external": False, "fs": "", "size": "",
         "mounted": True, "label": "", "uuid": None, "partuuid": None,
-        "partlabel": None, "tran": None,
+        "partlabel": None, "parttype": None, "tran": None,
     }
 
 
@@ -353,15 +451,16 @@ def _filter_devices(entries: list[dict], rules: dict | None = None) -> list[dict
     rules = parse_fstab() if rules is None else rules
     kept = [entry for entry in entries if not _is_fstab(entry, rules)]
     kept = [entry for entry in kept if entry.get("path") != "/"]
-    kept = [entry for entry in kept if not _hide_internal_unmounted(entry)]
+    kept = [entry for entry in kept if not _is_system_partition(entry)]
+    kept.sort(key=lambda entry: 1 if entry.get("external") else 0)
     kept.insert(0, _filesystem_entry(entries))
     return kept
 
 
 def devices() -> list[dict]:
     for fields in (
-        "NAME,LABEL,FSTYPE,SIZE,MOUNTPOINTS,RM,TYPE,MODEL,TRAN,UUID,PARTUUID,PARTLABEL",
-        "NAME,LABEL,FSTYPE,SIZE,MOUNTPOINT,RM,TYPE,MODEL,TRAN,UUID,PARTUUID,PARTLABEL",
+        "NAME,LABEL,FSTYPE,SIZE,MOUNTPOINTS,RM,TYPE,MODEL,TRAN,UUID,PARTTYPE,PARTUUID,PARTLABEL",
+        "NAME,LABEL,FSTYPE,SIZE,MOUNTPOINT,RM,TYPE,MODEL,TRAN,UUID,PARTTYPE,PARTUUID,PARTLABEL",
     ):
         try:
             proc = subprocess.run(

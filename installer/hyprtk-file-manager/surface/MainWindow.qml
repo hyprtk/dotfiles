@@ -243,8 +243,8 @@ FloatingWindow {
 
     NetworkAuthDialog {
         id: networkAuthDialog
-        onAccepted: (uri, username, password, domain) => {
-            Ui.acceptNetworkAuth(uri, username, password, domain);
+        onAccepted: (uri, username, password, domain, anonymous) => {
+            Ui.acceptNetworkAuth(uri, username, password, domain, anonymous);
             win.focusActivePane();
         }
         onCancelled: {

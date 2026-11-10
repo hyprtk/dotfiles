@@ -1,5 +1,50 @@
 # Changelog
 
+## 1.3.0 — 2026-11-10
+
+### Added
+
+- **Network browsing that actually authenticates.** Selecting a host now asks
+  for credentials and then enumerates the server's shares through GVfs (Gio),
+  listing them under the host. With a single share it mounts straight away.
+  Before, the backend "mounted" the server root, which GVfs treats as an
+  already-mounted browse location — so credentials were never validated and no
+  path appeared.
+- **Share mounts are real.** Clicking a share mounts `smb://host/share` (or
+  `nfs://host/export`) and opens it. Credentials are saved to the keyring
+  (`PasswordSave.PERMANENTLY`); a silent keyring attempt runs first, and the
+  dialog only appears when a password is actually required.
+- **Network places.** Shares and folders inside a mount can be added to Places.
+  GTK bookmarks now support `smb://` and `nfs://` URIs (shown with a
+  `folder-remote` icon) and reconnect on click. Add to Places converts a GVfs
+  mount path back to its URI so it survives reboots.
+- **Clicking a host toggles its shares.** A host with listed shares now shows a
+  caret and collapses/expands on click; hosts without shares connect as before.
+- **NFS exports** are listed with `showmount -e` when available.
+- **Network discovery runs automatically** when the window opens; scanning now
+  probes ports and mDNS in parallel.
+
+### Fixed
+
+- GVfs share directory names are matched case-insensitively, so a `Documents`
+  share maps to `smb-share:server=host,share=documents`.
+- 108 tests.
+
+## 1.2.9 — 2026-11-10
+
+### Changed
+
+- **Devices now matches Thunar.** EFI System (GPT and MBR `0xef`), Microsoft
+  Reserved, Windows Recovery, and BIOS boot partitions are hidden, along with
+  anything mounted under `/boot` or `/efi` — so a Ventoy stick no longer shows
+  its `VTOYEFI` partition.
+- Internal unmounted data volumes are shown again (reverts the 1.2.2 hide rule);
+  unlabelled volumes use Thunar-style names like `531 GB Volume` (decimal GB,
+  rounded).
+- Device rows are grouped like Thunar: internal volumes first, then
+  removable/external, with File System first.
+- 102 tests.
+
 ## 1.2.8 — 2026-11-10
 
 ### Fixed

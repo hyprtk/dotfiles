@@ -194,12 +194,20 @@ def _serve_async(request: dict) -> None:
             result = places_mod.eject_device(str(params.get("device") or ""))
         elif method == "network.scan":
             result = network_mod.scan()
+        elif method == "network.shares":
+            result = network_mod.list_shares(
+                str(params.get("uri") or ""),
+                str(params.get("username") or ""),
+                str(params.get("password") or ""),
+                str(params.get("domain") or ""),
+            )
         elif method == "network.mount":
             result = network_mod.mount(
                 str(params.get("uri") or ""),
                 str(params.get("username") or ""),
                 str(params.get("password") or ""),
                 str(params.get("domain") or ""),
+                bool(params.get("anonymous", False)),
             )
         else:
             raise ValueError(f"unknown async method: {method}")
@@ -208,7 +216,10 @@ def _serve_async(request: dict) -> None:
         write_message({"id": rid, "error": f"{type(exc).__name__}: {exc}"})
 
 
-ASYNC_METHODS = {"preview", "search", "checksum", "devices.mount", "devices.eject", "network.scan", "network.mount"}
+ASYNC_METHODS = {
+    "preview", "search", "checksum", "devices.mount", "devices.eject",
+    "network.scan", "network.mount", "network.shares",
+}
 
 
 def serve() -> int:

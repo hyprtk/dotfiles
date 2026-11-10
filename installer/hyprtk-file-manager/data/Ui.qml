@@ -17,7 +17,7 @@ Singleton {
     signal placesChanged()
     signal networkScanRequested()
     signal networkAuthRequested(string uri, string name)
-    signal networkAuthAccepted(string uri, string username, string password, string domain)
+    signal networkAuthAccepted(string uri, string username, string password, string domain, bool anonymous)
 
     function askRename(path, name) {
         root.modalOpen = true;
@@ -62,9 +62,9 @@ Singleton {
         root.networkAuthRequested(uri, name || uri);
     }
 
-    function acceptNetworkAuth(uri, username, password, domain) {
+    function acceptNetworkAuth(uri, username, password, domain, anonymous) {
         root.modalOpen = false;
-        root.networkAuthAccepted(uri, username || "", password || "", domain || "");
+        root.networkAuthAccepted(uri, username || "", password || "", domain || "", !!anonymous);
     }
 
     function cancelNetworkAuth() {

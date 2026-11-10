@@ -21,9 +21,16 @@ Rectangle {
     property string deviceError: ""
     property string busyUri: ""
     property int scanId: -1
+    property int sharesId: -1
     property int networkMountId: -1
     property int deviceMountId: -1
     property int deviceEjectId: -1
+    property var shareCredentials: ({})
+    property string pendingSharesHost: ""
+    property var pendingSharesAuth: null
+    property var pendingPrompt: null
+    property string lastNetworkUri: ""
+    property var collapsedHosts: ({})
 
     color: Theme.alpha(Theme.surface, 0.45)
 
@@ -44,22 +51,136 @@ Rectangle {
         root.scanId = Backend.call("network.scan", {});
     }
 
+    function uriHost(uri) {
+        const rest = String(uri || "").replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
+        return rest.split("/")[0].split("@").pop();
+    }
+
+    function uriHasShare(uri) {
+        const rest = String(uri || "").replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
+        const slash = rest.indexOf("/");
+        return slash >= 0 && rest.slice(slash + 1).length > 0;
+    }
+
+    function cachedCredentials(uri) {
+        const host = root.uriHost(uri);
+        return host && root.shareCredentials[host] ? root.shareCredentials[host] : null;
+    }
+
+    function rememberCredentials(uri, username, password, domain, anonymous) {
+        const host = root.uriHost(uri);
+        if (!host)
+            return;
+        const updated = Object.assign({}, root.shareCredentials);
+        updated[host] = {
+            username: username || "",
+            password: password || "",
+            domain: domain || "",
+            anonymous: !!anonymous
+        };
+        root.shareCredentials = updated;
+    }
+
+    function forgetCredentials(uri) {
+        const host = root.uriHost(uri);
+        if (!host || !root.shareCredentials[host])
+            return;
+        const updated = Object.assign({}, root.shareCredentials);
+        delete updated[host];
+        root.shareCredentials = updated;
+    }
+
     function requestShare(uri, name) {
         if (!uri)
             return;
-        Ui.askNetworkAuth(uri, name || uri);
+        const cached = root.cachedCredentials(uri);
+        if (cached) {
+            if (root.uriHasShare(uri))
+                root.mountShare(uri, cached.username, cached.password, cached.domain, cached.anonymous);
+            else
+                root.listShares(uri, cached);
+            return;
+        }
+        if (String(uri).toLowerCase().indexOf("smb://") === 0)
+            root.pendingPrompt = { uri: uri, name: name || uri };
+        const empty = { username: "", password: "", domain: "", anonymous: false };
+        if (root.uriHasShare(uri))
+            root.mountShare(uri, "", "", "", false);
+        else
+            root.listShares(uri, empty);
     }
 
-    function mountShare(uri, username, password, domain) {
+    function hostCollapsed(host) {
+        return !!root.collapsedHosts[host];
+    }
+
+    function setHostCollapsed(host, collapsed) {
+        if (!host)
+            return;
+        const updated = Object.assign({}, root.collapsedHosts);
+        if (collapsed)
+            updated[host] = true;
+        else
+            delete updated[host];
+        root.collapsedHosts = updated;
+    }
+
+    function toggleHost(device) {
+        if (!device)
+            return;
+        if (!root.hostCollapsed(device.host)) {
+            if (device.shares && device.shares.length > 0) {
+                root.setHostCollapsed(device.host, true);
+                return;
+            }
+        } else {
+            root.setHostCollapsed(device.host, false);
+            if (device.shares && device.shares.length > 0)
+                return;
+        }
+        const scheme = (device.servicesList || []).indexOf("nfs") >= 0
+            && (device.servicesList || []).indexOf("smb") < 0 ? "nfs" : "smb";
+        root.requestShare(scheme + "://" + device.host + "/", device.name || device.host);
+    }
+
+    function listShares(uri, credentials) {
+        if (!uri || root.busyUri || root.sharesId >= 0)
+            return;
+        root.busyUri = uri;
+        root.lastNetworkUri = uri;
+        root.networkError = "";
+        root.pendingSharesHost = root.uriHost(uri);
+        root.pendingSharesAuth = credentials || { username: "", password: "", domain: "", anonymous: false };
+        root.sharesId = Backend.call("network.shares", {
+            uri: uri,
+            username: root.pendingSharesAuth.username || "",
+            password: root.pendingSharesAuth.password || "",
+            domain: root.pendingSharesAuth.domain || ""
+        });
+    }
+
+    function applyShares(host, shares) {
+        const list = (root.networkDevices || []).slice();
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].host === host) {
+                list[i] = Object.assign({}, list[i], { shares: shares || [] });
+            }
+        }
+        root.networkDevices = list;
+    }
+
+    function mountShare(uri, username, password, domain, anonymous) {
         if (!uri || root.busyUri)
             return;
         root.busyUri = uri;
+        root.lastNetworkUri = uri;
         root.networkError = "";
         root.networkMountId = Backend.call("network.mount", {
             uri: uri,
             username: username || "",
             password: password || "",
-            domain: domain || ""
+            domain: domain || "",
+            anonymous: !!anonymous
         });
     }
 
@@ -101,8 +222,11 @@ Rectangle {
                 host: device.host,
                 services: (device.services || []).join(" · "),
                 servicesList: device.services || [],
+                shares: device.shares || [],
                 icon: device.icon || "network-server"
             });
+            if (root.hostCollapsed(device.host))
+                continue;
             const shares = device.shares || [];
             for (let j = 0; j < shares.length; j++)
                 out.push({ kind: "share", name: shares[j].name, uri: shares[j].uri, icon: "folder-remote" });
@@ -110,8 +234,24 @@ Rectangle {
         return out;
     }
 
+    function shareMenuItems(item) {
+        const items = [
+            { label: "Open", action: function () { root.requestShare(item.uri, item.name); } },
+            { label: "Add to Places", action: function () {
+                Backend.call("bookmarks.add", { path: item.uri, label: item.name });
+                root.reload();
+            } }
+        ];
+        return items;
+    }
+
     function placeMenuItems(item) {
-        const items = [{ label: "Open", action: function () { root.navigate(item.path); } }];
+        const items = [{ label: "Open", action: function () {
+            if (item.uri)
+                root.requestShare(item.path, item.name);
+            else
+                root.navigate(item.path);
+        } }];
         if (item.name === "Trash")
             items.push({ label: "Empty Trash…", action: function () { root.emptyTrashRequested(); } });
         if (item.custom)
@@ -120,6 +260,13 @@ Rectangle {
     }
 
     Component.onCompleted: root.reload()
+
+    Timer {
+        interval: 700
+        running: true
+        repeat: false
+        onTriggered: root.scanNetwork()
+    }
 
     Connections {
         target: Backend
@@ -131,16 +278,43 @@ Rectangle {
                 return;
             }
             if (result.kind === "network") {
-                root.networkDevices = result.devices || [];
+                const previous = {};
+                (root.networkDevices || []).forEach(function (device) {
+                    if (device.shares && device.shares.length)
+                        previous[device.host] = device.shares;
+                });
+                root.networkDevices = (result.devices || []).map(function (device) {
+                    return previous[device.host]
+                        ? Object.assign({}, device, { shares: previous[device.host] })
+                        : device;
+                });
                 root.networkScannedAt = result.scanned_at || 0;
                 root.networkScanning = false;
                 root.networkError = "";
                 root.scanId = -1;
                 return;
             }
+            if (result.kind === "network_shares") {
+                const credentials = root.pendingSharesAuth;
+                root.sharesId = -1;
+                root.busyUri = "";
+                root.pendingSharesAuth = null;
+                root.pendingPrompt = null;
+                root.applyShares(result.host, result.shares || []);
+                root.setHostCollapsed(result.host, false);
+                const shares = result.shares || [];
+                if (shares.length === 1 && credentials) {
+                    root.mountShare(shares[0].uri, credentials.username, credentials.password,
+                                    credentials.domain, credentials.anonymous);
+                } else if (shares.length === 0) {
+                    root.networkError = "No shares found on " + result.host;
+                }
+                return;
+            }
             if (result.kind === "network_mount") {
                 root.networkMountId = -1;
                 root.busyUri = "";
+                root.pendingPrompt = null;
                 root.navigate(result.path);
                 return;
             }
@@ -165,10 +339,31 @@ Rectangle {
                 root.scanId = -1;
                 root.networkScanning = false;
                 root.networkError = message;
+            } else if (id === root.sharesId) {
+                root.sharesId = -1;
+                root.busyUri = "";
+                root.pendingSharesAuth = null;
+                root.forgetCredentials(root.lastNetworkUri);
+                if (root.pendingPrompt) {
+                    const prompt = root.pendingPrompt;
+                    root.pendingPrompt = null;
+                    root.networkError = "";
+                    Ui.askNetworkAuth(prompt.uri, prompt.name);
+                } else {
+                    root.networkError = message;
+                }
             } else if (id === root.networkMountId) {
                 root.networkMountId = -1;
                 root.busyUri = "";
-                root.networkError = message;
+                root.forgetCredentials(root.lastNetworkUri);
+                if (root.pendingPrompt) {
+                    const prompt = root.pendingPrompt;
+                    root.pendingPrompt = null;
+                    root.networkError = "";
+                    Ui.askNetworkAuth(prompt.uri, prompt.name);
+                } else {
+                    root.networkError = message;
+                }
             } else if (id === root.deviceMountId) {
                 root.deviceMountId = -1;
                 root.deviceBusy = "";
@@ -185,8 +380,13 @@ Rectangle {
         target: Ui
         function onPlacesChanged() { root.reload(); }
         function onNetworkScanRequested() { root.scanNetwork(); }
-        function onNetworkAuthAccepted(uri, username, password, domain) {
-            root.mountShare(uri, username, password, domain);
+        function onNetworkAuthAccepted(uri, username, password, domain, anonymous) {
+            root.rememberCredentials(uri, username, password, domain, anonymous);
+            if (root.uriHasShare(uri))
+                root.mountShare(uri, username, password, domain, anonymous);
+            else
+                root.listShares(uri, { username: username, password: password,
+                                       domain: domain, anonymous: anonymous });
         }
     }
 
@@ -263,7 +463,10 @@ Rectangle {
                                 placeMenu.openAt(point.x, point.y);
                                 return;
                             }
-                            root.navigate(modelData.path);
+                            if (modelData.uri)
+                                root.requestShare(modelData.path, modelData.name);
+                            else
+                                root.navigate(modelData.path);
                         }
                     }
                 }
@@ -467,7 +670,9 @@ Rectangle {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width - 30 - (modelData.kind === "host" ? 44 : 0)
-                            text: modelData.name
+                            text: (modelData.kind === "host" && modelData.shares && modelData.shares.length > 0)
+                                ? ((root.hostCollapsed(modelData.host) ? "▸ " : "▾ ") + modelData.name)
+                                : modelData.name
                             color: modelData.kind === "host" ? Theme.muted : Theme.foreground
                             font.pixelSize: modelData.kind === "host" ? 10 : Theme.fontSize - 1
                             elide: Text.ElideRight
@@ -499,17 +704,22 @@ Rectangle {
                         id: shareHover
                         anchors.fill: parent
                         hoverEnabled: true
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                         enabled: modelData.kind === "share"
                             ? !root.busyUri
                             : (modelData.servicesList && modelData.servicesList.length > 0)
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
+                        onClicked: (mouse) => {
                             if (modelData.kind === "share") {
+                                if (mouse.button === Qt.RightButton) {
+                                    shareMenu.items = root.shareMenuItems(modelData);
+                                    const point = mapToItem(root, mouse.x, mouse.y);
+                                    shareMenu.openAt(point.x, point.y);
+                                    return;
+                                }
                                 root.requestShare(modelData.uri, modelData.name);
-                            } else if (modelData.servicesList.indexOf("smb") >= 0) {
-                                root.requestShare("smb://" + modelData.host + "/", modelData.name || modelData.host);
-                            } else if (modelData.servicesList.indexOf("nfs") >= 0) {
-                                root.requestShare("nfs://" + modelData.host + "/", modelData.name || modelData.host);
+                            } else {
+                                root.toggleHost(modelData);
                             }
                         }
                     }
@@ -540,5 +750,9 @@ Rectangle {
 
     MenuPopup {
         id: deviceMenu
+    }
+
+    MenuPopup {
+        id: shareMenu
     }
 }

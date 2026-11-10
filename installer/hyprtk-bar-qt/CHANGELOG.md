@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.27 — unreleased
+
+- **hyprtk-file-manager 1.3.0 vendored.** Network browsing now authenticates
+  (GVfs share enumeration, keyring-backed mounts), network shares/folders can be
+  added to Places, and hosts collapse/expand in the sidebar. The bar installer
+  provisions this snapshot.
+
 ## 0.41.26 — unreleased
 
 - **Bundled file manager installed.** `install.sh` now provisions the vendored

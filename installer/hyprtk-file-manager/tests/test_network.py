@@ -73,13 +73,61 @@ class NetworkTests(unittest.TestCase):
                 patch("hyprtk_file_manager.network._find_mount",
                       return_value=Path("/run/user/1000/gvfs/smb-share:server=host,share=share")):
             result = network.mount("smb://host/share", "user", "pass", "WORKGROUP")
-        gio_mount.assert_called_once_with("smb://host/share", "user", "pass", "WORKGROUP")
+        gio_mount.assert_called_once_with("smb://host/share", "user", "pass", "WORKGROUP", False)
         self.assertEqual(result["kind"], "network_mount")
         self.assertEqual(result["path"], "/run/user/1000/gvfs/smb-share:server=host,share=share")
 
     def test_mount_unsupported(self):
         with self.assertRaises(ValueError):
             network.mount("ftp://example.com/share")
+
+    def test_mount_requires_share(self):
+        with self.assertRaises(ValueError):
+            network.mount("smb://host/")
+        with self.assertRaises(ValueError):
+            network.mount("smb://host")
+
+    def test_list_shares(self):
+        children = [
+            {"name": "documents", "display": "Documents", "type": 6},
+            {"name": "IPC$", "display": "IPC$", "type": 6},
+            {"name": "readme.txt", "display": "readme.txt", "type": 1},
+        ]
+        with patch.object(network, "_gio_available", return_value=True), \
+                patch.object(network, "_gio_children", return_value=children):
+            result = network.list_shares("smb://host/", "u", "p", "WG")
+        self.assertEqual(result["kind"], "network_shares")
+        self.assertEqual(result["host"], "host")
+        self.assertEqual([share["name"] for share in result["shares"]], ["Documents"])
+        self.assertEqual(result["shares"][0]["uri"], "smb://host/documents")
+
+    def test_list_shares_nfs(self):
+        with patch.object(network, "_nfs_exports", return_value=["/export/data"]):
+            result = network.list_shares("nfs://host/")
+        self.assertEqual(result["kind"], "network_shares")
+        self.assertEqual(result["shares"][0]["uri"], "nfs://host/export/data")
+
+    def test_uri_for_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gvfs = Path(tmp) / "gvfs"
+            target = gvfs / "smb-share:server=192.168.0.20,share=documents" / "sub dir"
+            target.mkdir(parents=True)
+            with patch.dict("os.environ", {"XDG_RUNTIME_DIR": tmp}):
+                self.assertEqual(
+                    network.uri_for_path(str(target)),
+                    "smb://192.168.0.20/documents/sub%20dir",
+                )
+
+    def test_find_mount_matches_share_case_insensitively(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gvfs = Path(tmp) / "gvfs"
+            gvfs.mkdir()
+            wanted = gvfs / "smb-share:server=192.168.0.20,share=documents"
+            wanted.mkdir()
+            (gvfs / "smb-share:server=192.168.0.20,share=music").mkdir()
+            with patch.dict("os.environ", {"XDG_RUNTIME_DIR": tmp}):
+                found = network._find_mount("smb://192.168.0.20/Documents")
+        self.assertEqual(found, wanted)
 
 
 if __name__ == "__main__":
