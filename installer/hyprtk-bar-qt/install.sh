@@ -1,7 +1,8 @@
 #!/bin/bash
 # hyprtk-bar-qt installer for Hyprtk
 # Installs the Quickshell/QML shell + a Python venv (for the bundled pywal16),
-# drops launcher/toggle helpers on PATH, and registers the Hyprland autostart.
+# the vendored file manager (hyprtk-fm), drops launcher/toggle helpers on PATH,
+# and registers the Hyprland autostart.
 # Usage: ./install.sh             — install (system deps + venv)
 #        ./install.sh --dry-run   — check requirements, install nothing
 #        ./install.sh --no-deps   — install without touching system packages
@@ -86,6 +87,9 @@ if [ "$DO_UNINSTALL" -eq 1 ]; then
         rm -f /usr/local/bin/$APP_NAME /usr/local/bin/wal /usr/local/bin/qs /usr/local/bin/$APP_NAME-* 2>/dev/null || true
     elif command -v sudo >/dev/null 2>&1; then
         sudo rm -f /usr/local/bin/$APP_NAME /usr/local/bin/wal /usr/local/bin/qs /usr/local/bin/$APP_NAME-* 2>/dev/null || true
+    fi
+    if [ -e "$HOME/.local/share/hyprtk-file-manager" ] || [ -e "$BIN_DIR/hyprtk-fm" ]; then
+        echo ":: NOTE: hyprtk-file-manager is managed by its own installer; left in place."
     fi
     echo ":: Done. $APP_NAME has been uninstalled."
     exit 0
@@ -447,6 +451,11 @@ if [ "$DRY_RUN" -eq 1 ]; then
     else
         echo ":: Bundled pywal16: MISSING (vendor/pywal16)"
     fi
+    if [ -f "$SCRIPT_DIR/vendor/hyprtk-file-manager/install.sh" ]; then
+        echo ":: Bundled hyprtk-file-manager: vendor/hyprtk-file-manager (installs hyprtk-fm)"
+    else
+        echo ":: Bundled hyprtk-file-manager: MISSING (vendor/hyprtk-file-manager)"
+    fi
     if [ -n "${QS_BUILD_DEPS[$PM]:-}" ]; then
         echo ":: Quickshell: not packaged for $PM — built from source where Qt >= 6.6, else a prebuilt bundle is fetched"
     fi
@@ -586,6 +595,18 @@ else
     echo ":: WARN: vendored HyprQuickFrame missing — hyprtk-screenshot unavailable." >&2
 fi
 
+# ── Vendored hyprtk-file-manager (separate installer) ─────────────────────
+if [ -f "$SCRIPT_DIR/vendor/hyprtk-file-manager/install.sh" ]; then
+    echo ":: Installing vendored hyprtk-file-manager ..."
+    if PATH="$BIN_DIR:$PATH" bash "$SCRIPT_DIR/vendor/hyprtk-file-manager/install.sh"; then
+        echo ":: Installed hyprtk-file-manager (hyprtk-fm)"
+    else
+        echo ":: WARN: vendored hyprtk-file-manager installer failed — hyprtk-fm unavailable." >&2
+    fi
+else
+    echo ":: WARN: vendored hyprtk-file-manager missing — hyprtk-fm unavailable." >&2
+fi
+
 # ── Seed the default config on a fresh install ─────────────────────────────
 # bar-qt has its own config; on a machine that also has the GTK bar the backend
 # migrates from it once. Ship a default so a standalone install works too.
@@ -700,6 +721,13 @@ if [ -x "$BIN_DIR/wal" ]; then
         echo ":: Bundled wal ready ($("$BIN_DIR/wal" -v 2>&1))."
     else
         echo ":: WARN: bundled wal self-test failed — pywal theming unavailable." >&2
+    fi
+fi
+if [ -x "$BIN_DIR/hyprtk-fm" ]; then
+    if "$BIN_DIR/hyprtk-fm" version >/dev/null 2>&1; then
+        echo ":: Bundled file manager ready ($("$BIN_DIR/hyprtk-fm" version 2>&1))."
+    else
+        echo ":: WARN: hyprtk-fm installed but failed its version check." >&2
     fi
 fi
 

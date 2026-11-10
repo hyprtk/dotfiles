@@ -8,7 +8,7 @@ so a machine with Quickshell/Qt6 installed needs no extra downloads.
 | Item | Path | Installed to |
 |------|------|--------------|
 | pywal16 (`wal`) | `vendor/pywal16/` | `~/.local/share/hyprtk-bar-qt/vendor/pywal16` (+ a `wal` launcher in the venv, symlinked to `~/.local/bin/wal`) |
-| hyprtk-file-manager | `vendor/hyprtk-file-manager/` | separate `hyprtk-file-manager` repo/installer (vendored source snapshot; not installed by the bar installer) |
+| hyprtk-file-manager | `vendor/hyprtk-file-manager/` | `~/.local/share/hyprtk-file-manager` (+ `~/.local/bin/hyprtk-fm`, Files desktop entry) |
 | Nerd Font | `assets/fonts/SymbolsNerdFont-Regular.ttf` | `~/.local/share/fonts/` |
 | Bar themes | `themes/` | `~/.config/hyprtk-bar-qt/themes/` |
 | Clock widget themes | `assets/widgets/clock/` | `~/.config/hyprtk-bar-qt/widget-themes/clock/` |

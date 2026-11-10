@@ -3,6 +3,16 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.72] - 2026-11-10
+
+### Changed
+
+- **bar-qt 0.41.26 installer provisions the vendored file manager.** A
+  bar-only install now installs hyprtk-file-manager 1.2.8 alongside
+  HyprQuickFrame and pywal16: the app under `~/.local/share/hyprtk-file-manager`,
+  the `hyprtk-fm` launcher, and the Files desktop entry. Bar uninstall leaves it
+  in place because the standalone file-manager installer remains authoritative.
+
 ## [v1.3.71] - 2026-11-10
 
 ### Added

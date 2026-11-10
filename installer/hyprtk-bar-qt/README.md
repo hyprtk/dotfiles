@@ -104,6 +104,7 @@ bin/hyprtk-bar-qt-themer-toggle    hotkey helper (qs ipc call themer toggle)
 bin/hyprtk-bar-qt-widget-move  desktop-widget move start/stop (Hyprland bind)
 bin/hyprtk-screenshot         vendored HyprQuickFrame overlay launcher
 vendor/hyprquickframe/        vendored screenshot overlay (see .SOURCE.md)
+vendor/hyprtk-file-manager/   vendored file manager (see .SOURCE.md)
 vendor/patches/               local patches applied to the vendored overlay
 Makefile                      make test / run / install
 install.sh                    copy into the Quickshell config dir

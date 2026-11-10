@@ -1,11 +1,18 @@
 # Changelog
 
+## 0.41.26 — unreleased
+
+- **Bundled file manager installed.** `install.sh` now provisions the vendored
+  hyprtk-file-manager 1.2.8 alongside HyprQuickFrame and pywal16: the app in
+  `~/.local/share/hyprtk-file-manager`, the `hyprtk-fm` launcher, and the Files
+  desktop entry. `--uninstall` leaves it in place because the standalone
+  installer owns it.
+
 ## 0.41.25 — unreleased
 
 - **hyprtk-file-manager 1.2.8 vendored.** The separate file manager is carried
-  under `vendor/hyprtk-file-manager/` for source completeness; the standalone
-  installer remains the source of truth and the bar installer does not install
-  it.
+  under `vendor/hyprtk-file-manager/`; the standalone installer remains the
+  source of truth and the bar installer provisions it (0.41.26).
 - **Hyprland Settings shortcut in the Settings dialogue.** A separated
   "Hyprland Settings" entry at the bottom of the sidebar launches the
   independent config-manager as a layer-shell Overlay, so it opens above this
