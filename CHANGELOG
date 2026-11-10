@@ -1,5 +1,16 @@
 # Changelog
 
+## [v1.3.68] - 2026-11-10
+
+### Fixed
+
+- **Super+F / default file-manager launch.** Hyprland's session PATH did not
+  include `~/.local/bin`, so the `Super+F` wrapper's `command -v hyprtk-fm`
+  failed and fell back to Thunar. The session PATH now prepends
+  `~/.local/bin`, and the `Super+F` wrapper execs the absolute
+  `~/.local/bin/hyprtk-fm` (Thunar remains the fallback). The bar's Files quick
+  link and the XDG `inode/directory` desktop now resolve `hyprtk-fm`.
+
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
