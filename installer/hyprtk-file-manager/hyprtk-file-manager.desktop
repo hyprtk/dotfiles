@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Files
+GenericName=File Manager
+Comment=hyprtk file manager
+Exec=hyprtk-fm %U
+Icon=system-file-manager
+Terminal=false
+Categories=System;FileManager;
+MimeType=inode/directory;
+StartupNotify=true

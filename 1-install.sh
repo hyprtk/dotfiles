@@ -990,13 +990,6 @@ else
         _spin "Creating ~/.local/bin..." "mkdir -p ~/.local/bin" "$LOG_FILE"
         _ok "Hyprland configs installed"
 
-        # ── Preferred apps (XDG) ───────────────────────────────────────
-        # Point XDG at the suite's file manager/browser so desktop integration
-        # and hyprtk-bar's quick links resolve thunar/brave, not the distro's
-        # defaults. The session terminal is $TERMINAL in hypr/environment.lua.
-        _spin "Registering preferred apps..." "bash $SCRIPT_DIR/installer/scripts/set-default-apps.sh" "$LOG_FILE"
-        _ok "Preferred apps registered"
-
         # ── ZSH ──────────────────────────────────────────────────────
         _step "Installing ZSH"
         _spin "Installing zsh..." "_installPackagesPacman zsh" "$LOG_FILE"
@@ -1062,6 +1055,17 @@ else
         _step "Installing Hyprland Settings (config-manager)"
         _spin "Installing config-manager..." "bash $SCRIPT_DIR/installer/config-manager/install.sh" "$LOG_FILE"
         _ok "config-manager installed (opened from the bar's Settings → Hyprland Settings)"
+
+        # ── hyprtk-file-manager (GUI) ──────────────────────────────
+        _step "Installing hyprtk-file-manager"
+        _spin "Installing hyprtk-file-manager..." "bash $SCRIPT_DIR/installer/hyprtk-file-manager/install.sh" "$LOG_FILE"
+        _ok "hyprtk-file-manager installed (hyprtk-fm; default file manager)"
+
+        # ── Preferred apps (XDG + bar quick links) ─────────────────
+        # Point XDG and the bar's Files quick link at hyprtk-fm; Thunar stays
+        # installed as a fallback. The session terminal is $TERMINAL.
+        _spin "Registering preferred apps..." "bash $SCRIPT_DIR/installer/scripts/set-default-apps.sh" "$LOG_FILE"
+        _ok "Preferred apps registered"
 
         # ── hyprtk-usb (GUI) ────────────────────────────────────────
         _step "Installing hyprtk-usb"

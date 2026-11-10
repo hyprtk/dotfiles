@@ -13,3 +13,7 @@ hl.env("XDG_SESSION_TYPE", "wayland")
 -- distro default.
 hl.env("TERMINAL", "alacritty")
 
+-- Suite file manager: hyprtk-bar's quick links and tools honouring
+-- $FILEMANAGER resolve this instead of the distro default (Thunar remains the
+-- fallback in the Super+F bind).
+hl.env("FILEMANAGER", "hyprtk-fm")

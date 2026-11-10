@@ -1,0 +1,6 @@
+singleton Backend 1.0 Backend.qml
+singleton Jobs 1.0 Jobs.qml
+singleton Clipboard 1.0 Clipboard.qml
+singleton Ui 1.0 Ui.qml
+singleton Preview 1.0 Preview.qml
+singleton DragState 1.0 DragState.qml

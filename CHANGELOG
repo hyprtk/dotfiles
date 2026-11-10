@@ -3,10 +3,16 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
-## [Unreleased] - 2026-10-23
+## [v1.3.67] - 2026-11-10
 
 ### Added
 
+- **hyprtk-file-manager vendored and installed.** New Qt/QML (Quickshell) +
+  Python file manager, vendored under `installer/hyprtk-file-manager` and
+  installed after the bar/config-manager. `Super+F`, the XDG
+  `inode/directory` default, and the bar's **Files** quick link now open
+  `hyprtk-fm`; Thunar stays installed as a fallback. The session exports
+  `FILEMANAGER=hyprtk-fm`, so tools honouring it resolve the suite file manager.
 - **Live monitor output/mode pickers (`config-manager 0.2.2` re-vendored).**
   The Monitors page now lists every connected output and, per output, all
   available `WxH@Hz` modes read from `hyprctl -j monitors all` (the same source
