@@ -1,5 +1,8 @@
 # Changelog
 
+All notable changes to hyprtk-merged (the unified dotfiles installer) are
+documented in this file. Dates are in YYYY-MM-DD format.
+
 ## [v1.3.68] - 2026-11-10
 
 ### Fixed
@@ -10,9 +13,6 @@
   `~/.local/bin`, and the `Super+F` wrapper execs the absolute
   `~/.local/bin/hyprtk-fm` (Thunar remains the fallback). The bar's Files quick
   link and the XDG `inode/directory` desktop now resolve `hyprtk-fm`.
-
-All notable changes to hyprtk-merged (the unified dotfiles installer) are
-documented in this file. Dates are in YYYY-MM-DD format.
 
 ## [v1.3.67] - 2026-11-10
 
