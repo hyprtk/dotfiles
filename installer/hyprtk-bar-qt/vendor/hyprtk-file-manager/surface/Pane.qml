@@ -380,6 +380,10 @@ Item {
         Backend.call("open_root", { path: root.launchTarget() });
     }
 
+    function openTerminalRoot() {
+        Backend.call("terminal_root", { path: root.launchTarget() });
+    }
+
     function addToPlaces() {
         let target = root.path;
         const paths = Object.keys(root.selected);
@@ -457,12 +461,22 @@ Item {
             root.openEntry(entry);
     }
 
+    function openWithSelected() {
+        const paths = root.selectedPaths();
+        if (paths.length !== 1)
+            return;
+        Ui.askOpenWith(paths[0]);
+    }
+
     function buildMenu() {
         const paths = root.selectedPaths();
         const has = paths.length > 0;
         const single = paths.length === 1;
+        const entry = root.currentEntry();
+        const singleFile = single && entry !== undefined && !entry.dir;
         return [
             { label: "Open", enabled: single, action: function () { root.openSelected(); } },
+            { label: "Open With…", enabled: singleFile, action: function () { root.openWithSelected(); } },
             { label: "Rename…", enabled: single, action: function () { root.renameSelected(); } },
             { label: "Copy", enabled: has, action: function () { root.copySelection(); } },
             { label: "Cut", enabled: has, action: function () { root.cutSelection(); } },
@@ -481,6 +495,7 @@ Item {
             { label: "Properties…", enabled: single, action: function () { root.showProperties(); } },
             { label: "Open Terminal Here", enabled: true, action: function () { root.openTerminal(); } },
             { label: "Open as Root", enabled: true, action: function () { root.openAsRoot(); } },
+            { label: "Open Terminal as Root", enabled: true, action: function () { root.openTerminalRoot(); } },
             { label: "Toggle Transfers Tray", enabled: true, action: function () { Config.showTransfers = !Config.showTransfers; } }
         ];
     }
@@ -858,22 +873,6 @@ Item {
             anchors.margins: 6
             spacing: 4
 
-            IconButton {
-                text: "←"
-                available: root.historyIndex > 0
-                onClicked: { root.activated(); root.goBack(); }
-            }
-            IconButton {
-                text: "→"
-                available: root.historyIndex < root.history.length - 1
-                onClicked: { root.activated(); root.goForward(); }
-            }
-            IconButton {
-                text: "↑"
-                available: root.path !== "/"
-                onClicked: { root.activated(); root.goUp(); }
-            }
-
             PathBar {
                 id: pathBar
                 Layout.fillWidth: true
@@ -980,9 +979,39 @@ Item {
         }
     }
 
+    Rectangle {
+        id: rootBanner
+        visible: Backend.elevated
+        anchors.top: toolbar.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: visible ? 26 : 0
+        color: Theme.alpha(Theme.danger, 0.16)
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Theme.alpha(Theme.danger, 0.4)
+        }
+
+        Text {
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            verticalAlignment: Text.AlignVCenter
+            text: "Running as root — file operations affect the whole system"
+            color: Theme.danger
+            font.pixelSize: 11
+            font.bold: true
+            elide: Text.ElideRight
+        }
+    }
+
     Item {
         id: content
-        anchors.top: toolbar.bottom
+        anchors.top: rootBanner.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: statusBar.top
@@ -1027,7 +1056,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 18
                         height: 18
-                        sourceSize: Qt.size(18, 18)
+                        sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
                         source: Quickshell.iconPath(modelData.icon, "text-x-generic")
                     }
 
@@ -1148,7 +1177,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 16
                         height: 16
-                        sourceSize: Qt.size(16, 16)
+                        sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
                         source: Quickshell.iconPath(modelData.icon, "text-x-generic")
                     }
 
@@ -1171,7 +1200,8 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: Config.iconSize * 2.2
                         height: Config.iconSize * 2.2
-                        sourceSize: Qt.size(Config.iconSize * 2.2, Config.iconSize * 2.2)
+                        sourceSize: Qt.size(Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)),
+                                            Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)))
                         source: Quickshell.iconPath(modelData.icon, "text-x-generic")
                     }
 

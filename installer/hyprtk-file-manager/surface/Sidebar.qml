@@ -32,7 +32,18 @@ Rectangle {
     property string lastNetworkUri: ""
     property var collapsedHosts: ({})
 
+    property var pane: null
+
+    readonly property bool canGoBack: root.pane !== null && root.pane.historyIndex > 0
+    readonly property bool canGoForward: root.pane !== null
+        && root.pane.historyIndex < root.pane.history.length - 1
+    readonly property bool canGoUp: root.pane !== null && root.pane.path !== "/"
+
     color: Theme.alpha(Theme.surface, 0.45)
+
+    function goHome() {
+        root.navigate(Quickshell.env("HOME") || "/");
+    }
 
     function reload() {
         Backend.call("places", {});
@@ -390,9 +401,48 @@ Rectangle {
         }
     }
 
+    Row {
+        id: navRow
+        anchors.top: parent.top
+        anchors.topMargin: 8
+        anchors.left: parent.left
+        anchors.leftMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 10
+        height: 30
+        spacing: 2
+
+        IconButton {
+            text: "←"
+            available: root.canGoBack
+            onClicked: if (root.pane) root.pane.goBack()
+        }
+
+        IconButton {
+            text: "→"
+            available: root.canGoForward
+            onClicked: if (root.pane) root.pane.goForward()
+        }
+
+        IconButton {
+            text: "↑"
+            available: root.canGoUp
+            onClicked: if (root.pane) root.pane.goUp()
+        }
+
+        IconButton {
+            text: "⌂"
+            available: root.pane !== null
+            onClicked: root.goHome()
+        }
+    }
+
     Flickable {
-        anchors.fill: parent
-        anchors.topMargin: 14
+        anchors.top: navRow.bottom
+        anchors.topMargin: 6
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
         anchors.bottomMargin: 14
         contentHeight: sections.height
         clip: true
@@ -436,7 +486,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 16
                             height: 16
-                            sourceSize: Qt.size(16, 16)
+                            sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
                             source: Quickshell.iconPath(modelData.icon || "folder", "folder")
                         }
 
@@ -506,7 +556,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 16
                             height: 16
-                            sourceSize: Qt.size(16, 16)
+                            sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
                             source: Quickshell.iconPath(modelData.icon || "drive-harddisk", "drive-harddisk")
                         }
 
@@ -563,7 +613,7 @@ Rectangle {
                             anchors.centerIn: parent
                             width: 14
                             height: 14
-                            sourceSize: Qt.size(14, 14)
+                            sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
                             source: Quickshell.iconPath("media-eject", "media-eject")
                         }
 
@@ -663,7 +713,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 15
                             height: 15
-                            sourceSize: Qt.size(15, 15)
+                            sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
                             source: Quickshell.iconPath(modelData.icon || "network-server", "network-server")
                         }
 

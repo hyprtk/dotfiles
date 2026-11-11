@@ -7,7 +7,8 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string home: Quickshell.env("HOME") || ""
+    readonly property string home:
+        Quickshell.env("HYPRTK_WAL_HOME") || Quickshell.env("HOME") || ""
     property var wal: ({})
 
     FileView {
@@ -46,6 +47,9 @@ Singleton {
 
     readonly property int radius: 8
     readonly property int fontSize: 12
+
+    // Request full-color icon variants; Papirus only colors folders at 22px+.
+    readonly property int iconSource: 64
 
     function alpha(color, value) {
         return Qt.rgba(color.r, color.g, color.b, value);

@@ -117,7 +117,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: 48
                     height: 48
-                    sourceSize: Qt.size(48, 48)
+                    sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
                     source: Quickshell.iconPath(root.info.kind === "dir" ? "folder" : "text-x-generic", "text-x-generic")
                 }
 

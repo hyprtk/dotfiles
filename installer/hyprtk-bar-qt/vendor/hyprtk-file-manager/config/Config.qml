@@ -26,6 +26,18 @@ Singleton {
     property bool _loaded: false
     property int _loadId: -1
 
+    function cycleView() {
+        const order = ["list", "grid", "compact"];
+        const index = order.indexOf(root.viewMode);
+        root.viewMode = order[(index + 1) % order.length];
+    }
+
+    function cycleSort() {
+        const order = ["name", "size", "mtime", "type"];
+        const index = order.indexOf(root.sortKey);
+        root.sortKey = order[(index + 1) % order.length];
+    }
+
     function values() {
         return {
             viewMode: root.viewMode,

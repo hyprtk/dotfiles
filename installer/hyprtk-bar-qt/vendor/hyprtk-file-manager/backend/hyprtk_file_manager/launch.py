@@ -33,8 +33,42 @@ def _forward_env() -> list[str]:
         "XAUTHORITY",
         "DBUS_SESSION_BUS_ADDRESS",
         "XDG_SESSION_TYPE",
+        "XDG_DATA_HOME",
+        "XDG_DATA_DIRS",
+        "QT_QPA_PLATFORMTHEME",
     )
-    return [f"{key}={os.environ[key]}" for key in keys if os.environ.get(key)]
+    values = [f"{key}={os.environ[key]}" for key in keys if os.environ.get(key)]
+    wal_home = os.environ.get("HYPRTK_WAL_HOME") or str(Path.home())
+    values.append(f"HYPRTK_WAL_HOME={wal_home}")
+    return values
+
+
+def launcher_path() -> Path:
+    return Path(__file__).resolve().parents[2] / "bin" / "hyprtk-fm"
+
+
+def open_as_root(path: str) -> dict:
+    target = Path(path).expanduser()
+    if target.is_file():
+        target = target.parent
+    if not target.is_dir():
+        raise NotADirectoryError(str(target))
+    if not shutil.which("pkexec"):
+        raise RuntimeError("pkexec not found")
+    launcher = launcher_path()
+    if not launcher.is_file():
+        fallback = shutil.which("hyprtk-fm")
+        if not fallback:
+            raise FileNotFoundError("hyprtk-fm launcher not found")
+        launcher = Path(fallback)
+    command = ["pkexec", "env"] + _forward_env() + [str(launcher), str(target)]
+    subprocess.Popen(
+        command,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    return {"kind": "open_root_fm", "path": str(target), "launcher": str(launcher)}
 
 
 def open_terminal(path: str, root: bool = False) -> dict:

@@ -20,6 +20,7 @@ class RpcTests(unittest.TestCase):
         self.assertEqual(response["id"], 1)
         self.assertEqual(response["result"]["kind"], "ping")
         self.assertIn("version", response["result"])
+        self.assertIsInstance(response["result"]["root"], bool)
 
     def test_list(self):
         response = rpc.handle({"id": 2, "method": "list", "params": {"path": str(self.root)}})

@@ -13,6 +13,7 @@ from . import __version__
 from . import launch
 from . import meta
 from . import network as network_mod
+from . import openwith as openwith_mod
 from . import places as places_mod
 from . import preview as preview_mod
 from . import search as search_mod
@@ -94,19 +95,31 @@ def handle(request: dict) -> dict:
     params = request.get("params") or {}
     try:
         if method == "ping":
-            return {"id": rid, "result": {"kind": "ping", "version": __version__}}
+            return {"id": rid, "result": {"kind": "ping", "version": __version__, "root": os.geteuid() == 0}}
         if method == "list":
             return {"id": rid, "result": _list(params)}
         if method == "places":
             return {"id": rid, "result": _places(params)}
         if method == "open":
             return {"id": rid, "result": _open(params)}
+        if method == "open_with.launch":
+            return {
+                "id": rid,
+                "result": openwith_mod.launch(
+                    str(params.get("path") or ""), str(params.get("app") or ""),
+                ),
+            }
         if method == "terminal":
             return {
                 "id": rid,
                 "result": launch.open_terminal(str(params.get("path") or places_mod.home_dir()), False),
             }
         if method == "open_root":
+            return {
+                "id": rid,
+                "result": launch.open_as_root(str(params.get("path") or places_mod.home_dir())),
+            }
+        if method == "terminal_root":
             return {
                 "id": rid,
                 "result": launch.open_terminal(str(params.get("path") or places_mod.home_dir()), True),
@@ -174,6 +187,8 @@ def _serve_async(request: dict) -> None:
     try:
         if method == "preview":
             result = preview_mod.build_preview(str(params.get("path") or ""))
+        elif method == "open_with.apps":
+            result = openwith_mod.applications(str(params.get("path") or ""))
         elif method == "search":
             result = search_mod.search(
                 str(params.get("root") or places_mod.home_dir()),
@@ -218,7 +233,7 @@ def _serve_async(request: dict) -> None:
 
 ASYNC_METHODS = {
     "preview", "search", "checksum", "devices.mount", "devices.eject",
-    "network.scan", "network.mount", "network.shares",
+    "network.scan", "network.mount", "network.shares", "open_with.apps",
 }
 
 

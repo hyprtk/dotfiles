@@ -13,6 +13,7 @@ Singleton {
     signal deleteRequested(var paths, bool permanent)
     signal batchRenameRequested(var paths)
     signal propertiesRequested(string path)
+    signal openWithRequested(string path)
     signal emptyTrashRequested()
     signal placesChanged()
     signal networkScanRequested()
@@ -42,6 +43,11 @@ Singleton {
     function askProperties(path) {
         root.modalOpen = true;
         root.propertiesRequested(path);
+    }
+
+    function askOpenWith(path) {
+        root.modalOpen = true;
+        root.openWithRequested(path);
     }
 
     function askEmptyTrash() {

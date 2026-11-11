@@ -122,6 +122,7 @@ FloatingWindow {
             Sidebar {
                 Layout.preferredWidth: 190
                 Layout.fillHeight: true
+                pane: win.activePane
                 currentPath: win.activePane ? win.activePane.path : ""
                 onNavigate: (target) => win.activePane.navigate(target)
                 onEmptyTrashRequested: Ui.askEmptyTrash()
@@ -241,6 +242,11 @@ FloatingWindow {
         onClosed: win.focusActivePane()
     }
 
+    OpenWithDialog {
+        id: openWithDialog
+        onClosed: win.focusActivePane()
+    }
+
     NetworkAuthDialog {
         id: networkAuthDialog
         onAccepted: (uri, username, password, domain, anonymous) => {
@@ -351,6 +357,9 @@ FloatingWindow {
         }
         function onPropertiesRequested(path) {
             propertiesDialog.open(path);
+        }
+        function onOpenWithRequested(path) {
+            openWithDialog.open(path);
         }
         function onEmptyTrashRequested() {
             emptyTrashDialog.open("Empty Trash?", "Permanently delete all items in the Trash. This cannot be undone.", "Empty Trash");

@@ -14,6 +14,7 @@ Singleton {
     property int reqId: 0
     property var queue: []
     property string lastError: ""
+    property bool elevated: false
 
     signal response(int id, var result)
     signal failure(int id, string message)
@@ -55,6 +56,8 @@ Singleton {
             root.fsEvent(String(res.token), String(res.dir));
             return;
         }
+        if (res.result && res.result.kind === "ping")
+            root.elevated = res.result.root === true;
         const id = (res.id === null || res.id === undefined) ? -1 : res.id;
         if (res.error) {
             root.failure(id, res.error);
@@ -62,6 +65,8 @@ Singleton {
             root.response(id, res.result);
         }
     }
+
+    Component.onCompleted: root.call("ping", {})
 
     Process {
         id: proc

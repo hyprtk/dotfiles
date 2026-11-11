@@ -5,7 +5,7 @@ A fast, keyboard-first file manager for the hyprtk desktop — Qt 6 QML
 with the power of Dolphin/Yazi one shortcut away. It follows the suite's live
 pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 
-**Current version: 1.3.0** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 1.4.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -28,7 +28,9 @@ pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 **Preview and inspection**
 - Spacebar Quick Look: images, video, PDF, text/code and metadata
 - Properties dialog with permissions and checksums
-- Open-with via `xdg-open`; open a terminal (or a root terminal) in the cwd
+- Open-with via `xdg-open`; **Open With…** picks any registered application
+  (default first, then recommended), and opens a terminal (or a root terminal)
+  in the cwd
 
 **Places and devices**
 - Places sidebar from XDG dirs + GTK bookmarks (shared with Thunar)

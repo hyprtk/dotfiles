@@ -3,6 +3,25 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.75] - 2026-11-11
+
+### Added
+
+- **hyprtk-file-manager 1.4.0.** Right-click a file for **Open With…** — a
+  chooser listing the default app first, then recommended apps, then the rest;
+  arrow keys/Enter work, and the system default is unchanged. Navigation
+  (back/forward/up) moved from the address bar to the top of the sidebar and
+  gained a Home button. Elevated windows now show a red **running as root**
+  banner under the toolbar, and **Open as Root** launches an elevated
+  `hyprtk-fm` (the old root-terminal action remains as **Open Terminal as
+  Root**). Papirus folder colors now apply in every view (icons request a 64px
+  source), and the view/sort cyclers are restored.
+
+### Changed
+
+- **bar-qt 0.41.28** vendors and provisions the same 1.4.0 snapshot. All
+  file-manager copies are version-matched and byte-identical.
+
 ## [v1.3.74] - 2026-11-11
 
 ### Added

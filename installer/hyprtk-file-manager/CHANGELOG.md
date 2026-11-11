@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.4.0 — 2026-11-11
+
+### Added
+
+- **Open With.** Right-clicking a file now offers **Open With…**, a dialog that
+  lists every application registered for the file's content type — the default
+  app first, then recommended apps, then the rest alphabetically. Pick one with
+  the mouse or arrow keys and Enter; the file opens in it without changing the
+  system default. Applications come from Gio/GVfs, with a `.desktop`-file
+  fallback when PyGObject is unavailable.
+- 117 tests.
+
+### Changed
+
+- **Open as Root now opens an elevated file manager.** The blank-area menu item
+  launches `hyprtk-fm` through `pkexec` (forwarding the Wayland/Qt session and
+  pywal theme environment) instead of a root terminal. The previous behaviour
+  is still available as **Open Terminal as Root**.
+- **Root warning banner.** A window running as root now shows a red bar under
+  the address bar — "Running as root — file operations affect the whole
+  system" — so an elevated instance is never mistaken for a normal one.
+- **Sidebar navigation.** Back, forward and up moved from the start of the
+  address bar to the top of the sidebar, joined by a Home button. The address
+  bar now spans the full toolbar width.
+
+### Fixed
+
+- **View and sort buttons.** The toolbar's view-mode and sort-key buttons called
+  `Config.cycleView()` / `Config.cycleSort()`, which were missing from the
+  settings singleton, so both clicks failed silently. Both cyclers are restored.
+- **Papirus folder colors in every view.** Icons were requested at their display
+  size, so 16px rows (compact view, sidebar) picked Papirus' monochrome
+  symbolic variant and the grid could pick a blue fallback. Icons now request a
+  64px source and scale down, so the recolored full-color variants are used
+  consistently in list, grid and compact views.
+
 ## 1.3.0 — 2026-11-10
 
 ### Added

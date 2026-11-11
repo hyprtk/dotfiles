@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.41.28 — unreleased
+
+- **hyprtk-file-manager 1.4.0 vendored.** Adds the **Open With…** chooser,
+  back/forward/up + Home at the top of the sidebar, a root warning banner in
+  elevated windows, elevated **Open as Root** (file manager, not terminal),
+  fully colored Papirus folder icons in every view, and restores the view/sort
+  cyclers. The bar installer provisions this snapshot.
+
 ## 0.41.27 — unreleased
 
 - **hyprtk-file-manager 1.3.0 vendored.** Network browsing now authenticates
