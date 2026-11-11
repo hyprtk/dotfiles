@@ -5,7 +5,8 @@
 - **hyprtk-file-manager 1.3.0 vendored.** Network browsing now authenticates
   (GVfs share enumeration, keyring-backed mounts), network shares/folders can be
   added to Places, and hosts collapse/expand in the sidebar. The bar installer
-  provisions this snapshot.
+  provisions this snapshot. The vendored snapshot now includes the file
+  manager's README and INSTALL guide.
 
 ## 0.41.26 — unreleased
 
