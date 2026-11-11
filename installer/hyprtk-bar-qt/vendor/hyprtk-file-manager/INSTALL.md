@@ -1,7 +1,7 @@
 # Installing hyprtk-file-manager
 
 This document covers a standalone install, the suite/vendored install, and how
-to make the file manager the desktop default. It applies to version 1.5.0.
+to make the file manager the desktop default. It applies to version 1.5.1.
 
 ## Quick start
 

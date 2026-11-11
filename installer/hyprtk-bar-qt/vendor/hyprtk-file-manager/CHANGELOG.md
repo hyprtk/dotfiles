@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.1 — 2026-11-11
+
+### Changed
+
+- **Sidebar typography.** The Places, Devices and Network section headings now
+  use the item font size instead of a smaller label size, and network host rows
+  match it too.
+
 ## 1.5.0 — 2026-11-11
 
 ### Added

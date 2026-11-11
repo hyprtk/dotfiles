@@ -465,7 +465,7 @@ Rectangle {
                 verticalAlignment: Text.AlignVCenter
                 text: "Places"
                 color: Theme.accent
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSize
                 font.bold: true
             }
 
@@ -534,7 +534,7 @@ Rectangle {
                 bottomPadding: 4
                 text: "Devices"
                 color: Theme.accent
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSize
                 font.bold: true
             }
 
@@ -667,7 +667,7 @@ Rectangle {
                         leftPadding: 16
                         text: root.networkScanning ? "Network · scanning…" : "Network"
                         color: Theme.accent
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.fontSize
                         font.bold: true
                     }
 
@@ -729,7 +729,7 @@ Rectangle {
                                 ? ((root.hostCollapsed(modelData.host) ? "▸ " : "▾ ") + modelData.name)
                                 : modelData.name
                             color: modelData.kind === "host" ? Theme.muted : Theme.foreground
-                            font.pixelSize: modelData.kind === "host" ? 10 : Theme.fontSize - 1
+                            font.pixelSize: Theme.fontSize
                             elide: Text.ElideRight
                         }
 

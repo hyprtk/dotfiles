@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.41.30 — unreleased
+
+- **hyprtk-file-manager 1.5.1 vendored.** Sidebar section headings (Places,
+  Devices, Network) now use the item font size, with network host rows matching.
+
 ## 0.41.29 — unreleased
 
 - **hyprtk-file-manager 1.5.0 vendored.** Adds a settings dialog covering every
