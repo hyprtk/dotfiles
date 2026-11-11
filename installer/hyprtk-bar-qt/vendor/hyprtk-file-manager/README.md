@@ -127,7 +127,8 @@ the app and persisted automatically.
 | `Ctrl+H` | toggle hidden files |
 | `Ctrl+T` / `Ctrl+W` | new tab / close tab |
 | `Tab` | switch active pane (dual pane) |
-| `Up`/`Down`, `Home`/`End` | move cursor |
+| `Up`/`Down`, `Home`/`End` | move selection |
+| `Ctrl+Up`/`Ctrl+Down`, `Ctrl+Home`/`Ctrl+End` | move cursor, keep selection |
 | `Return` | open |
 | `Space` | toggle preview (Quick Look) |
 | `Ctrl+Space` | toggle selection |

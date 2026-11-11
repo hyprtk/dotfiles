@@ -87,6 +87,15 @@ Item {
         root.tabs = next;
     }
 
+    function resetViewState() {
+        root.selected = ({});
+        root.cursor = 0;
+        root.anchor = 0;
+        root.filtering = false;
+        root.filterText = "";
+        root.filterQuery = "";
+    }
+
     function navigate(value) {
         const target = root.normalize(value);
         if (!target || target === root.path)
@@ -101,12 +110,7 @@ Item {
             root.historyIndex = next.length - 1;
         }
         root.path = target;
-        root.selected = ({});
-        root.cursor = 0;
-        root.anchor = 0;
-        root.filtering = false;
-        root.filterText = "";
-        root.filterQuery = "";
+        root.resetViewState();
         root.syncTab();
         root.sessionChanged();
     }
@@ -119,12 +123,7 @@ Item {
         root.history = (tab.history || [tab.path]).slice();
         root.historyIndex = (tab.historyIndex === undefined) ? root.history.length - 1 : tab.historyIndex;
         root.path = tab.path;
-        root.selected = ({});
-        root.cursor = 0;
-        root.anchor = 0;
-        root.filtering = false;
-        root.filterText = "";
-        root.filterQuery = "";
+        root.resetViewState();
         root.sessionChanged();
     }
 
@@ -152,6 +151,7 @@ Item {
         if (root.historyIndex > 0) {
             root.historyIndex -= 1;
             root.path = root.history[root.historyIndex];
+            root.resetViewState();
             root.syncTab();
             root.sessionChanged();
         }
@@ -161,6 +161,7 @@ Item {
         if (root.historyIndex < root.history.length - 1) {
             root.historyIndex += 1;
             root.path = root.history[root.historyIndex];
+            root.resetViewState();
             root.syncTab();
             root.sessionChanged();
         }
@@ -222,9 +223,13 @@ Item {
         root.cursor = index;
     }
 
-    function moveCursor(delta) {
+    function moveCursor(delta, keepSelection) {
         const max = Math.max(0, listing.entries.length - 1);
         root.cursor = Math.max(0, Math.min(max, root.cursor + delta));
+        if (!keepSelection) {
+            root.selectIndex(root.cursor, "single");
+            root.anchor = root.cursor;
+        }
         listView.positionViewAtIndex(root.cursor, ListView.Contain);
         gridView.positionViewAtIndex(root.cursor, GridView.Contain);
     }
@@ -264,6 +269,22 @@ Item {
         return entry ? [root.keyFor(entry.name)] : [];
     }
 
+    function pruneSelection() {
+        const prefix = root.path.endsWith("/") ? root.path : root.path + "/";
+        const keys = Object.keys(root.selected);
+        const next = {};
+        let changed = false;
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if (key.indexOf(prefix) === 0 && key.indexOf("/", prefix.length) < 0)
+                next[key] = true;
+            else
+                changed = true;
+        }
+        if (changed)
+            root.selected = next;
+    }
+
     function selectAll() {
         const next = {};
         for (let i = 0; i < listing.entries.length; i++)
@@ -272,12 +293,14 @@ Item {
     }
 
     function copySelection() {
+        root.pruneSelection();
         const paths = root.selectedPaths();
         if (paths.length > 0)
             Clipboard.copy(paths);
     }
 
     function cutSelection() {
+        root.pruneSelection();
         const paths = root.selectedPaths();
         if (paths.length > 0)
             Clipboard.cut(paths);
@@ -734,6 +757,7 @@ Item {
         onLoaded: {
             if (root.cursor >= listing.entries.length)
                 root.cursor = Math.max(0, listing.entries.length - 1);
+            root.pruneSelection();
             root.tryReveal();
             if (Config.showPreview && root.active)
                 Preview.load(root.cursorPath());
@@ -1536,9 +1560,19 @@ Item {
         onActivated: root.moveCursor(-1)
     }
     Shortcut {
+        sequence: "Ctrl+Up"
+        enabled: root.opKeysEnabled
+        onActivated: root.moveCursor(-1, true)
+    }
+    Shortcut {
         sequence: "Down"
         enabled: root.opKeysEnabled
         onActivated: root.moveCursor(1)
+    }
+    Shortcut {
+        sequence: "Ctrl+Down"
+        enabled: root.opKeysEnabled
+        onActivated: root.moveCursor(1, true)
     }
     Shortcut {
         sequence: "Home"
@@ -1546,9 +1580,19 @@ Item {
         onActivated: root.moveCursor(-listing.entries.length)
     }
     Shortcut {
+        sequence: "Ctrl+Home"
+        enabled: root.opKeysEnabled
+        onActivated: root.moveCursor(-listing.entries.length, true)
+    }
+    Shortcut {
         sequence: "End"
         enabled: root.opKeysEnabled
         onActivated: root.moveCursor(listing.entries.length)
+    }
+    Shortcut {
+        sequence: "Ctrl+End"
+        enabled: root.opKeysEnabled
+        onActivated: root.moveCursor(listing.entries.length, true)
     }
     Shortcut {
         sequence: "Return"

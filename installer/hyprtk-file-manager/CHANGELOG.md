@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.3 — 2026-11-11
+
+### Fixed
+
+- **Copy/paste pasted older items.** Arrow keys only moved the cursor while
+  leaving a previous selection in place, so `Ctrl+C` copied the previously
+  clicked item (or a whole earlier selection) instead of the item under the
+  cursor. Arrow keys now move the selection with the cursor; `Ctrl`+arrows move
+  the cursor while keeping the selection for multi-select.
+- **Stale selection across navigation.** Back/forward (and tab/path changes) now
+  clear the selection, and a selection that points outside the current folder is
+  pruned before it can be copied.
+
 ## 1.6.2 — 2026-11-11
 
 ### Changed

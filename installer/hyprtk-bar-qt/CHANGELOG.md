@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.34 — unreleased
+
+- **hyprtk-file-manager 1.6.3 vendored.** Copy/paste no longer pastes older
+  items: arrow keys move the selection with the cursor (`Ctrl`+arrows keep the
+  selection), navigation and history changes clear the selection, and a
+  selection pointing outside the current folder is pruned before copy/cut.
+
 ## 0.41.33 — unreleased
 
 - **hyprtk-file-manager 1.6.2 vendored.** The right-click menu is grouped into
