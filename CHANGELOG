@@ -3,6 +3,14 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.79] - 2026-11-11
+
+### Changed
+
+- **hyprtk-file-manager 1.6.1.** The settings dialog shows the running
+  file-manager version in its bottom-left corner.
+- **bar-qt 0.41.32** vendors and provisions the same 1.6.1 snapshot.
+
 ## [v1.3.78] - 2026-11-11
 
 ### Added

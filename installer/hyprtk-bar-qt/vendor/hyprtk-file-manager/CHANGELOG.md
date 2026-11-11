@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1 — 2026-11-11
+
+### Changed
+
+- **Settings dialog version.** The dialog shows the running
+  hyprtk-file-manager version in its bottom-left corner.
+
 ## 1.6.0 — 2026-11-11
 
 ### Changed

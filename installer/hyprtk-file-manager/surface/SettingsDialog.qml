@@ -188,11 +188,20 @@ Item {
 
             Item { width: 1; height: 4 }
 
-            Row {
-                anchors.right: parent.right
-                spacing: 8
+            Item {
+                width: parent.width
+                height: 30
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "hyprtk-file-manager " + (Backend.version.length > 0 ? Backend.version : "…")
+                    color: Theme.muted
+                    font.pixelSize: 10
+                }
 
                 DialogButton {
+                    anchors.right: parent.right
                     text: "Done"
                     primary: true
                     onClicked: root.dismiss()

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.41.32 — unreleased
+
+- **hyprtk-file-manager 1.6.1 vendored.** The settings dialog now shows the
+  running file-manager version in its bottom-left corner.
+
 ## 0.41.31 — unreleased
 
 - **hyprtk-file-manager 1.6.0 vendored.** The file manager's right-click menu is

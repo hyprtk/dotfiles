@@ -15,6 +15,7 @@ Singleton {
     property var queue: []
     property string lastError: ""
     property bool elevated: false
+    property string version: ""
 
     signal response(int id, var result)
     signal failure(int id, string message)
@@ -56,8 +57,10 @@ Singleton {
             root.fsEvent(String(res.token), String(res.dir));
             return;
         }
-        if (res.result && res.result.kind === "ping")
+        if (res.result && res.result.kind === "ping") {
             root.elevated = res.result.root === true;
+            root.version = String(res.result.version || "");
+        }
         const id = (res.id === null || res.id === undefined) ? -1 : res.id;
         if (res.error) {
             root.failure(id, res.error);
