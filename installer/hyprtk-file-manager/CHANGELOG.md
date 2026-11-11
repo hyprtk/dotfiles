@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.0 — 2026-11-11
+
+### Added
+
+- **Settings dialog.** A gear at the top of the sidebar (also `Ctrl+,` and the
+  command palette) opens settings for every editable preference: view mode,
+  icon size, sort key, descending order, folders first, hidden files, dual
+  pane, preview panel and the transfers tray. Changes apply immediately and are
+  saved automatically.
+
 ## 1.4.0 — 2026-11-11
 
 ### Added

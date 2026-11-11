@@ -101,6 +101,7 @@ FloatingWindow {
             { label: "Empty Trash", action: function () { Ui.askEmptyTrash(); } },
             { label: "Show/Hide Transfers", action: function () { Config.showTransfers = !Config.showTransfers; } },
             { label: "Select All", action: function () { pane.selectAll(); } },
+            { label: "Settings…", action: function () { Ui.askSettings(); } },
             { label: "Quit", action: function () { Qt.quit(); } }
         ]);
     }
@@ -247,6 +248,11 @@ FloatingWindow {
         onClosed: win.focusActivePane()
     }
 
+    SettingsDialog {
+        id: settingsDialog
+        onClosed: win.focusActivePane()
+    }
+
     NetworkAuthDialog {
         id: networkAuthDialog
         onAccepted: (uri, username, password, domain, anonymous) => {
@@ -361,12 +367,21 @@ FloatingWindow {
         function onOpenWithRequested(path) {
             openWithDialog.open(path);
         }
+        function onSettingsRequested() {
+            settingsDialog.open();
+        }
         function onEmptyTrashRequested() {
             emptyTrashDialog.open("Empty Trash?", "Permanently delete all items in the Trash. This cannot be undone.", "Empty Trash");
         }
         function onNetworkAuthRequested(uri, name) {
             networkAuthDialog.open(name || uri, uri);
         }
+    }
+
+    Shortcut {
+        sequence: "Ctrl+,"
+        enabled: !Ui.modalOpen && !Jobs.currentConflict
+        onActivated: Ui.askSettings()
     }
 
     Shortcut {

@@ -435,6 +435,11 @@ Rectangle {
             available: root.pane !== null
             onClicked: root.goHome()
         }
+
+        IconButton {
+            text: "⚙"
+            onClicked: Ui.askSettings()
+        }
     }
 
     Flickable {

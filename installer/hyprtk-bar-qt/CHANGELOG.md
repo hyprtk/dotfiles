@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.29 — unreleased
+
+- **hyprtk-file-manager 1.5.0 vendored.** Adds a settings dialog covering every
+  editable preference (view mode, icon size, sort, hidden files, dual pane,
+  preview, transfers), reachable from a sidebar gear, `Ctrl+,` or the command
+  palette. Changes apply live and save automatically.
+
 ## 0.41.28 — unreleased
 
 - **hyprtk-file-manager 1.4.0 vendored.** Adds the **Open With…** chooser,

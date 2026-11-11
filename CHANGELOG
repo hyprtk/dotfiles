@@ -3,6 +3,21 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.76] - 2026-11-11
+
+### Added
+
+- **hyprtk-file-manager 1.5.0.** A settings dialog, opened from a gear at the
+  top of the sidebar, `Ctrl+,` or the command palette, exposes every editable
+  preference: view mode, icon size, sort key, descending, folders first, hidden
+  files, dual pane, preview panel and the transfers tray. Changes apply live
+  and persist automatically.
+
+### Changed
+
+- **bar-qt 0.41.29** vendors and provisions the same 1.5.0 snapshot. All
+  file-manager copies are version-matched and byte-identical.
+
 ## [v1.3.75] - 2026-11-11
 
 ### Added
