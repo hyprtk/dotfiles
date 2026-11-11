@@ -1182,7 +1182,7 @@ Item {
                         width: 18
                         height: 18
                         sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
-                        source: Quickshell.iconPath(modelData.icon, "text-x-generic")
+                        source: Quickshell.iconPath(modelData.icon, modelData.dir ? "folder" : "text-x-generic")
                     }
 
                     Text {
@@ -1267,8 +1267,8 @@ Item {
             model: listing.entries
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            cellWidth: Config.viewMode === "compact" ? Math.max(150, content.width / 4) : 120
-            cellHeight: Config.viewMode === "compact" ? 30 : 96
+            cellWidth: Config.viewMode === "compact" ? Math.max(150, content.width / 4) : 148
+            cellHeight: Config.viewMode === "compact" ? 30 : 118
             currentIndex: root.cursor
             onContentYChanged: {
                 if (contentY + height > contentHeight - 700)
@@ -1279,6 +1279,11 @@ Item {
                 id: rowItem
                 required property var modelData
                 required property int index
+                readonly property string fullPath: root.keyFor(modelData.name)
+                readonly property bool wantsThumb:
+                    Config.viewMode === "grid" && Config.thumbnails && !!modelData.preview
+                readonly property string thumbSource:
+                    rowItem.wantsThumb ? Thumbnails.thumbFor(rowItem.fullPath, modelData.mtime, modelData.size) : ""
                 width: gridView.cellWidth
                 height: gridView.cellHeight
                 Item {
@@ -1290,6 +1295,20 @@ Item {
                 color: root.isSelected(modelData.name)
                     ? Theme.alpha(Theme.accent, 0.22)
                     : (index === root.cursor && root.active ? Theme.alpha(Theme.accent2, 0.10) : "transparent")
+
+                function maybeThumb() {
+                    if (rowItem.wantsThumb)
+                        Thumbnails.request(rowItem.fullPath, modelData.mtime, modelData.size);
+                }
+
+                Component.onCompleted: rowItem.maybeThumb()
+                onModelDataChanged: rowItem.maybeThumb()
+
+                Connections {
+                    target: Config
+                    function onThumbnailsChanged() { rowItem.maybeThumb(); }
+                    function onViewModeChanged() { rowItem.maybeThumb(); }
+                }
 
                 Row {
                     visible: Config.viewMode === "compact"
@@ -1303,7 +1322,7 @@ Item {
                         width: 16
                         height: 16
                         sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
-                        source: Quickshell.iconPath(modelData.icon, "text-x-generic")
+                        source: Quickshell.iconPath(modelData.icon, modelData.dir ? "folder" : "text-x-generic")
                     }
 
                     Text {
@@ -1321,17 +1340,45 @@ Item {
                     anchors.centerIn: parent
                     spacing: 6
 
-                    Image {
+                    Item {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: Config.iconSize * 2.2
-                        height: Config.iconSize * 2.2
-                        sourceSize: Qt.size(Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)),
-                                            Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)))
-                        source: Quickshell.iconPath(modelData.icon, "text-x-generic")
+                        width: gridView.cellWidth - 20
+                        height: 82
+
+                        Rectangle {
+                            anchors.fill: parent
+                            visible: rowItem.thumbSource !== ""
+                            radius: 7
+                            color: Theme.alpha(Theme.foreground, 0.05)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.foreground, 0.10)
+                            clip: true
+
+                            Image {
+                                anchors.fill: parent
+                                anchors.margins: 3
+                                source: rowItem.thumbSource
+                                sourceSize: Qt.size(256, 192)
+                                fillMode: modelData.preview === "pdf" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+                                asynchronous: true
+                                cache: true
+                                smooth: true
+                            }
+                        }
+
+                        Image {
+                            anchors.centerIn: parent
+                            visible: rowItem.thumbSource === ""
+                            width: Config.iconSize * 2.2
+                            height: Config.iconSize * 2.2
+                            sourceSize: Qt.size(Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)),
+                                                Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)))
+                            source: Quickshell.iconPath(modelData.icon, modelData.dir ? "folder" : "text-x-generic")
+                        }
                     }
 
                     Text {
-                        width: gridView.cellWidth - 12
+                        width: gridView.cellWidth - 16
                         text: modelData.name
                         color: Theme.foreground
                         font.pixelSize: Theme.fontSize - 1

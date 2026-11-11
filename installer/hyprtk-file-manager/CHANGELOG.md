@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.6.4 — 2026-11-11
+
+### Added
+
+- **Real thumbnails in grid view.** Images, videos and PDFs now show preview
+  tiles (image/video frames and the first PDF page) instead of only their type
+  icon. Tiles are generated on demand for visible items, cached on disk, and
+  fall back to the type icon while loading. A new **Grid thumbnails** setting
+  turns them off.
+
+### Changed
+
+- **Type-aware file icons.** Files and folders now get their real freedesktop
+  MIME icon from the active theme (Papirus) instead of one generic glyph:
+  source code, documents, images, audio, video, archives/packages, fonts,
+  certificates/keys, 3D models, disk images, executables and more. Exact
+  names (Makefile, CMakeLists.txt, README, LICENSE, CHANGELOG, PKGBUILD,
+  shell rc files) and well-known/XDG folders (Desktop, Documents, Downloads,
+  Music, Pictures, Videos, Projects, `.git`, cloud folders) get their own
+  icons. Extensionless executables/scripts and Qt Linguist `.ts` files are
+  detected from content; `.ts` otherwise shows the TypeScript icon.
+
 ## 1.6.3 — 2026-11-11
 
 ### Fixed

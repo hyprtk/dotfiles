@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.35 — unreleased
+
+- **hyprtk-file-manager 1.6.4 vendored.** Files and folders get type-aware
+  Papirus icons (source, documents, media, archives, fonts, keys, 3D models,
+  executables, special/XDG folders), and grid view shows real cached thumbnails
+  for images, video and PDF. A **Grid thumbnails** setting toggles them.
+
 ## 0.41.34 — unreleased
 
 - **hyprtk-file-manager 1.6.3 vendored.** Copy/paste no longer pastes older

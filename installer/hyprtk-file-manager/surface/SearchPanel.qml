@@ -230,7 +230,7 @@ Item {
                             width: 16
                             height: 16
                             sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
-                            source: Quickshell.iconPath(modelData.icon, "text-x-generic")
+                            source: Quickshell.iconPath(modelData.icon, modelData.dir ? "folder" : "text-x-generic")
                         }
 
                         Column {

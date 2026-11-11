@@ -8,6 +8,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from .fileicons import icon_for
+
 CACHE_ROOT = Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache")) / "hyprtk-file-manager" / "thumbs"
 TEXT_LIMIT = 64 * 1024
 
@@ -47,10 +49,59 @@ def _thumb(key: str, extension: str) -> Path:
     return CACHE_ROOT / f"{key}.{extension}"
 
 
+def _make_thumb(target: Path, mime: str, key: str):
+    major = mime.split("/")[0]
+    if major == "image":
+        out = _thumb(key, "jpg")
+        if not out.exists():
+            _run(["vipsthumbnail", str(target), "-s", "512", "-o", str(out)])
+        if out.exists():
+            return "image", out
+    elif major == "video":
+        out = _thumb(key, "jpg")
+        if not out.exists():
+            _run(["ffmpeg", "-y", "-loglevel", "error", "-ss", "0", "-i", str(target),
+                  "-frames:v", "1", "-vf", "scale=512:-1", str(out)])
+        if out.exists():
+            return "video", out
+    elif mime == "application/pdf":
+        prefix = CACHE_ROOT / key
+        out = prefix.with_suffix(".png")
+        if not out.exists():
+            _run(["pdftoppm", "-f", "1", "-singlefile", "-scale-to", "512",
+                  "-png", str(target), str(prefix)])
+        if out.exists():
+            return "pdf", out
+    return None
+
+
+def build_thumb(path: str) -> dict:
+    target = Path(path).expanduser()
+    try:
+        stat = target.stat(follow_symlinks=False)
+    except OSError:
+        return {"kind": "", "thumb": ""}
+    if not target.is_file() or target.is_symlink():
+        return {"kind": "", "thumb": ""}
+    mime = _mime(str(target))
+    key = _cache_key(str(target), stat.st_mtime_ns, stat.st_size)
+    made = _make_thumb(target, mime, key)
+    if not made:
+        return {"kind": "", "thumb": ""}
+    kind, out = made
+    return {
+        "kind": kind,
+        "thumb": str(out),
+        "mtime": stat.st_mtime,
+        "size": stat.st_size,
+    }
+
+
 def build_preview(path: str) -> dict:
     target = Path(path).expanduser()
     stat = target.stat(follow_symlinks=False)
     mime = _mime(str(target))
+    is_dir = target.is_dir() and not target.is_symlink()
     meta = {
         "path": str(target),
         "name": target.name,
@@ -58,6 +109,7 @@ def build_preview(path: str) -> dict:
         "size": stat.st_size,
         "mtime": stat.st_mtime,
         "mode": stat.st_mode,
+        "icon": icon_for(target.name, is_dir, target.is_symlink(), str(target), bool(stat.st_mode & 0o111)),
     }
     if target.is_symlink():
         meta["target"] = os.readlink(target)
@@ -67,27 +119,10 @@ def build_preview(path: str) -> dict:
     major = mime.split("/")[0]
     key = _cache_key(str(target), stat.st_mtime_ns, stat.st_size)
 
-    if major == "image":
-        out = _thumb(key, "jpg")
-        if not out.exists():
-            _run(["vipsthumbnail", str(target), "-s", "512", "-o", str(out)])
-        if out.exists():
-            return {"kind": "image", "thumb": str(out), "meta": meta}
-    elif major == "video":
-        out = _thumb(key, "jpg")
-        if not out.exists():
-            _run(["ffmpeg", "-y", "-loglevel", "error", "-ss", "0", "-i", str(target),
-                  "-frames:v", "1", "-vf", "scale=512:-1", str(out)])
-        if out.exists():
-            return {"kind": "video", "thumb": str(out), "meta": meta}
-    elif mime == "application/pdf":
-        prefix = CACHE_ROOT / key
-        out = prefix.with_suffix(".png")
-        if not out.exists():
-            _run(["pdftoppm", "-f", "1", "-singlefile", "-scale-to", "512",
-                  "-png", str(target), str(prefix)])
-        if out.exists():
-            return {"kind": "pdf", "thumb": str(out), "meta": meta}
+    made = _make_thumb(target, mime, key)
+    if made:
+        kind, out = made
+        return {"kind": kind, "thumb": str(out), "meta": meta}
 
     if major == "text" or _looks_text(str(target)):
         try:

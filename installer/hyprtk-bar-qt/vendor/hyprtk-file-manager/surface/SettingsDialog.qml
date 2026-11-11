@@ -167,6 +167,16 @@ Item {
 
                 SettingRow {
                     width: parent.width
+                    label: "Grid thumbnails"
+
+                    ToggleSwitch {
+                        checked: Config.thumbnails
+                        onToggled: (value) => Config.thumbnails = value
+                    }
+                }
+
+                SettingRow {
+                    width: parent.width
                     label: "Transfers tray"
 
                     ToggleSwitch {

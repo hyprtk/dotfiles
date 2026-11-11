@@ -187,6 +187,8 @@ def _serve_async(request: dict) -> None:
     try:
         if method == "preview":
             result = preview_mod.build_preview(str(params.get("path") or ""))
+        elif method == "thumb":
+            result = preview_mod.build_thumb(str(params.get("path") or ""))
         elif method == "open_with.apps":
             result = openwith_mod.applications(str(params.get("path") or ""))
         elif method == "search":
@@ -232,7 +234,7 @@ def _serve_async(request: dict) -> None:
 
 
 ASYNC_METHODS = {
-    "preview", "search", "checksum", "devices.mount", "devices.eject",
+    "preview", "thumb", "search", "checksum", "devices.mount", "devices.eject",
     "network.scan", "network.mount", "network.shares", "open_with.apps",
 }
 

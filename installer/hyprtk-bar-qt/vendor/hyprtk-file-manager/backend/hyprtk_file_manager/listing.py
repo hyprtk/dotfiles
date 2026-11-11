@@ -3,38 +3,10 @@
 from __future__ import annotations
 
 import functools
-import mimetypes
 import os
 from pathlib import Path
 
-ICON_FALLBACK = "text-x-generic"
-MIME_ICONS = {
-    "application/pdf": "application-pdf",
-    "application/zip": "package-x-generic",
-    "application/x-tar": "package-x-generic",
-    "application/x-7z-compressed": "package-x-generic",
-    "application/vnd.rar": "package-x-generic",
-    "application/gzip": "package-x-generic",
-    "application/x-bzip2": "package-x-generic",
-    "application/x-xz": "package-x-generic",
-}
-MAJOR_ICONS = {
-    "image": "image-x-generic",
-    "video": "video-x-generic",
-    "audio": "audio-x-generic",
-    "text": "text-x-generic",
-}
-
-
-def icon_for(name: str, is_dir: bool, is_link: bool) -> str:
-    if is_dir:
-        return "folder"
-    if is_link:
-        return "emblem-symbolic-link"
-    mime, _encoding = mimetypes.guess_type(name)
-    if mime in MIME_ICONS:
-        return MIME_ICONS[mime]
-    return MAJOR_ICONS.get((mime or "").split("/")[0], ICON_FALLBACK)
+from .fileicons import icon_for, preview_kind
 
 
 def _raw_scan(path: Path):
@@ -147,8 +119,9 @@ def list_dir(
 
     entries = []
     for name, is_dir, is_link in window:
+        full = os.path.join(target, name)
         try:
-            stat = os.stat(os.path.join(target, name), follow_symlinks=False)
+            stat = os.stat(full, follow_symlinks=False)
             size, mtime, mode = stat.st_size, stat.st_mtime, stat.st_mode
         except OSError:
             size, mtime, mode = 0, 0.0, 0
@@ -160,7 +133,8 @@ def list_dir(
                 "size": size,
                 "mtime": mtime,
                 "mode": mode,
-                "icon": icon_for(name, is_dir, is_link),
+                "icon": icon_for(name, is_dir, is_link, full, bool(mode & 0o111)),
+                "preview": preview_kind(name) if not is_dir else "",
             }
         )
 

@@ -28,7 +28,7 @@ def _entry(path: str, line: str | None = None, lineno=None):
         "size": stat.st_size,
         "mtime": stat.st_mtime,
         "mode": stat.st_mode,
-        "icon": icon_for(name, is_dir, is_link),
+        "icon": icon_for(name, is_dir, is_link, str(target), bool(stat.st_mode & 0o111)),
         "line": line,
         "lineno": lineno,
     }

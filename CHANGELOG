@@ -3,6 +3,16 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.82] - 2026-11-11
+
+### Changed
+
+- **hyprtk-file-manager 1.6.4.** Files and folders now use type-aware Papirus
+  icons (MIME/extension, exact names, content sniffing, special/XDG folders).
+  Grid view shows real cached thumbnails for images, video and PDF, with a new
+  **Grid thumbnails** setting.
+- **bar-qt 0.41.35** vendors and provisions the same 1.6.4 snapshot.
+
 ## [v1.3.81] - 2026-11-11
 
 ### Changed

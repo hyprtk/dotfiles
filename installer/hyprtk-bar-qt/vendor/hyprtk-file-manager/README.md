@@ -12,6 +12,8 @@ pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 **Browsing**
 - Async, virtualized listings that never freeze (10k-file directories are fine)
 - Icon grid, details list and compact views; sortable, dirs-first, hidden toggle
+- Type-aware Papirus icons per file (MIME/extension, exact names) and special
+  folders (Desktop, Documents, Downloads, `.git`, cloud folders…)
 - Tabs with per-tab history, back/forward/up, breadcrumb and `Ctrl+L` path entry
 - Single pane by default, optional dual pane (`Tab` switches)
 - Single/ctrl/shift selection, marquee select, and cross-pane drag and drop
@@ -26,6 +28,7 @@ pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 - Undo journal persisted alongside session state
 
 **Preview and inspection**
+- Grid thumbnails for images, video and PDF (cached; toggle in Settings)
 - Spacebar Quick Look: images, video, PDF, text/code and metadata
 - Properties dialog with permissions and checksums
 - Open-with via `xdg-open`; **Open With…** picks any registered application
