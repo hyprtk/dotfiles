@@ -53,6 +53,10 @@ On Arch/Gentoo/Nix the packaged `quickshell` is used and neither path runs.
 
 ## Re-vendoring into hyprtk-multi-distro / merged
 
+Vendor runtime files only. Exclude development material from the snapshot:
+`.git`, `spike/`, `tests/`, `PLAN*.md`, `QA.md`, `scripts/qa.sh` and Python
+caches.
+
 The bar is vendored byte-identically:
 
 ```sh

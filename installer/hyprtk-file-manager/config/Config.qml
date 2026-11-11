@@ -22,6 +22,8 @@ Singleton {
     property bool dualPane: Quickshell.env("HYPRTK_FM_DUAL") === "1"
     property bool showPreview: false
     property bool showTransfers: true
+    property var hiddenMenuItems: []
+    property var menuOrder: []
 
     property bool _loaded: false
     property int _loadId: -1
@@ -48,7 +50,9 @@ Singleton {
             dirsFirst: root.dirsFirst,
             dualPane: root.dualPane,
             showPreview: root.showPreview,
-            showTransfers: root.showTransfers
+            showTransfers: root.showTransfers,
+            hiddenMenuItems: root.hiddenMenuItems,
+            menuOrder: root.menuOrder
         };
     }
 
@@ -74,6 +78,14 @@ Singleton {
             root.showPreview = values.showPreview;
         if (typeof values.showTransfers === "boolean")
             root.showTransfers = values.showTransfers;
+        if (Array.isArray(values.hiddenMenuItems))
+            root.hiddenMenuItems = values.hiddenMenuItems.filter(function (key) {
+                return typeof key === "string";
+            });
+        if (Array.isArray(values.menuOrder))
+            root.menuOrder = values.menuOrder.filter(function (key) {
+                return typeof key === "string";
+            });
         root._loaded = true;
     }
 
@@ -125,4 +137,6 @@ Singleton {
     onDualPaneChanged: root.scheduleSave()
     onShowPreviewChanged: root.scheduleSave()
     onShowTransfersChanged: root.scheduleSave()
+    onHiddenMenuItemsChanged: root.scheduleSave()
+    onMenuOrderChanged: root.scheduleSave()
 }

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.6.0 — 2026-11-11
+
+### Changed
+
+- **Repository hygiene.** Planning docs, QA notes, benchmarks and test suites
+  are no longer tracked or published; they stay local for development.
+
+### Added
+
+- **Editable right-click menu.** Settings now has a **Right-click menu** editor:
+  toggle any context-menu item on or off and move it up or down. The order and
+  visibility apply to both file and blank-area menus, are saved with the rest of
+  the configuration, and can be reset to defaults.
+
 ## 1.5.1 — 2026-11-11
 
 ### Changed

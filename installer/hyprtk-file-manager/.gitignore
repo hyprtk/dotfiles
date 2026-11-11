@@ -1,6 +1,13 @@
 __pycache__/
 *.pyc
+
+# Dev-only planning, QA, benchmarks and tests (not published).
+PLAN*.md
+QA.md
 spike/
+tests/
+scripts/qa.sh
+
 .ruff_cache/
 .pytest_cache/
 .mypy_cache/

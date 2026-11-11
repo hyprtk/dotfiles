@@ -1,9 +1,22 @@
 # Changelog
 
+## 0.41.31 — unreleased
+
+- **hyprtk-file-manager 1.6.0 vendored.** The file manager's right-click menu is
+  now editable from Settings: show/hide and reorder every context-menu item,
+  persisted with the rest of the configuration. The vendored snapshot carries
+  runtime files only (planning docs and tests stay out).
+
 ## 0.41.30 — unreleased
 
 - **hyprtk-file-manager 1.5.1 vendored.** Sidebar section headings (Places,
   Devices, Network) now use the item font size, with network host rows matching.
+
+### Changed
+
+- **Repository hygiene.** Planning docs, test suites and QA scripts are no
+  longer tracked; the vendored file-manager snapshot now carries runtime files
+  only.
 
 ## 0.41.29 — unreleased
 

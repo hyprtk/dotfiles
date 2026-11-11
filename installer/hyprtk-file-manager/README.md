@@ -5,7 +5,7 @@ A fast, keyboard-first file manager for the hyprtk desktop — Qt 6 QML
 with the power of Dolphin/Yazi one shortcut away. It follows the suite's live
 pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 
-**Current version: 1.5.1** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 1.6.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -44,7 +44,7 @@ pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 - Instant filename filter (`Ctrl+F`) plus recursive name/content search
   (`Ctrl+Shift+F`, ripgrep for content when installed)
 - Command palette over every action (`Ctrl+K`), plus a settings dialog
-  (`Ctrl+,`) for every preference
+  (`Ctrl+,`) for every preference, including a right-click menu editor
 - Full keyboard operation; see the shortcut table below
 
 ## Requirements

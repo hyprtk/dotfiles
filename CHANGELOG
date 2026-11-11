@@ -3,6 +3,22 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.78] - 2026-11-11
+
+### Added
+
+- **hyprtk-file-manager 1.6.0.** The right-click menu is editable from Settings:
+  every context-menu item can be shown/hidden and reordered, with the result
+  saved to the file manager's config and reset to defaults on demand. This
+  applies to both file and blank-area menus.
+
+### Changed
+
+- **bar-qt 0.41.31** vendors and provisions the same 1.6.0 snapshot.
+- **Repository hygiene.** Planning docs, QA notes, tests and benchmark material
+  are no longer tracked in the source repos or published; vendored snapshots
+  carry runtime files only.
+
 ## [v1.3.77] - 2026-11-11
 
 ### Changed

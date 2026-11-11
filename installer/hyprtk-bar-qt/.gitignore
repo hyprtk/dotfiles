@@ -14,9 +14,17 @@ coverage.xml
 htmlcov/
 .tox/
 
-# Dev-only working notes (not shipped).
+# Dev-only planning, QA, benchmarks and tests (not published).
 PARITY.md
 PLAN*.md
+QA.md
+tests/
+scripts/qa.sh
+spike/
 
-# Vendored file-manager docs
-!vendor/hyprtk-file-manager/PLAN.md
+# Vendored file-manager dev files are never bundled.
+vendor/hyprtk-file-manager/PLAN*.md
+vendor/hyprtk-file-manager/QA.md
+vendor/hyprtk-file-manager/tests/
+vendor/hyprtk-file-manager/scripts/qa.sh
+vendor/hyprtk-file-manager/spike/

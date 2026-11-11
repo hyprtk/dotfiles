@@ -251,6 +251,12 @@ FloatingWindow {
     SettingsDialog {
         id: settingsDialog
         onClosed: win.focusActivePane()
+        onContextMenuRequested: contextMenuDialog.open(win.activePane ? win.activePane.menuCatalog() : [])
+    }
+
+    ContextMenuDialog {
+        id: contextMenuDialog
+        onClosed: settingsDialog.forceActiveFocus()
     }
 
     NetworkAuthDialog {

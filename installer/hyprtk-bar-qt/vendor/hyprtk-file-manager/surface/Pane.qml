@@ -468,36 +468,107 @@ Item {
         Ui.askOpenWith(paths[0]);
     }
 
+    function menuCatalog() {
+        return [
+            { key: "open", label: "Open" },
+            { key: "openWith", label: "Open With…" },
+            { key: "rename", label: "Rename…" },
+            { key: "copy", label: "Copy" },
+            { key: "cut", label: "Cut" },
+            { key: "paste", label: "Paste" },
+            { key: "newFolder", label: "New Folder…" },
+            { key: "newFile", label: "New File…" },
+            { key: "trash", label: "Move to Trash" },
+            { key: "delete", label: "Delete Permanently…" },
+            { key: "restore", label: "Restore from Trash" },
+            { key: "emptyTrash", label: "Empty Trash…" },
+            { key: "openTrash", label: "Open Trash" },
+            { key: "addPlace", label: "Add to Places" },
+            { key: "selectAll", label: "Select All" },
+            { key: "undo", label: "Undo" },
+            { key: "redo", label: "Redo" },
+            { key: "properties", label: "Properties…" },
+            { key: "terminal", label: "Open Terminal Here" },
+            { key: "root", label: "Open as Root" },
+            { key: "rootTerminal", label: "Open Terminal as Root" },
+            { key: "transfers", label: "Toggle Transfers Tray" }
+        ];
+    }
+
     function buildMenu() {
         const paths = root.selectedPaths();
         const has = paths.length > 0;
         const single = paths.length === 1;
         const entry = root.currentEntry();
         const singleFile = single && entry !== undefined && !entry.dir;
-        return [
-            { label: "Open", enabled: single, action: function () { root.openSelected(); } },
-            { label: "Open With…", enabled: singleFile, action: function () { root.openWithSelected(); } },
-            { label: "Rename…", enabled: single, action: function () { root.renameSelected(); } },
-            { label: "Copy", enabled: has, action: function () { root.copySelection(); } },
-            { label: "Cut", enabled: has, action: function () { root.cutSelection(); } },
-            { label: "Paste", enabled: Clipboard.hasItems, action: function () { root.pasteClipboard(); } },
-            { label: "New Folder…", enabled: true, action: function () { root.newFolder(); } },
-            { label: "New File…", enabled: true, action: function () { root.newFile(); } },
-            { label: "Move to Trash", enabled: has, action: function () { root.trashSelection(); } },
-            { label: "Delete Permanently…", enabled: has, action: function () { root.deleteSelection(); } },
-            { label: "Restore from Trash", enabled: root.inTrash() && has, action: function () { root.restoreSelection(); } },
-            { label: "Empty Trash…", enabled: root.inTrash(), action: function () { Ui.askEmptyTrash(); } },
-            { label: "Open Trash", enabled: true, action: function () { root.openTrash(); } },
-            { label: "Add to Places", enabled: true, action: function () { root.addToPlaces(); } },
-            { label: "Select All", enabled: listing.entries.length > 0, action: function () { root.selectAll(); } },
-            { label: "Undo", enabled: true, action: function () { root.undoLast(); } },
-            { label: "Redo", enabled: true, action: function () { root.redoLast(); } },
-            { label: "Properties…", enabled: single, action: function () { root.showProperties(); } },
-            { label: "Open Terminal Here", enabled: true, action: function () { root.openTerminal(); } },
-            { label: "Open as Root", enabled: true, action: function () { root.openAsRoot(); } },
-            { label: "Open Terminal as Root", enabled: true, action: function () { root.openTerminalRoot(); } },
-            { label: "Toggle Transfers Tray", enabled: true, action: function () { Config.showTransfers = !Config.showTransfers; } }
-        ];
+
+        const actions = {
+            open: function () { root.openSelected(); },
+            openWith: function () { root.openWithSelected(); },
+            rename: function () { root.renameSelected(); },
+            copy: function () { root.copySelection(); },
+            cut: function () { root.cutSelection(); },
+            paste: function () { root.pasteClipboard(); },
+            newFolder: function () { root.newFolder(); },
+            newFile: function () { root.newFile(); },
+            trash: function () { root.trashSelection(); },
+            delete: function () { root.deleteSelection(); },
+            restore: function () { root.restoreSelection(); },
+            emptyTrash: function () { Ui.askEmptyTrash(); },
+            openTrash: function () { root.openTrash(); },
+            addPlace: function () { root.addToPlaces(); },
+            selectAll: function () { root.selectAll(); },
+            undo: function () { root.undoLast(); },
+            redo: function () { root.redoLast(); },
+            properties: function () { root.showProperties(); },
+            terminal: function () { root.openTerminal(); },
+            root: function () { root.openAsRoot(); },
+            rootTerminal: function () { root.openTerminalRoot(); },
+            transfers: function () { Config.showTransfers = !Config.showTransfers; }
+        };
+
+        const states = {
+            open: single,
+            openWith: singleFile,
+            rename: single,
+            copy: has,
+            cut: has,
+            paste: Clipboard.hasItems,
+            trash: has,
+            delete: has,
+            restore: root.inTrash() && has,
+            emptyTrash: root.inTrash(),
+            selectAll: listing.entries.length > 0,
+            properties: single
+        };
+
+        const hidden = Config.hiddenMenuItems || [];
+        const order = Config.menuOrder || [];
+        let items = root.menuCatalog().map(function (item, index) {
+            return {
+                key: item.key,
+                label: item.label,
+                enabled: states[item.key] !== false,
+                action: actions[item.key],
+                fallback: index
+            };
+        }).filter(function (item) {
+            return hidden.indexOf(item.key) < 0;
+        });
+
+        if (order.length > 0) {
+            items.sort(function (a, b) {
+                const ai = order.indexOf(a.key);
+                const bi = order.indexOf(b.key);
+                const av = ai < 0 ? 1000 + a.fallback : ai;
+                const bv = bi < 0 ? 1000 + b.fallback : bi;
+                return av - bv;
+            });
+        }
+
+        return items.map(function (item) {
+            return { label: item.label, enabled: item.enabled, action: item.action };
+        });
     }
 
     function showMenu(px, py) {

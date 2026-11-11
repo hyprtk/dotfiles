@@ -13,6 +13,7 @@ Item {
     focus: visible
 
     signal closed()
+    signal contextMenuRequested()
 
     function open() {
         root.visible = true;
@@ -171,6 +172,16 @@ Item {
                     ToggleSwitch {
                         checked: Config.showTransfers
                         onToggled: (value) => Config.showTransfers = value
+                    }
+                }
+
+                SettingRow {
+                    width: parent.width
+                    label: "Right-click menu"
+
+                    DialogButton {
+                        text: "Edit…"
+                        onClicked: root.contextMenuRequested()
                     }
                 }
             }
