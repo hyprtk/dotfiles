@@ -8,6 +8,12 @@ build/
 # Generated artifacts / internal docs — never published
 output.html
 PLAN*.md
+QA.md
+PARITY.md
+PLANNING.md
+tests/
+scripts/qa.sh
+spike/
 install.log
 installer/scripts/verify/
 .scratch/
