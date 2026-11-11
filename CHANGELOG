@@ -3,6 +3,17 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.80] - 2026-11-11
+
+### Changed
+
+- **hyprtk-file-manager 1.6.2.** The right-click menu is grouped into sections
+  separated by thin dividers (Open, Edit, Create, Trash, Organize, Tools,
+  Properties), and actions that do not apply to the current selection are hidden
+  instead of greyed out, so the menu is much shorter in normal use. Every action
+  remains available, and the show/hide and reorder settings still apply.
+- **bar-qt 0.41.33** vendors and provisions the same 1.6.2 snapshot.
+
 ## [v1.3.79] - 2026-11-11
 
 ### Changed

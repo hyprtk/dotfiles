@@ -39,20 +39,41 @@ Item {
         Repeater {
             model: root.items
 
-            delegate: Rectangle {
+            delegate: Item {
+                id: itemDelegate
                 required property var modelData
+
+                readonly property bool separator: modelData.separator === true
+
                 width: column.width
-                height: 28
-                radius: 5
-                opacity: modelData.enabled === false ? 0.4 : 1
-                color: itemHover.hovered && modelData.enabled !== false
-                    ? Theme.alpha(Theme.accent, 0.2) : "transparent"
+                height: separator ? 7 : 28
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: !itemDelegate.separator
+                    radius: 5
+                    opacity: modelData.enabled === false ? 0.4 : 1
+                    color: itemHover.hovered && modelData.enabled !== false
+                        ? Theme.alpha(Theme.accent, 0.2) : "transparent"
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    visible: itemDelegate.separator
+                    height: 1
+                    color: Theme.alpha(Theme.foreground, 0.14)
+                }
 
                 Text {
                     anchors.left: parent.left
                     anchors.leftMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.label
+                    visible: !itemDelegate.separator
+                    text: modelData.label || ""
                     color: Theme.foreground
                     font.pixelSize: 12
                 }
@@ -61,7 +82,7 @@ Item {
                     id: itemHover
                     anchors.fill: parent
                     hoverEnabled: true
-                    enabled: modelData.enabled !== false
+                    enabled: !itemDelegate.separator && modelData.enabled !== false
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         root.close();

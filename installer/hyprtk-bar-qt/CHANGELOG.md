@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.33 — unreleased
+
+- **hyprtk-file-manager 1.6.2 vendored.** The right-click menu is grouped into
+  thin-divided sections (Open, Edit, Create, Trash, Organize, Tools, Properties)
+  and hides actions that do not apply to the current selection, so it is much
+  shorter in normal use. All actions remain available.
+
 ## 0.41.32 — unreleased
 
 - **hyprtk-file-manager 1.6.1 vendored.** The settings dialog now shows the

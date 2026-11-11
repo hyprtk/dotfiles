@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.2 — 2026-11-11
+
+### Changed
+
+- **Cleaner right-click menu.** Items are now grouped into sections (Open,
+  Edit, Create, Trash, Organize, Tools, Properties) separated by thin dividers,
+  and actions that do not apply to the current selection are hidden instead of
+  shown greyed out. Every action is still available, the per-user show/hide and
+  reorder settings still apply, and the menu is noticeably shorter in normal
+  use.
+
 ## 1.6.1 — 2026-11-11
 
 ### Changed

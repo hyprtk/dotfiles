@@ -470,28 +470,34 @@ Item {
 
     function menuCatalog() {
         return [
-            { key: "open", label: "Open" },
-            { key: "openWith", label: "Open With…" },
-            { key: "rename", label: "Rename…" },
-            { key: "copy", label: "Copy" },
-            { key: "cut", label: "Cut" },
-            { key: "paste", label: "Paste" },
-            { key: "newFolder", label: "New Folder…" },
-            { key: "newFile", label: "New File…" },
-            { key: "trash", label: "Move to Trash" },
-            { key: "delete", label: "Delete Permanently…" },
-            { key: "restore", label: "Restore from Trash" },
-            { key: "emptyTrash", label: "Empty Trash…" },
-            { key: "openTrash", label: "Open Trash" },
-            { key: "addPlace", label: "Add to Places" },
-            { key: "selectAll", label: "Select All" },
-            { key: "undo", label: "Undo" },
-            { key: "redo", label: "Redo" },
-            { key: "properties", label: "Properties…" },
-            { key: "terminal", label: "Open Terminal Here" },
-            { key: "root", label: "Open as Root" },
-            { key: "rootTerminal", label: "Open Terminal as Root" },
-            { key: "transfers", label: "Toggle Transfers Tray" }
+            { key: "open", label: "Open", group: "open" },
+            { key: "openWith", label: "Open With…", group: "open" },
+
+            { key: "cut", label: "Cut", group: "edit" },
+            { key: "copy", label: "Copy", group: "edit" },
+            { key: "paste", label: "Paste", group: "edit" },
+            { key: "rename", label: "Rename…", group: "edit" },
+            { key: "undo", label: "Undo", group: "edit" },
+            { key: "redo", label: "Redo", group: "edit" },
+
+            { key: "newFolder", label: "New Folder…", group: "create" },
+            { key: "newFile", label: "New File…", group: "create" },
+
+            { key: "trash", label: "Move to Trash", group: "trash" },
+            { key: "delete", label: "Delete Permanently…", group: "trash" },
+            { key: "restore", label: "Restore from Trash", group: "trash" },
+            { key: "emptyTrash", label: "Empty Trash…", group: "trash" },
+            { key: "openTrash", label: "Open Trash", group: "trash" },
+
+            { key: "addPlace", label: "Add to Places", group: "organize" },
+            { key: "selectAll", label: "Select All", group: "organize" },
+
+            { key: "terminal", label: "Open Terminal Here", group: "tools" },
+            { key: "root", label: "Open as Root", group: "tools" },
+            { key: "rootTerminal", label: "Open Terminal as Root", group: "tools" },
+            { key: "transfers", label: "Toggle Transfers Tray", group: "tools" },
+
+            { key: "properties", label: "Properties…", group: "info" }
         ];
     }
 
@@ -538,6 +544,7 @@ Item {
             delete: has,
             restore: root.inTrash() && has,
             emptyTrash: root.inTrash(),
+            openTrash: !root.inTrash(),
             selectAll: listing.entries.length > 0,
             properties: single
         };
@@ -548,12 +555,13 @@ Item {
             return {
                 key: item.key,
                 label: item.label,
+                group: item.group || "",
                 enabled: states[item.key] !== false,
                 action: actions[item.key],
                 fallback: index
             };
         }).filter(function (item) {
-            return hidden.indexOf(item.key) < 0;
+            return hidden.indexOf(item.key) < 0 && states[item.key] !== false;
         });
 
         if (order.length > 0) {
@@ -566,9 +574,31 @@ Item {
             });
         }
 
-        return items.map(function (item) {
-            return { label: item.label, enabled: item.enabled, action: item.action };
-        });
+        return root.groupMenu(items.map(function (item) {
+            return { label: item.label, enabled: item.enabled, action: item.action, group: item.group };
+        }));
+    }
+
+    function groupMenu(items) {
+        const groups = [];
+        const buckets = {};
+        for (let i = 0; i < items.length; i++) {
+            const group = items[i].group || "";
+            if (!buckets[group]) {
+                buckets[group] = [];
+                groups.push(group);
+            }
+            buckets[group].push(items[i]);
+        }
+        const result = [];
+        for (let i = 0; i < groups.length; i++) {
+            if (result.length > 0)
+                result.push({ separator: true, enabled: false });
+            const bucket = buckets[groups[i]];
+            for (let j = 0; j < bucket.length; j++)
+                result.push(bucket[j]);
+        }
+        return result;
     }
 
     function showMenu(px, py) {
