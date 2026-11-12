@@ -60,9 +60,9 @@ Item {
         if (!value)
             return value;
         if (value === "~")
-            value = Config.startPath;
+            value = Quickshell.env("HOME") || Config.startPath;
         else if (value.indexOf("~/") === 0)
-            value = Config.startPath + value.slice(1);
+            value = (Quickshell.env("HOME") || Config.startPath) + value.slice(1);
         if (value.length > 1)
             value = value.replace(/\/+$/, "");
         return value;

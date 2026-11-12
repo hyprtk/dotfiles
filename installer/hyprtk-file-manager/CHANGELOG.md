@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.6.6 — 2026-11-12
+
+### Changed
+
+- **Friendlier address bar.** Breadcrumbs now replace technical prefixes with
+  readable names: the home directory shows as **Home**, and removable/mounted
+  volumes such as `/run/media/<user>/OneTouch` show just the volume name
+  (**OneTouch**) instead of the full mount path. Paths are also entered as `~`
+  in the edit field.
+
+### Fixed
+
+- **Click to type a path.** Clicking anywhere in the address bar (not on a
+  breadcrumb) now switches it to an editable field, so you no longer need
+  `Ctrl+L` to type an address.
+
 ## 1.6.5 — 2026-11-11
 
 ### Fixed

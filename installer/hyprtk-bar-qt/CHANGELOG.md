@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.37 — unreleased
+
+- **hyprtk-file-manager 1.6.6 vendored.** The address bar reads friendlier —
+  home shows as **Home** and mount paths collapse to the volume name (e.g.
+  `/run/media/<user>/OneTouch` → **OneTouch**) — and clicking the bar now opens
+  the editable path field.
+
 ## 0.41.36 — unreleased
 
 - **hyprtk-file-manager 1.6.5 vendored.** The settings dialog now sizes to the
