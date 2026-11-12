@@ -54,6 +54,33 @@ Rectangle {
         root.reload();
     }
 
+    function orderedPlaces(list) {
+        const items = (list || []).slice();
+        const order = Config.placesOrder || [];
+        if (order.length === 0)
+            return items;
+        const rank = {};
+        for (let i = 0; i < order.length; i++)
+            rank[order[i]] = i;
+        return items.sort(function (a, b) {
+            const ra = rank[a.path] !== undefined ? rank[a.path] : Number.MAX_SAFE_INTEGER;
+            const rb = rank[b.path] !== undefined ? rank[b.path] : Number.MAX_SAFE_INTEGER;
+            return ra - rb;
+        });
+    }
+
+    function movePlace(item, delta) {
+        const list = (root.groups.places || []).slice();
+        const index = list.findIndex(function (place) { return place.path === item.path; });
+        const target = index + delta;
+        if (index < 0 || target < 0 || target >= list.length)
+            return;
+        const moved = list.splice(index, 1)[0];
+        list.splice(target, 0, moved);
+        Config.placesOrder = list.map(function (place) { return place.path; });
+        root.groups = Object.assign({}, root.groups, { places: list });
+    }
+
     function scanNetwork() {
         if (root.networkScanning)
             return;
@@ -65,6 +92,15 @@ Rectangle {
     function uriHost(uri) {
         const rest = String(uri || "").replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
         return rest.split("/")[0].split("@").pop();
+    }
+
+    function hostLabel(host) {
+        const devices = root.networkDevices || [];
+        for (let i = 0; i < devices.length; i++) {
+            if (devices[i].host === host)
+                return devices[i].name || host;
+        }
+        return host;
     }
 
     function uriHasShare(uri) {
@@ -257,6 +293,8 @@ Rectangle {
     }
 
     function placeMenuItems(item) {
+        const list = root.groups.places || [];
+        const index = list.findIndex(function (place) { return place.path === item.path; });
         const items = [{ label: "Open", action: function () {
             if (item.uri)
                 root.requestShare(item.path, item.name);
@@ -265,12 +303,24 @@ Rectangle {
         } }];
         if (item.name === "Trash")
             items.push({ label: "Empty Trash…", action: function () { root.emptyTrashRequested(); } });
+        items.push({ separator: true });
+        items.push({ label: "Move Up", enabled: index > 0, action: function () { root.movePlace(item, -1); } });
+        items.push({ label: "Move Down", enabled: index >= 0 && index < list.length - 1,
+                     action: function () { root.movePlace(item, 1); } });
         if (item.custom)
             items.push({ label: "Remove from Places", action: function () { root.removePlace(item.path); } });
         return items;
     }
 
     Component.onCompleted: root.reload()
+
+    Connections {
+        target: Config
+        function onPlacesOrderChanged() {
+            if (root.groups.places)
+                root.groups = Object.assign({}, root.groups, { places: root.orderedPlaces(root.groups.places) });
+        }
+    }
 
     Timer {
         interval: 700
@@ -285,7 +335,7 @@ Rectangle {
             if (!result)
                 return;
             if (result.kind === "places") {
-                root.groups = result;
+                root.groups = Object.assign({}, result, { places: root.orderedPlaces(result.places) });
                 return;
             }
             if (result.kind === "network") {
@@ -318,7 +368,7 @@ Rectangle {
                     root.mountShare(shares[0].uri, credentials.username, credentials.password,
                                     credentials.domain, credentials.anonymous);
                 } else if (shares.length === 0) {
-                    root.networkError = "No shares found on " + result.host;
+                    root.networkError = "No shares found on " + root.hostLabel(result.host);
                 }
                 return;
             }

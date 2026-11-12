@@ -124,6 +124,79 @@ def avahi_services() -> dict[str, dict]:
     return found
 
 
+_NAME_CACHE: dict[str, str] = {}
+
+
+def parse_nmblookup_output(text: str) -> str:
+    """Pick the NetBIOS host name from `nmblookup -A <ip>` output."""
+    candidates: list[tuple[int, str]] = []
+    for line in text.splitlines():
+        match = re.match(r"^\s*(\S+)\s+<([0-9A-Fa-f]{2})>\s+-\s+(.*)$", line)
+        if not match:
+            continue
+        name, code, flags = match.group(1), match.group(2).upper(), match.group(3)
+        if not name or name.startswith("__") or "GROUP" in flags.upper():
+            continue
+        if code in ("00", "20"):
+            candidates.append((0 if code == "00" else 1, name))
+    if not candidates:
+        return ""
+    candidates.sort()
+    return candidates[0][1]
+
+
+def parse_getent_output(host: str, text: str) -> str:
+    """Pick the first host name for `host` from `getent hosts <ip>` output."""
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0] == host:
+            name = parts[1].split(".")[0].strip()
+            if name and name != host:
+                return name
+    return ""
+
+
+def netbios_name(host: str) -> str:
+    if not shutil.which("nmblookup"):
+        return ""
+    try:
+        proc = subprocess.run(
+            ["nmblookup", "-A", host],
+            capture_output=True, text=True, timeout=3,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    if proc.returncode != 0:
+        return ""
+    return parse_nmblookup_output(proc.stdout)
+
+
+def reverse_dns_name(host: str) -> str:
+    if not shutil.which("getent"):
+        return ""
+    try:
+        proc = subprocess.run(
+            ["getent", "hosts", host],
+            capture_output=True, text=True, timeout=2,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    if proc.returncode != 0:
+        return ""
+    return parse_getent_output(host, proc.stdout)
+
+
+def resolve_host_name(host: str) -> str:
+    """Friendly LAN name for an IP, cached for the session."""
+    cached = _NAME_CACHE.get(host)
+    if cached:
+        return cached
+    name = netbios_name(host) or reverse_dns_name(host)
+    if name:
+        _NAME_CACHE[host] = name
+    return name
+
+
 def smb_shares(host: str, username: str = "", password: str = "",
                domain: str = "") -> list[dict]:
     if not shutil.which("smbclient"):
@@ -171,6 +244,15 @@ def scan() -> dict:
         merged["services"] |= entry["services"]
         if entry.get("name"):
             merged["name"] = entry["name"]
+
+    unnamed = [host for host, data in hosts.items()
+               if not data.get("name") or data["name"] == host]
+    if unnamed:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+            names = list(pool.map(resolve_host_name, unnamed))
+        for host, name in zip(unnamed, names):
+            if name:
+                hosts[host]["name"] = name
 
     smb_hosts = [host for host, data in hosts.items() if "smb" in data["services"]][:16]
     share_map: dict[str, list] = {}

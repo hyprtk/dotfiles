@@ -25,6 +25,7 @@ Singleton {
     property bool thumbnails: true
     property var hiddenMenuItems: []
     property var menuOrder: []
+    property var placesOrder: []
 
     property bool _loaded: false
     property int _loadId: -1
@@ -54,7 +55,8 @@ Singleton {
             showTransfers: root.showTransfers,
             thumbnails: root.thumbnails,
             hiddenMenuItems: root.hiddenMenuItems,
-            menuOrder: root.menuOrder
+            menuOrder: root.menuOrder,
+            placesOrder: root.placesOrder
         };
     }
 
@@ -88,6 +90,10 @@ Singleton {
             });
         if (Array.isArray(values.menuOrder))
             root.menuOrder = values.menuOrder.filter(function (key) {
+                return typeof key === "string";
+            });
+        if (Array.isArray(values.placesOrder))
+            root.placesOrder = values.placesOrder.filter(function (key) {
                 return typeof key === "string";
             });
         root._loaded = true;
@@ -144,4 +150,5 @@ Singleton {
     onThumbnailsChanged: root.scheduleSave()
     onHiddenMenuItemsChanged: root.scheduleSave()
     onMenuOrderChanged: root.scheduleSave()
+    onPlacesOrderChanged: root.scheduleSave()
 }

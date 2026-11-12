@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.7 — 2026-11-12
+
+### Added
+
+- **Reorder Places.** The right-click menu on any sidebar place now has
+  **Move Up** / **Move Down**, and the chosen order is saved with the rest of
+  the settings. This works for the built-in places (Home, Downloads, Trash…)
+  as well as custom bookmarks.
+- **Readable network hosts.** LAN devices discovered by address are labelled
+  with their machine name from NetBIOS or DNS (e.g. `192.168.0.230` → **NAS**),
+  falling back to the IP only when no name resolves. Names are cached for the
+  session.
+
 ## 1.6.6 — 2026-11-12
 
 ### Changed

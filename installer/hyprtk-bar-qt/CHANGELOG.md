@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.38 — unreleased
+
+- **hyprtk-file-manager 1.6.7 vendored.** Sidebar Places can be reordered with
+  **Move Up** / **Move Down** (saved in config), and discovered LAN hosts show
+  their NetBIOS/DNS machine name (e.g. `192.168.0.230` → **NAS**) instead of the
+  IP.
+
 ## 0.41.37 — unreleased
 
 - **hyprtk-file-manager 1.6.6 vendored.** The address bar reads friendlier —
