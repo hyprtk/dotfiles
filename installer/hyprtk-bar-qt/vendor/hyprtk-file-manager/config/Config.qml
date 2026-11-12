@@ -15,6 +15,7 @@ Singleton {
         return ["list", "grid", "compact"].indexOf(value) >= 0 ? value : "list";
     }
     property bool showHidden: false
+    property bool showFilter: true
     property int iconSize: 20
     property string sortKey: "name"
     property bool sortDesc: false
@@ -46,6 +47,7 @@ Singleton {
         return {
             viewMode: root.viewMode,
             showHidden: root.showHidden,
+            showFilter: root.showFilter,
             iconSize: root.iconSize,
             sortKey: root.sortKey,
             sortDesc: root.sortDesc,
@@ -68,6 +70,8 @@ Singleton {
             root.viewMode = values.viewMode;
         if (typeof values.showHidden === "boolean")
             root.showHidden = values.showHidden;
+        if (typeof values.showFilter === "boolean")
+            root.showFilter = values.showFilter;
         if (typeof values.iconSize === "number")
             root.iconSize = Math.max(12, Math.min(64, values.iconSize));
         if (["name", "size", "mtime", "type"].indexOf(values.sortKey) >= 0)
@@ -140,6 +144,7 @@ Singleton {
 
     onViewModeChanged: root.scheduleSave()
     onShowHiddenChanged: root.scheduleSave()
+    onShowFilterChanged: root.scheduleSave()
     onIconSizeChanged: root.scheduleSave()
     onSortKeyChanged: root.scheduleSave()
     onSortDescChanged: root.scheduleSave()

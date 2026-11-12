@@ -159,6 +159,16 @@ Item {
 
                 SettingRow {
                     width: parent.width
+                    label: "Address-bar filter"
+
+                    ToggleSwitch {
+                        checked: Config.showFilter
+                        onToggled: (value) => Config.showFilter = value
+                    }
+                }
+
+                SettingRow {
+                    width: parent.width
                     label: "Dual pane"
 
                     ToggleSwitch {

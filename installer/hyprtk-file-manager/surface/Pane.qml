@@ -33,6 +33,8 @@ Item {
     property string filterQuery: ""
     property string pendingReveal: ""
 
+    readonly property int gridIcon: Math.max(24, Math.round(Config.iconSize * 2.2))
+
     readonly property int selectedCount: Object.keys(root.selected).length
     readonly property bool opKeysEnabled:
         root.active && !root.editingPath && !root.filtering
@@ -679,6 +681,8 @@ Item {
     }
 
     function startFilter() {
+        if (!Config.showFilter)
+            return;
         root.filtering = true;
         if (root.filterText.length > 0)
             root.filterQuery = root.filterText;
@@ -805,6 +809,14 @@ Item {
         function onFsEvent(token, dir) {
             if (token === root.watchToken)
                 root.refreshSoon();
+        }
+    }
+
+    Connections {
+        target: Config
+        function onShowFilterChanged() {
+            if (!Config.showFilter && root.filtering)
+                root.stopFilter();
         }
     }
 
@@ -1080,6 +1092,7 @@ Item {
             }
             IconButton {
                 text: "⌕"
+                visible: Config.showFilter
                 active: root.filtering
                 onClicked: {
                     root.activated();
@@ -1154,6 +1167,18 @@ Item {
             onContentYChanged: {
                 if (contentY + height > contentHeight - 700)
                     listing.loadMore();
+            }
+
+            WheelHandler {
+                acceptedModifiers: Qt.ControlModifier
+                onWheel: (event) => {
+                    const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                    if (delta === 0)
+                        return;
+                    const next = Config.iconSize + (delta > 0 ? 4 : -4);
+                    Config.iconSize = Math.max(12, Math.min(64, next));
+                    event.accepted = true;
+                }
             }
 
             delegate: Rectangle {
@@ -1267,12 +1292,25 @@ Item {
             model: listing.entries
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            cellWidth: Config.viewMode === "compact" ? Math.max(150, content.width / 4) : 148
-            cellHeight: Config.viewMode === "compact" ? 30 : 118
+            cellWidth: Config.viewMode === "compact" ? Math.max(150, content.width / 4)
+                : Math.max(92, root.gridIcon + 44)
+            cellHeight: Config.viewMode === "compact" ? 30 : root.gridIcon + 38
             currentIndex: root.cursor
             onContentYChanged: {
                 if (contentY + height > contentHeight - 700)
                     listing.loadMore();
+            }
+
+            WheelHandler {
+                acceptedModifiers: Qt.ControlModifier
+                onWheel: (event) => {
+                    const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                    if (delta === 0)
+                        return;
+                    const next = Config.iconSize + (delta > 0 ? 4 : -4);
+                    Config.iconSize = Math.max(12, Math.min(64, next));
+                    event.accepted = true;
+                }
             }
 
             delegate: Rectangle {
@@ -1338,12 +1376,12 @@ Item {
                 Column {
                     visible: Config.viewMode === "grid"
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: 4
 
                     Item {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: gridView.cellWidth - 20
-                        height: 82
+                        width: gridView.cellWidth - 16
+                        height: root.gridIcon
 
                         Rectangle {
                             anchors.fill: parent
@@ -1369,16 +1407,16 @@ Item {
                         Image {
                             anchors.centerIn: parent
                             visible: rowItem.thumbSource === ""
-                            width: Config.iconSize * 2.2
-                            height: Config.iconSize * 2.2
-                            sourceSize: Qt.size(Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)),
-                                                Math.max(Theme.iconSource, Math.ceil(Config.iconSize * 2.2)))
+                            width: root.gridIcon
+                            height: root.gridIcon
+                            sourceSize: Qt.size(Math.max(Theme.iconSource, root.gridIcon),
+                                                Math.max(Theme.iconSource, root.gridIcon))
                             source: Quickshell.iconPath(modelData.icon, modelData.dir ? "folder" : "text-x-generic")
                         }
                     }
 
                     Text {
-                        width: gridView.cellWidth - 16
+                        width: gridView.cellWidth - 12
                         text: modelData.name
                         color: Theme.foreground
                         font.pixelSize: Theme.fontSize - 1
@@ -1658,7 +1696,7 @@ Item {
     }
     Shortcut {
         sequence: "Ctrl+F"
-        enabled: root.opKeysEnabled
+        enabled: root.opKeysEnabled && Config.showFilter
         onActivated: root.startFilter()
     }
     Shortcut {

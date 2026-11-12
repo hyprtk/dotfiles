@@ -70,7 +70,7 @@ Rectangle {
     }
 
     function movePlace(item, delta) {
-        const list = (root.groups.places || []).slice();
+        const list = root.orderedPlaces(root.groups.places || []);
         const index = list.findIndex(function (place) { return place.path === item.path; });
         const target = index + delta;
         if (index < 0 || target < 0 || target >= list.length)
@@ -79,6 +79,7 @@ Rectangle {
         list.splice(target, 0, moved);
         Config.placesOrder = list.map(function (place) { return place.path; });
         root.groups = Object.assign({}, root.groups, { places: list });
+        Config.save();
     }
 
     function scanNetwork() {
@@ -293,7 +294,7 @@ Rectangle {
     }
 
     function placeMenuItems(item) {
-        const list = root.groups.places || [];
+        const list = root.orderedPlaces(root.groups.places || []);
         const index = list.findIndex(function (place) { return place.path === item.path; });
         const items = [{ label: "Open", action: function () {
             if (item.uri)

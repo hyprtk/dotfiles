@@ -3,6 +3,21 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.88] - 2026-11-12
+
+### Added
+
+- **Grid control and filter setting (hyprtk-file-manager 1.6.9, bar-qt
+  0.41.40).** `Ctrl` + scroll wheel resizes icons in the list/grid, the grid
+  tiles scale with the icon size and are tighter, and the address-bar filter is
+  enabled by default with a new **Settings → Address-bar filter** toggle.
+
+### Fixed
+
+- **Places order now persists.** Reordering a sidebar place with **Move Up** /
+  **Move Down** saves immediately, so the order survives a restart even if the
+  window is closed right after.
+
 ## [v1.3.87] - 2026-11-12
 
 ### Added

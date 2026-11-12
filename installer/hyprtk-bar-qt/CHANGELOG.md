@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.40 — unreleased
+
+- **hyprtk-file-manager 1.6.9 vendored.** Sidebar place order now saves
+  immediately; the address-bar filter is enabled by default with a settings
+  toggle; the grid is tighter and scales with the icon size; and `Ctrl` +
+  scroll wheel resizes icons.
+
 ## 0.41.39 — unreleased
 
 - **hyprtk-file-manager 1.6.8 vendored.** The **Open With…** dialog gains a

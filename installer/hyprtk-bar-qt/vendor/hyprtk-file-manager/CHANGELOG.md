@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.6.9 — 2026-11-12
+
+### Added
+
+- **Icon size on Ctrl+wheel.** Holding `Ctrl` while scrolling over the file
+  list or grid now grows or shrinks the icon size (12–64), and the grid/tile
+  cells scale with it.
+- **Address-bar filter setting.** The filter control is enabled by default and
+  can be switched off from **Settings → Address-bar filter**.
+
+### Fixed
+
+- **Places order is now saved reliably.** Reordering a place with **Move Up** /
+  **Move Down** now persists immediately (instead of relying on the debounced
+  save, which could be lost if the window was closed right after moving).
+- **Tighter grid view.** Folder tiles no longer leave large empty gaps — the
+  cell size follows the icon size and the icon/label spacing was reduced.
+
 ## 1.6.8 — 2026-11-12
 
 ### Added
