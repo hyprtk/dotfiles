@@ -16,6 +16,19 @@ so a machine with Quickshell/Qt6 installed needs no extra downloads.
 | Scripts | `scripts/` | `~/.local/share/hyprtk-bar-qt/scripts/` |
 | Default config | `config.json` | `~/.config/hyprtk-bar-qt/config.json` (fresh installs only) |
 
+## hyprtk-file-manager
+
+`vendor/hyprtk-file-manager/` is a byte-identical copy of
+[hyprtk/hyprtk-file-manager](https://github.com/hyprtk/hyprtk-file-manager),
+the suite's native Qt/QML file manager. `install.sh` runs its installer, which
+puts the app under `~/.local/share/hyprtk-file-manager`, the `hyprtk-fm`
+launcher in `~/.local/bin`, and a **Files** desktop entry. hyprtk-fm is the
+default file manager (`Super + F`, the bar's **Files** quick link and
+`inode/directory`), with Thunar kept as a fallback; `--uninstall` leaves it in
+place because it has its own installer. The standalone repo remains
+authoritative — never patch the vendored tree; re-vendor it (its `vendor/`
+snapshot and the suite's `installer/hyprtk-file-manager/`) on each release.
+
 ## pywal16
 
 `vendor/pywal16/` is a verbatim copy of

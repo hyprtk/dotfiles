@@ -5,7 +5,7 @@ A fast, keyboard-first file manager for the hyprtk desktop — Qt 6 QML
 with the power of Dolphin/Yazi one shortcut away. It follows the suite's live
 pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 
-**Current version: 1.6.2** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 1.6.7** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -14,7 +14,8 @@ pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 - Icon grid, details list and compact views; sortable, dirs-first, hidden toggle
 - Type-aware Papirus icons per file (MIME/extension, exact names) and special
   folders (Desktop, Documents, Downloads, `.git`, cloud folders…)
-- Tabs with per-tab history, back/forward/up, breadcrumb and `Ctrl+L` path entry
+- Tabs with per-tab history, back/forward/up, breadcrumb (Home and mount paths
+  read as names, click to type a path) and `Ctrl+L` path entry
 - Single pane by default, optional dual pane (`Tab` switches)
 - Single/ctrl/shift selection, marquee select, and cross-pane drag and drop
 
@@ -36,12 +37,14 @@ pywal theme and ships as the default `Super+F` / `inode/directory` handler.
   in the cwd
 
 **Places and devices**
-- Places sidebar from XDG dirs + GTK bookmarks (shared with Thunar)
+- Places sidebar from XDG dirs + GTK bookmarks (shared with Thunar), reorderable
+  with **Move Up** / **Move Down** (saved with the rest of the settings)
 - Devices via `lsblk`/UDisks2: mount, open, eject (unmount-only, by design);
   boot/EFI/recovery partitions hidden, internal-first grouping
-- Network: auto-scan for SMB/NFS/AFP hosts, enumerate shares through GVfs,
-  real credential auth saved to the keyring, mount `smb://host/share`, and
-  add shares/folders to Places as reconnectable URIs
+- Network: auto-scan for SMB/NFS/AFP hosts (shown by machine name via NetBIOS/DNS,
+  e.g. `192.168.0.230` → **NAS**), enumerate shares through GVfs, real credential
+  auth saved to the keyring, mount `smb://host/share`, and add shares/folders to
+  Places as reconnectable URIs
 
 **Search and keyboard**
 - Instant filename filter (`Ctrl+F`) plus recursive name/content search

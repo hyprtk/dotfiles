@@ -3,6 +3,15 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.86] - 2026-11-12
+
+### Docs
+
+- **hyprtk-fm is now highlighted.** The main README (features, keybindings and
+  Applications), the cheatsheet, the bar-qt README/BUNDLING guide and the
+  file-manager README now document hyprtk-fm as the suite's default file
+  manager, with Thunar as fallback.
+
 ## [v1.3.85] - 2026-11-12
 
 ### Added

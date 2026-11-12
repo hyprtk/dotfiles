@@ -33,7 +33,7 @@ screen recordings are saved by default to your ~/videos/Recordings directory
 # application shortcuts 
   Ctrl    Alt U           *pavucontrol*
   Ctrl    ALT P           *pamac-manager*
-  Super   F               *file manager* (`thunar`)
+  Super   F               *file manager* (`hyprtk-fm`)
   Super   B               *browser* (`brave`)
   Super   Ctrl B          *browser* (`chromium`)
 

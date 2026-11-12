@@ -164,6 +164,26 @@ Requirements: `grim`, `slurp`, `wl-clipboard`, `libnotify`; the editors and
 KDE Connect are optional. The source is pinned in `vendor/hyprquickframe/`
 (provenance in `.SOURCE.md`, local changes in `vendor/patches/`).
 
+## Bundled file manager (hyprtk-fm)
+
+The bar installer also provisions **hyprtk-fm**, the suite's native file manager,
+from the vendored snapshot in `vendor/hyprtk-file-manager/`:
+
+- **Installs** the app to `~/.local/share/hyprtk-file-manager`, the `hyprtk-fm`
+  launcher to `~/.local/bin`, and a **Files** desktop entry.
+- **Default file manager** for the suite — `Super + F`, the bar's **Files**
+  quick link and the XDG `inode/directory` handler; Thunar stays installed as a
+  fallback.
+- **Features**: tabs with history, dual pane, breadcrumb address bar (Home and
+  mount paths read as names), list/grid/compact views with real thumbnails,
+  previews, search, undo/trash, network (SMB/NFS) share browsing with readable
+  LAN host names, and reordable sidebar **Places**.
+- The standalone repo
+  [`hyprtk/hyprtk-file-manager`](https://github.com/hyprtk/hyprtk-file-manager)
+  remains authoritative; the vendored copy is kept byte-identical and the bar's
+  `install.sh` runs its installer. `./install.sh --uninstall` leaves the file
+  manager in place (it has its own installer).
+
 ## Status
 
 Working bar: workspaces, tasklist, tray, clock, CPU/memory sparklines and a
