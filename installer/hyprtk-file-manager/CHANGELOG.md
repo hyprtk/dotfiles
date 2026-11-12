@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.5 — 2026-11-11
+
+### Fixed
+
+- **Settings dialog overflow.** The dialog now sizes to the window and its
+  settings list scrolls, so the version label and Done button stay inside the
+  panel instead of spilling below it when the list grows.
+
 ## 1.6.4 — 2026-11-11
 
 ### Added

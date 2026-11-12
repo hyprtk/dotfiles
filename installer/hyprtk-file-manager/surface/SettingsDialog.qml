@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import "../theme"
 import "../config"
 import "../data"
@@ -38,14 +39,14 @@ Item {
 
     Rectangle {
         anchors.centerIn: parent
-        width: 560
-        height: 520
+        width: Math.min(560, parent.width - 40)
+        height: Math.min(620, parent.height - 40)
         radius: 12
         color: Theme.surface
         border.width: 1
         border.color: Theme.alpha(Theme.foreground, 0.15)
 
-        Column {
+        ColumnLayout {
             anchors.fill: parent
             anchors.margins: 20
             spacing: 8
@@ -55,24 +56,35 @@ Item {
                 color: Theme.foreground
                 font.pixelSize: 15
                 font.bold: true
+                Layout.fillWidth: true
             }
 
             Text {
-                width: parent.width
                 text: "Applies instantly and is saved automatically."
                 color: Theme.muted
                 font.pixelSize: 10
+                Layout.fillWidth: true
             }
 
             Rectangle {
-                width: parent.width
-                height: 1
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
                 color: Theme.alpha(Theme.foreground, 0.1)
             }
 
-            Column {
-                width: parent.width
-                spacing: 4
+            Flickable {
+                id: flick
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: width
+                contentHeight: settingsColumn.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                Column {
+                    id: settingsColumn
+                    width: flick.width
+                    spacing: 4
 
                 SettingRow {
                     width: parent.width
@@ -194,13 +206,12 @@ Item {
                         onClicked: root.contextMenuRequested()
                     }
                 }
+                }
             }
 
-            Item { width: 1; height: 4 }
-
             Item {
-                width: parent.width
-                height: 30
+                Layout.fillWidth: true
+                Layout.preferredHeight: 30
 
                 Text {
                     anchors.left: parent.left

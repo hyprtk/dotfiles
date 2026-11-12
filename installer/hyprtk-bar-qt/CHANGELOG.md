@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.41.36 — unreleased
+
+- **hyprtk-file-manager 1.6.5 vendored.** The settings dialog now sizes to the
+  window and scrolls its settings list, keeping the version label and Done
+  button inside the panel.
+
 ## 0.41.35 — unreleased
 
 - **hyprtk-file-manager 1.6.4 vendored.** Files and folders get type-aware
