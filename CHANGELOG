@@ -3,6 +3,16 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.87] - 2026-11-12
+
+### Added
+
+- **Set a default application (hyprtk-file-manager 1.6.8, bar-qt 0.41.39).**
+  The **Open With…** dialog gains a **Remember as default** toggle. When
+  enabled, the chosen application is set as the default handler for that file
+  type (via `xdg-mime`, with Gio and `mimeapps.list` fallbacks) and then opens
+  the file.
+
 ## [v1.3.86] - 2026-11-12
 
 ### Docs

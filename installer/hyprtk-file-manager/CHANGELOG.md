@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.8 — 2026-11-12
+
+### Added
+
+- **Set a default application.** The **Open With…** dialog now has a
+  **Remember as default** toggle. When enabled, the chosen application is set
+  as the default handler for that file type (via `xdg-mime`, falling back to
+  Gio or a `mimeapps.list` write) and then opens the file. Future files of the
+  same type open directly in it.
+
 ## 1.6.7 — 2026-11-12
 
 ### Added

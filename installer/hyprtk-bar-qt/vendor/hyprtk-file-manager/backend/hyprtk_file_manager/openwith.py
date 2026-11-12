@@ -236,6 +236,89 @@ def _desktop_entries(mime: str) -> list[dict]:
     return entries
 
 
+def _config_home() -> Path:
+    return Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+
+
+def _set_ini_default(lines: list[str], mime: str, desktop_id: str) -> list[str]:
+    section = "Default Applications"
+    out: list[str] = []
+    in_section = False
+    seen_section = False
+    replaced = False
+    inserted = False
+
+    def flush_insert() -> None:
+        nonlocal inserted
+        if in_section and not replaced and not inserted:
+            out.append(f"{mime}={desktop_id};")
+            inserted = True
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            flush_insert()
+            in_section = stripped == f"[{section}]"
+            if in_section:
+                seen_section = True
+            out.append(line)
+            continue
+        if in_section and not replaced:
+            key = line.split("=", 1)[0].strip()
+            if key == mime:
+                out.append(f"{mime}={desktop_id};")
+                replaced = True
+                continue
+        out.append(line)
+    flush_insert()
+    if not seen_section:
+        if out and out[-1].strip():
+            out.append("")
+        out.append(f"[{section}]")
+        out.append(f"{mime}={desktop_id};")
+    return out
+
+
+def _write_mimeapps_default(desktop_id: str, mime: str) -> None:
+    path = _config_home() / "mimeapps.list"
+    lines: list[str] = []
+    if path.exists():
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            lines = []
+    lines = _set_ini_default(lines, mime, desktop_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _apply_default(desktop_id: str, mime: str) -> None:
+    xdg_mime = shutil.which("xdg-mime")
+    if xdg_mime:
+        try:
+            proc = subprocess.run(
+                [xdg_mime, "default", desktop_id, mime],
+                capture_output=True, text=True, timeout=5,
+            )
+            if proc.returncode == 0:
+                return
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    if _gio_available():
+        try:
+            import gi
+
+            gi.require_version("Gio", "2.0")
+            from gi.repository import Gio
+
+            info = Gio.DesktopAppInfo.new(desktop_id)
+            if info is not None and info.set_as_default_for_type(mime):
+                return
+        except Exception:
+            pass
+    _write_mimeapps_default(desktop_id, mime)
+
+
 def _entries(path: str) -> list[dict]:
     mime = _content_type(path)
     if not _gio_available():
@@ -272,6 +355,29 @@ def applications(path: str) -> dict:
         "path": str(target),
         "mime": mime,
         "apps": apps,
+    }
+
+
+def set_default(path: str, app_id: str) -> dict:
+    target = Path(path).expanduser()
+    if not target.exists():
+        raise FileNotFoundError(str(target))
+    app_id = str(app_id or "")
+    if not app_id:
+        raise ValueError("no application selected")
+    mime = _content_type(str(target))
+    entry = next((item for item in _entries(str(target)) if item["id"] == app_id), None)
+    if entry is None:
+        raise ValueError(f"application not available: {app_id}")
+    desktop = entry.get("desktopFile") or ""
+    desktop_id = Path(desktop).name if desktop else app_id
+    _apply_default(desktop_id, mime)
+    return {
+        "kind": "open_with_default",
+        "path": str(target),
+        "mime": mime,
+        "app": app_id,
+        "desktopId": desktop_id,
     }
 
 

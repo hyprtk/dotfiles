@@ -11,9 +11,11 @@ Item {
     property string mime: ""
     property var apps: []
     property bool loading: false
+    property bool makeDefault: false
     property string error: ""
     property int pendingLoadId: -1
     property int pendingLaunchId: -1
+    property int pendingDefaultId: -1
 
     signal closed()
 
@@ -28,8 +30,10 @@ Item {
         root.apps = [];
         root.error = "";
         root.loading = true;
+        root.makeDefault = false;
         root.pendingLoadId = -1;
         root.pendingLaunchId = -1;
+        root.pendingDefaultId = -1;
         root.visible = true;
         root.pendingLoadId = Backend.call("open_with.apps", { path: root.targetPath });
         Qt.callLater(function () { appList.forceActiveFocus(); });
@@ -39,6 +43,7 @@ Item {
         root.visible = false;
         root.pendingLoadId = -1;
         root.pendingLaunchId = -1;
+        root.pendingDefaultId = -1;
         root.error = "";
         Ui.close();
         if (root.parent)
@@ -50,15 +55,27 @@ Item {
         root.dismiss();
     }
 
-    function launchCurrent() {
-        const app = root.apps[appList.currentIndex];
-        if (!app)
-            return;
+    function doLaunch(app) {
         root.error = "";
         root.pendingLaunchId = Backend.call("open_with.launch", {
             path: root.targetPath,
             app: app.id
         });
+    }
+
+    function launchCurrent() {
+        const app = root.apps[appList.currentIndex];
+        if (!app)
+            return;
+        root.error = "";
+        if (root.makeDefault) {
+            root.pendingDefaultId = Backend.call("open_with.set_default", {
+                path: root.targetPath,
+                app: app.id
+            });
+        } else {
+            root.doLaunch(app);
+        }
     }
 
     Connections {
@@ -71,6 +88,11 @@ Item {
                 root.apps = (result && result.apps) || [];
                 appList.currentIndex = 0;
                 Qt.callLater(function () { appList.forceActiveFocus(); });
+            } else if (id === root.pendingDefaultId) {
+                root.pendingDefaultId = -1;
+                const app = root.apps[appList.currentIndex];
+                if (app)
+                    root.doLaunch(app);
             } else if (id === root.pendingLaunchId) {
                 root.pendingLaunchId = -1;
                 root.dismiss();
@@ -81,6 +103,9 @@ Item {
                 root.pendingLoadId = -1;
                 root.loading = false;
                 root.error = message;
+            } else if (id === root.pendingDefaultId) {
+                root.pendingDefaultId = -1;
+                root.error = "Could not set default: " + message;
             } else if (id === root.pendingLaunchId) {
                 root.pendingLaunchId = -1;
                 root.error = message;
@@ -99,7 +124,7 @@ Item {
     Rectangle {
         anchors.centerIn: parent
         width: 470
-        height: 430
+        height: 470
         radius: 12
         color: Theme.surface
         border.width: 1
@@ -259,6 +284,26 @@ Item {
                         color: Theme.muted
                         font.pixelSize: 10
                     }
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: 10
+
+                ToggleSwitch {
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: root.makeDefault
+                    onToggled: (value) => root.makeDefault = value
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 50
+                    text: "Remember as default for " + (root.mime.length > 0 ? root.mime : "these files")
+                    color: Theme.muted
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
                 }
             }
 

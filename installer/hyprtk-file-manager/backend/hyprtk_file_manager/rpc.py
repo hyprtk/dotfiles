@@ -109,6 +109,13 @@ def handle(request: dict) -> dict:
                     str(params.get("path") or ""), str(params.get("app") or ""),
                 ),
             }
+        if method == "open_with.set_default":
+            return {
+                "id": rid,
+                "result": openwith_mod.set_default(
+                    str(params.get("path") or ""), str(params.get("app") or ""),
+                ),
+            }
         if method == "terminal":
             return {
                 "id": rid,

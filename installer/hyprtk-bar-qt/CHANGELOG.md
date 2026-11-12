@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.39 — unreleased
+
+- **hyprtk-file-manager 1.6.8 vendored.** The **Open With…** dialog gains a
+  **Remember as default** toggle: the chosen application is set as the default
+  handler for that file type (via `xdg-mime`, with Gio and `mimeapps.list`
+  fallbacks) and then opens the file.
+
 ## 0.41.38 — unreleased
 
 - **hyprtk-file-manager 1.6.7 vendored.** Sidebar Places can be reordered with
