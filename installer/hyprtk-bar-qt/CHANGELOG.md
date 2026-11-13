@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.41.43 — unreleased
+
+- **Tasklist no longer leaves a phantom button (one app showed up twice).** The
+  model regrouped only when the toplevel *list* changed, but a window's `appId`
+  and title arrive *after* it is mapped (XWayland especially late). A window
+  grouped while its `appId` was still empty left an iconless button behind, and
+  the real button appeared next to it — so one app looked duplicated. Every
+  toplevel property change now bumps a revision the grouping reads, and windows
+  with no `appId` and no title are skipped until they have one.
+- **Quickshell source build works on Alpine again.** `QS_BUILD_DEPS[apk]` asked
+  for `cli11`, which Alpine does not package (v3.24 has none in
+  main/community/testing), and one unknown name makes the whole `apk add`
+  transaction fail — so not even the Qt deps got installed and the build could
+  never start. `cli11` is dropped from the apk list and, since CLI11 is
+  header-only and Quickshell only `#include`s `<CLI/CLI.hpp>` (no
+  `find_package`), the v2.7.2 headers are installed under `/usr/local/include`
+  when the distro has no package for them.
+
 ## 0.41.42 — unreleased
 
 - **Updates module now appears.** The shipped `config.json` writes the notifier's

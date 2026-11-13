@@ -19,8 +19,43 @@ RowLayout {
     readonly property int fs: BarConfig.fontSize(11)
     readonly property var pinned: (BarConfig.center.pinned || [])
 
+    // groups() only re-evaluates when the toplevel *list* changes, but a window's
+    // appId/title arrive after it is mapped (XWayland especially late). A window
+    // grouped before its appId was known used to leave a phantom, iconless
+    // button behind, and the real button then appeared next to it — one app
+    // looked duplicated. Every toplevel property change bumps `revision`, which
+    // groups() reads, so the list is regrouped.
+    property int revision: 0
+
+    Repeater {
+        model: Hyprland.toplevels
+        delegate: Connections {
+            required property var modelData
+            target: modelData
+            function onTitleChanged() { root.revision++; }
+            function onActivatedChanged() { root.revision++; }
+            function onWorkspaceChanged() { root.revision++; }
+        }
+    }
+    Repeater {
+        model: Hyprland.toplevels.values
+        delegate: Connections {
+            required property var modelData
+            target: modelData ? modelData.wayland : null
+            function onAppIdChanged() { root.revision++; }
+        }
+    }
+
     function _appId(t) {
-        return (t.wayland && t.wayland.appId) ? t.wayland.appId : (t.title || "app");
+        const id = (t.wayland && t.wayland.appId) ? String(t.wayland.appId) : "";
+        return id || String(t.title || "");
+    }
+    // Grouping key: one app must never split into two buttons just because its
+    // appId differs in case, spacing or a `.desktop` suffix ("GitHub Desktop"
+    // vs "github-desktop"). The raw appId is kept for the icon lookup.
+    function _appKey(t) {
+        return root._appId(t)
+            .toLowerCase().replace(/\.desktop$/, "").replace(/[\s_-]+/g, "");
     }
     // Resolve an appId to a theme icon (desktop entry, symbolic preferred).
     function iconFor(appId) {
@@ -41,24 +76,29 @@ RowLayout {
         return a.length > 0 && b.length > 0 && (a === b || a.includes(b) || b.includes(a));
     }
     function groups() {
+        const _rev = root.revision; // regroup when a toplevel property changes (above)
         const map = {};
+        const label = {};
         for (const t of (Hyprland.toplevels.values || [])) {
-            const k = root._appId(t);
-            (map[k] = map[k] || []).push(t);
+            const raw = root._appId(t);
+            if (!raw) continue; // appId/title not known yet — nothing to show
+            const k = root._appKey(t);
+            if (!map[k]) { map[k] = []; label[k] = raw; }
+            map[k].push(t);
         }
         const out = [];
         const seen = {};
         for (const p of root.pinned) {
             let key = null;
             for (const k in map)
-                if (root._match(p.class, k)) { key = k; break; }
-            out.push({ pinned: p, appId: p.class || "", wins: key ? map[key] : [] });
+                if (root._match(p.class, label[k])) { key = k; break; }
+            out.push({ pinned: p, appId: key ? label[key] : (p.class || ""), wins: key ? map[key] : [] });
             if (key)
                 seen[key] = true;
         }
         for (const k in map)
             if (!seen[k])
-                out.push({ pinned: null, appId: k, wins: map[k] });
+                out.push({ pinned: null, appId: label[k], wins: map[k] });
         return out;
     }
     function _recent(wins) {

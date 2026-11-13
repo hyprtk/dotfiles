@@ -3,6 +3,29 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.91] - 2026-11-13
+
+### Fixed
+
+- **AppImage support installs `fuse2` on Arch.** Arch has no `fuse` package
+  (the name only exists as `fuse2`'s `provides`, which pacman cannot install
+  by), so the old `pkg_install fuse` made the whole transaction fail and AppImage
+  support was never set up. Found by the package gate.
+- **Bar tasklist no longer shows a phantom button (an app could look listed
+  twice, bar-qt 0.41.43).** The window list only regrouped when a window was
+  added or removed, but a window's `appId`/title are set *after* it is mapped
+  (XWayland especially late). A window grouped while its `appId` was still empty
+  left an iconless button behind and the real button appeared next to it. Every
+  toplevel property change now regroups, empty `appId`+title windows are skipped,
+  and grouping keys are normalized so one app cannot split in two.
+- **Quickshell source build works on Alpine again (bar-qt 0.41.43).** Alpine
+  v3.24 ships no `cli11` package, and one unknown name makes the entire `apk
+  add` transaction fail — so not even the Qt deps were installed and the build
+  could never start. `cli11` is gone from `QS_DEPS[apk]`; the header-only CLI11
+  v2.7.2 headers are installed under `/usr/local/include` when the distro has
+  no package for them (Quickshell only `#include`s `<CLI/CLI.hpp>`, it does not
+  call `find_package`).
+
 ## [v1.3.90] - 2026-11-13
 
 ### Fixed

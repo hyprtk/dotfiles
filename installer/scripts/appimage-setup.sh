@@ -9,7 +9,9 @@
 echo ""
 case "$HYPRTK_PM" in
     pacman)
-        pkg_install fuse2 fuse
+        # fuse2 is the libfuse2 AppImages need; Arch has no `fuse` package (the
+        # name only exists as fuse2's `provides`, which pacman cannot install by).
+        pkg_install fuse2
         pkg_install base-devel git
         aur_install appimagelauncher
         ;;

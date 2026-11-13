@@ -171,7 +171,35 @@ QS_DEPS[apt]="git build-essential cmake ninja-build pkg-config qt6-base-dev qt6-
 QS_DEPS[dnf]="git gcc-c++ cmake ninja-build pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsvg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
 QS_DEPS[zypper]="git gcc-c++ cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
 QS_DEPS[xbps]="git base-devel cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11 jemalloc-devel libdrm-devel wayland-devel wayland-protocols libxcb-devel"
-QS_DEPS[apk]="git build-base cmake ninja pkgconf qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qtsvg-dev cli11 jemalloc-dev libdrm-dev wayland-dev wayland-protocols libxcb-dev"
+QS_DEPS[apk]="git build-base cmake ninja pkgconf qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qtsvg-dev jemalloc-dev libdrm-dev wayland-dev wayland-protocols libxcb-dev"
+
+# CLI11 is header-only and Quickshell #includes <CLI/CLI.hpp> directly (no
+# find_package), so headers on the default include path are enough. Every family
+# here packages it except Alpine (v3.24 has none), and one unknown name in the
+# apk transaction fails the whole dep install — so it is omitted above and
+# fetched here instead.
+CLI11_VER="v2.7.2"
+
+have_cli11() { [ -f /usr/include/CLI/CLI.hpp ] || [ -f /usr/local/include/CLI/CLI.hpp ]; }
+
+install_cli11_headers() {
+    have_cli11 && return 0
+    if ! have git; then
+        say "quickshell: CLI11 headers missing and git unavailable" >&2
+        return 1
+    fi
+    say "quickshell: CLI11 headers missing (no package on this distro) — installing $CLI11_VER"
+    local tmp; tmp="$(mktemp -d)" || return 1
+    if git clone --depth=1 --branch "$CLI11_VER" https://github.com/CLIUtils/CLI11.git "$tmp/cli11" >/dev/null 2>&1 \
+       && hyprtk_run_root mkdir -p /usr/local/include \
+       && hyprtk_run_root cp -r "$tmp/cli11/include/CLI" /usr/local/include/; then
+        rm -rf "$tmp"
+        return 0
+    fi
+    rm -rf "$tmp"
+    say "quickshell: could not install CLI11 headers" >&2
+    return 1
+}
 
 # ── Apps ────────────────────────────────────────────────────────────────────
 install_gtk4_layer_shell() {
@@ -438,6 +466,7 @@ install_quickshell() {
     fi
 
     [ -n "${QS_DEPS[$HYPRTK_PM]:-}" ] && pkg_install ${QS_DEPS[$HYPRTK_PM]} || true
+    install_cli11_headers || true
     if ! have cmake || ! have ninja || ! have git; then
         say "quickshell: cmake/ninja/git unavailable — hyprtk-bar-qt cannot run" >&2
         return 1
