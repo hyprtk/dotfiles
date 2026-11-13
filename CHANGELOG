@@ -3,6 +3,21 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.89] - 2026-11-13
+
+### Added
+
+- **Glyph icons and button tooltips (hyprtk-file-manager 1.7.0).** Every
+  navigation and toolbar control now uses a crisp Nerd Font glyph from a
+  bundled font, the filter is a proper search icon, and hovering a button shows
+  its action and shortcut.
+- **One shared desktop clipboard (hyprtk-file-manager 1.8.0, bar-qt 0.41.41).**
+  File copy/cut now publishes the Wayland
+  `x-special/gnome-copied-files` selection, so the bar's cliphist history and
+  other file managers share a single clipboard. Clipboard-history entries that
+  are file selections are restored as real file selections instead of plain
+  text.
+
 ## [v1.3.88] - 2026-11-12
 
 ### Added

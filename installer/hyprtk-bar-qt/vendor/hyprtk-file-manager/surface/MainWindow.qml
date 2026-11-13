@@ -27,6 +27,7 @@ FloatingWindow {
         win.activePane = pane;
         paneA.active = (pane === paneA);
         paneB.active = (pane === paneB);
+        Clipboard.refresh();
         if (pane) {
             pane.forceActiveFocus();
             pane.requestPreview();

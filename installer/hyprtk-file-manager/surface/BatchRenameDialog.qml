@@ -302,9 +302,10 @@ Item {
 
                     Text {
                         width: 16
-                        text: "→"
+                        text: Glyph.arrowRight
                         color: Theme.alpha(Theme.foreground, 0.4)
-                        font.pixelSize: 10
+                        font.family: Glyph.family
+                        font.pixelSize: 9
                     }
 
                     Text {

@@ -464,31 +464,36 @@ Rectangle {
         spacing: 2
 
         IconButton {
-            text: "←"
+            text: Glyph.back
+            hint: "Back (Alt+Left)"
             available: root.canGoBack
             onClicked: if (root.pane) root.pane.goBack()
         }
 
         IconButton {
-            text: "→"
+            text: Glyph.forward
+            hint: "Forward (Alt+Right)"
             available: root.canGoForward
             onClicked: if (root.pane) root.pane.goForward()
         }
 
         IconButton {
-            text: "↑"
+            text: Glyph.up
+            hint: "Parent folder (Backspace)"
             available: root.canGoUp
             onClicked: if (root.pane) root.pane.goUp()
         }
 
         IconButton {
-            text: "⌂"
+            text: Glyph.home
+            hint: "Home"
             available: root.pane !== null
             onClicked: root.goHome()
         }
 
         IconButton {
-            text: "⚙"
+            text: Glyph.settings
+            hint: "Settings (Ctrl+,)"
             onClicked: Ui.askSettings()
         }
     }
@@ -724,9 +729,10 @@ Rectangle {
 
                     Text {
                         width: 28
-                        text: "⟳"
+                        text: Glyph.refresh
                         color: Theme.accent
-                        font.pixelSize: 13
+                        font.family: Glyph.family
+                        font.pixelSize: 12
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
@@ -775,10 +781,21 @@ Rectangle {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
+                            visible: modelData.kind === "host"
+                                && modelData.shares && modelData.shares.length > 0
+                            text: root.hostCollapsed(modelData.host)
+                                ? Glyph.chevronRight : Glyph.chevronDown
+                            color: Theme.muted
+                            font.family: Glyph.family
+                            font.pixelSize: 9
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
                             width: parent.width - 30 - (modelData.kind === "host" ? 44 : 0)
-                            text: (modelData.kind === "host" && modelData.shares && modelData.shares.length > 0)
-                                ? ((root.hostCollapsed(modelData.host) ? "▸ " : "▾ ") + modelData.name)
-                                : modelData.name
+                                - (modelData.kind === "host" && modelData.shares
+                                   && modelData.shares.length > 0 ? 14 : 0)
+                            text: modelData.name
                             color: modelData.kind === "host" ? Theme.muted : Theme.foreground
                             font.pixelSize: Theme.fontSize
                             elide: Text.ElideRight

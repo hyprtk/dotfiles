@@ -61,9 +61,10 @@ Rectangle {
 
             Text {
                 width: 20
-                text: "×"
+                text: Glyph.close
                 color: Theme.muted
-                font.pixelSize: 14
+                font.family: Glyph.family
+                font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
 
                 MouseArea {

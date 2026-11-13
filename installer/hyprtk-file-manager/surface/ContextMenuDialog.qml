@@ -190,7 +190,9 @@ Item {
                             id: upButton
                             anchors.right: downButton.left
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "↑"
+                            text: Glyph.up
+                            hint: "Move up"
+                            iconSize: 11
                             implicitWidth: 26
                             available: index > 0
                             onClicked: root.move(modelData, -1)
@@ -201,7 +203,9 @@ Item {
                             anchors.right: parent.right
                             anchors.rightMargin: 4
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "↓"
+                            text: Glyph.down
+                            hint: "Move down"
+                            iconSize: 11
                             implicitWidth: 26
                             available: index < root.order.length - 1
                             onClicked: root.move(modelData, 1)

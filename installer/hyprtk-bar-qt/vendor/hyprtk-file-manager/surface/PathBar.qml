@@ -159,9 +159,10 @@ Item {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: segment.index < root.segments().length - 1
-                            text: "›"
+                            text: Glyph.chevronRight
                             color: Theme.alpha(Theme.foreground, 0.35)
-                            font.pixelSize: Theme.fontSize
+                            font.family: Glyph.family
+                            font.pixelSize: 9
                         }
                     }
                 }

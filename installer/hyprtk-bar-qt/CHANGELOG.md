@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.41.41 — unreleased
+
+- **hyprtk-file-manager 1.8.0 vendored.** Crisp Nerd Font glyphs and themed
+  tooltips across every navigation/toolbar control, a correctly drawn search
+  icon for the filter, and a **shared desktop clipboard**: file copy/cut uses
+  the Wayland `x-special/gnome-copied-files` selection, so cliphist and other
+  file managers see the same copy/cut selection.
+- **Shared clipboard history.** Clipboard-history entries that are file
+  selections (`x-special/gnome-copied-files`: a `copy`/`cut` header followed by
+  `file://` URIs) are restored as a real file selection instead of plain text,
+  so pasting them in the file manager or another file manager copies/moves the
+  files.
+
 ## 0.41.40 — unreleased
 
 - **hyprtk-file-manager 1.6.9 vendored.** Sidebar place order now saves

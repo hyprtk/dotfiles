@@ -114,7 +114,9 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 18
                     height: 18
-                    text: "×"
+                    text: Glyph.close
+                    iconSize: 9
+                    hint: "Cancel transfer"
                     available: modelData.state === "running" || modelData.state === "queued"
                     onClicked: Jobs.cancel(modelData.id)
                 }

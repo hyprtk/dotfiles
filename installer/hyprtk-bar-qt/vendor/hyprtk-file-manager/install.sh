@@ -22,9 +22,13 @@ fi
 
 command -v qs >/dev/null 2>&1 || { echo "qs (Quickshell) is required" >&2; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo "python3 is required" >&2; exit 1; }
+for tool in wl-copy wl-paste; do
+    command -v "$tool" >/dev/null 2>&1 || \
+        echo ":: WARN: $tool not found — the shared clipboard needs wl-clipboard" >&2
+done
 
 mkdir -p "$PREFIX" "$BIN" "$APPS"
-for item in shell.qml surface components theme config data backend bin; do
+for item in shell.qml surface components theme config data backend bin assets; do
     rm -rf "$PREFIX/$item"
     cp -a "$ROOT/$item" "$PREFIX/$item"
 done

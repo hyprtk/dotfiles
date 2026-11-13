@@ -5,7 +5,7 @@ A fast, keyboard-first file manager for the hyprtk desktop — Qt 6 QML
 with the power of Dolphin/Yazi one shortcut away. It follows the suite's live
 pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 
-**Current version: 1.6.9** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 1.8.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -21,6 +21,9 @@ pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 
 **File operations**
 - Copy, cut, paste, move, rename, new folder/file, trash and permanent delete
+- Shared desktop clipboard: file selections use the Wayland
+  `x-special/gnome-copied-files` format, so the bar's cliphist history and other
+  file managers see the same copy/cut selection
 - Conflict dialog: replace / skip / keep both / apply to all
 - Docked task queue with progress, cancel and partial-failure reporting
 - Multi-level undo **and** redo for move/copy/trash/rename (`Ctrl+Z` /

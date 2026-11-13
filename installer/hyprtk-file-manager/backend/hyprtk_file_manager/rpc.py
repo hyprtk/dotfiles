@@ -10,6 +10,7 @@ import threading
 from pathlib import Path
 
 from . import __version__
+from . import clipboard as clipboard_mod
 from . import launch
 from . import meta
 from . import network as network_mod
@@ -147,6 +148,21 @@ def handle(request: dict) -> dict:
             }
         if method == "version":
             return {"id": rid, "result": {"kind": "version", "version": __version__}}
+        if method == "clipboard.set":
+            return {
+                "id": rid,
+                "result": {
+                    "kind": "clipboard",
+                    "ok": clipboard_mod.set_files(
+                        params.get("paths") or [], bool(params.get("cut", False)),
+                    ),
+                },
+            }
+        if method == "clipboard.clear":
+            return {
+                "id": rid,
+                "result": {"kind": "clipboard", "ok": clipboard_mod.clear()},
+            }
         if method.startswith("job."):
             return {"id": rid, "result": MANAGER.dispatch(method[4:], params)}
         if method == "undo":
@@ -194,6 +210,9 @@ def _serve_async(request: dict) -> None:
     try:
         if method == "preview":
             result = preview_mod.build_preview(str(params.get("path") or ""))
+        elif method == "clipboard.get":
+            result = clipboard_mod.get_files()
+            result["kind"] = "clipboard"
         elif method == "thumb":
             result = preview_mod.build_thumb(str(params.get("path") or ""))
         elif method == "open_with.apps":
@@ -243,6 +262,7 @@ def _serve_async(request: dict) -> None:
 ASYNC_METHODS = {
     "preview", "thumb", "search", "checksum", "devices.mount", "devices.eject",
     "network.scan", "network.mount", "network.shares", "open_with.apps",
+    "clipboard.get",
 }
 
 

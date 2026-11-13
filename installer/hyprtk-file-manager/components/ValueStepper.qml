@@ -14,7 +14,8 @@ Row {
     spacing: 6
 
     IconButton {
-        text: "−"
+        text: Glyph.minus
+        hint: "Decrease"
         available: root.value > root.from
         onClicked: root.changed(Math.max(root.from, root.value - root.step))
     }
@@ -29,7 +30,8 @@ Row {
     }
 
     IconButton {
-        text: "+"
+        text: Glyph.plus
+        hint: "Increase"
         available: root.value < root.to
         onClicked: root.changed(Math.min(root.to, root.value + root.step))
     }

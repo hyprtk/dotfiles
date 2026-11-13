@@ -59,17 +59,53 @@ def list_entries() -> list[dict]:
     return parse_list(proc.stdout.decode("utf-8", "replace"))
 
 
+def looks_like_file_list(data: bytes) -> bool:
+    """True when the entry is a ``copy``/``cut`` + ``file://`` URI selection."""
+    text = data[:4096].decode("utf-8", "replace")
+    lines = [line.strip() for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+             if line.strip() and not line.strip().startswith("#")]
+    if not lines:
+        return False
+    if lines[0].lower() in ("copy", "cut"):
+        lines = lines[1:]
+    return bool(lines) and all(line.lower().startswith("file://") for line in lines)
+
+
 def copy_entry(cid: str, image: str | None) -> bool:
-    """Decode an entry and place it on the clipboard (text or image)."""
+    """Decode an entry and place it on the clipboard (text, image or file list)."""
     if not str(cid).isdigit():
         return False
     try:
-        decode = subprocess.Popen(["cliphist", "decode", str(cid)], stdout=subprocess.PIPE)
-        args = ["wl-copy", "--type", "image/" + image] if image else ["wl-copy"]
-        copy = subprocess.Popen(args, stdin=decode.stdout)
-        decode.stdout.close()
-        decode.wait(timeout=8)
-        return copy.wait(timeout=8) == 0
+        if image:
+            decode = subprocess.Popen(["cliphist", "decode", str(cid)], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(
+                ["wl-copy", "--type", "image/" + image],
+                stdin=decode.stdout,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            decode.stdout.close()
+            decode.wait(timeout=8)
+            return proc.wait(timeout=8) == 0
+        decoded = subprocess.run(
+            ["cliphist", "decode", str(cid)], capture_output=True, timeout=8,
+        )
+        if decoded.returncode != 0:
+            return False
+        if looks_like_file_list(decoded.stdout):
+            args = ["wl-copy", "--type", "x-special/gnome-copied-files"]
+        else:
+            args = ["wl-copy"]
+        proc = subprocess.Popen(
+            args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        proc.communicate(decoded.stdout, timeout=8)
+        return proc.returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False
 

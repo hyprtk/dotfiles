@@ -1,7 +1,7 @@
 # Installing hyprtk-file-manager
 
 This document covers a standalone install, the suite/vendored install, and how
-to make the file manager the desktop default. It applies to version 1.6.2.
+to make the file manager the desktop default. It applies to version 1.8.0.
 
 ## Quick start
 
@@ -26,12 +26,16 @@ It refuses to run without `qs` (Quickshell) or `python3`.
 | **Quickshell** | the `qs` binary on `PATH` (Qt 6 QML runtime) |
 | **Python** | 3.10 or newer |
 | **PyGObject** | `python-gobject` / `python3-gi` — network shares and GVfs |
+| **wl-clipboard** | `wl-copy` / `wl-paste` — the shared desktop clipboard |
 | **GIO** | the `gio` command — trash and GVfs mounts |
 | **UDisks2** | device mount/eject (`udisksctl`) |
 
 Only `qs` and `python3` are checked by the installer; the rest are runtime
 requirements. The app starts without them, but the corresponding features
 (trash, devices, network) will report errors.
+
+The UI glyph font (Symbols Nerd Font) is bundled under `assets/fonts` and loaded
+by the app at runtime, so no system font installation is required.
 
 ### Optional
 

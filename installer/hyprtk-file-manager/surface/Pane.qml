@@ -255,8 +255,14 @@ Item {
         return Qt.formatDateTime(new Date(seconds * 1000), "dd MMM yyyy HH:mm");
     }
 
-    function sortLabel() {
-        return ({ name: "N", size: "S", mtime: "D", type: "T" })[Config.sortKey] || "N";
+    function sortGlyph() {
+        return ({ name: Glyph.sortName, size: Glyph.sortSize,
+                  mtime: Glyph.sortTime, type: Glyph.sortType })[Config.sortKey] || Glyph.sortName;
+    }
+
+    function sortHint() {
+        return "Sort by " + ({ name: "name", size: "size",
+                               mtime: "modified", type: "type" })[Config.sortKey];
     }
 
     function currentEntry() {
@@ -309,12 +315,17 @@ Item {
     }
 
     function pasteClipboard() {
-        if (!Clipboard.hasItems)
-            return;
-        const method = Clipboard.mode === "cut" ? "job.move" : "job.copy";
-        Backend.call(method, { sources: Clipboard.paths, dest: root.path });
-        if (Clipboard.mode === "cut")
-            Clipboard.clear();
+        const dest = root.path;
+        Clipboard.load(function (info) {
+            const files = (info && info.paths) ? info.paths : [];
+            if (files.length === 0)
+                return;
+            const mode = (info && info.mode) || "copy";
+            Backend.call(mode === "cut" ? "job.move" : "job.copy",
+                         { sources: files, dest: dest });
+            if (mode === "cut")
+                Clipboard.clear();
+        });
     }
 
     function trashSelection() {
@@ -627,6 +638,7 @@ Item {
     }
 
     function showMenu(px, py) {
+        Clipboard.refresh();
         menu.items = root.buildMenu();
         menu.openAt(px, py);
     }
@@ -917,6 +929,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         height: 32
+        z: 2
         color: Theme.alpha(Theme.background, 0.65)
 
         Row {
@@ -972,9 +985,10 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            text: "×"
+                            text: Glyph.close
                             color: Theme.muted
-                            font.pixelSize: 12
+                            font.family: Glyph.family
+                            font.pixelSize: 11
                         }
 
                         MouseArea {
@@ -989,7 +1003,8 @@ Item {
             }
 
             IconButton {
-                text: "+"
+                text: Glyph.plus
+                hint: "New tab"
                 implicitWidth: 26
                 implicitHeight: 26
                 onClicked: root.newTab()
@@ -1003,6 +1018,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         height: 42
+        z: 1
         color: Theme.background
 
         RowLayout {
@@ -1064,34 +1080,43 @@ Item {
             }
 
             IconButton {
-                text: "⟳"
+                text: Glyph.refresh
+                hint: "Reload (F5)"
                 onClicked: { root.activated(); root.reload(); }
             }
             IconButton {
-                text: root.sortLabel()
+                text: root.sortGlyph()
+                hint: root.sortHint()
                 active: true
                 onClicked: { root.activated(); Config.cycleSort(); }
             }
             IconButton {
-                text: Config.sortDesc ? "↓" : "↑"
+                text: Config.sortDesc ? Glyph.down : Glyph.up
+                hint: Config.sortDesc ? "Descending" : "Ascending"
                 onClicked: { root.activated(); Config.sortDesc = !Config.sortDesc; }
             }
             IconButton {
-                text: Config.viewMode === "list" ? "☰" : (Config.viewMode === "grid" ? "▦" : "≣")
+                text: Config.viewMode === "list" ? Glyph.list
+                    : (Config.viewMode === "grid" ? Glyph.grid : Glyph.compact)
+                hint: Config.viewMode === "list" ? "Details view"
+                    : (Config.viewMode === "grid" ? "Icon view" : "Compact view")
                 onClicked: { root.activated(); Config.cycleView(); }
             }
             IconButton {
-                text: Config.showHidden ? "◉" : "○"
+                text: Config.showHidden ? Glyph.eye : Glyph.eyeOff
+                hint: Config.showHidden ? "Hide hidden files" : "Show hidden files"
                 active: Config.showHidden
                 onClicked: { root.activated(); Config.showHidden = !Config.showHidden; }
             }
             IconButton {
-                text: "▥"
+                text: Glyph.dualPane
+                hint: "Dual pane (Tab)"
                 active: Config.dualPane
                 onClicked: { root.activated(); Config.dualPane = !Config.dualPane; }
             }
             IconButton {
-                text: "⌕"
+                text: Glyph.search
+                hint: "Filter this folder (Ctrl+F)"
                 visible: Config.showFilter
                 active: root.filtering
                 onClicked: {
@@ -1103,12 +1128,14 @@ Item {
                 }
             }
             IconButton {
-                text: "◫"
+                text: Glyph.preview
+                hint: "Toggle preview"
                 active: Config.showPreview
                 onClicked: { root.activated(); root.togglePreview(); }
             }
             IconButton {
-                text: "⋮"
+                text: Glyph.menu
+                hint: "Actions"
                 onClicked: {
                     root.activated();
                     root.showMenu(8, tabStrip.height + toolbar.height + 4);

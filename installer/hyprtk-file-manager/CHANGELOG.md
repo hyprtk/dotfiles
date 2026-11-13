@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.8.0 — 2026-11-13
+
+### Changed
+
+- **One shared clipboard.** File copy/cut now publishes the selection on the
+  Wayland system clipboard using the desktop-standard
+  `x-special/gnome-copied-files` format (`copy`/`cut` + `file://` URIs) instead
+  of keeping a private in-app list. The bar's cliphist history sees file copies,
+  and files copied in any other file manager can be pasted into hyprtk-fm.
+  Pasting also understands the plain-text form that cliphist returns when a
+  history entry is restored.
+- Pasting reads the live selection at the moment of the action, so copied files
+  stay in sync with the rest of the desktop.
+
+## 1.7.0 — 2026-11-13
+
+### Changed
+
+- **Consistent glyph icons.** Every navigation and toolbar control now uses a
+  crisp Nerd Font glyph from a bundled **Symbols Nerd Font** instead of ad-hoc
+  Unicode symbols that varied with the system font. Back, forward, up, home,
+  settings, reload, sort, sort direction, view modes, hidden files, dual pane,
+  preview, menu, close, tab, breadcrumb, reorder and stepper controls all share
+  one icon language.
+- **Themed button tooltips.** Hovering a navigation or toolbar button now shows
+  a short tooltip with the action name and its shortcut after a brief delay.
+
+### Fixed
+
+- **Filter button icon.** The address-bar filter control now shows a search
+  glyph instead of an unrelated symbol (it could render as a recycle-style
+  glyph depending on the fallback font).
+
 ## 1.6.9 — 2026-11-12
 
 ### Added
