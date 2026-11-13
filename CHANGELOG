@@ -3,6 +3,23 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.92] - 2026-11-13
+
+### Changed
+
+- **Tasklist regroup is now a signature binding (bar-qt 0.41.43).** The v1.3.91
+  fix used Repeater delegates, which Repeater rejects ("Delegate must be of Item
+  type"), so the revision counter never ran — the phantom still went away only
+  because empty `appId`+title windows are skipped. A `_sig` binding over the
+  fields the grouping reads (address, appId/title, workspace, activated) now
+  drives the regroup properly, and the two startup warnings are gone.
+
+### Removed
+
+- **Dead `tray.reset_nm_applet` config key (bar-qt 0.41.43).** Nothing read it;
+  it only ever shipped a setting that did nothing. Existing configs keep working
+  — the key is simply ignored once removed.
+
 ## [v1.3.91] - 2026-11-13
 
 ### Fixed

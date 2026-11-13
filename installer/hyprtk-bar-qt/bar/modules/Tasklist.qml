@@ -21,30 +21,13 @@ RowLayout {
 
     // groups() only re-evaluates when the toplevel *list* changes, but a window's
     // appId/title arrive after it is mapped (XWayland especially late). A window
-    // grouped before its appId was known used to leave a phantom, iconless
-    // button behind, and the real button then appeared next to it — one app
-    // looked duplicated. Every toplevel property change bumps `revision`, which
-    // groups() reads, so the list is regrouped.
-    property int revision: 0
-
-    Repeater {
-        model: Hyprland.toplevels
-        delegate: Connections {
-            required property var modelData
-            target: modelData
-            function onTitleChanged() { root.revision++; }
-            function onActivatedChanged() { root.revision++; }
-            function onWorkspaceChanged() { root.revision++; }
-        }
-    }
-    Repeater {
-        model: Hyprland.toplevels.values
-        delegate: Connections {
-            required property var modelData
-            target: modelData ? modelData.wayland : null
-            function onAppIdChanged() { root.revision++; }
-        }
-    }
+    // grouped before its appId was known used to leave a phantom, iconless button
+    // behind, and the real button then appeared next to it — one app looked
+    // duplicated. `_sig` is a binding over exactly the fields the grouping uses,
+    // so any of them changing re-runs groups(), which reads it.
+    readonly property string _sig: (Hyprland.toplevels.values || []).map(t =>
+        t.address + "|" + root._appId(t) + "|"
+        + (t.workspace ? t.workspace.id : "") + "|" + (t.activated ? 1 : 0)).join(";")
 
     function _appId(t) {
         const id = (t.wayland && t.wayland.appId) ? String(t.wayland.appId) : "";
@@ -76,7 +59,7 @@ RowLayout {
         return a.length > 0 && b.length > 0 && (a === b || a.includes(b) || b.includes(a));
     }
     function groups() {
-        const _rev = root.revision; // regroup when a toplevel property changes (above)
+        const _rev = root._sig; // regroup when a toplevel's fields change (above)
         const map = {};
         const label = {};
         for (const t of (Hyprland.toplevels.values || [])) {

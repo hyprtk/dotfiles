@@ -156,8 +156,7 @@
   },
   "tray": {
     "enabled": true,
-    "icon_size": 20,
-    "reset_nm_applet": true
+    "icon_size": 20
   },
   "quicksettings": {
     "enabled": true
