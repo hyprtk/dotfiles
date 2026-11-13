@@ -3,6 +3,23 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.90] - 2026-11-13
+
+### Fixed
+
+- **Yay install no longer stalls on an invisible password prompt.** The AUR
+  build for `yay` ran inside `gum spin`, which hands the step `/dev/null` on
+  stdin, so the sudo call inside `makepkg -si` failed with "a terminal is
+  required to read the password" — invisible under the spinner — and the step
+  still reported success. The build now runs outside the spinner with the
+  terminal attached, and the result is verified (`yay` actually present) before
+  reporting OK.
+- **Bar update notifier now appears (bar-qt 0.41.42).** The shipped config
+  writes the notifier's script path with a leading `~`, and the module's
+  allow-list check compared that literal string against absolute repo roots, so
+  the widget hid itself even when enabled and placed in the layout. The path is
+  expanded before the check, so existing configs work without migration.
+
 ## [v1.3.89] - 2026-11-13
 
 ### Added

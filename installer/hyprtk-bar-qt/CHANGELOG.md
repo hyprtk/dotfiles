@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.41.42 — unreleased
+
+- **Updates module now appears.** The shipped `config.json` writes the notifier's
+  `script` as `~/.local/share/hyprtk-bar-qt/scripts/updates.sh`, and the
+  allow-list check compared that literal string against absolute repo roots, so
+  the module decided its script was untrusted and stayed invisible even with
+  `enabled: true` and the widget placed in the layout. `~` (and `~/…`) is now
+  expanded before both the check and the `Process` command, so existing configs
+  work without migration.
+
 ## 0.41.41 — unreleased
 
 - **hyprtk-file-manager 1.8.0 vendored.** Crisp Nerd Font glyphs and themed

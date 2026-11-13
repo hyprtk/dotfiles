@@ -652,11 +652,20 @@ if [ "$HYPRTK_PM" = pacman ]; then
     if pkg_is_installed yay; then
         _ok "yay already installed"
     else
-        # makepkg -si (and base-devel) need sudo; make sure the cached credential
-        # is fresh and prompt visibly rather than under the spinner.
+        # The AUR build must NOT run under `gum spin`: the spinner hands the step
+        # /dev/null on stdin and a screen it repaints, so the sudo call inside
+        # `makepkg -si` dies with "a terminal is required to read the password"
+        # (and anything written to /dev/tty is erased by the spinner). Authenticate
+        # visibly, then build with the real terminal attached.
         _sudo_auth
-        _spin "Installing yay..." "_installPackagesPacman base-devel git && git clone https://aur.archlinux.org/yay-git.git ~/Downloads/yay-git && cd ~/Downloads/yay-git && makepkg -si --noconfirm" "$LOG_FILE" "base-devel + yay-git (AUR build)"
-        _ok "yay installed"
+        echo -e "${CYAN}  → ${WHITE}base-devel + yay-git (AUR build, output logged)${NC}"
+        echo -e "${WHITE}    This takes a few minutes; any sudo prompt appears below.${NC}"
+        _run "Installing yay..." "mkdir -p ~/Downloads && rm -rf ~/Downloads/yay-git && _installPackagesPacman base-devel git && git clone https://aur.archlinux.org/yay-git.git ~/Downloads/yay-git && cd ~/Downloads/yay-git && makepkg -si --noconfirm" "$LOG_FILE"
+        if pkg_is_installed yay; then
+            _ok "yay installed"
+        else
+            _fail "yay was not installed — see $LOG_FILE"
+        fi
     fi
 else
     _ok "Non-Arch system ($HYPRTK_PM) — AUR helper not required"

@@ -16,8 +16,21 @@ Text {
     property string tip: ""
 
     readonly property string home: Quickshell.env("HOME") || ""
-    readonly property string script: BarConfig.updates.script || (root.home + "/.local/share/hyprtk-bar-qt/scripts/updates.sh")
-    readonly property string install: BarConfig.updates.install_command || (root.home + "/.local/share/hyprtk-bar-qt/scripts/installupdates.sh")
+
+    // The shipped config.json writes these paths with a leading `~`; expand it
+    // before the allow-list check and the Process command, otherwise the tilde
+    // form never matches a repo-owned root and the module stays invisible.
+    function _expandPath(p) {
+        p = String(p || "");
+        if (p === "~")
+            return root.home;
+        if (p.indexOf("~/") === 0)
+            return root.home + p.slice(1);
+        return p;
+    }
+
+    readonly property string script: root._expandPath(BarConfig.updates.script || (root.home + "/.local/share/hyprtk-bar-qt/scripts/updates.sh"))
+    readonly property string install: root._expandPath(BarConfig.updates.install_command || (root.home + "/.local/share/hyprtk-bar-qt/scripts/installupdates.sh"))
     readonly property int intervalS: BarConfig.updates.interval || 60
 
     // Only run scripts from bar/repo-owned roots (never an arbitrary path).
