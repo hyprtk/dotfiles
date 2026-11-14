@@ -715,26 +715,32 @@ Rectangle {
                 width: sections.width
                 height: 26
 
-                Row {
-                    anchors.fill: parent
+                Text {
+                    id: networkTitle
+                    anchors.left: parent.left
+                    anchors.right: networkRefresh.left
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    leftPadding: 16
+                    text: root.networkScanning ? "Network · scanning…" : "Network"
+                    color: Theme.accent
+                    font.pixelSize: Theme.fontSize
+                    font.bold: true
+                    elide: Text.ElideRight
+                }
 
-                    Text {
-                        width: parent.width - 60
-                        leftPadding: 16
-                        text: root.networkScanning ? "Network · scanning…" : "Network"
-                        color: Theme.accent
-                        font.pixelSize: Theme.fontSize
-                        font.bold: true
-                    }
-
-                    Text {
-                        width: 28
-                        text: Glyph.refresh
-                        color: Theme.accent
-                        font.family: Glyph.family
-                        font.pixelSize: 12
-                        horizontalAlignment: Text.AlignHCenter
-                    }
+                Text {
+                    id: networkRefresh
+                    anchors.right: parent.right
+                    anchors.rightMargin: 6
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 16
+                    text: Glyph.refresh
+                    color: Theme.accent
+                    font.family: Glyph.family
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    opacity: root.networkScanning ? 0.45 : 1.0
                 }
 
                 MouseArea {

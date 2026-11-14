@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.41.44 — unreleased
+
+- **Bundled file manager is hyprtk-file-manager 1.8.1.** The vendored snapshot
+  under `vendor/hyprtk-file-manager/` is refreshed: the sidebar's Network header
+  no longer runs the `Network · scanning…` label underneath the refresh glyph
+  (title and glyph are anchored to opposite edges, the title elides), and the
+  glyph dims during a scan.
+- The vendored snapshot is now taken from the published repo (`git archive`)
+  rather than the working tree, so dev-only material (`tests/`, `PLAN.md`,
+  `QA.md`, `scripts/qa.sh`) no longer ships inside it.
+
 ## 0.41.43 — unreleased
 
 - **Tasklist no longer leaves a phantom button (one app showed up twice).** The

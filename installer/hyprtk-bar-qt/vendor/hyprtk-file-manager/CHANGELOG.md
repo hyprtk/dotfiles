@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.1 — 2026-11-14
+
+### Fixed
+
+- **The Network refresh button no longer sits on the scanning label.** The
+  sidebar header laid the title and the refresh glyph out in a single row with a
+  fixed title width, so while a scan was running `Network · scanning…` ran
+  underneath the glyph. The title and the glyph are now anchored to opposite
+  edges of the panel — the title elides instead of overflowing, and the glyph
+  dims while a scan is in progress.
+
 ## 1.8.0 — 2026-11-13
 
 ### Changed

@@ -3,6 +3,28 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.3.93] - 2026-11-14
+
+### Fixed
+
+- **File manager: the Network refresh glyph no longer covers the scanning label
+  (hyprtk-file-manager 1.8.1).** The sidebar header laid the title and the
+  refresh icon out in one row with a fixed title width, so `Network ·
+  scanning…` ran underneath the glyph. Title and glyph now anchor to opposite
+  edges of the panel, the title elides instead of overflowing, and the glyph
+  dims while a scan is running.
+
+### Changed
+
+- **Bundled file manager is hyprtk-file-manager 1.8.1** in both the bar's
+  vendored snapshot (`installer/hyprtk-bar-qt/vendor/…`) and its own installer
+  tree (`installer/hyprtk-file-manager/`); all copies report the same version and
+  are byte-identical.
+- **Vendored snapshots now come from the published repo** (`git archive HEAD`)
+  rather than the working tree, so dev-only material (`tests/`, `PLAN.md`,
+  `QA.md`, `scripts/qa.sh`) no longer ships.
+- Bar bumped to 0.41.44.
+
 ## [v1.3.92] - 2026-11-13
 
 ### Changed
