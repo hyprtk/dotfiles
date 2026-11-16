@@ -37,6 +37,12 @@ Singleton {
         root.viewMode = order[(index + 1) % order.length];
     }
 
+    // Ctrl+wheel icon step (12–64), shared by the list and grid delegates.
+    function stepIconSize(delta) {
+        const step = delta > 0 ? 4 : -4;
+        root.iconSize = Math.max(12, Math.min(64, root.iconSize + step));
+    }
+
     function cycleSort() {
         const order = ["name", "size", "mtime", "type"];
         const index = order.indexOf(root.sortKey);

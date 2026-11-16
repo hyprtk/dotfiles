@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.43.5 — 2026-11-16
+
+- **Vendor hyprtk-file-manager 1.8.5.** Ctrl+wheel resizes the file manager's
+  icons again (the old handlers were WheelHandlers, which never saw wheel
+  events inside a Flickable), and the list view follows the icon size.
+
 ## 0.43.4 — 2026-11-16
 
 - **Vendor hyprtk-file-manager 1.8.4.** The Places order is remembered across

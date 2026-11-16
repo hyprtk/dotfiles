@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.8.5 — 2026-11-16
+
+### Fixed
+
+- **Ctrl+wheel resizes the icons again.** The resize handlers were
+  `WheelHandler`s inside the list/grid `Flickable`s, and a `WheelHandler` never
+  receives wheel events there (a `MouseArea` does), so holding Ctrl and
+  scrolling did nothing at all. Both delegates now handle the wheel on their
+  mouse area: Ctrl+wheel steps the icon size 12–64, a plain wheel is left
+  unaccepted so the view still scrolls.
+- **List view honours the icon size.** Row icons and heights were hard-coded to
+  18/28 px, so resizing was invisible outside grid/tile view. They now scale
+  with `Config.iconSize` (unchanged at the default of 20).
+
 ## 1.8.4 — 2026-11-16
 
 ### Fixed

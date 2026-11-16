@@ -1201,24 +1201,15 @@ Item {
                     listing.loadMore();
             }
 
-            WheelHandler {
-                acceptedModifiers: Qt.ControlModifier
-                onWheel: (event) => {
-                    const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
-                    if (delta === 0)
-                        return;
-                    const next = Config.iconSize + (delta > 0 ? 4 : -4);
-                    Config.iconSize = Math.max(12, Math.min(64, next));
-                    event.accepted = true;
-                }
-            }
-
             delegate: Rectangle {
                 id: rowItem
                 required property var modelData
                 required property int index
+                // Ctrl+wheel scales the icon; at the default (20) this is the
+                // 18px icon and 28px row the list has always had.
+                readonly property int iconPx: Math.max(12, Math.min(48, Math.round(18 * Config.iconSize / 20)))
                 width: listView.width
-                height: 28
+                height: Math.max(28, rowItem.iconPx + 10)
                 Item {
                     id: dragProxy
                     width: 1
@@ -1236,9 +1227,10 @@ Item {
 
                     Image {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 18
-                        height: 18
-                        sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
+                        width: rowItem.iconPx
+                        height: rowItem.iconPx
+                        sourceSize: Qt.size(Math.max(Theme.iconSource, rowItem.iconPx),
+                                            Math.max(Theme.iconSource, rowItem.iconPx))
                         source: Quickshell.iconPath(modelData.icon, modelData.dir ? "folder" : "text-x-generic")
                     }
 
@@ -1275,6 +1267,16 @@ Item {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     preventStealing: true
+                    // Ctrl+wheel resizes the icons. A WheelHandler never sees
+                    // wheel events inside a Flickable here, and an unaccepted
+                    // wheel has to bubble up to the view so it still scrolls.
+                    onWheel: (wheel) => {
+                        const delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x;
+                        const ctrl = (wheel.modifiers & Qt.ControlModifier) !== 0;
+                        if (ctrl && delta !== 0)
+                            Config.stepIconSize(delta);
+                        wheel.accepted = ctrl;
+                    }
                     drag.target: dragProxy
                     Drag.active: dragMouse.drag.active
                     Drag.dragType: Drag.Automatic
@@ -1331,18 +1333,6 @@ Item {
             onContentYChanged: {
                 if (contentY + height > contentHeight - 700)
                     listing.loadMore();
-            }
-
-            WheelHandler {
-                acceptedModifiers: Qt.ControlModifier
-                onWheel: (event) => {
-                    const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
-                    if (delta === 0)
-                        return;
-                    const next = Config.iconSize + (delta > 0 ? 4 : -4);
-                    Config.iconSize = Math.max(12, Math.min(64, next));
-                    event.accepted = true;
-                }
             }
 
             delegate: Rectangle {
@@ -1462,6 +1452,16 @@ Item {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     preventStealing: true
+                    // Ctrl+wheel resizes the icons. A WheelHandler never sees
+                    // wheel events inside a Flickable here, and an unaccepted
+                    // wheel has to bubble up to the view so it still scrolls.
+                    onWheel: (wheel) => {
+                        const delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x;
+                        const ctrl = (wheel.modifiers & Qt.ControlModifier) !== 0;
+                        if (ctrl && delta !== 0)
+                            Config.stepIconSize(delta);
+                        wheel.accepted = ctrl;
+                    }
                     drag.target: dragProxy
                     Drag.active: dragMouse.drag.active
                     Drag.dragType: Drag.Automatic
