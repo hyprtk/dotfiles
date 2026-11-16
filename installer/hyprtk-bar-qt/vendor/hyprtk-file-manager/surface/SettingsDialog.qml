@@ -113,6 +113,18 @@ Item {
 
                 SettingRow {
                     width: parent.width
+                    label: "Side panel icon size"
+
+                    ValueStepper {
+                        value: Config.sidebarIconSize
+                        from: 12
+                        to: 32
+                        onChanged: (value) => Config.sidebarIconSize = value
+                    }
+                }
+
+                SettingRow {
+                    width: parent.width
                     label: "Sort by"
 
                     Segmented {

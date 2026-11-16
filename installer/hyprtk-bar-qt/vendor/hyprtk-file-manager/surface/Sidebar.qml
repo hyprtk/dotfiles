@@ -34,6 +34,9 @@ Rectangle {
 
     property var pane: null
 
+    // How much wider the side-panel icons are than the 16px default.
+    readonly property int iconDelta: Config.sidebarIconSize - 16
+
     readonly property bool canGoBack: root.pane !== null && root.pane.historyIndex > 0
     readonly property bool canGoForward: root.pane !== null
         && root.pane.historyIndex < root.pane.history.length - 1
@@ -536,7 +539,7 @@ Rectangle {
                 delegate: Rectangle {
                     required property var modelData
                     width: sections.width
-                    height: 30
+                    height: Math.max(30, Config.sidebarIconSize + 14)
                     radius: 6
                     color: (root.currentPath === modelData.path)
                         ? Theme.alpha(Theme.accent, 0.18)
@@ -550,15 +553,16 @@ Rectangle {
 
                         Image {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 16
-                            height: 16
-                            sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
+                            width: Config.sidebarIconSize
+                            height: Config.sidebarIconSize
+                            sourceSize: Qt.size(Math.max(Theme.iconSource, Config.sidebarIconSize),
+                                                Math.max(Theme.iconSource, Config.sidebarIconSize))
                             source: Quickshell.iconPath(modelData.icon || "folder", "folder")
                         }
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 24
+                            width: parent.width - 24 - root.iconDelta
                             text: modelData.name
                             color: Theme.foreground
                             font.pixelSize: Theme.fontSize
@@ -605,7 +609,7 @@ Rectangle {
                 delegate: Rectangle {
                     required property var modelData
                     width: sections.width
-                    height: 30
+                    height: Math.max(30, Config.sidebarIconSize + 14)
                     radius: 6
                     opacity: modelData.mounted ? 1.0 : 0.78
                     color: (modelData.mounted && root.currentPath === modelData.path)
@@ -620,15 +624,16 @@ Rectangle {
 
                         Image {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 16
-                            height: 16
-                            sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
+                            width: Config.sidebarIconSize
+                            height: Config.sidebarIconSize
+                            sourceSize: Qt.size(Math.max(Theme.iconSource, Config.sidebarIconSize),
+                                                Math.max(Theme.iconSource, Config.sidebarIconSize))
                             source: Quickshell.iconPath(modelData.icon || "drive-harddisk", "drive-harddisk")
                         }
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - (modelData.mounted ? (modelData.external ? 44 : 24) : 72)
+                            width: parent.width - (modelData.mounted ? (modelData.external ? 44 : 24) : 72) - root.iconDelta
                             text: modelData.name
                             color: Theme.foreground
                             font.pixelSize: Theme.fontSize
@@ -771,7 +776,7 @@ Rectangle {
                 delegate: Rectangle {
                     required property var modelData
                     width: sections.width
-                    height: modelData.kind === "host" ? 28 : 26
+                    height: Math.max(modelData.kind === "host" ? 28 : 26, Config.sidebarIconSize + 12)
                     radius: 6
                     color: (modelData.kind === "share" && shareHover.hovered)
                         ? Theme.alpha(Theme.accent2, 0.10) : "transparent"
@@ -784,9 +789,10 @@ Rectangle {
 
                         Image {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 15
-                            height: 15
-                            sourceSize: Qt.size(Theme.iconSource, Theme.iconSource)
+                            width: Config.sidebarIconSize - 1
+                            height: Config.sidebarIconSize - 1
+                            sourceSize: Qt.size(Math.max(Theme.iconSource, Config.sidebarIconSize),
+                                                Math.max(Theme.iconSource, Config.sidebarIconSize))
                             source: Quickshell.iconPath(modelData.icon || "network-server", "network-server")
                         }
 
@@ -803,7 +809,7 @@ Rectangle {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 30 - (modelData.kind === "host" ? 44 : 0)
+                            width: parent.width - 30 - (modelData.kind === "host" ? 44 : 0) - root.iconDelta
                                 - (modelData.kind === "host" && modelData.shares
                                    && modelData.shares.length > 0 ? 14 : 0)
                             text: modelData.name

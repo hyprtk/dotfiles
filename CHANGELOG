@@ -3,6 +3,14 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.5.5] - 2026-11-16
+
+### Added
+
+- **hyprtk-file-manager 1.8.6 (bar-qt 0.43.6).** Settings → “Side panel icon
+  size” (12–32, default 16) scales the Places, Devices and Network icons and
+  their row heights together.
+
 ## [v1.5.4] - 2026-11-16
 
 ### Fixed

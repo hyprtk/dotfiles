@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.6 — 2026-11-16
+
+### Added
+
+- **Side panel icon size setting.** Settings has a “Side panel icon size” row
+  (12–32, default 16) next to the file-view “Icon size”. It scales the Places,
+  Devices and Network icons and their row heights together, so a larger icon
+  does not push the labels out of the row. Saved with the rest of the config.
+
 ## 1.8.5 — 2026-11-16
 
 ### Fixed

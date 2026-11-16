@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.43.6 — 2026-11-16
+
+- **Vendor hyprtk-file-manager 1.8.6.** Settings gains a “Side panel icon size”
+  row for the file manager's Places/Devices/Network icons.
+
 ## 0.43.5 — 2026-11-16
 
 - **Vendor hyprtk-file-manager 1.8.5.** Ctrl+wheel resizes the file manager's

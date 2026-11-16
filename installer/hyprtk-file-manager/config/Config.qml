@@ -17,6 +17,7 @@ Singleton {
     property bool showHidden: false
     property bool showFilter: true
     property int iconSize: 20
+    property int sidebarIconSize: 16
     property string sortKey: "name"
     property bool sortDesc: false
     property bool dirsFirst: true
@@ -70,6 +71,7 @@ Singleton {
             showHidden: root.showHidden,
             showFilter: root.showFilter,
             iconSize: root.iconSize,
+            sidebarIconSize: root.sidebarIconSize,
             sortKey: root.sortKey,
             sortDesc: root.sortDesc,
             dirsFirst: root.dirsFirst,
@@ -95,6 +97,8 @@ Singleton {
             root.showFilter = values.showFilter;
         if (typeof values.iconSize === "number")
             root.iconSize = Math.max(12, Math.min(64, values.iconSize));
+        if (typeof values.sidebarIconSize === "number")
+            root.sidebarIconSize = Math.max(12, Math.min(32, values.sidebarIconSize));
         if (["name", "size", "mtime", "type"].indexOf(values.sortKey) >= 0)
             root.sortKey = values.sortKey;
         if (typeof values.sortDesc === "boolean")
@@ -164,6 +168,7 @@ Singleton {
     onShowHiddenChanged: root.scheduleSave()
     onShowFilterChanged: root.scheduleSave()
     onIconSizeChanged: root.scheduleSave()
+    onSidebarIconSizeChanged: root.scheduleSave()
     onSortKeyChanged: root.scheduleSave()
     onSortDescChanged: root.scheduleSave()
     onDirsFirstChanged: root.scheduleSave()
