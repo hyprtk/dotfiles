@@ -6,6 +6,8 @@ import "../theme"
 TextField {
     id: root
 
+    property int radius: 6
+
     implicitHeight: 30
     font.pixelSize: Theme.fontSize
     font.family: Theme.fontFamily
@@ -17,7 +19,7 @@ TextField {
     rightPadding: 9
 
     background: Rectangle {
-        radius: 6
+        radius: root.radius
         color: Theme.alpha(Theme.background, 0.6)
         border.width: 1
         border.color: root.activeFocus ? Theme.accent : Theme.alpha(Theme.accent2, 0.30)

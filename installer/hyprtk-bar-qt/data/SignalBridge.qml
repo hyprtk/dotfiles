@@ -30,6 +30,8 @@ Singleton {
                         UiState.arcMenuOpen = !UiState.arcMenuOpen;
                     else if (c === "clipboard")
                         UiState.clipboardOpen = !UiState.clipboardOpen;
+                    else if (c === "launcher")
+                        UiState.launcherOpen = !UiState.launcherOpen;
                 } catch (e) {}
             }
         }

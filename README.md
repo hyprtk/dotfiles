@@ -96,7 +96,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | `Super + Return` | Terminal (Alacritty) |
 | `Super + Space` | Start menu (in-bar) |
 | `Super + Q` | Close window |
-| `Super + D` | App menu (rofi) |
+| `Super + D` | App launcher (in-bar; rofi fallback) |
 | `Super + F` | File manager (hyprtk-fm) |
 | `Super + B` / `Super + Ctrl + B` | Brave / Chromium |
 | `Super + X` | Exit session |

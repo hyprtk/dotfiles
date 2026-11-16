@@ -16,13 +16,17 @@ import os
 from pathlib import Path
 
 
-def list_dir(path: str) -> dict:
-    """Entries of *path* (dirs first, hidden skipped), or an empty list."""
+def list_dir(path: str, show_hidden: bool = False) -> dict:
+    """Entries of *path* (dirs first), or an empty list.
+
+    Hidden (dot) files are skipped unless *show_hidden* is true, matching
+    rofi's filebrowser defaults.
+    """
     base = Path(os.path.expanduser(path or "~"))
     entries = []
     try:
         for entry in base.iterdir():
-            if entry.name.startswith("."):
+            if entry.name.startswith(".") and not show_hidden:
                 continue
             try:
                 is_dir = entry.is_dir()
@@ -98,13 +102,14 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="action", required=True)
     lst = sub.add_parser("list")
     lst.add_argument("path", nargs="?", default="~")
+    lst.add_argument("--hidden", action="store_true", help="include dotfiles")
     sub.add_parser("xdg-places")
     args = ap.parse_args(argv)
 
     if args.action == "xdg-places":
         print(json.dumps({"places": xdg_places()}))
         return 0
-    print(json.dumps(list_dir(args.path)))
+    print(json.dumps(list_dir(args.path, args.hidden)))
     return 0
 
 

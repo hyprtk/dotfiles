@@ -75,6 +75,7 @@ ShellRoot {
     ArcMenu {}
     BarMenu {}
     StartMenu {}
+    Launcher {}
     Themer {}
     SysMonitor {}
     NotificationCenter {}

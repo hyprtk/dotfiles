@@ -17,7 +17,7 @@ and run sudo mkinitcpio -P (Please ensure you have your kernels headers installe
 # common operations
   Super          Return   *term* (`alacritty`)
   Super          q        *quit* (kill focused window)
-  Super          d        *show app menu* (`rofi menu`)
+  Super          d        *show app launcher* (`hyprtk-bar-qt-launcher-toggle`, rofi fallback)
   Super   Ctrl   q        *show hyprlogout* (lock/suspend/logout/reboot/shutdown)
 
 # screenshot

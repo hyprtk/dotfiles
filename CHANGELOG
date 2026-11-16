@@ -3,6 +3,33 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.4.0] - 2026-11-16
+
+### Added
+
+- **New in-bar application launcher, replacing rofi as the app menu
+  (bar-qt 0.42.0).** `Super+D` and `Super+Ctrl+Return` now call
+  `hyprtk-bar-qt-launcher-toggle`; `appsmenu.sh` remains the fallback when the
+  toggle is missing. The launcher mirrors the old rofi setup: 700×450, 4×4
+  Papirus-Dark icon grid, applications (drun), categories, run, files
+  (filebrowser) and windows modes; tokenized normal/regex/glob/fuzzy/prefix
+  matching, case-smart, sort toggle, hover-select, click accept, click-outside
+  close, run history, and rofi's keys (Ctrl+Return literal input, Shift+Return
+  terminal, Shift+Delete history/close/hidden, Ctrl+space row-select, Ctrl+L
+  file completion, Ctrl+grave case, Alt+grave sort). Run mode scans `$PATH`;
+  Link/URL desktop entries resolve through a new backend helper.
+- **New `launcher` config block** with rofi-compatible defaults; omitted keys
+  fall back to QML defaults, so existing configs need no migration.
+
+### Changed
+
+- **Bar bumped to 0.42.0**, vendored byte-identically into
+  `installer/hyprtk-bar-qt/` from the published repo.
+- **Theme icons resolve correctly:** `bin/hyprtk-bar-qt` exports
+  `QS_ICON_THEME` from `launcher.icon_theme` (default `Papirus-Dark`) because
+  Quickshell only reads the QIcon theme at startup.
+- README/cheatsheet app-menu line now documents the in-bar launcher.
+
 ## [v1.3.93] - 2026-11-14
 
 ### Fixed

@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.42.0 — 2026-11-16
+
+- **New in-bar application launcher, replacing the rofi apps menu.** A
+  Quickshell overlay (`surface/Launcher.qml`) with five modes — applications
+  (drun), categories, run, files (filebrowser) and windows — presented as the
+  same 4×4 icon grid as `configs/rofi/config-apps-menu.rasi`. Rofi behaviour is
+  preserved: hover-select, click accept, click-outside close, tokenized
+  normal/regex/glob/fuzzy/prefix matching, case-smart, sort toggle, cycle,
+  run history, and the documented keys (Ctrl+Return literal input,
+  Shift+Return terminal, Shift+Delete history/close/hidden, Ctrl+space
+  row-select, Ctrl+L file completion, Ctrl+grave case, Alt+grave sort,
+  Page/Home/End, Ctrl+PageUp/Down columns).
+- **Run mode lists `$PATH` executables** (or `run_list_command`), plus history;
+  **Link/URL desktop entries** are resolved through a new `entry-info` backend
+  helper; Shift+Delete clears run/app history.
+- **New `launcher` config block** with rofi-compatible defaults (700×450, 4×4,
+  Papirus-Dark, drun/run/filebrowser/window/categories, display/window
+  formats, terminal/run templates, filebrowser command and hidden toggle).
+  Config falls back to QML defaults, so existing configs need no migration.
+- **Launcher icons now resolve correctly:** `bin/hyprtk-bar-qt` exports
+  `QS_ICON_THEME` from `launcher.icon_theme` (default `Papirus-Dark`), since
+  Quickshell reads QIcon's theme only at startup and otherwise falls back to
+  broken hicolor lookups.
+- `files.py list` gained `--hidden`; `TTextField` gained a `radius` property.
+- **`Super+D` and `Super+Ctrl+Return` now call
+  `hyprtk-bar-qt-launcher-toggle`** (dotfiles), with `appsmenu.sh` kept as the
+  rofi fallback.
+
 ## 0.41.44 — unreleased
 
 - **Bundled file manager is hyprtk-file-manager 1.8.1.** The vendored snapshot

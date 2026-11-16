@@ -32,4 +32,23 @@ if [ -z "$qs_bin" ]; then
     exit 127
 fi
 
+# Quickshell resolves theme icons through QIcon, which defaults to hicolor and
+# only reads QS_ICON_THEME once at startup. Keep it in sync with the bar's
+# `launcher.icon_theme` (default Papirus-Dark) so launcher/tasklist icons match
+# the rest of the desktop instead of falling back to broken-image squares.
+if [ -z "${QS_ICON_THEME:-}" ]; then
+    QS_ICON_THEME="$(python3 - <<'PY'
+import json
+from pathlib import Path
+p = Path.home() / ".config" / "hyprtk-bar-qt" / "config.json"
+try:
+    data = json.loads(p.read_text())
+except Exception:
+    data = {}
+print((data.get("launcher") or {}).get("icon_theme") or "Papirus-Dark")
+PY
+)"
+    export QS_ICON_THEME
+fi
+
 exec "$qs_bin" -p "$root" "$@"
