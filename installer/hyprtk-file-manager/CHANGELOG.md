@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.3 — 2026-11-16
+
+### Fixed
+
+- **Closing the window now ends the process.** Quickshell keeps running with an
+  invisible window when its only window is closed, so every launch (`Super+F`,
+  the bar's **Files** quick link) left another stray `hyprtk-fm` process behind
+  — 21 of them had accumulated in one session. The window quits the shell when
+  it is closed (the same path as `Ctrl+Q`); minimize and workspace switches are
+  unaffected.
+
 ## 1.8.2 — 2026-11-16
 
 ### Fixed

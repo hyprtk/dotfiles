@@ -15,6 +15,11 @@ FloatingWindow {
     implicitHeight: 760
     minimumSize: Qt.size(760, 480)
 
+    // Closing the window must end the process. Quickshell keeps running with an
+    // invisible window otherwise, so every launch (Super+F, the bar's Files
+    // quick link) left another stray hyprtk-fm process behind.
+    onClosed: Qt.quit()
+
     property var activePane: paneA
     property var renameTarget: null
     property var newTarget: null

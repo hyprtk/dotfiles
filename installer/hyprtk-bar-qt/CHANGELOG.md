@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.43.3 — 2026-11-16
+
+- **Vendor hyprtk-file-manager 1.8.3.** Closing the file manager window now
+  ends its process instead of leaving a stray `hyprtk-fm` running behind an
+  invisible window.
+
 ## 0.43.2 — 2026-11-16
 
 - **Vendor hyprtk-file-manager 1.8.2.** Folder icons in the file manager now

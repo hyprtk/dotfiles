@@ -3,6 +3,15 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.5.2] - 2026-11-16
+
+### Fixed
+
+- **hyprtk-file-manager 1.8.3 (bar-qt 0.43.3).** Closing the file manager
+  window now ends its process. Quickshell kept running with an invisible
+  window, so every launch left a stray `hyprtk-fm` behind (21 had accumulated
+  in one session).
+
 ## [v1.5.1] - 2026-11-16
 
 ### Fixed
