@@ -316,6 +316,11 @@ Rectangle {
     Component.onCompleted: root.reload()
 
     Connections {
+        target: Theme
+        function onIconEpochChanged() { root.reload(); }
+    }
+
+    Connections {
         target: Config
         function onPlacesOrderChanged() {
             if (root.groups.places)

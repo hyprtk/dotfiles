@@ -832,6 +832,11 @@ Item {
         }
     }
 
+    Connections {
+        target: Theme
+        function onIconEpochChanged() { listing.reicon(); }
+    }
+
     onPathChanged: {
         if (root.path)
             Backend.call("watch", { token: root.watchToken, path: root.path });

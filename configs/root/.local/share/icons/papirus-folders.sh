@@ -259,10 +259,21 @@ change_color() {
 		for prefix in "${prefixes[@]}"; do
 			for file_path in "$THEME_DIR/$size/places/$prefix"{-*,}.svg; do
 				[ -f "$file_path" ] || continue  # is a file
-				[ -L "$file_path" ] && continue  # is not a symlink
 
 				file_name="${file_path##*/}"
 				symlink_path="${file_path/-$color/}"  # remove color suffix
+
+				# Papirus ships some color variants as symlinks themselves
+				# (folder-blue-desktop.svg -> user-blue-desktop.svg,
+				# folder-blue-videos.svg -> folder-blue-video.svg). Skipping
+				# them left the alias pointing at the color that was applied
+				# before, so Desktop/Videos kept the old color forever after a
+				# custom color had flattened the chain. Link through the
+				# symlink instead, unless that would point the alias at itself.
+				if [ -L "$symlink_path" ] &&
+					[ "$(readlink -f "$symlink_path")" = "$(readlink -f "$file_path")" ]; then
+					continue
+				fi
 
 				ln -sf "$file_name" "$symlink_path" || {
 					fatal "Fail to create '$symlink_path' symlink"

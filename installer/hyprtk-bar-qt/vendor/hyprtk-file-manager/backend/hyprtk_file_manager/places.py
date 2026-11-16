@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from urllib.parse import quote, unquote
 
+from .fileicons import DIR_FALLBACK, icon_variant
+
 USER_DIR_NAMES = {
     "XDG_DESKTOP_DIR": "Desktop",
     "XDG_DOWNLOAD_DIR": "Downloads",
@@ -169,6 +171,12 @@ def places(home: Path | None = None, config: Path | None = None) -> list[dict]:
             continue
         seen.add(key)
         items.append(item)
+    # Resolve folder icons to the colour variant the theme links them to, so the
+    # sidebar repaints when the Papirus folder colour changes.  Names that the
+    # theme does not ship (the XDG user dirs map to "documents"/"videos"/...)
+    # fall back to the plain folder icon, which has to be resolved too.
+    for item in items:
+        item["icon"] = icon_variant(item.get("icon", ""), DIR_FALLBACK)
     return items
 
 

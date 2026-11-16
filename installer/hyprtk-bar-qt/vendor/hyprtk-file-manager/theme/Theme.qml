@@ -51,6 +51,22 @@ Singleton {
     // Request full-color icon variants; Papirus only colors folders at 22px+.
     readonly property int iconSource: 64
 
+    // Bumped whenever papirus-folders rewrites the folder-colour symlinks
+    // (wallpaper hook or the bar's Icons page). Qt caches themed icon pixmaps
+    // by name and never sees the underlying file change, so views re-resolve
+    // their icon names when this changes.
+    property int iconEpoch: 0
+
+    FileView {
+        id: papirusState
+        path: root.home + "/.config/papirus-folders.sh/keep"
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.iconEpoch += 1
+        onTextChanged: root.iconEpoch += 1
+        onFileChanged: reload()
+    }
+
     function alpha(color, value) {
         return Qt.rgba(color.r, color.g, color.b, value);
     }

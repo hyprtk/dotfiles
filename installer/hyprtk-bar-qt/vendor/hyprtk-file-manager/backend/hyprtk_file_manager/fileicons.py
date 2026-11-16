@@ -220,6 +220,51 @@ def _resolve(candidates) -> str | None:
     return None
 
 
+def _icon_file(name: str) -> str:
+    """Return the file the active theme resolves ``name`` to (or "").
+
+    Deliberately uncached: the file behind a folder-icon symlink changes
+    whenever the folder colour changes.
+    """
+    if _THEME is None or not name:
+        return ""
+    try:
+        info = _THEME.lookup_icon(name, 64, 0)
+        return os.path.realpath(info.get_filename()) if info else ""
+    except Exception:
+        return ""
+
+
+def icon_variant(name: str, fallback: str = "") -> str:
+    """Return the icon name of the file the theme currently links ``name`` to.
+
+    Papirus ships folder icons as symlinks onto a colour variant
+    (``folder-desktop.svg -> folder-latte-pink-desktop.svg``), so the linked
+    name changes with every folder colour.  Qt caches themed icon pixmaps by
+    name and never notices the file change, so handing the UI the variant name
+    is what makes an already-visible window repaint instead of showing the old
+    colour until it is restarted.
+
+    ``fallback`` is used (and also resolved) when ``name`` is not in the theme,
+    so callers stop relying on the static fallback baked into their icon URLs.
+    """
+    if not name or not _has_icon(name):
+        if not fallback:
+            return name
+        name = fallback
+    target = _icon_file(name)
+    if not target:
+        return name
+    base = os.path.basename(target)
+    for suffix in (".svg", ".png", ".xpm"):
+        if base.endswith(suffix):
+            base = base[: -len(suffix)]
+            break
+    if not base or base == name or not _has_icon(base):
+        return name
+    return base
+
+
 @lru_cache(maxsize=2048)
 def _icons_for_mime(mime: str):
     if Gio is None:
@@ -364,7 +409,7 @@ def icon_for(
     executable: bool = False,
 ) -> str:
     if is_dir:
-        return _dir_icon(name, path)
+        return icon_variant(_dir_icon(name, path))
     if is_link:
         return _resolve(("inode-symlink",)) or LINK_FALLBACK
     exact = NAME_ICONS.get(name.lower())

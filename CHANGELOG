@@ -3,6 +3,21 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.5.1] - 2026-11-16
+
+### Fixed
+
+- **Desktop and Videos folders keep the old Papirus colour.** Papirus ships a
+  few colour variants as symlinks (`folder-blue-desktop.svg` →
+  `user-blue-desktop.svg`), and the vendored `papirus-folders` skipped
+  symlinked sources, so those aliases were never rewritten when the wallpaper
+  picked a stock colour. It now links through them (with a self-reference
+  guard), in `installer/standalone/`, `configs/root/` and the theme's own copy.
+- **hyprtk-file-manager 1.8.2 (bar-qt 0.43.2).** Folder icons follow a
+  wallpaper change in an already-open window: icons resolve to the colour
+  variant the theme links them to and the view re-fetches its rows and places
+  when `papirus-folders` rewrites the theme.
+
 ## [v1.5.0] - 2026-11-16
 
 ### Added

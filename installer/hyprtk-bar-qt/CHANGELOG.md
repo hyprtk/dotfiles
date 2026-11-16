@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.2 — 2026-11-16
+
+- **Vendor hyprtk-file-manager 1.8.2.** Folder icons in the file manager now
+  follow a wallpaper change again: icons are resolved to the colour variant the
+  Papirus theme links them to, and the window re-fetches its rows (and sidebar
+  places) when `papirus-folders` rewrites the theme.
+
 ## 0.43.1 — 2026-11-16
 
 - **Fix the bar’s “Apps menu” quicklink.** It still pointed at the deleted

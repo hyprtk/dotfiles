@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8.2 — 2026-11-16
+
+### Fixed
+
+- **Folder icons follow a wallpaper change again.** Papirus folder icons are
+  symlinks onto a colour variant (`folder-desktop.svg` →
+  `folder-latte-pink-desktop.svg`), so a new folder colour changes the icon
+  *file* without changing its name. Qt caches themed icon pixmaps by name and
+  never notices, so an open window kept the old colour until it was restarted —
+  and the Desktop/Videos icons, whose colour variants are themselves symlinks,
+  were not rewritten at all by `papirus-folders`. Icons are now resolved to the
+  variant name the theme currently links them to, and the window re-fetches its
+  rows when `papirus-folders` rewrites the theme (it watches
+  `~/.config/papirus-folders.sh/keep`, so the bar's Icons page counts too).
+
 ## 1.8.1 — 2026-11-14
 
 ### Fixed

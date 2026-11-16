@@ -32,7 +32,7 @@ Item {
         root.fetch(0);
     }
 
-    function fetch(offset) {
+    function fetch(offset, limit) {
         if (!root.path || root.loading)
             return;
         root.loading = true;
@@ -40,13 +40,21 @@ Item {
         root.pendingId = Backend.call("list", {
             path: root.path,
             offset: offset,
-            limit: root.pageSize,
+            limit: limit || root.pageSize,
             sort: root.sortKey,
             desc: root.sortDesc,
             dirsFirst: root.dirsFirst,
             hidden: root.showHidden,
             query: root.query
         });
+    }
+
+    // Re-fetch the rows already on screen so their icon names follow a folder
+    // colour change, without clearing the view or losing the scroll position.
+    function reicon() {
+        if (!root.path || root.loading || root.entries.length === 0)
+            return;
+        root.fetch(0, Math.max(root.pageSize, root.entries.length));
     }
 
     function loadMore() {
