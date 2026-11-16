@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.4 — 2026-11-16
+
+### Fixed
+
+- **Places order survives a restart again.** The stored order is read back from
+  the backend, whose arrays arrive as QVariant lists that `Array.isArray()`
+  rejects, so `placesOrder` (and the hidden/ordered menu-item lists) were
+  silently dropped on load — and the next startup then saved the empty list
+  over the real one. Lists are now normalised before use, so moving Places up
+  or down is remembered.
+
 ## 1.8.3 — 2026-11-16
 
 ### Fixed

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.43.4 — 2026-11-16
+
+- **Vendor hyprtk-file-manager 1.8.4.** The Places order is remembered across
+  restarts again (list values coming back from the backend were being dropped).
+
 ## 0.43.3 — 2026-11-16
 
 - **Vendor hyprtk-file-manager 1.8.3.** Closing the file manager window now

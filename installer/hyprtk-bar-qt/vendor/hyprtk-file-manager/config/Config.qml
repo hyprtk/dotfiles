@@ -43,6 +43,21 @@ Singleton {
         root.sortKey = order[(index + 1) % order.length];
     }
 
+    // Arrays that come back from the backend arrive as QVariant lists, which
+    // `Array.isArray()` rejects, so normalise them into real arrays of strings.
+    // Returns null when the value is not a list (nothing to apply).
+    function _stringList(value) {
+        if (!value || typeof value.length !== "number")
+            return null;
+        const items = Array.prototype.slice.call(value, 0);
+        const out = [];
+        for (let i = 0; i < items.length; i++) {
+            if (typeof items[i] === "string")
+                out.push(items[i]);
+        }
+        return out;
+    }
+
     function values() {
         return {
             viewMode: root.viewMode,
@@ -88,18 +103,15 @@ Singleton {
             root.showTransfers = values.showTransfers;
         if (typeof values.thumbnails === "boolean")
             root.thumbnails = values.thumbnails;
-        if (Array.isArray(values.hiddenMenuItems))
-            root.hiddenMenuItems = values.hiddenMenuItems.filter(function (key) {
-                return typeof key === "string";
-            });
-        if (Array.isArray(values.menuOrder))
-            root.menuOrder = values.menuOrder.filter(function (key) {
-                return typeof key === "string";
-            });
-        if (Array.isArray(values.placesOrder))
-            root.placesOrder = values.placesOrder.filter(function (key) {
-                return typeof key === "string";
-            });
+        const hiddenMenuItems = root._stringList(values.hiddenMenuItems);
+        if (hiddenMenuItems !== null)
+            root.hiddenMenuItems = hiddenMenuItems;
+        const menuOrder = root._stringList(values.menuOrder);
+        if (menuOrder !== null)
+            root.menuOrder = menuOrder;
+        const placesOrder = root._stringList(values.placesOrder);
+        if (placesOrder !== null)
+            root.placesOrder = placesOrder;
         root._loaded = true;
     }
 
