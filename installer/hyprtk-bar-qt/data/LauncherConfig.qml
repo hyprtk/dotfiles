@@ -44,6 +44,9 @@ Singleton {
     }
 
     readonly property bool enabled: cfg.enabled !== false
+    // auto = follow the bar Theme; otherwise a legacy rofi-variant name
+    // ported by data/LauncherTheme.qml (no rofi files are read).
+    readonly property string theme: cfg.theme || "auto"
 
     // ── geometry / grid ────────────────────────────────────────────────
     readonly property int width: root._num("width", 700)
@@ -94,7 +97,7 @@ Singleton {
     readonly property string urlLauncher: cfg.drun_url_launcher || cfg.url_launcher || "xdg-open"
 
     // ── run mode ───────────────────────────────────────────────────────
-    readonly property string terminal: cfg.terminal || "rofi-sensible-terminal"
+    readonly property string terminal: cfg.terminal || "alacritty"
     readonly property string runCommand: cfg.run_command || "{cmd}"
     readonly property string runInTerminal: cfg.run_shell_command
         || cfg.run_in_terminal || "{terminal} -e {cmd}"

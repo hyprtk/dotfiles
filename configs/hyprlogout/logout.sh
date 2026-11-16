@@ -3,104 +3,43 @@
 #
 #                                                                        
 # by hyprtk (Kori Tk) (2026)
-# ----------------------------------------------------- 
-# Current Theme
-dir="$HOME/.config/rofi"
-theme='config-power'
+# -----------------------------------------------------
+# Power menu (gum). Launched from a keybind, so menu.sh re-opens it in a
+# floating terminal tagged "hyprtk-menu" when there is no tty.
+. "$HOME/hyprtk/installer/scripts/menu.sh"
 
-# CMDs
-uptime="`uptime -p | sed -e 's/up //g'`"
-#host=`hostnamectl --static`
+uptime="$(uptime -p | sed -e 's/up //g')"
 
-# Options
-shutdown=''
-reboot=''
-lock=''
-suspend=''
-hibernate=''
-logout=''
-yes=''
-no=''
+choice=$(printf '%s\n' \
+    "Lock" "Suspend" "Log out" "Hibernate" "Reboot" "Shut down" \
+    | menu_choose "Power · up $uptime")
 
-# Rofi CMD
-rofi_cmd() {
-    rofi -theme-str 'window {location: center; anchor: center; fullscreen: false; width: 600px; height: 450px;}' \
-         -theme-str 'mainbox {children: [ "message", "listview" ];}' \
-         -theme-str 'listview {columns: 3; lines: 2;}' \
-         -theme-str 'element-text {horizontal-align: 0.5;}' \
-         -theme-str 'textbox {horizontal-align: 0.5;}' \
-         -dmenu \
-         -p "Uptime: $uptime" \
-         -mesg "Uptime: $uptime" \
-         -theme ${dir}/${theme}.rasi
-}
+[ -n "$choice" ] || exit 0
 
-# Confirmation CMD
-confirm_cmd() {
-    rofi -theme-str 'window {location: center; anchor: center; fullscreen: false; width: 400px; height: 300px;}' \
-         -theme-str 'mainbox {children: [ "message", "listview" ];}' \
-         -theme-str 'listview {columns: 2; lines: 1;}' \
-         -theme-str 'element-text {horizontal-align: 0.5;}' \
-         -theme-str 'textbox {horizontal-align: 0.5;}' \
-         -dmenu \
-         -p 'Confirmation' \
-         -mesg 'Are you Sure?' \
-         -theme ${dir}/${theme}.rasi
-}
-
-# Ask for confirmation
-confirm_exit() {
-    echo -e "$yes\n$no" | confirm_cmd
-}
-
-# Pass variables to rofi dmenu
-run_rofi() {
-    echo -e "$lock\n$suspend\n$logout\n$hibernate\n$reboot\n$shutdown" | rofi_cmd
-}
-
-# Execute Command
-run_cmd() {
-    selected="$(confirm_exit)"
-    if [[ "$selected" == "$yes" ]]; then
-        if [[ $1 == '--shutdown' ]]; then
-            systemctl poweroff
-        elif [[ $1 == '--reboot' ]]; then
-            systemctl reboot
-        elif [[ $1 == '--suspend' ]]; then
-            mpc -q pause
-            amixer set Master mute
-            systemctl suspend
-        elif [[ $1 == '--logout' ]]; then
-            hyprctl dispatch 'hl.dsp.exit()'   
-        elif [[ $1 == '--hibernate' ]]; then
-            systemctl hibernate
-        elif [[ $1 == '--lock' ]]; then
-            ~/.config/hypr/scripts/lock.sh
-        fi
-    else
-        exit 0
-    fi
-}
-
-# Actions
-chosen="$(run_rofi)"
-case ${chosen} in
-    $shutdown)
-        run_cmd --shutdown
+case "$choice" in
+    Lock)
+        ~/.config/hypr/scripts/lock.sh
         ;;
-    $reboot)
-        run_cmd --reboot
+    Suspend)
+        menu_confirm "Suspend now?" || exit 0
+        mpc -q pause 2>/dev/null || true
+        amixer set Master mute 2>/dev/null || true
+        systemctl suspend
         ;;
-    $lock)
-        run_cmd --lock
+    "Log out")
+        menu_confirm "End your session?" || exit 0
+        hyprctl dispatch 'hl.dsp.exit()'
         ;;
-    $suspend)
-        run_cmd --suspend
+    Hibernate)
+        menu_confirm "Hibernate now?" || exit 0
+        systemctl hibernate
         ;;
-    $suspend)
-        run_cmd --hibernate
+    Reboot)
+        menu_confirm "Restart the computer?" || exit 0
+        systemctl reboot
         ;;
-    $logout)
-        run_cmd --logout
+    "Shut down")
+        menu_confirm "Power off the computer?" || exit 0
+        systemctl poweroff
         ;;
 esac

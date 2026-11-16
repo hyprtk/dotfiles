@@ -40,10 +40,46 @@ PanelWindow {
         Qt.resolvedUrl("../backend/hyprtk_bar_qt/barsettings.py").toString().replace("file://", "")
 
     property int page: 0
-    readonly property var pageNames: ["Bar", "Themes", "Fonts", "Animations", "Arc Menu", "Menu", "Quicklinks", "Modules", "Widgets"]
+    readonly property var pageNames: ["Bar", "Themes", "Launcher", "Fonts", "Animations", "Arc Menu", "Menu", "Quicklinks", "Modules", "Widgets"]
     readonly property var arcPositions: ["top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"]
     readonly property var moduleIds: ["start_button", "quicklinks", "workspaces", "tasklist", "window", "updates", "net", "tray", "kbstate", "notifications", "clock", "media", "sysmon", "themer", "settings", "quicksettings"]
     readonly property var widgetIds: ["clock", "weather", "visualizer", "disk", "network", "resources", "sysinfo"]
+
+    // ── launcher helpers ───────────────────────────────────────────────
+    readonly property var launcherModes: ["apps", "categories", "run", "files", "windows"]
+    readonly property var launcherModeLabels: ({
+        apps: "Applications", categories: "Categories", run: "Run",
+        files: "Files", windows: "Windows"
+    })
+    function launcherModeLabel(id) { return win.launcherModeLabels[id] || id; }
+    function launcherActiveModes() {
+        const m = win.g("launcher.modes", win.launcherModes);
+        return (Array.isArray(m) && m.length) ? m : win.launcherModes;
+    }
+    function launcherToggleMode(id, on) {
+        let m = win.cloneArr(win.launcherActiveModes());
+        if (on) {
+            if (m.indexOf(id) < 0)
+                m.push(id);
+        } else {
+            m = m.filter(x => x !== id);
+        }
+        if (m.length)
+            win.set("launcher.modes", m);
+    }
+    function launcherChoices() {
+        return win.launcherActiveModes().map(id => win.launcherModeLabel(id));
+    }
+    function launcherDefaultLabel() {
+        return win.launcherModeLabel(win.g("launcher.default_mode", "apps"));
+    }
+    function launcherModeId(label) {
+        for (const id of win.launcherModes) {
+            if (win.launcherModeLabel(id) === label)
+                return id;
+        }
+        return "apps";
+    }
 
     // ── debounced config writer ────────────────────────────────────────
     property var pending: ({})
@@ -243,11 +279,11 @@ PanelWindow {
         return ["clock", "weather", "visualizer", "disk", "network", "resources", "sysinfo"].indexOf(id) >= 0;
     }
 
-    // ── theme helpers (theme block + Qt override + rofi variant kept in sync,
-    // so the Settings page and the Themer window cannot shadow each other) ────
+    // ── theme helpers (theme block + Qt override kept in lock-step, so the
+    // Settings page and the Themer window cannot shadow each other) ─────────
     function setTheme(key, value) {
         // Merge the edit into the full theme and hand it to the shared writer
-        // (writes both config representations and re-links rofi).
+        // (writes both config representations).
         const src = key === "source" ? value : win.g("theme.source", "pywal");
         const nm = key === "theme_name" ? value : win.g("theme.theme_name", "");
         const bg = key === "background" ? value : win.g("theme.background", "");
@@ -579,6 +615,148 @@ PanelWindow {
                                 }
                             }
                             Item { Layout.fillWidth: true }
+                        }
+                        Item { Layout.fillHeight: true }
+                    }
+                }
+
+                // Launcher ──────────────────────────────────────────────
+                Flickable {
+                    Layout.fillWidth: true; Layout.fillHeight: true
+                    contentHeight: launcherCol.implicitHeight; clip: true
+                    ColumnLayout {
+                        id: launcherCol
+                        width: parent.width
+                        spacing: 8
+                        Text { text: "Appearance"; color: Theme.accent; font.pixelSize: BarConfig.scaled(12); font.bold: true }
+                        SRow {
+                            label: "Enabled"
+                            TCheckBox { checked: win.g("launcher.enabled", true); onToggled: win.set("launcher.enabled", checked) }
+                        }
+                        SRow {
+                            label: "Theme"
+                            TComboBox {
+                                Layout.preferredWidth: 240
+                                model: LauncherTheme.variantLabels
+                                currentIndex: win.idx(LauncherTheme.variants, win.g("launcher.theme", "auto"))
+                                onActivated: win.set("launcher.theme", LauncherTheme.variants[currentIndex])
+                            }
+                        }
+                        SRow { label: "Width"; TSpinBox { from: 360; to: 1600; stepSize: 10; value: win.g("launcher.width", 700); onValueModified: win.set("launcher.width", value) } }
+                        SRow { label: "Height"; TSpinBox { from: 260; to: 1200; stepSize: 10; value: win.g("launcher.height", 450); onValueModified: win.set("launcher.height", value) } }
+                        SRow { label: "Columns"; TSpinBox { from: 1; to: 8; value: win.g("launcher.columns", 4); onValueModified: win.set("launcher.columns", value) } }
+                        SRow { label: "Lines"; TSpinBox { from: 1; to: 8; value: win.g("launcher.lines", 4); onValueModified: win.set("launcher.lines", value) } }
+                        SRow { label: "Icon size"; TSpinBox { from: 16; to: 96; value: win.g("launcher.icon_size", 40); onValueModified: win.set("launcher.icon_size", value) } }
+                        SRow {
+                            label: "Show icons"
+                            TCheckBox { checked: win.g("launcher.show_icons", true); onToggled: win.set("launcher.show_icons", checked) }
+                        }
+                        SRow {
+                            label: "Placeholder"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.placeholder", "Search"); onEditingFinished: win.set("launcher.placeholder", text) }
+                        }
+                        SRow {
+                            label: "Icon theme"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.icon_theme", "Papirus-Dark"); onEditingFinished: win.set("launcher.icon_theme", text) }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Icon theme is read when the bar starts; restart the bar to apply it."
+                            color: Theme.dim; font.pixelSize: BarConfig.scaled(10); wrapMode: Text.WordWrap
+                        }
+
+                        Text { text: "Behaviour"; color: Theme.accent; font.pixelSize: BarConfig.scaled(12); font.bold: true; Layout.topMargin: 6 }
+                        SRow {
+                            label: "Matching"
+                            TComboBox {
+                                model: ["normal", "regex", "glob", "fuzzy", "prefix"]
+                                currentIndex: win.idx(model, win.g("launcher.matching", "normal"))
+                                onActivated: win.set("launcher.matching", model[currentIndex])
+                            }
+                        }
+                        SRow { label: "Case sensitive"; TCheckBox { checked: win.g("launcher.case_sensitive", false); onToggled: win.set("launcher.case_sensitive", checked) } }
+                        SRow { label: "Case smart"; TCheckBox { checked: win.g("launcher.case_smart", false); onToggled: win.set("launcher.case_smart", checked) } }
+                        SRow { label: "Tokenize"; TCheckBox { checked: win.g("launcher.tokenize", true); onToggled: win.set("launcher.tokenize", checked) } }
+                        SRow { label: "Sort results"; TCheckBox { checked: win.g("launcher.sort", false); onToggled: win.set("launcher.sort", checked) } }
+                        SRow { label: "Hover select"; TCheckBox { checked: win.g("launcher.hover_select", true); onToggled: win.set("launcher.hover_select", checked) } }
+                        SRow { label: "Click outside closes"; TCheckBox { checked: win.g("launcher.click_to_exit", true); onToggled: win.set("launcher.click_to_exit", checked) } }
+                        SRow { label: "Cycle selection"; TCheckBox { checked: win.g("launcher.cycle", true); onToggled: win.set("launcher.cycle", checked) } }
+                        SRow { label: "Rank by usage"; TCheckBox { checked: win.g("launcher.rank_by_usage", false); onToggled: win.set("launcher.rank_by_usage", checked) } }
+                        SRow {
+                            label: "Max results (0 = all)"
+                            TSpinBox { from: 0; to: 5000; stepSize: 10; value: win.g("launcher.max_results", 0); onValueModified: win.set("launcher.max_results", value) }
+                        }
+
+                        Text { text: "Modes"; color: Theme.accent; font.pixelSize: BarConfig.scaled(12); font.bold: true; Layout.topMargin: 6 }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            Repeater {
+                                model: win.launcherModes
+                                TCheckBox {
+                                    required property string modelData
+                                    text: win.launcherModeLabel(modelData)
+                                    checked: win.launcherActiveModes().indexOf(modelData) >= 0
+                                    onToggled: win.launcherToggleMode(modelData, checked)
+                                }
+                            }
+                        }
+                        SRow {
+                            label: "Default mode"
+                            TComboBox {
+                                model: win.launcherChoices()
+                                currentIndex: win.idx(model, win.launcherDefaultLabel())
+                                onActivated: win.set("launcher.default_mode", win.launcherModeId(model[currentIndex]))
+                            }
+                        }
+                        SRow {
+                            label: "Show mode switcher"
+                            TCheckBox { checked: win.g("launcher.show_mode_switcher", true); onToggled: win.set("launcher.show_mode_switcher", checked) }
+                        }
+
+                        Text { text: "Run"; color: Theme.accent; font.pixelSize: BarConfig.scaled(12); font.bold: true; Layout.topMargin: 6 }
+                        SRow {
+                            label: "Terminal"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.terminal", "alacritty"); onEditingFinished: win.set("launcher.terminal", text) }
+                        }
+                        SRow {
+                            label: "Run command"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.run_command", "{cmd}"); onEditingFinished: win.set("launcher.run_command", text) }
+                        }
+                        SRow {
+                            label: "Terminal template"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.run_in_terminal", "{terminal} -e {cmd}"); onEditingFinished: win.set("launcher.run_in_terminal", text) }
+                        }
+                        SRow {
+                            label: "Run list command"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.run_list_command", ""); placeholderText: "blank = scan $PATH"; onEditingFinished: win.set("launcher.run_list_command", text) }
+                        }
+                        SRow { label: "Disable history"; TCheckBox { checked: win.g("launcher.disable_history", false); onToggled: win.set("launcher.disable_history", checked) } }
+                        SRow { label: "Max history"; TSpinBox { from: 1; to: 200; value: win.g("launcher.max_history", 25); onValueModified: win.set("launcher.max_history", value) } }
+
+                        Text { text: "Files"; color: Theme.accent; font.pixelSize: BarConfig.scaled(12); font.bold: true; Layout.topMargin: 6 }
+                        SRow {
+                            label: "Start folder"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.files_start", "~"); onEditingFinished: win.set("launcher.files_start", text) }
+                        }
+                        SRow {
+                            label: "Open command"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.files_command", "xdg-open"); onEditingFinished: win.set("launcher.files_command", text) }
+                        }
+                        SRow { label: "Show hidden"; TCheckBox { checked: win.g("launcher.files_show_hidden", false); onToggled: win.set("launcher.files_show_hidden", checked) } }
+
+                        Text { text: "Apps & windows"; color: Theme.accent; font.pixelSize: BarConfig.scaled(12); font.bold: true; Layout.topMargin: 6 }
+                        SRow {
+                            label: "App label format"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.drun_display_format", "{name}"); onEditingFinished: win.set("launcher.drun_display_format", text) }
+                        }
+                        SRow {
+                            label: "Window format"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.window_format", "{w} · {c} · {t}"); onEditingFinished: win.set("launcher.window_format", text) }
+                        }
+                        SRow {
+                            label: "Window command"
+                            TTextField { Layout.fillWidth: true; text: win.g("launcher.window_command", ""); placeholderText: "blank = focus"; onEditingFinished: win.set("launcher.window_command", text) }
                         }
                         Item { Layout.fillHeight: true }
                     }

@@ -53,6 +53,30 @@ hl.window_rule({
     size = "800 600",
 })
 
+-- gum menus: menu.sh re-execs rofi-free scripts in alacritty tagged
+-- app-id/class "hyprtk-menu" (title "Hyprtk Menu") so power/wallpaper menus
+-- float instead of tiling. Class covers Wayland-native app-ids; title covers
+-- terminals that only set the title.
+hl.window_rule({
+    name = "windowrule-hyprtk-menu",
+    match = {
+        class = "hyprtk-menu",
+    },
+    float = true,
+    center = true,
+    size = "600 450",
+})
+
+hl.window_rule({
+    name = "windowrule-hyprtk-menu-title",
+    match = {
+        title = "^(Hyprtk Menu)$",
+    },
+    float = true,
+    center = true,
+    size = "600 450",
+})
+
 -- Updates module: installupdates.sh relaunches itself in a terminal tagged
 -- app-id/class "hyprtk-updates" (title "Hyprtk Updates") — float it instead of
 -- tiling it full-screen. Two rules: class for Wayland-native app-ids, title for

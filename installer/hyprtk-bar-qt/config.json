@@ -63,7 +63,8 @@
         "id": "apps",
         "label": "Apps menu",
         "icon": "",
-        "command": "~/.local/share/hyprtk-bar-qt/scripts/appsmenu.sh",
+        "action": "launcher",
+        "command": "",
         "command_right": "",
         "command_middle": ""
       },
@@ -247,6 +248,7 @@
     "show_icons": true,
     "icon_theme": "Papirus-Dark",
     "placeholder": "Search",
+    "theme": "auto",
     "modes": [
       "apps",
       "categories",
@@ -276,7 +278,7 @@
     "drun_show_actions": false,
     "window_format": "{w} · {c} · {t}",
     "window_command": "",
-    "terminal": "rofi-sensible-terminal",
+    "terminal": "alacritty",
     "run_command": "{cmd}",
     "run_in_terminal": "{terminal} -e {cmd}",
     "run_list_command": "",

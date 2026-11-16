@@ -1,5 +1,5 @@
 // Themer — centred layer-shell panel with a sidebar of theming pages: Wallpaper
-// (thumbnail picker), Pywal, Rofi, Bar Themes (9 shipped), Matuwall, Lock
+// (thumbnail picker), Pywal, Bar Themes (9 shipped), Matuwall, Lock
 // Screen, Icons, SDDM & GRUB, and Import (waybar themes from disk).
 //
 // Script-driven actions call the same hyprtk scripts as the GTK bar, including
@@ -47,12 +47,10 @@ PanelWindow {
 
     readonly property string home: Quickshell.env("HOME") || ""
     readonly property string base: Qt.resolvedUrl("../backend/hyprtk_bar_qt/").toString().replace("file://", "")
-    readonly property string scripts: win.home + "/.local/share/hyprtk-bar-qt/scripts"
 
     readonly property var pages: [
         { key: "wallpaper", glyph: "\uf03e", label: "Wallpaper" },
         { key: "pywal", glyph: "\uf043", label: "Pywal" },
-        { key: "rofi", glyph: "\uf009", label: "Rofi" },
         { key: "bar", glyph: "\uf1fc", label: "Bar Themes" },
         { key: "matuwall", glyph: "\uf1c5", label: "Matuwall" },
         { key: "swaylock", glyph: "\uf023", label: "Lock Screen" },
@@ -70,10 +68,12 @@ PanelWindow {
     // cache — ~/.cache/current-wallpaper.png keeps the same URL while its
     // contents change, so the preview would otherwise stay stale.
     property int currentWallVersion: 0
-    property var rofiVariants: []
-    property string rofiActive: ""
     property string statusMsg: ""
     property string importPath: ""
+    property bool pickerOpen: false
+    property string pickerPath: ""
+    property string pickerParent: ""
+    property var pickerDirs: []
     property string iconHex: Theme.accent
     property var mwConfig: ({})
     property var mwSections: []
@@ -113,7 +113,6 @@ PanelWindow {
         win.refreshThemes();
         win.refreshImportable();
         win.refreshWallpapers();
-        win.refreshRofi();
         win.refreshPywal();
         win.refreshSchemes();
         win.refreshIcons();
@@ -142,11 +141,6 @@ PanelWindow {
     function refreshWallpapers() {
         scanProc.command = ["python3", win.base + "wallpapers.py", "scan", win.wallDir()];
         scanProc.running = true;
-    }
-    function refreshRofi() {
-        win.rofiVariants = [];
-        win.rofiActive = "";
-        rofiProc.running = true;
     }
 
     Process {
@@ -200,40 +194,23 @@ PanelWindow {
             win.refreshImportable();
         }
     }
-    // rofi folder picker for the Import path field.
+    // Native folder picker for the Import path field.
     Process {
-        id: pickProc
+        id: pickerProc
         stdout: SplitParser {
             onRead: line => {
-                const p = line.trim();
-                if (p) {
-                    win.importPath = p;
-                    importField.text = p;
-                }
+                try {
+                    const d = JSON.parse(line);
+                    win.pickerPath = d.path || win.pickerPath;
+                    win.pickerParent = d.parent || "";
+                    win.pickerDirs = (d.entries || []).filter(e => e.is_dir);
+                } catch (e) {}
             }
         }
-        onExited: (code, status) => { if (code === 0) win.toast("Folder selected"); }
     }
     Process {
         id: removeProc
         onExited: (code, status) => { win.refreshThemes(); win.refreshImportable(); }
-    }
-    Process {
-        id: rofiProc
-        command: ["bash", "-c",
-            "printf 'LINK=%s\\n' \"$(readlink ~/.config/rofi/variant.rasi 2>/dev/null)\"; " +
-            "ls -1 ~/.local/share/hyprtk-bar-qt/scripts/rofi/variants/*.rasi 2>/dev/null || " +
-            "ls -1 ~/.config/rofi/variants/*.rasi 2>/dev/null"]
-        stdout: SplitParser {
-            onRead: line => {
-                if (line.startsWith("LINK=")) {
-                    const p = line.substring(5);
-                    win.rofiActive = p.length ? p.split("/").pop().replace(/\.rasi$/, "") : "";
-                } else if (line.endsWith(".rasi")) {
-                    win.rofiVariants = win.rofiVariants.concat([{ name: line.split("/").pop().replace(/\.rasi$/, ""), path: line }]);
-                }
-            }
-        }
     }
     FileView {
         id: lockFile
@@ -365,15 +342,13 @@ PanelWindow {
     }
 
     function applyTheme(t) {
-        // Writes the nested theme block + Qt overrides and re-links rofi.
+        // Writes the nested theme block + Qt overrides; the launcher follows it.
         ThemeSync.apply("manual", t.name, t.palette.background, t.palette.foreground, t.palette.accent);
         win.toast("Theme: " + t.name);
-        rofiRefresh.restart();
     }
     function clearOverrides() {
-        // "Follow pywal": drop the overrides and let the pywal variant track live.
+        // "Follow pywal": drop the overrides and let pywal track live.
         ThemeSync.apply("pywal", "", "", "", "");
-        rofiRefresh.restart();
     }
     function doImport(path) {
         if (!path) { win.toast("Enter a theme path"); return; }
@@ -381,23 +356,33 @@ PanelWindow {
         importProc.running = true;
     }
     function browseImport() {
-        pickProc.command = ["python3", win.base + "pickdir.py", win.importPath || ""];
-        pickProc.running = true;
+        win.pickerPath = (win.importPath && win.importPath.length) ? win.importPath : win.home;
+        win.pickerOpen = true;
+        win.pickerLoad();
+    }
+    function pickerLoad() {
+        if (pickerProc.running)
+            return;
+        pickerProc.command = ["python3", win.base + "files.py", "list", win.pickerPath];
+        pickerProc.running = true;
+    }
+    function pickerEnter(path) {
+        win.pickerPath = path;
+        win.pickerLoad();
+    }
+    function pickerUp() {
+        if (win.pickerParent && win.pickerParent !== win.pickerPath)
+            win.pickerEnter(win.pickerParent);
+    }
+    function pickerChoose() {
+        win.importPath = win.pickerPath;
+        importField.text = win.importPath;
+        win.pickerOpen = false;
+        win.toast("Folder selected");
     }
     function doRemove(name) {
         removeProc.command = ["python3", win.base + "themes.py", "remove", name];
         removeProc.running = true;
-    }
-    function applyRofi(path) {
-        Quickshell.execDetached(["bash", "-c",
-            "ln -sf '" + path + "' ~/.config/rofi/variant.rasi && bash '" + win.scripts + "/sync-rofi-theme.sh'"]);
-        win.toast("Rofi variant: " + path.split("/").pop().replace(/\.rasi$/, ""));
-        rofiRefresh.restart();
-    }
-    function regenRofi() {
-        Quickshell.execDetached(["bash", win.scripts + "/sync-rofi-theme.sh"]);
-        win.toast("Regenerating rofi variant\u2026");
-        rofiRefresh.restart();
     }
     function refreshPywal() { if (!pywalProc.running) pywalProc.running = true; }
     function refreshSchemes() { if (!schemesProc.running) schemesProc.running = true; }
@@ -465,8 +450,6 @@ PanelWindow {
         const h = s.replace(/^#/, "");
         return /^[0-9a-fA-F]{6}/.test(h) ? "#" + h.slice(0, 6) : "#000000";
     }
-
-    Timer { id: rofiRefresh; interval: 800; onTriggered: win.refreshRofi() }
 
     // ── matuwall ───────────────────────────────────────────────────────
     Process {
@@ -769,39 +752,6 @@ PanelWindow {
                             }
                         }
                     }
-                }
-
-                // Rofi ─────────────────────────────────────────────────
-                ColumnLayout {
-                    spacing: 8
-                    Text { text: "Active variant: " + (win.rofiActive.length ? win.rofiActive : "(none)"); color: Theme.foreground; font.pixelSize: BarConfig.scaled(12)}
-                    Flickable {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        contentHeight: rofiList.implicitHeight
-                        clip: true
-                        ColumnLayout {
-                            id: rofiList
-                            width: parent.width
-                            spacing: 3
-                            Repeater {
-                                model: win.rofiVariants
-                                delegate: Rectangle {
-                                    id: rr
-                                    required property var modelData
-                                    Layout.fillWidth: true
-                                    implicitHeight: 28
-                                    radius: 6
-                                    color: rrHover.hovered ? Theme.alpha(Theme.accent2, 0.15)
-                                        : (win.rofiActive === rr.modelData.name ? Theme.alpha(Theme.accent, 0.25) : "transparent")
-                                    Text { anchors.verticalCenter: parent.verticalCenter; anchors.left: parent.left; anchors.leftMargin: 10; text: rr.modelData.name; color: Theme.foreground; font.pixelSize: BarConfig.scaled(12)}
-                                    HoverHandler { id: rrHover }
-                                    TapHandler { onTapped: win.applyRofi(rr.modelData.path) }
-                                }
-                            }
-                        }
-                    }
-                    TButton { text: "Regenerate from Pywal"; onClicked: win.regenRofi() }
                 }
 
                 // Bar Themes ────────────────────────────────────────────
@@ -1274,6 +1224,78 @@ PanelWindow {
                 Text { text: win.statusMsg; color: Theme.accent; font.pixelSize: BarConfig.scaled(10); Layout.fillWidth: true; elide: Text.ElideRight }
                 TButton { text: "Save"; onClicked: Config.save() }
                 TButton { text: "Close"; onClicked: UiState.themerOpen = false }
+            }
+        }
+    }
+
+    // Native folder picker for the Import path.
+    Rectangle {
+        anchors.fill: parent
+        z: 20
+        visible: win.pickerOpen
+        radius: Theme.radiusPanel
+        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b,
+                       Theme.panelOpacityStrong)
+        border.width: BarConfig.borderWidth
+        border.color: Theme.accent
+
+        MouseArea { anchors.fill: parent; onClicked: {} }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 8
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "Select folder"; color: Theme.accent; font.bold: true; font.pixelSize: BarConfig.scaled(14); Layout.fillWidth: true }
+                TButton { text: "Cancel"; onClicked: win.pickerOpen = false }
+            }
+            Text {
+                Layout.fillWidth: true
+                text: win.pickerPath
+                color: Theme.dim
+                font.pixelSize: BarConfig.scaled(11)
+                elide: Text.ElideMiddle
+            }
+            Flickable {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentHeight: pickList.implicitHeight
+                ColumnLayout {
+                    id: pickList
+                    width: parent.width
+                    spacing: 2
+                    Repeater {
+                        model: win.pickerDirs
+                        delegate: Rectangle {
+                            id: pickRow
+                            required property var modelData
+                            Layout.fillWidth: true
+                            implicitHeight: 28
+                            radius: 6
+                            color: pickHover.hovered ? Theme.alpha(Theme.accent2, 0.15) : "transparent"
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                spacing: 8
+                                Text { text: "\uf07b"; color: Theme.accent2; font.family: "Symbols Nerd Font"; font.pixelSize: BarConfig.scaled(12) }
+                                Text { text: pickRow.modelData.name; color: Theme.foreground; font.pixelSize: BarConfig.scaled(12); Layout.fillWidth: true; elide: Text.ElideRight }
+                            }
+                            HoverHandler { id: pickHover }
+                            TapHandler { onTapped: win.pickerEnter(pickRow.modelData.path) }
+                        }
+                    }
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                TButton { text: "Up"; onClicked: win.pickerUp() }
+                Item { Layout.fillWidth: true }
+                Text { text: win.pickerDirs.length + " folders"; color: Theme.dim; font.pixelSize: BarConfig.scaled(10) }
+                TButton { text: "Use this folder"; onClicked: win.pickerChoose() }
             }
         }
     }

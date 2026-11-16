@@ -87,6 +87,7 @@ RowLayout {
                     if (mouse.button === Qt.LeftButton) {
                         if (id === "cliphist") { UiState.clipboardOpen = !UiState.clipboardOpen; return; }
                         if (id === "wallpaper") { UiState.themerOpen = !UiState.themerOpen; return; }
+                        if (id === "apps" || d.action === "launcher") { UiState.launcherOpen = !UiState.launcherOpen; return; }
                         if (d.action === "clipboard") { UiState.clipboardOpen = !UiState.clipboardOpen; return; }
                         if (d.action === "themer") { UiState.themerOpen = !UiState.themerOpen; return; }
                         const cmd = d.command || root.defaultCommand(id);

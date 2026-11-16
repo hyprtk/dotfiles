@@ -7,6 +7,9 @@ TextField {
     id: root
 
     property int radius: 6
+    property color backgroundColor: Theme.alpha(Theme.background, 0.6)
+    property color focusBorderColor: Theme.accent
+    property color idleBorderColor: Theme.alpha(Theme.accent2, 0.30)
 
     implicitHeight: 30
     font.pixelSize: Theme.fontSize
@@ -20,8 +23,8 @@ TextField {
 
     background: Rectangle {
         radius: root.radius
-        color: Theme.alpha(Theme.background, 0.6)
+        color: root.backgroundColor
         border.width: 1
-        border.color: root.activeFocus ? Theme.accent : Theme.alpha(Theme.accent2, 0.30)
+        border.color: root.activeFocus ? root.focusBorderColor : root.idleBorderColor
     }
 }

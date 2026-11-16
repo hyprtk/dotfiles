@@ -6,23 +6,23 @@ _PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 
 case "$HYPRTK_PM" in
 pacman)
-    PKGS=(timeshift file-roller gparted xfce4-power-manager rofi cockpit)
+    PKGS=(timeshift file-roller gparted xfce4-power-manager cockpit)
     AUR=(gnome-disk-utility)
     ;;
 apt)
-    PKGS=(timeshift file-roller gparted xfce4-power-manager rofi cockpit gnome-disk-utility)
+    PKGS=(timeshift file-roller gparted xfce4-power-manager cockpit gnome-disk-utility)
     ;;
 dnf)
-    PKGS=(timeshift file-roller gparted xfce4-power-manager rofi cockpit gnome-disk-utility)
+    PKGS=(timeshift file-roller gparted xfce4-power-manager cockpit gnome-disk-utility)
     ;;
 zypper)
-    PKGS=(timeshift file-roller gparted xfce4-power-manager rofi cockpit gnome-disk-utility)
+    PKGS=(timeshift file-roller gparted xfce4-power-manager cockpit gnome-disk-utility)
     ;;
 xbps)
-    PKGS=(timeshift file-roller gparted xfce4-power-manager rofi cockpit gnome-disk-utility)
+    PKGS=(timeshift file-roller gparted xfce4-power-manager cockpit gnome-disk-utility)
     ;;
 apk)
-    PKGS=(file-roller gparted xfce4-power-manager rofi cockpit gnome-disk-utility)
+    PKGS=(file-roller gparted xfce4-power-manager cockpit gnome-disk-utility)
     ;;
 esac
 

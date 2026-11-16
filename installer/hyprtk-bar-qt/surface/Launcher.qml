@@ -843,10 +843,9 @@ PanelWindow {
         height: Math.min(LauncherConfig.height, l.height - 80)
         anchors.centerIn: parent
         radius: 16
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b,
-                       Theme.panelOpacity)
+        color: LauncherTheme.panelColor
         border.width: Math.max(1, BarConfig.borderWidth)
-        border.color: Theme.alpha(Theme.foreground, 0.08)
+        border.color: LauncherTheme.borderColor
 
         // Right-click inside the panel cancels like rofi (MouseSecondary).
         MouseArea {
@@ -870,6 +869,9 @@ PanelWindow {
                     visible: l.mode === "categories" && l.category.length > 0
                     label: l.category
                     implicitHeight: 32
+                    baseColor: LauncherTheme.chipBg
+                    hoverColor: LauncherTheme.chipHover
+                    textColor: LauncherTheme.foreground
                     onTapped: {
                         l.category = "";
                         l.query = "";
@@ -888,6 +890,11 @@ PanelWindow {
                     font.pixelSize: BarConfig.scaled(14)
                     leftPadding: 16
                     rightPadding: 16
+                    color: LauncherTheme.foreground
+                    placeholderTextColor: LauncherTheme.dim
+                    backgroundColor: LauncherTheme.inputBg
+                    focusBorderColor: LauncherTheme.accent
+                    idleBorderColor: LauncherTheme.inputBorder
                     placeholderText: LauncherConfig.placeholder
                     onTextChanged: {
                         l.query = text;
@@ -1033,14 +1040,14 @@ PanelWindow {
                         implicitWidth: 36
                         implicitHeight: 36
                         radius: 5
-                        color: l.mode === modelData ? Theme.accent : Theme.alpha(Theme.foreground, 0.05)
+                        color: l.mode === modelData ? LauncherTheme.selectedBg : LauncherTheme.buttonBg
                         border.width: 1
-                        border.color: Theme.alpha(Theme.foreground, 0.07)
+                        border.color: LauncherTheme.borderColor
 
                         Text {
                             anchors.centerIn: parent
                             text: modeBtn.meta.glyph
-                            color: l.mode === modeBtn.modelData ? "#ffffff" : Theme.foreground
+                            color: l.mode === modeBtn.modelData ? LauncherTheme.selectedFg : LauncherTheme.foreground
                             font.family: l.glyphFont
                             font.pixelSize: BarConfig.scaled(15)
                         }
@@ -1078,9 +1085,9 @@ PanelWindow {
                         width: grid.cellWidth - 10
                         height: grid.cellHeight - 10
                         radius: 5
-                        color: cell.index === l.index ? Theme.accent : "transparent"
+                        color: cell.index === l.index ? LauncherTheme.selectedBg : LauncherTheme.cellBg
                         border.width: cell.index === l.index ? 0 : 1
-                        border.color: Theme.alpha(Theme.foreground, 0.07)
+                        border.color: LauncherTheme.cellBorder
 
                         Column {
                             anchors.centerIn: parent
@@ -1098,7 +1105,7 @@ PanelWindow {
                             Text {
                                 width: parent.width
                                 text: cell.modelData.label || ""
-                                color: cell.index === l.index ? "#ffffff" : Theme.foreground
+                                color: cell.index === l.index ? LauncherTheme.selectedFg : LauncherTheme.foreground
                                 font.family: Theme.fontFamily
                                 font.pixelSize: BarConfig.scaled(11)
                                 horizontalAlignment: Text.AlignHCenter
@@ -1109,7 +1116,7 @@ PanelWindow {
                                 width: parent.width
                                 visible: text.length > 0 && cell.index !== l.index
                                 text: cell.modelData.sub || ""
-                                color: Theme.dim
+                                color: LauncherTheme.dim
                                 font.pixelSize: BarConfig.scaled(9)
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: l.ellipsize
@@ -1139,7 +1146,7 @@ PanelWindow {
                         : l.mode === "files" ? "Empty folder"
                         : l.mode === "windows" ? "No matching windows"
                         : "No matches"
-                    color: Theme.dim
+                    color: LauncherTheme.dim
                     font.family: Theme.fontFamily
                     font.pixelSize: BarConfig.scaled(12)
                 }

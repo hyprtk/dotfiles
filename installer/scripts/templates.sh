@@ -2,11 +2,12 @@
 #
 # by hyprtk (Kori Tk) (2026)
 # ----------------------------------------------------- 
+# Select a template and copy it to the clipboard (gum filter).
+. "$(dirname "$0")/menu.sh"
 
-# Select text file
-selected=$(ls -1 ~/private/templates | rofi -dmenu -p "Select the template")
+selected=$(find "$HOME/private/templates" -maxdepth 1 -type f \
+    -printf "%f\n" 2>/dev/null | sort | menu_filter "Select the template")
 
 if [ "$selected" ]; then
-    # Add content to clipboard
-    xclip -sel clip ~/private/templates/$selected
+    xclip -sel clip "$HOME/private/templates/$selected"
 fi

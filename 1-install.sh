@@ -895,7 +895,6 @@ else
         _spin "Installing vim..." "_installSymLink vim ~/.config/vim $SCRIPT_DIR/configs/vim/ ~/.config" "$LOG_FILE"
         _spin "Installing nvim..." "_installSymLink nvim ~/.config/nvim $SCRIPT_DIR/configs/nvim/ ~/.config" "$LOG_FILE"
         _spin "Installing starship..." "_installSymLink starship ~/.config/starship.toml $SCRIPT_DIR/configs/starship/starship.toml ~/.config/starship.toml" "$LOG_FILE"
-        _spin "Installing rofi..." "_installSymLink rofi ~/.config/rofi $SCRIPT_DIR/configs/rofi/ ~/.config" "$LOG_FILE"
         _spin "Installing wal..." "_installSymLink wal ~/.config/wal $SCRIPT_DIR/configs/wal/ ~/.config" "$LOG_FILE"
         # btop config lives in a real ~/.config/btop (btop.conf is linked, the
         # pywal theme is a per-user link). Nothing generated is written into the

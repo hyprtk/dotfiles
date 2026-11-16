@@ -17,7 +17,7 @@ and run sudo mkinitcpio -P (Please ensure you have your kernels headers installe
 # common operations
   Super          Return   *term* (`alacritty`)
   Super          q        *quit* (kill focused window)
-  Super          d        *show app launcher* (`hyprtk-bar-qt-launcher-toggle`, rofi fallback)
+  Super          d        *show app launcher* (`hyprtk-bar-qt-launcher-toggle`)
   Super   Ctrl   q        *show hyprlogout* (lock/suspend/logout/reboot/shutdown)
 
 # screenshot
@@ -53,7 +53,6 @@ screen recordings are saved by default to your ~/videos/Recordings directory
     More keybindings are included in the config.
   - *hyprtk-bar-qt* is the taskbar (right-click for bar settings / theme).
     Notifications use its built-in center (bell button).
-  - *rofi* is documented through man pages - `man rofi`.
   - *Multimedia keys* - may not work for every keyboard
     may need to hold down the function (`fn`) key
   - Follow the wiki - https://wiki.hyprland.org/

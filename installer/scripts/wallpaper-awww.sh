@@ -3,11 +3,13 @@
 #
 # by hyprtk (Kori Tk) (2026)
 # ----------------------------------------------------- 
-
+# Select wallpaper (gum; menu.sh re-opens this in a floating terminal when
+# launched from a keybind).
 # ----------------------------------------------------- 
-# Select wallpaper
-# ----------------------------------------------------- 
-selected=$(ls -1 ~/Pictures/Wallpapers | grep "png" | rofi -dmenu -config ~/hyprtk/configs/rofi/config-wallpaper.rasi)
+. "$(dirname "$0")/menu.sh"
+selected=$(find "$HOME/Pictures/Wallpapers" -maxdepth 1 -type f \
+    \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) \
+    -printf "%f\n" 2>/dev/null | sort | menu_filter "Wallpaper")
 
 if [ "$selected" ]; then
 

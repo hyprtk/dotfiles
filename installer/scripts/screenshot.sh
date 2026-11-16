@@ -1,4 +1,7 @@
 #!/bin/bash
+# Screenshot menu (gum). menu.sh re-opens this in a floating terminal when
+# launched from a keybind.
+. "$(dirname "$0")/menu.sh"
 #
 #                                                      
 #  
@@ -102,21 +105,21 @@ save='Save'
 copy_save='Copy & Save'
 edit='Edit'
 
-# Rofi CMD
-rofi_cmd() {
-    rofi -dmenu -replace -config ~/.config/rofi/config-screenshot.rasi -i -no-show-icons -l 2 -width 30 -p "Take screenshot"
+# Menu
+menu_cmd() {
+    menu_choose "Take screenshot"
 }
 
-# Pass variables to rofi dmenu
-run_rofi() {
-    echo -e "$option_1\n$option_2" | rofi_cmd
+# Pass variables to the menu
+run_menu() {
+    echo -e "$option_1\n$option_2" | menu_cmd
 }
 
 ####
 # Choose Timer
 # CMD
 timer_cmd() {
-    rofi -dmenu -replace -config ~/.config/rofi/config-screenshot.rasi -i -no-show-icons -l 5 -width 30 -p "Choose timer"
+    menu_choose "Choose timer"
 }
 
 # Ask for confirmation
@@ -152,7 +155,7 @@ timer_run() {
 # Chose Screenshot Type
 # CMD
 type_screenshot_cmd() {
-    rofi -dmenu -replace -config ~/.config/rofi/config-screenshot.rasi -i -no-show-icons -l 3 -width 30 -p "Type of screenshot"
+    menu_choose "Type of screenshot"
 }
 
 # Ask for confirmation
@@ -182,7 +185,7 @@ type_screenshot_run() {
 # Choose to save or copy photo
 # CMD
 copy_save_editor_cmd() {
-    rofi -dmenu -replace -config ~/.config/rofi/config-screenshot.rasi -i -no-show-icons -l 4 -width 30 -p "How to save"
+    menu_choose "How to save"
 }
 
 # Ask for confirmation
@@ -271,7 +274,7 @@ run_cmd() {
 }
 
 # Actions
-chosen="$(run_rofi)"
+chosen="$(run_menu)"
 case ${chosen} in
     $option_1)
         run_cmd --opt1

@@ -169,14 +169,14 @@ install_cli11_headers() {
 # Optional feature dependencies — external binaries the bar shells out to. Each
 # feature degrades gracefully when its tool is missing (skip with --no-extras).
 declare -A EXTRAS
-EXTRAS[pacman]="networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber brightnessctl hyprsunset dmidecode pciutils cliphist grim slurp wl-clipboard rofi libnotify wob papirus-icon-theme polkit awww matugen cava imagemagick python-pillow"
-EXTRAS[apt]="network-manager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify-bin papirus-icon-theme polkitd pkexec cava imagemagick python3-pil"
-EXTRAS[dnf]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify papirus-icon-theme polkit cava ImageMagick python3-pillow"
-EXTRAS[zypper]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify-tools papirus-icon-theme polkit cava ImageMagick python3-Pillow"
-EXTRAS[xbps]="NetworkManager bluez pipewire wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify papirus-icon-theme polkit cava ImageMagick python3-Pillow"
-EXTRAS[apk]="networkmanager bluez pipewire wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard rofi libnotify papirus-icon-theme polkit cava imagemagick py3-pillow"
-EXTRAS[emerge]="net-misc/networkmanager net-wireless/bluez media-video/pipewire media-video/wireplumber x11-misc/rofi gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-libs/libnotify media-sound/cava media-gfx/imagemagick dev-python/pillow"
-EXTRAS[nix]="networkmanager bluez pipewire wireplumber rofi grim slurp wl-clipboard libnotify cava imagemagick python3Packages.pillow"
+EXTRAS[pacman]="networkmanager bluez bluez-utils pipewire pipewire-pulse wireplumber brightnessctl hyprsunset dmidecode pciutils cliphist grim slurp wl-clipboard libnotify wob papirus-icon-theme polkit awww matugen cava imagemagick python-pillow"
+EXTRAS[apt]="network-manager bluez pipewire pipewire-pulse wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard libnotify-bin papirus-icon-theme polkitd pkexec cava imagemagick python3-pil"
+EXTRAS[dnf]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard libnotify papirus-icon-theme polkit cava ImageMagick python3-pillow"
+EXTRAS[zypper]="NetworkManager bluez pipewire pipewire-pulseaudio wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard libnotify-tools papirus-icon-theme polkit cava ImageMagick python3-Pillow"
+EXTRAS[xbps]="NetworkManager bluez pipewire wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard libnotify papirus-icon-theme polkit cava ImageMagick python3-Pillow"
+EXTRAS[apk]="networkmanager bluez pipewire wireplumber brightnessctl dmidecode pciutils grim slurp wl-clipboard libnotify papirus-icon-theme polkit cava imagemagick py3-pillow"
+EXTRAS[emerge]="net-misc/networkmanager net-wireless/bluez media-video/pipewire media-video/wireplumber gui-apps/grim gui-apps/slurp gui-apps/wl-clipboard x11-libs/libnotify media-sound/cava media-gfx/imagemagick dev-python/pillow"
+EXTRAS[nix]="networkmanager bluez pipewire wireplumber grim slurp wl-clipboard libnotify cava imagemagick python3Packages.pillow"
 
 # AUR-only extras (Arch) — installed via yay/paru when an AUR helper is present.
 EXTRAS_AUR="papirus-folders"

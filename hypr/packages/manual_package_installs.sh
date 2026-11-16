@@ -13,7 +13,7 @@ _PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 
 case "$HYPRTK_PM" in
 pacman)
-    PKGS=(pacman-contrib alacritty kitty rofi chromium starship ranger neovim mpv
+    PKGS=(pacman-contrib alacritty kitty chromium starship ranger neovim mpv
           freerdp xfce4-power-manager thunar mousepad awesome-terminal-fonts
           otf-font-awesome ttf-fira-sans ttf-fira-code ttf-firacode-nerd vlc eza
           python-pip python-psutil python-rich python-click xdg-desktop-portal-gtk
@@ -26,7 +26,7 @@ pacman)
          pacseek github-desktop-bin waypaper nitrogen)
     ;;
 apt)
-    PKGS=(alacritty kitty rofi chromium starship ranger neovim mpv freerdp3-x11
+    PKGS=(alacritty kitty chromium starship ranger neovim mpv freerdp3-x11
           xfce4-power-manager thunar mousepad fonts-font-awesome fonts-firacode vlc
           eza python3-pip python3-psutil python3-rich python3-click
           xdg-desktop-portal-gtk pavucontrol tumbler blueman sddm papirus-icon-theme
@@ -36,7 +36,7 @@ apt)
           xclip pamixer xautolock gnome-disk-utility)
     ;;
 dnf)
-    PKGS=(alacritty kitty rofi chromium starship ranger neovim mpv freerdp
+    PKGS=(alacritty kitty chromium starship ranger neovim mpv freerdp
           xfce4-power-manager Thunar mousepad fontawesome-fonts-all fira-code-fonts
           vlc eza python3-pip python3-psutil python3-rich python3-click
           xdg-desktop-portal-gtk pavucontrol tumbler blueman sddm papirus-icon-theme
@@ -47,7 +47,7 @@ dnf)
           gnome-disk-utility)
     ;;
 zypper)
-    PKGS=(alacritty kitty rofi chromium starship ranger neovim mpv freerdp
+    PKGS=(alacritty kitty chromium starship ranger neovim mpv freerdp
           xfce4-power-manager thunar mousepad fontawesome-fonts fira-code-fonts vlc
           eza python3-pip python3-psutil python3-rich python3-click
           xdg-desktop-portal-gtk pavucontrol tumbler blueman sddm papirus-icon-theme
@@ -57,7 +57,7 @@ zypper)
           pamixer xautolock gnome-disk-utility)
     ;;
 xbps)
-    PKGS=(alacritty kitty rofi chromium starship ranger neovim mpv freerdp
+    PKGS=(alacritty kitty chromium starship ranger neovim mpv freerdp
           xfce4-power-manager Thunar mousepad font-awesome font-firacode vlc eza
           python3-pip python3-psutil python3-rich python3-click
           xdg-desktop-portal-gtk pavucontrol tumbler blueman sddm papirus-icon-theme
@@ -68,7 +68,7 @@ xbps)
           gnome-disk-utility)
     ;;
 apk)
-    PKGS=(alacritty kitty rofi chromium starship ranger neovim mpv freerdp
+    PKGS=(alacritty kitty chromium starship ranger neovim mpv freerdp
           xfce4-power-manager thunar mousepad font-awesome font-fira-code-nerd vlc eza
           py3-pip py3-psutil py3-rich py3-click xdg-desktop-portal-gtk pavucontrol
           tumbler blueman sddm papirus-icon-theme btop networkmanager

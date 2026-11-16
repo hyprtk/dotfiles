@@ -25,7 +25,6 @@ MAP[nvim]=configs/nvim
 MAP[ohmyposh]=configs/ohmyposh
 MAP[oh-my-zsh]=configs/oh-my-zsh
 MAP[ranger]=configs/ranger
-MAP[rofi]=configs/rofi
 MAP[sddm]=configs/sddm
 MAP[smb]=configs/smb
 MAP[starship]=configs/starship

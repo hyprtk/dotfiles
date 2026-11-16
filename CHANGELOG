@@ -3,6 +3,35 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.5.0] - 2026-11-16
+
+### Added
+
+- **Launcher-owned theme variants (bar-qt 0.43.1).** The old rofi rasi palettes
+  are ported to `data/LauncherTheme.qml`: Follow bar theme (default), Hyprtk,
+  Hyprtk Pywal, Aero, Clear, Glass, Inverse, Light, Liquid Glass, Negative and
+  Reverse. No rofi file is read; pywal still drives the accents.
+- **Settings → Launcher page** for the `launcher` block: theme, geometry/grid,
+  icons, placeholder, matching/case/sort, hover/click/cycle, usage ranking,
+  modes and default, run/terminal/history, filebrowser, display/window formats.
+
+### Changed
+
+- **Rofi removed completely.** The launcher no longer uses `appsmenu.sh`,
+  `configs/rofi`, `scripts/rofi` or `sync-rofi-theme.sh`; `Super+D` and
+  `Super+Ctrl+Return` call `hyprtk-bar-qt-launcher-toggle` directly, and the
+  bar’s “Apps menu” quicklink uses the native launcher action.
+- **Themer:** the Rofi page is gone; the Import “Browse…” picker is a native
+  QML folder browser (`pickdir.py` removed).
+- **Menus ported from rofi to gum:** power/logout, wallpaper, templates, Brave
+  bookmarks, icon-colour selector, screenshot/grim and the Manjaro scrot
+  helper. `installer/scripts/menu.sh` re-opens them in a floating
+  `alacritty --class hyprtk-menu` window for keybind use; matching window rules
+  were added to `hypr/windowrules.lua`.
+- `rofi` dropped from the bar installer extras, distro package lists and ISO
+  package set; `configs/rofi` deleted; docs updated. `launcher.terminal`
+  defaults to `alacritty`.
+
 ## [v1.4.0] - 2026-11-16
 
 ### Added

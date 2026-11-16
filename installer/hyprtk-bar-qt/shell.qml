@@ -17,7 +17,7 @@ ShellRoot {
     id: shell
 
     // Instantiate the keybind signal bridge (menu/arc/clipboard toggles) and the
-    // theme writer (keeps the rofi variant in sync with `theme.source`).
+    // theme writer (persists bar theme changes).
     readonly property var signalBridge: SignalBridge
     readonly property var themeSync: ThemeSync
     readonly property var lockSync: LockSync

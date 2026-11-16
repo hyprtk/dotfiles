@@ -27,7 +27,7 @@ Mpris, Hyprland) ship with the Quickshell package.
 ## Optional feature binaries (degrade gracefully)
 
 NetworkManager/nmcli, bluez/bluetoothctl, pipewire/wpctl, brightnessctl,
-hyprsunset, dmidecode, pciutils, cliphist + wl-clipboard, rofi, libnotify,
+hyprsunset, dmidecode, pciutils, cliphist + wl-clipboard, libnotify,
 wob, papirus-icon-theme + papirus-folders, polkit/pkexec, awww/swww, matugen,
 cava, ImageMagick, Pillow. Installed by `install.sh`'s `EXTRAS` array
 (`--no-extras` skips them).

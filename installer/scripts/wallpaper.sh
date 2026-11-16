@@ -4,8 +4,11 @@
 # by hyprtk (Kori Tk) (2026)
 # ----------------------------------------------------- 
 
-# Select wallpaper
-selected=$(ls -1 ~/Pictures/Wallpapers | grep "png" | rofi -dmenu -config ~/hyprtk/configs/rofi/config-wallpaper.rasi -p "Wallpapers")
+# Select wallpaper (gum)
+. "$(dirname "$0")/menu.sh"
+selected=$(find "$HOME/Pictures/Wallpapers" -maxdepth 1 -type f \
+    \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) \
+    -printf "%f\n" 2>/dev/null | sort | menu_filter "Wallpapers")
 
 if [ "$selected" ]; then
 

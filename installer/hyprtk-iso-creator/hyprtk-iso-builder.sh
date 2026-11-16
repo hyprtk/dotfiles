@@ -292,7 +292,6 @@ _build_skel() {
     _skel_link ".config/vim"              "configs/vim"
     _skel_link ".config/nvim"             "configs/nvim"
     _skel_link ".config/starship.toml"    "configs/starship/starship.toml"
-    _skel_link ".config/rofi"             "configs/rofi"
     _skel_link ".config/wal"              "configs/wal"
     _skel_link ".config/btop"             "configs/btop"
     _skel_link ".config/gtk-3.0"          "configs/gtk/gtk-3.0"

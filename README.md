@@ -18,7 +18,7 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Li
 
 ## What is this?
 
-A curated, consistent desktop configuration that replaces the default look and feel of your Linux desktop with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** (bundled) — hyprtk-bar-qt, rofi, the app menu, the lock screen and even your icons all stay in sync.
+A curated, consistent desktop configuration that replaces the default look and feel of your Linux desktop with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** (bundled) — hyprtk-bar-qt, the app launcher, the lock screen and even your icons all stay in sync.
 
 - **Wayland first** — Hyprland with a floating/split hybrid workflow
 - **Xorg fallback** — XFCE stays installed as a safety net
@@ -71,7 +71,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Status bar** | hyprtk-bar-qt — Qt6/QML (Quickshell) pywal-themed taskbar with built-in menus |
 | **Desktop widgets** | Clock, weather, audio visualizer, hard disks, network, CPU/RAM and system info — free-floating surfaces you drag into place and snap into groups, themed by pywal |
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
-| **Wallpaper** | Matuwall film-strip picker + rofi list + random (awww daemon, installed automatically) |
+| **Wallpaper** | Matuwall film-strip picker + gum list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
 | **Screenshots** | HyprQuickFrame overlay — region/window/full/temp, swappy/satty editor, optional KDE share, pywal theme |
 | **Screen recording** | wf-recorder |
@@ -96,7 +96,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | `Super + Return` | Terminal (Alacritty) |
 | `Super + Space` | Start menu (in-bar) |
 | `Super + Q` | Close window |
-| `Super + D` | App launcher (in-bar; rofi fallback) |
+| `Super + D` | App launcher (in-bar) |
 | `Super + F` | File manager (hyprtk-fm) |
 | `Super + B` / `Super + Ctrl + B` | Brave / Chromium |
 | `Super + X` | Exit session |
@@ -117,9 +117,9 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | --- | --- |
 | `Super + W` | Matuwall wallpaper picker |
 | `Super + Shift + W` | Random wallpaper |
-| `Super + Ctrl + W` | Wallpaper list (rofi) |
+| `Super + Ctrl + W` | Wallpaper list (gum) |
 
-All theming (bar theme, pywal, rofi, icons, lock screen, SDDM/GRUB) is changed from
+All theming (bar theme, pywal, icons, lock screen, SDDM/GRUB) is changed from
 **hyprtk-bar-qt**'s Theme Manager, opened from the wallpaper glyph in the bar.
 
 ### Media & system
@@ -159,7 +159,7 @@ All theming (bar theme, pywal, rofi, icons, lock screen, SDDM/GRUB) is changed f
 
 ## Applications
 
-All system theming (wallpaper, pywal, rofi, icons, lock screen, SDDM/GRUB) now lives in **hyprtk-bar-qt**'s Theme Manager, opened from the wallpaper glyph in the bar. The **start menu** and **arc menu** are both built into **hyprtk-bar-qt** — no separate apps:
+All system theming (wallpaper, pywal, icons, lock screen, SDDM/GRUB) now lives in **hyprtk-bar-qt**'s Theme Manager, opened from the wallpaper glyph in the bar. The **start menu** and **arc menu** are both built into **hyprtk-bar-qt** — no separate apps:
 
 | Feature | What it does | Open with |
 | --- | --- | --- |

@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.43.1 — 2026-11-16
+
+- **Fix the bar’s “Apps menu” quicklink.** It still pointed at the deleted
+  `appsmenu.sh`, so clicking the app-launcher glyph did nothing. The shipped
+  link now carries `action: "launcher"` and `Quicklinks.qml` toggles the
+  in-bar launcher for it (same path as the `Super+D` keybind). The installed
+  config is updated in place; no re-add needed.
+
+## 0.43.0 — 2026-11-16
+
+- **Launcher themes are now launcher-owned.** `data/LauncherTheme.qml` ports the
+  ten old rofi variant palettes to QML (Hyprtk, Pywal, Aero, Clear, Glass,
+  Inverse, Light, Liquid Glass, Negative, Reverse) plus **Follow bar theme**
+  (default). No rofi rasi file is read; pywal still drives the accents, so
+  wallpaper changes re-tint every variant. Select it in Settings → Launcher.
+- **New Settings → Launcher page** for the `launcher` block: enabled, theme,
+  width/height, grid columns/lines, icon size/theme, placeholder, matching
+  (normal/regex/glob/fuzzy/prefix), case/tokenize/sort, hover/click/cycle,
+  usage ranking, max results, mode enable/default, run/terminal/history,
+  filebrowser, display and window formats. All writes go through the existing
+  debounced `barsettings.py` path.
+- **Rofi removed completely.**
+  - Launcher: `appsmenu.sh`, `scripts/rofi/`, `sync-rofi-theme.sh` and the
+    keybind fallback are gone; `Super+D` / `Super+Ctrl+Return` call
+    `hyprtk-bar-qt-launcher-toggle` directly.
+  - Themer: the Rofi page is gone; the Import “Browse…” picker is now a native
+    QML folder browser (`pickdir.py` removed).
+  - Menus ported from rofi to **gum**: power, wallpaper (both pickers),
+    templates, Brave bookmarks, icon-colour selector, screenshot/grim and the
+    Manjaro scrot helper. A new `installer/scripts/menu.sh` re-opens these in a
+    floating `alacritty --class hyprtk-menu` terminal when launched from a
+    keybind (no tty), with matching window rules in `hypr/windowrules.lua`.
+  - `rofi` dropped from the bar installer extras, the distro package lists and
+    the ISO package set; `configs/rofi` removed; docs updated.
+- `launcher.terminal` now defaults to `alacritty` (rofi-sensible-terminal is
+  gone).
+
 ## 0.42.0 — 2026-11-16
 
 - **New in-bar application launcher, replacing the rofi apps menu.** A

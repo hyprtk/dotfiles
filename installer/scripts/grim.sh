@@ -5,15 +5,17 @@
 # by hyprtk (Kori Tk) (2026)
 # ----------------------------------------------------- 
 
+# ----------------------------------------------------- 
+# Screenshot menu (gum).
+. "$(dirname "$0")/menu.sh"
+
 DIR="$HOME/Pictures/screenshots/"
 NAME="screenshot_$(date +%d%m%Y_%H%M%S).png"
 
 option2="Selected area"
 option3="Fullscreen (delay 3 sec)"
 
-options="$option2\n$option3"
-
-choice=$(echo -e "$options" | rofi -dmenu -config ~/hyprtk/configs/rofi/config-screenshot.rasi -i -no-show-icons -l 4 -width 30 -p "Take Screenshot")
+choice=$(printf '%s\n' "$option2" "$option3" | menu_choose "Take Screenshot")
 
 case $choice in
     $option2)

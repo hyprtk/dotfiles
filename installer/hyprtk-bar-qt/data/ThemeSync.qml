@@ -1,10 +1,7 @@
-// Applies a bar theme — writes the nested `theme` block + the Qt overrides and
-// re-links the rofi variant so rofi always matches the bar.
-//
-// Mirrors the GTK bar (app.py::_sync_rofi_variant): changing `theme.source` /
-// `theme.theme_name` must also update `~/.config/rofi/variant.rasi` via
-// sync-rofi-theme.sh. Every theme change (Themer / Settings) goes through
-// `apply()` so the two config representations and rofi stay in lock-step.
+// Applies a bar theme — writes the nested `theme` block plus the Qt overrides.
+// Every theme change (Themer / Settings) goes through `apply()` so both config
+// representations stay in lock-step. The launcher reads the same Theme tokens,
+// so it follows the bar theme without any separate theme files.
 pragma Singleton
 
 import QtQuick
@@ -15,11 +12,8 @@ import "../config"
 Singleton {
     id: root
 
-    readonly property string home: Quickshell.env("HOME") || ""
     readonly property string backend:
         Qt.resolvedUrl("../backend/hyprtk_bar_qt/barsettings.py").toString().replace("file://", "")
-    readonly property string syncScript:
-        root.home + "/.local/share/hyprtk-bar-qt/scripts/sync-rofi-theme.sh"
 
     // source: "pywal" | "imported" | "manual" ("" follows pywal); colours optional.
     function apply(source, name, background, foreground, accent) {
@@ -36,7 +30,7 @@ Singleton {
         // whole-file read-modify-write, so two separate writers — Config.save()
         // and a nested patch — race and clobber each other):
         //   • top-level `themeSource`/`themeName`/… = the Qt overrides;
-        //   • nested `theme` block = what sync-rofi-theme.sh reads.
+        //   • nested `theme` block = the persisted bar theme.
         const patch = {
             themeSource: src,
             themeName: name || "",
@@ -55,11 +49,5 @@ Singleton {
         setProc.running = true;
     }
 
-    // Re-link rofi from the current config (start-up + after every theme write).
-    function syncRofi() { syncProc.running = true; }
-
-    Process { id: setProc; onExited: (code, status) => { if (code === 0) root.syncRofi(); } }
-    Process { id: syncProc; command: ["bash", root.syncScript] }
-
-    Component.onCompleted: root.syncRofi()
+    Process { id: setProc }
 }

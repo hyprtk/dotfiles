@@ -13,9 +13,15 @@ option1="Selected window (delay 3 sec)"
 option2="Selected area"
 option3="Fullscreen (delay 3 sec)"
 
-options="$option2\n$option3\n$option1"
+# gum menu (no rofi); helper lives in the installed dotfiles tree.
+if [ -f "$HOME/hyprtk/installer/scripts/menu.sh" ]; then
+    . "$HOME/hyprtk/installer/scripts/menu.sh"
+else
+    echo "menu.sh not found" >&2
+    exit 1
+fi
 
-choice=$(echo -e "$options" | rofi -i -dmenu -config ~/hyprtk/configs/rofi/config-screenshot.rasi -width 30 -p "Take Screenshot")
+choice=$(printf '%s\n' "$option2" "$option3" "$option1" | menu_choose "Take Screenshot")
 
 case $choice in
     $option1)
