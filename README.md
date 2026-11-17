@@ -79,6 +79,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Screen lock** | hyprlock (swaylock-effects fallback) |
 | **Logout** | hyprlogout |
 | **Files** | hyprtk-fm — Qt6/QML file manager (tabs, dual pane, thumbnail grid, LAN share browsing); Thunar fallback |
+| **Text editor** | hyprtk-edit — Qt6/QML text editor (tabs, session restore, crash drafts, find/replace, minimap, 600+ syntaxes); pywal-themed |
 | **Icons** | Papirus (recolored to match the theme) |
 | **Cursor** | Adwaita (session theme via `XCURSOR_THEME`/`XCURSOR_SIZE`) |
 | **Browser** | Brave / Chromium |
@@ -98,6 +99,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | `Super + Q` | Close window |
 | `Super + D` | App launcher (in-bar) |
 | `Super + F` | File manager (hyprtk-fm) |
+| `Super + E` | Text editor (hyprtk-edit) |
 | `Super + B` / `Super + Ctrl + B` | Brave / Chromium |
 | `Super + X` | Exit session |
 | `Super + M` | Toggle fullscreen |
@@ -166,10 +168,14 @@ All system theming (wallpaper, pywal, icons, lock screen, SDDM/GRUB) now lives i
 | **Start menu** | Whisker/Win7/Win11/Plasma app menu — search, favorites, recents, power buttons | `Super + Space` or the start button |
 | **Arc menu** | FAB in a screen corner that fans its items out on click | `Super + Ctrl + M` (or the FAB) |
 | **Files** | hyprtk-fm — native Qt6/QML file manager: tabs, dual pane, breadcrumbs, thumbnail grid, previews, undo/trash and LAN share browsing; pywal-themed | `Super + F`, the bar's **Files** quick link, or opening any folder |
+| **Editor** | hyprtk-edit — native Qt6/QML text editor: tabs, session restore, autosaved crash-recovery drafts, regex search, command palette, line operations, minimap and 600+ Pygments syntaxes, with a syntax theme derived from pywal | `Super + E`, the bar's **Editor** quick link, or opening any text file |
 
 hyprtk-fm is the suite's default file manager (registered for
 `inode/directory`), installed by the bar's installer from its vendored snapshot;
-Thunar remains available as a fallback.
+Thunar remains available as a fallback. **hyprtk-edit** is the default handler
+for `text/plain` and `text/markdown`; it ships as a standalone installer, adds
+its own Pygments dependency and falls back to a private PyPI venv on distros
+whose PySide6 lacks the QML bindings.
 
 Both are configured from the bar settings dialogue (*Menu* and *Arc Menu* tabs) and follow the bar's theme + pywal.
 

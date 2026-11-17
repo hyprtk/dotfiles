@@ -3,6 +3,22 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.6.0] - 2026-11-17
+
+### Added
+
+- **hyprtk-editor 0.1.1 (bar-qt 0.43.7).** A new suite app: a Qt6/QML text
+  editor with tabs and per-tab undo, session restore, autosaved crash-recovery
+  drafts, encoding/BOM/EOL-faithful atomic saves, Pygments highlighting for
+  600+ languages (viewport-scoped), regex/whole-word search with live match
+  painting, a command palette, line operations, a minimap, bracket matching and
+  a syntax theme derived from the bar's pywal palette.
+- The editor is registered for `text/plain` and `text/markdown`, gets the
+  `Super + E` keybind and an **Editor** quick link (quick links + arc menu).
+- When the distro's PySide6 has no QtQml/QtQuick bindings (Debian 12, Ubuntu
+  24.04), the installer provisions a private PyPI venv; Pygments is added to the
+  package manifest for every family.
+
 ## [v1.5.5] - 2026-11-16
 
 ### Added

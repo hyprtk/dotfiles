@@ -3,8 +3,9 @@
 # The dotfiles install alacritty, thunar, brave and hyprtk-fm, but a fresh
 # distro still points XDG at its own defaults (seen on Fedora: kitty as the
 # inode/directory handler, firefox as the browser). Prefer hyprtk-fm for
-# inode/directory and point the bar's Files quick link at it; Thunar stays
-# installed as a fallback. User-level; best-effort.
+# inode/directory, hyprtk-editor for text/plain + text/markdown, and point the
+# bar's Files quick link at hyprtk-fm with an Editor link beside it; Thunar
+# stays installed as a fallback. User-level; best-effort.
 #
 # The session terminal is $TERMINAL, set in hypr/environment.lua.
 set -u
@@ -17,8 +18,18 @@ if [ -f "$apps_dir/hyprtk-file-manager.desktop" ] || [ -f "/usr/share/applicatio
     fm_desktop="hyprtk-file-manager.desktop"
 fi
 
+# hyprtk-editor owns plain text and Markdown when it is installed; other
+# handlers (a distro's gedit/kate) stay available for their own MIME types.
+editor_desktop=""
+if [ -f "$apps_dir/hyprtk-editor.desktop" ] || [ -f "/usr/share/applications/hyprtk-editor.desktop" ]; then
+    editor_desktop="hyprtk-editor.desktop"
+fi
+
 if command -v xdg-mime >/dev/null 2>&1; then
     xdg-mime default "$fm_desktop" inode/directory 2>/dev/null || true
+    if [ -n "$editor_desktop" ]; then
+        xdg-mime default "$editor_desktop" text/plain text/markdown 2>/dev/null || true
+    fi
 fi
 
 if command -v xdg-settings >/dev/null 2>&1; then
@@ -67,6 +78,33 @@ def patch(node):
 
 
 patch(data)
+
+# Ensure the suite editor is one of the quick links (idempotent).
+quicklinks = data.get("quicklinks")
+if isinstance(quicklinks, dict):
+    links = quicklinks.get("links")
+    if isinstance(links, list) and not any(
+        isinstance(item, dict)
+        and (item.get("command") == "hyprtk-edit" or item.get("id") == "editor")
+        for item in links
+    ):
+        entry = {
+            "id": "editor",
+            "label": "Editor",
+            "icon": "\uf15b",
+            "command": "hyprtk-edit",
+            "command_right": "",
+            "command_middle": "",
+        }
+        index = len(links) - 1
+        for i, item in enumerate(links):
+            if isinstance(item, dict) and (
+                item.get("id") == "files" or item.get("label") == "Files"
+            ):
+                index = i
+                break
+        links.insert(index + 1, entry)
+
 tmp = path + ".tmp"
 with open(tmp, "w", encoding="utf-8") as handle:
     json.dump(data, handle, indent=2)
@@ -75,4 +113,4 @@ os.replace(tmp, path)
 PY
 fi
 
-echo "preferred apps registered (file manager: ${fm_desktop%.desktop}; bar quick link: hyprtk-fm; browser: brave if present)"
+echo "preferred apps registered (file manager: ${fm_desktop%.desktop}; text: ${editor_desktop:-unchanged}; bar quick links: hyprtk-fm + hyprtk-edit; browser: brave if present)"

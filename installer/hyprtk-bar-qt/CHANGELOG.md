@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.43.7 — 2026-11-17
+
+- **Editor quick link.** The quick-links row and the arc menu gain an **Editor**
+  entry (`hyprtk-edit`), the suite's new text editor.
+
 ## 0.43.6 — 2026-11-16
 
 - **Vendor hyprtk-file-manager 1.8.6.** Settings gains a “Side panel icon size”

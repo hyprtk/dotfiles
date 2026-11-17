@@ -1069,6 +1069,11 @@ else
         _spin "Installing hyprtk-file-manager..." "bash $SCRIPT_DIR/installer/hyprtk-file-manager/install.sh" "$LOG_FILE"
         _ok "hyprtk-file-manager installed (hyprtk-fm; default file manager)"
 
+        # ── hyprtk-editor (GUI) ────────────────────────────────────
+        _step "Installing hyprtk-editor"
+        _spin "Installing hyprtk-editor..." "bash $SCRIPT_DIR/installer/hyprtk-editor/install.sh" "$LOG_FILE"
+        _ok "hyprtk-editor installed (hyprtk-edit; default text editor)"
+
         # ── Preferred apps (XDG + bar quick links) ─────────────────
         # Point XDG and the bar's Files quick link at hyprtk-fm; Thunar stays
         # installed as a fallback. The session terminal is $TERMINAL.

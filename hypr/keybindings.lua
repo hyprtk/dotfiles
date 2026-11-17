@@ -10,6 +10,7 @@ hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-qt-menu-
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-fm; [ -x \"$p\" ] && exec \"$p\"; exec thunar'"))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-edit; [ -x \"$p\" ] && exec \"$p\"; exec xdg-open \"$HOME\"'"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("brave"))
 hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd("chromium"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"), { description = "Toggle split" })
