@@ -64,6 +64,7 @@ Rectangle {
                 id: queryField
                 Layout.fillWidth: true
                 height: 26
+                ContextMenu.menu: EditorMenu { editor: queryField }
                 color: root.th.foreground
                 selectionColor: Util.alpha(root.th.accent, 0.4)
                 selectedTextColor: root.th.foreground
@@ -143,6 +144,7 @@ Rectangle {
                 id: replaceField
                 Layout.fillWidth: true
                 height: 26
+                ContextMenu.menu: EditorMenu { editor: replaceField }
                 color: root.th.foreground
                 selectionColor: Util.alpha(root.th.accent, 0.4)
                 selectedTextColor: root.th.foreground

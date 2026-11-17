@@ -5,7 +5,7 @@ front, Python behind it. Opens like a notepad, grows into the parts of Kate
 that earn their keep: real tabs, a session, regex search, 600+ syntaxes, a
 command palette, line operations and a minimap.
 
-**Current version: 0.1.4** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 0.1.5** — see [CHANGELOG.md](CHANGELOG.md).
 
 ![hyprtk-editor](hyprtk_editor/assets/hyprtk-editor.svg)
 

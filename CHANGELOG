@@ -3,6 +3,18 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.2] - 2026-11-17
+
+### Fixed
+
+- **hyprtk-editor 0.1.5: the right-click menu.** Qt Quick Controls' own
+  `TextEditingContextMenu` is painted from the control palette, so right-clicking
+  the text came up in the stock black/blue of the Basic style with the icon
+  theme's coloured undo/cut/paste icons. The menu (and the same menu on the find,
+  replace, prompt and command-palette fields) is now the same actions in the
+  pywal palette: surface panel with an accent-tinted rounded border, accent
+  hover, dimmed disabled entries, editor font, no platform icons.
+
 ## [v1.7.1] - 2026-11-17
 
 ### Fixed

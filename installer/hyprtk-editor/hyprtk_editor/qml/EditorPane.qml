@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "theme"
+import "components"
 import "theme/util.js" as Util
 
 // One document. Creating a TextArea per tab (rather than swapping text into a
@@ -179,7 +180,7 @@ Item {
     // Large-file / read-only banner
     Rectangle {
         id: banner
-        visible: pane.doc.huge || pane.doc.binary || pane.doc.readonly
+        visible: !!(pane.doc.huge || pane.doc.binary || pane.doc.readonly)
         height: visible ? 26 : 0
         anchors.top: parent.top
         anchors.left: parent.left
@@ -252,6 +253,9 @@ Item {
             bottomPadding: 28
             background: null
             opacity: (pane.doc.binary === true) ? 0.7 : 1.0
+            // The stock TextEditingContextMenu paints from the control palette;
+            // this one is the same actions in the editor palette.
+            ContextMenu.menu: EditorMenu { editor: textArea }
 
             onTextChanged: {
                 if (pane.loading)

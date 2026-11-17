@@ -75,6 +75,7 @@ Rectangle {
                 id: field
                 Layout.fillWidth: true
                 height: 30
+                ContextMenu.menu: EditorMenu { editor: field }
                 color: root.th.foreground
                 selectionColor: Util.alpha(root.th.accent, 0.4)
                 selectedTextColor: root.th.foreground

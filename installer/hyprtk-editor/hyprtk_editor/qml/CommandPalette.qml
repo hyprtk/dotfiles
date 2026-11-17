@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "theme"
+import "components"
 import "theme/util.js" as Util
 
 Rectangle {
@@ -84,6 +85,7 @@ Rectangle {
                 id: field
                 Layout.fillWidth: true
                 height: 36
+                ContextMenu.menu: EditorMenu { editor: field }
                 color: root.th.foreground
                 selectionColor: Util.alpha(root.th.accent, 0.4)
                 selectedTextColor: root.th.foreground

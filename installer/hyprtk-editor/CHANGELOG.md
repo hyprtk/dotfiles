@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.5 — 2026-11-17
+
+- The right-click menu over the text (and over the find, replace, prompt and
+  command-palette fields) now uses the editor palette. Qt Quick Controls hands
+  out a `TextEditingContextMenu` painted from the control palette, so it came up
+  in the stock black/blue of the Basic style, with the icon theme's coloured
+  undo/cut/paste icons, next to a pywal window.
+- It is a menu of the same actions in the app's own colours: surface panel,
+  accent-tinted rounded border, accent hover, dimmed disabled entries, editor
+  font, and no platform icons.
+- Boot check now opens a document and right-clicks it, so a broken context menu
+  fails the gate instead of shipping.
+
 ## 0.1.4 — 2026-11-17
 
 - The file dialogs (Open, Save, Open Folder) no longer come up as the native GTK
