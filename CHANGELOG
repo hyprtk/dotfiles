@@ -1920,3 +1920,7 @@ documented in this file. Dates are in YYYY-MM-DD format.
 
 - Separate per-distro repos: everything is merged into a single `dotfiles`
   repo (github.com/hyprtk/dotfiles).
+
+---
+
+Part of the **hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
