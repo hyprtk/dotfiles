@@ -1,3 +1,3 @@
 """hyprtk-file-manager backend."""
 
-__version__ = "1.8.8"
+__version__ = "1.8.9"

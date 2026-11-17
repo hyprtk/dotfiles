@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.10 — 2026-11-17
+
+- **New app icon.** The suite's v09 mark (monogram plus a bar badge) replaces
+  the third-party `com.gitlab.jnuutinen.minimalmenu` icon. The installer copies
+  it into the payload and writes the desktop entry with an absolute `Icon=` path.
+- **Vendor hyprtk-file-manager 1.8.9** (icon and installer).
+
 ## 0.43.9 — 2026-11-17
 
 - **Vendor hyprtk-file-manager 1.8.8.** The file manager's “Open With” dialog now

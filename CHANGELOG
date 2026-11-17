@@ -3,6 +3,32 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.7] - 2026-11-17
+
+### Changed
+
+- **Suite branding: app icons.** Every component now carries the v09 mark from
+  the brand kit — an oversized `ht` monogram with the component glyph in a
+  gradient-ringed badge: `hyprtk-bar-qt` 0.43.10, `hyprtk-file-manager` 1.8.9,
+  `hyprtk-editor` 0.2.2, `hyprtk-config-manager` 0.2.3, plus the usb and
+  iso-creator GUIs. Each desktop entry now sets an absolute `Icon=` path into
+  the app's own payload instead of falling back to a third-party or generic
+  icon (`com.gitlab.jnuutinen.minimalmenu`, `system-file-manager`,
+  `preferences-system`). This is the convention the editor and the two GUIs
+  already used, and it keeps the installer from writing into
+  `~/.local/share/icons`, which is a symlink into the papirus theme in the
+  dotfiles clone.
+- **Vendored** hyprtk-file-manager 1.8.9 (byte-identical in
+  `installer/hyprtk-file-manager/` and the bar's
+  `vendor/hyprtk-file-manager/`); bar re-vendored at 0.43.10.
+- `assets/icons/hyprtk.svg` carries the suite mark itself (asset only — no
+  desktop entry references it yet).
+- No package or installer-target surface changed. The gate was carried from
+  v1.7.6 (T1 1340 resolvable / 26 AUR / 89 allow-listed / 0 unexpected, T2 9/9,
+  audit 0 unexpected with the 16 known provides-only TODOs); all six installers
+  were additionally re-run end-to-end on this machine and every entry's icon
+  path verified.
+
 ## [v1.7.6] - 2026-11-17
 
 ### Changed

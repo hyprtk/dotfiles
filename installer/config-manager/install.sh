@@ -153,10 +153,15 @@ if ! on_path "$BIN_DIR"; then
     fi
 fi
 
-# Desktop entry (Exec rewritten to the absolute launcher).
+# App icon: absolute path next to the app, so the entry never depends on an
+# icon package being installed.
+install -Dm644 "$SCRIPT_DIR/data/$APP_NAME.svg" "$INSTALL_DIR/$APP_NAME.svg"
+
+# Desktop entry (Exec and Icon rewritten to absolute paths).
 mkdir -p "$APPS_DIR"
 if [ -f "$SCRIPT_DIR/data/$APP_NAME.desktop" ]; then
-    sed "s|^Exec=.*|Exec=\"$BIN_DIR/$LAUNCHER_NAME\" open|" \
+    sed -e "s|^Exec=.*|Exec=\"$BIN_DIR/$LAUNCHER_NAME\" open|" \
+        -e "s|^Icon=.*|Icon=$INSTALL_DIR/$APP_NAME.svg|" \
         "$SCRIPT_DIR/data/$APP_NAME.desktop" > "$DESKTOP_FILE"
 else
     cat > "$DESKTOP_FILE" <<DESKTOP
@@ -165,7 +170,7 @@ Type=Application
 Name=$TITLE
 Comment=Configure Hyprland's Lua configuration
 Exec="$BIN_DIR/$LAUNCHER_NAME" open
-Icon=preferences-system
+Icon=$INSTALL_DIR/$APP_NAME.svg
 Terminal=false
 Categories=Settings;System;
 StartupNotify=true

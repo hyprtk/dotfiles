@@ -697,9 +697,14 @@ for s in "$SCRIPT_DIR"/bin/*; do
     ln -sf "$QS_DIR/bin/$(basename "$s")" "$BIN_DIR/$(basename "$s")"
 done
 
-# Rewrite Exec to this user's actual launcher path.
+# App icon: absolute path into the install dir. A bare Icon=<name> would fall
+# back to whichever icon package happens to be installed.
+install -Dm644 "$SCRIPT_DIR/assets/icons/$APP_NAME.svg" "$INSTALL_DIR/$APP_NAME.svg"
+
+# Rewrite Exec and Icon to this user's actual paths.
 if [ -f "$SCRIPT_DIR/$APP_NAME.desktop" ]; then
-    awk -v e="$BIN_DIR/$APP_NAME" '/^Exec=/{print "Exec=\"" e "\""; next} {print}' \
+    awk -v e="$BIN_DIR/$APP_NAME" -v i="$INSTALL_DIR/$APP_NAME.svg" \
+        '/^Exec=/{print "Exec=\"" e "\""; next} /^Icon=/{print "Icon=" i; next} {print}' \
         "$SCRIPT_DIR/$APP_NAME.desktop" > "$APPS_DIR/$APP_NAME.desktop"
     update-desktop-database "$APPS_DIR" 2>/dev/null || true
 fi

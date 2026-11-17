@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.3 — 2026-11-17
+
+### Changed
+
+- **New app icon.** The suite's v09 mark (monogram plus a sliders badge). The
+  installer now installs it beside the app and writes an absolute `Icon=` path,
+  replacing the generic `preferences-system` icon.
+
 ## Unreleased — documentation
 
 - The README and this changelog now describe the project as one of the seven

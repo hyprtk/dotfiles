@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2 — 2026-11-17
+
+### Changed
+
+- **New app icon.** The suite's v09 mark (monogram plus a document badge)
+  replaces the previous logo and is used for both the window icon and the
+  desktop entry.
+
 ## 0.2.1 — 2026-11-17
 
 Wave 2 of the v0.2 plan.

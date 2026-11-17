@@ -47,7 +47,12 @@ done
 find "$PREFIX/backend" -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
 chmod +x "$PREFIX/bin/hyprtk-fm"
 ln -sf "$PREFIX/bin/hyprtk-fm" "$BIN/hyprtk-fm"
-cp "$ROOT/hyprtk-file-manager.desktop" "$APPS/hyprtk-file-manager.desktop"
+
+# App icon: absolute path into the install prefix (same convention as the
+# editor and the usb/iso GUIs) so the entry never depends on an icon package.
+install -Dm644 "$ROOT/assets/icons/hyprtk-file-manager.svg" "$PREFIX/hyprtk-file-manager.svg"
+sed -e "s|^Icon=.*|Icon=$PREFIX/hyprtk-file-manager.svg|" \
+    "$ROOT/hyprtk-file-manager.desktop" > "$APPS/hyprtk-file-manager.desktop"
 
 if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database "$APPS" >/dev/null 2>&1 || true

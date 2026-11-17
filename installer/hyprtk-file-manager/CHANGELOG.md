@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.9 — 2026-11-17
+
+### Changed
+
+- **New app icon.** The suite's v09 mark (monogram plus a folder badge) ships in
+  `assets/icons/`, and the installer writes the desktop entry with an absolute
+  `Icon=` path into the install prefix. The launcher no longer falls back to the
+  generic `system-file-manager` icon.
+
 ## 1.8.8 — 2026-11-17
 
 ### Fixed
