@@ -15,6 +15,9 @@ Item {
     property bool ready: false
     property var minimapLines: []
     property int minimapMax: 1
+    // Git status for this file's gutter stripe: {"12": "add"} from Bridge.gitStatus.
+    property var gitLines: ({})
+    property string gitKind: ""
     // The text that represents "clean": the version on disk at load/save.
     property string cleanText: ""
 
@@ -60,6 +63,9 @@ Item {
         restoreTimer.start();
         refreshHighlight();
         rebuildMinimap();
+        // Not inline: each first look costs a git subprocess, and startup should
+        // paint the document before it asks about the repository.
+        gitTimer.restart();
     }
 
     function setText(text) {
@@ -79,6 +85,23 @@ Item {
         loading = false;
         pane.doc.modified = false;
         textArea.readOnly = pane.doc.readonly === true || pane.doc.binary === true;
+        // A save (or a reload) is the only thing that can change the diff
+        // against HEAD, so this is where the gutter is refreshed.
+        refreshGit();
+    }
+
+    function refreshGit() {
+        var path = pane.doc.path || "";
+        if (!path || Bridge.config.git_gutter === false) {
+            pane.gitLines = ({});
+            pane.gitKind = "";
+            gitCanvas.requestPaint();
+            return;
+        }
+        var status = Bridge.gitStatus(path);
+        pane.gitKind = status.kind || "";
+        pane.gitLines = status.ok ? (status.lines || ({})) : ({});
+        gitCanvas.requestPaint();
     }
 
     function focusEditor() {
@@ -199,13 +222,54 @@ Item {
         }
     }
 
+    // Git diff stripe. It sits to the left of the line numbers and is always
+    // present when enabled, so a marker survives wrap mode and the
+    // line-number toggle. Sparse marks, so a Canvas beats one item per line.
+    Rectangle {
+        id: gitStripe
+        width: Bridge.config.git_gutter === false ? 0 : 6
+        visible: width > 0
+        anchors.top: banner.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        color: Util.alpha(pane.th.surfaceAlt, 0.45)
+        clip: true
+
+        Canvas {
+            id: gitCanvas
+            anchors.fill: parent
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+                var marks = pane.gitLines;
+                if (!marks)
+                    return;
+                var lh = Math.max(1, pane.lineHeight);
+                var top = view.contentItem ? view.contentItem.contentY : 0;
+                var first = Math.max(0, Math.floor(top / lh) - 2);
+                var last = Math.ceil((top + view.height) / lh) + 2;
+                for (var key in marks) {
+                    var line = parseInt(key, 10) - 1;
+                    if (isNaN(line) || line < first || line > last)
+                        continue;
+                    var kind = marks[key];
+                    ctx.fillStyle = kind === "add" ? Util.css(pane.th.success, 0.9)
+                        : kind === "del" ? Util.css(pane.th.danger, 0.9)
+                        : Util.css(pane.th.warning, 0.9);
+                    var y = line * lh - top + textArea.topPadding;
+                    ctx.fillRect(0, y, width, Math.max(2, lh - 1));
+                }
+            }
+        }
+    }
+
     ListView {
         id: gutter
         visible: Bridge.config.line_numbers && !Bridge.config.wrap
         width: visible ? Math.max(44, (String(textArea.lineCount).length + 2) * pane.charWidth + 12) : 0
         anchors.top: banner.bottom
         anchors.bottom: parent.bottom
-        anchors.left: parent.left
+        anchors.left: gitStripe.right
         interactive: false
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -320,16 +384,25 @@ Item {
                 if (!rows || rows.length === 0)
                     return;
                 var usable = height - 8;
-                var rowHeight = Math.max(1, usable / rows.length);
+                // Both dimensions are clamped: with a handful of lines the
+                // "one row per line" scale would otherwise paint a few
+                // full-height bars, and the viewport box would overflow the
+                // canvas (visible as a solid grey minimap on a new file).
+                var rowHeight = Math.min(3, Math.max(1, usable / rows.length));
                 ctx.fillStyle = Util.css(pane.th.muted, 0.42);
                 for (var i = 0; i < rows.length; i++) {
                     var w = Math.max(1, Math.min(width - 8, (rows[i] / pane.minimapMax) * (width - 8)));
                     ctx.fillRect(4, 4 + i * rowHeight, w, Math.max(1, rowHeight - 0.7));
                 }
                 var total = Math.max(1, textArea.lineCount) * Math.max(1, pane.lineHeight);
+                // A document that fits on screen has no scroll position worth
+                // showing; painting the box anyway turned the minimap into a
+                // solid slab on a new file.
+                if (total <= view.height + 1)
+                    return;
                 var top = view.contentItem ? view.contentItem.contentY : 0;
                 var boxY = 4 + (top / total) * usable;
-                var boxH = Math.max(10, (view.height / total) * usable);
+                var boxH = Math.min(usable, Math.max(10, (view.height / total) * usable));
                 ctx.fillStyle = Util.css(pane.th.accent, 0.14);
                 ctx.fillRect(0, boxY, width, boxH);
                 ctx.strokeStyle = Util.css(pane.th.accent, 0.35);
@@ -377,7 +450,11 @@ Item {
     Timer {
         id: scrollRefresh
         interval: 110
-        onTriggered: { pane.refreshHighlight(); miniCanvas.requestPaint(); }
+        onTriggered: {
+            pane.refreshHighlight();
+            miniCanvas.requestPaint();
+            gitCanvas.requestPaint();
+        }
     }
 
     Timer {
@@ -418,6 +495,12 @@ Item {
     }
 
     Timer {
+        id: gitTimer
+        interval: 300
+        onTriggered: pane.refreshGit()
+    }
+
+    Timer {
         id: restoreTimer
         interval: 60
         onTriggered: {
@@ -438,7 +521,9 @@ Item {
     Connections {
         target: Bridge
         function onPaletteChanged() { pane.refreshHighlight(); miniCanvas.requestPaint(); }
+        function onSettingsChanged() { pane.refreshGit(); gitCanvas.requestPaint(); }
     }
 
     onMinimapLinesChanged: miniCanvas.requestPaint()
+    onGitLinesChanged: gitCanvas.requestPaint()
 }

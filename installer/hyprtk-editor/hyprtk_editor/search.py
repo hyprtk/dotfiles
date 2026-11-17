@@ -116,3 +116,67 @@ def selection_for_matches(matches: list[dict], index: int) -> tuple[int, int]:
     index = max(0, min(index, len(matches) - 1))
     item = matches[index]
     return item["start"], item["start"] + item["length"]
+
+
+# -- fuzzy matching (quick open, command palette) ------------------------
+# A subsequence match, scored so that the ranking feels like an editor's
+# "type three letters and get the right file": adjacency beats scattering,
+# a match at a word start beats one mid-word, and a shorter candidate beats a
+# longer one that contains the same letters.
+SEPARATORS = "/\\._- "
+
+
+def fuzzy_score(needle: str, haystack: str) -> int | None:
+    """Score ``needle`` against ``haystack``; ``None`` when it does not match.
+
+    +1 per matched character, +6 when it is adjacent to the previous match,
+    +4 when it starts a word, minus a small penalty for long candidates.
+    Adjacency has to outweigh a word start: otherwise ``m_a_i_n.py`` would beat
+    ``main.py``, because every underscore looks like the start of a word.
+    """
+    if not needle:
+        return 0
+    hay = str(haystack or "").lower()
+    if not hay:
+        return None
+    score = 0
+    position = -1
+    previous = -2
+    for char in needle.lower():
+        index = hay.find(char, position + 1)
+        if index < 0:
+            return None
+        score += 1
+        if index == previous + 1:
+            score += 6
+        if index == 0 or hay[index - 1] in SEPARATORS:
+            score += 4
+        previous = index
+        position = index
+    score -= max(0, len(hay) - len(needle)) // 8
+    return score
+
+
+def rank(items, query: str, keys=("name", "path"), limit: int = 200) -> list[dict]:
+    """Rank ``items`` (dicts) by their best score over ``keys``.
+
+    An empty query keeps the incoming order and respects ``limit`` — that is
+    what "show recents first" means. Ties keep the incoming order too.
+    """
+    rows = [item for item in (items or []) if isinstance(item, dict)]
+    if not query:
+        return rows[:limit]
+    scored = []
+    for order, item in enumerate(rows):
+        best = None
+        for key in keys:
+            value = item.get(key)
+            if not value:
+                continue
+            score = fuzzy_score(query, str(value))
+            if score is not None and (best is None or score > best):
+                best = score
+        if best is not None:
+            scored.append((-best, order, item))
+    scored.sort(key=lambda row: (row[0], row[1]))
+    return [row[2] for row in scored[:limit]]

@@ -3,6 +3,27 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.5] - 2026-11-17
+
+### Changed
+
+- **hyprtk-editor 0.2.1** — the editor's v0.2 waves 1–2, vendored from tag
+  `v0.2.1` (byte-identical in `installer/hyprtk-editor/`):
+  - per-document find state, so a query and its matches no longer follow you
+    across tabs; tab drag-reorder, middle-click close and wheel-to-cycle in the
+    tab strip;
+  - quick open (`Ctrl+P`) over open documents, recents and the current folder,
+    ranked by a fuzzy subsequence score, sharing one card with the command
+    palette;
+  - Pygments tokenising moved off the GUI thread above ~24 KB, with superseded
+    results dropped by generation;
+  - a git diff gutter (added / modified / deleted against HEAD) in its own
+    stripe, so it survives wrap mode and the line-number toggle;
+  - print and export to PDF from a separate light-theme document, with a
+    palette-dressed `QPrintDialog`.
+  - No package or installer surface changed: the editor still needs only
+    PySide6 and Pygments, both already in every family's list.
+
 ## [v1.7.3] - 2026-11-17
 
 ### Changed

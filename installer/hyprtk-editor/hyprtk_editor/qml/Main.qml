@@ -29,6 +29,17 @@ ApplicationWindow {
     property int matchIndex: -1
     property var pendingOverwrite: null
     property string pendingReloadId: ""
+    // Find state per document: {query, replacement, case, word, regex,
+    // replaceMode, visible, matchIndex, matches}. The bar is one widget that
+    // shows the active document's record, so switching tabs no longer leaks a
+    // query into another file.
+    property var find: ({})
+    property bool findSyncing: false
+    // Tab drag state (non-live reorder: the model is only touched on release,
+    // because reordering a Repeater destroys the delegate holding the grab).
+    property string dragTabId: ""
+    property int dropIndex: -1
+    property bool tabDragging: false
     // Dirty state is owned here, keyed by document id. QML hands the pane a
     // *copy* of the doc object, so the pane cannot mutate this map's source.
     property var dirty: ({})
@@ -87,6 +98,53 @@ ApplicationWindow {
             index = 0;
         var next = (index + step + docs.length) % docs.length;
         win.activateTab(docs[next].id);
+    }
+
+    // -- tab strip -------------------------------------------------------
+    // Insertion index for a pointer x measured in the tab row: past a tab's
+    // midpoint means "after it", so dragging left and right feels symmetric.
+    function indexAtX(row, x) {
+        var count = win.docs.length;
+        var position = 0;
+        for (var i = 0; i < count; i++) {
+            var child = row.children[i];
+            if (!child)
+                break;
+            if (x < position + child.width / 2)
+                return i;
+            position += child.width + row.spacing;
+        }
+        return count;
+    }
+
+    function commitTabDrag() {
+        var id = win.dragTabId;
+        var target = win.dropIndex;
+        win.cancelTabDrag();
+        if (id && target >= 0)
+            win.moveDocument(id, target);
+    }
+
+    function cancelTabDrag() {
+        win.tabDragging = false;
+        win.dragTabId = "";
+        win.dropIndex = -1;
+    }
+
+    function moveDocument(id, target) {
+        var from = win.docIndex(id);
+        if (from < 0)
+            return;
+        var list = win.docs.slice();
+        var item = list.splice(from, 1)[0];
+        var to = from < target ? target - 1 : target;
+        to = Math.max(0, Math.min(list.length, to));
+        if (to === from)
+            return;
+        list.splice(to, 0, item);
+        win.docs = list;
+        win.bump();
+        win.scheduleSessionSave();
     }
 
     function titleText() {
@@ -171,12 +229,21 @@ ApplicationWindow {
     function activateTab(id) {
         if (!panes[id])
             return;
+        // The bar always shows the *active* document's find record, so the
+        // outgoing one is written back before the switch.
+        if (win.activeId && win.activeId !== id && win.find[win.activeId]) {
+            win.storeFindQuery();
+            var outgoing = win.find[win.activeId];
+            outgoing.matches = win.matches;
+            outgoing.matchIndex = win.matchIndex;
+        }
         activeId = id;
         for (var key in panes)
             panes[key].visible = (key === id);
         var pane = panes[id];
         pane.visible = true;
         pane.focusEditor();
+        win.refreshFindForActive();
         win.bump();
         win.updateWelcome();
         win.scheduleSessionSave();
@@ -213,6 +280,13 @@ ApplicationWindow {
                 if (key !== id)
                     clean[key] = win.dirty[key];
             win.dirty = clean;
+        }
+        if (win.find[id] !== undefined) {
+            var kept = {};
+            for (var fkey in win.find)
+                if (fkey !== id)
+                    kept[fkey] = win.find[fkey];
+            win.find = kept;
         }
         var index = docIndex(id);
         docs = docs.filter(function (item) { return item.id !== id; });
@@ -466,19 +540,96 @@ ApplicationWindow {
     }
 
     // -- search ----------------------------------------------------------
+    // One widget, one record per document. Everything below reads and writes
+    // through findRecord() so a query, its matches and the replace options
+    // survive a tab switch instead of leaking into the next file.
+    function findRecord(id) {
+        if (!id)
+            return {
+                query: "", replacement: "", caseSensitive: false, wholeWord: false,
+                regex: false, replaceMode: false, visible: false,
+                matchIndex: -1, matches: []
+            };
+        var record = win.find[id];
+        if (!record) {
+            record = {
+                query: "", replacement: "", caseSensitive: false, wholeWord: false,
+                regex: false, replaceMode: false, visible: false,
+                matchIndex: -1, matches: []
+            };
+            win.find[id] = record;
+        }
+        return record;
+    }
+
+    function loadFindIntoBar(id) {
+        var record = win.findRecord(id);
+        // Setting the field re-emits queryEdited; the guard stops that echo
+        // from kicking a search and stealing the caret on a tab switch.
+        win.findSyncing = true;
+        findBar.query = record.query;
+        findBar.replacement = record.replacement;
+        findBar.caseSensitive = record.caseSensitive;
+        findBar.wholeWord = record.wholeWord;
+        findBar.regex = record.regex;
+        findBar.replaceMode = record.replaceMode;
+        findBar.matchCount = record.matches ? record.matches.length : 0;
+        findBar.matchIndex = record.matchIndex;
+        findBar.visible = record.visible && !!win.activePane();
+        win.findSyncing = false;
+    }
+
+    function storeFindQuery() {
+        if (!win.activeId)
+            return;
+        var record = win.findRecord(win.activeId);
+        record.query = findBar.query;
+        record.replacement = findBar.replacement;
+        record.caseSensitive = findBar.caseSensitive;
+        record.wholeWord = findBar.wholeWord;
+        record.regex = findBar.regex;
+        record.replaceMode = findBar.replaceMode;
+        record.visible = findBar.visible;
+    }
+
+    // Called by activateTab: show this document's own search, or nothing.
+    function refreshFindForActive() {
+        win.matches = [];
+        win.matchIndex = -1;
+        var record = win.find[win.activeId];
+        win.loadFindIntoBar(win.activeId);
+        if (!record || !record.visible || !record.query) {
+            if (win.activeId)
+                Bridge.setSearch(win.activeId, []);
+            var pane = win.activePane();
+            if (pane)
+                pane.refreshHighlight();
+            return;
+        }
+        win.runSearch(false);
+    }
+
     function openFind(replaceMode) {
         if (!activePane())
             return;
-        findBar.replaceMode = replaceMode;
-        findBar.visible = true;
+        var record = win.findRecord(win.activeId);
+        record.visible = true;
+        record.replaceMode = replaceMode;
+        win.loadFindIntoBar(win.activeId);
         findBar.focusQuery();
         win.runSearch(false);
     }
 
     function closeFind() {
-        findBar.visible = false;
+        var record = win.findRecord(win.activeId);
+        record.visible = false;
+        record.matches = [];
+        record.matchIndex = -1;
         win.matches = [];
         win.matchIndex = -1;
+        findBar.visible = false;
+        findBar.matchCount = 0;
+        findBar.matchIndex = -1;
         if (activeId)
             Bridge.setSearch(activeId, []);
         var pane = activePane();
@@ -490,7 +641,9 @@ ApplicationWindow {
         var pane = activePane();
         if (!pane)
             return;
+        var record = win.findRecord(win.activeId);
         var query = findBar.query;
+        win.storeFindQuery();
         if (!query) {
             win.matches = [];
             win.matchIndex = -1;
@@ -502,10 +655,18 @@ ApplicationWindow {
         }
         win.matches = Bridge.findAll(pane.area.text, query, findBar.caseSensitive,
                                      findBar.wholeWord, findBar.regex);
-        win.matchIndex = win.matches.length > 0 ? 0 : -1;
+        // selectFirst === true means "the user is typing": jump to the first
+        // match. A tab switch passes false and keeps the remembered position.
+        var keep = record.matchIndex;
+        if (win.matches.length === 0)
+            win.matchIndex = -1;
+        else if (selectFirst === true || keep < 0 || keep >= win.matches.length)
+            win.matchIndex = 0;
+        else
+            win.matchIndex = keep;
         findBar.matchCount = win.matches.length;
         if (selectFirst !== false && win.matchIndex >= 0)
-            win.selectMatch(0);
+            win.selectMatch(win.matchIndex);
         win.applyMatchHighlight();
     }
 
@@ -520,6 +681,11 @@ ApplicationWindow {
         }
         Bridge.setSearch(activeId, ranges);
         findBar.matchIndex = win.matchIndex;
+        var record = win.find[win.activeId];
+        if (record) {
+            record.matches = win.matches;
+            record.matchIndex = win.matchIndex;
+        }
         var pane = activePane();
         if (pane)
             pane.refreshHighlight();
@@ -615,6 +781,71 @@ ApplicationWindow {
         Bridge.updateSettings({ font_size: Math.max(9, Math.min(32, size)) });
     }
 
+    // -- printing --------------------------------------------------------
+    function exportPdf() {
+        if (!activeId)
+            return;
+        var result = Bridge.exportPdf(activeId);
+        if (result.cancelled)
+            return;
+        if (result.ok)
+            toast.show("PDF written to " + result.path, "ok");
+        else
+            toast.show(result.error || "Export failed", "error");
+    }
+
+    function printDocument() {
+        if (!activeId)
+            return;
+        var result = Bridge.printDoc(activeId);
+        if (result.cancelled)
+            return;
+        if (result.ok)
+            toast.show("Sent " + (result.title || "document") + " to the printer", "ok");
+        else
+            toast.show(result.error || "Printing failed", "error");
+    }
+
+    // -- quick open ------------------------------------------------------
+    function quickOpenCandidates() {
+        var doc = activeDoc();
+        var list = Bridge.quickOpen(doc && doc.path ? doc.path : "");
+        var seen = {};
+        var out = [];
+        // Open documents first: a buffer that is already open is more useful
+        // than a duplicate recent row, and it also covers a path whose file
+        // has since been deleted from disk.
+        for (var i = 0; i < docs.length; i++) {
+            if (!docs[i].path || seen[docs[i].path])
+                continue;
+            seen[docs[i].path] = true;
+            out.push({
+                path: docs[i].path,
+                name: docs[i].title || docs[i].path,
+                folder: "",
+                source: "open"
+            });
+        }
+        for (var j = 0; j < list.length; j++) {
+            if (seen[list[j].path])
+                continue;
+            seen[list[j].path] = true;
+            out.push(list[j]);
+        }
+        return out;
+    }
+
+    function openQuickOpen() {
+        quickOpen.open(win.quickOpenCandidates());
+    }
+
+    function toggleQuickOpen() {
+        if (quickOpen.visible)
+            quickOpen.close();
+        else
+            win.openQuickOpen();
+    }
+
     // -- command palette -------------------------------------------------
     function buildActions() {
         var doc = activeDoc();
@@ -627,6 +858,7 @@ ApplicationWindow {
 
         add("New file", "Ctrl+N", function () { win.newDocument(); });
         add("Open file…", "Ctrl+O", function () { win.openFiles(); });
+        add("Quick open…", "Ctrl+P", function () { win.openQuickOpen(); });
         add("Save", "Ctrl+S", function () { win.saveActive(false); });
         add("Save as…", "Ctrl+Shift+S", function () { win.saveActive(true); });
         add("Reload from disk", "", function () {
@@ -662,6 +894,7 @@ ApplicationWindow {
         add("Toggle word wrap", "Alt+Z", function () { Bridge.updateSettings({ wrap: !cfg.wrap }); });
         add("Toggle line numbers", "", function () { Bridge.updateSettings({ line_numbers: !cfg.line_numbers }); });
         add("Toggle minimap", "", function () { Bridge.updateSettings({ minimap: !cfg.minimap }); });
+        add("Toggle git gutter", "", function () { Bridge.updateSettings({ git_gutter: !cfg.git_gutter }); });
         add("Toggle current-line highlight", "", function () { Bridge.updateSettings({ highlight_current_line: !cfg.highlight_current_line }); });
         add("Toggle bracket matching", "", function () { Bridge.updateSettings({ match_brackets: !cfg.match_brackets }); });
         add("Toggle syntax highlighting", "", function () { Bridge.updateSettings({ syntax: !cfg.syntax }); });
@@ -698,6 +931,8 @@ ApplicationWindow {
             if (doc && doc.path)
                 Bridge.copyToClipboard(doc.path);
         });
+        add("Export as PDF…", "", function () { win.exportPdf(); });
+        add("Print…", "", function () { win.printDocument(); });
         add("Preferences…", "Ctrl+,", function () { settingsDialog.open(); });
         add("About hyprtk-editor", "", function () {
             toast.show("hyprtk-editor " + Bridge.version + " — Qt " + Qt.application.version, "info");
@@ -807,9 +1042,17 @@ ApplicationWindow {
                             delegate: Rectangle {
                                 id: tab
 
+                                // Drag state lives on the delegate: the row is
+                                // never reordered mid-drag, so this instance
+                                // keeps the mouse grab until release.
+                                property bool dragArmed: false
+                                property real dragStartX: 0
+                                property real dragStartY: 0
+
                                 width: Math.min(220, Math.max(110, tabLabel.implicitWidth + 46))
                                 height: 32
                                 radius: 7
+                                opacity: win.tabDragging && modelData.id === win.dragTabId ? 0.55 : 1.0
                                 color: modelData.id === win.activeId
                                     ? win.th.background
                                     : (tabMouse.containsMouse ? Util.alpha(win.th.surfaceAlt, 0.7) : "transparent")
@@ -828,13 +1071,81 @@ ApplicationWindow {
                                     elide: Text.ElideMiddle
                                 }
 
+                                // Insertion marker: a 2 px accent line between
+                                // tabs, at the boundary the drop would land on.
+                                Rectangle {
+                                    width: 2
+                                    height: parent.height - 6
+                                    radius: 1
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    x: -2
+                                    color: win.th.accent
+                                    visible: win.tabDragging && win.dropIndex === index
+                                }
+                                Rectangle {
+                                    width: 2
+                                    height: parent.height - 6
+                                    radius: 1
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    x: parent.width
+                                    color: win.th.accent
+                                    visible: win.tabDragging && index === win.docs.length - 1
+                                        && win.dropIndex === win.docs.length
+                                }
+
                                 MouseArea {
                                     id: tabMouse
                                     anchors.fill: parent
                                     anchors.rightMargin: 24
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: win.activateTab(modelData.id)
+                                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+
+                                    onClicked: function (mouse) {
+                                        if (mouse.button === Qt.MiddleButton)
+                                            win.closeTab(modelData.id);
+                                        else
+                                            win.activateTab(modelData.id);
+                                    }
+
+                                    onPressed: function (mouse) {
+                                        if (mouse.button !== Qt.LeftButton)
+                                            return;
+                                        tab.dragArmed = true;
+                                        tab.dragStartX = mouse.x;
+                                        tab.dragStartY = mouse.y;
+                                    }
+
+                                    onPositionChanged: function (mouse) {
+                                        if (!pressed || !tab.dragArmed)
+                                            return;
+                                        if (!win.tabDragging
+                                            && Math.abs(mouse.x - tab.dragStartX) < 8
+                                            && Math.abs(mouse.y - tab.dragStartY) < 8)
+                                            return;
+                                        win.tabDragging = true;
+                                        win.dragTabId = modelData.id;
+                                        var point = tabMouse.mapToItem(tabsRow, mouse.x, mouse.y);
+                                        win.dropIndex = win.indexAtX(tabsRow, point.x);
+                                    }
+
+                                    onReleased: {
+                                        tab.dragArmed = false;
+                                        if (win.tabDragging)
+                                            win.commitTabDrag();
+                                    }
+
+                                    onCanceled: {
+                                        tab.dragArmed = false;
+                                        win.cancelTabDrag();
+                                    }
+
+                                    onWheel: function (wheel) {
+                                        if (wheel.angleDelta.y > 0)
+                                            win.cycleTab(-1);
+                                        else if (wheel.angleDelta.y < 0)
+                                            win.cycleTab(1);
+                                    }
                                 }
 
                                 IconButton {
@@ -968,12 +1279,23 @@ ApplicationWindow {
         anchors.right: parent.right
         anchors.topMargin: 54
         anchors.rightMargin: 28
-        onQueryEdited: searchTimer.restart()
+        onQueryEdited: {
+            if (win.findSyncing)
+                return;
+            win.storeFindQuery();
+            searchTimer.restart();
+        }
         onNextRequested: win.findStep(false)
         onPreviousRequested: win.findStep(true)
         onReplaceOneRequested: win.replaceOne()
         onReplaceAllRequested: win.replaceAll()
         onClosed: win.closeFind()
+    }
+
+    QuickOpen {
+        id: quickOpen
+        anchors.fill: parent
+        onChosen: function (path) { win.openPath(path); }
     }
 
     CommandPalette {
@@ -1116,6 +1438,7 @@ ApplicationWindow {
     Shortcut { sequence: "Ctrl+G"; onActivated: win.gotoLinePrompt() }
     Shortcut { sequence: "Ctrl+K"; onActivated: win.openPalette() }
     Shortcut { sequence: "Ctrl+Shift+P"; onActivated: win.openPalette() }
+    Shortcut { sequence: "Ctrl+P"; onActivated: win.toggleQuickOpen() }
     Shortcut { sequence: "Ctrl+,"; onActivated: settingsDialog.open() }
     Shortcut { sequence: "Ctrl+Shift+D"; onActivated: win.lineAction("duplicate") }
     Shortcut { sequence: "Ctrl+Shift+K"; onActivated: win.lineAction("deleteLines") }

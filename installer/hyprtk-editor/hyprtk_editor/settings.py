@@ -36,6 +36,8 @@ DEFAULTS: dict = {
     "match_brackets": True,
     "minimap": True,
     "syntax": True,
+    "git_gutter": True,
+    "print_colour": True,
     "restore_session": True,
     "autosave_seconds": 5,
     "trim_trailing_on_save": False,

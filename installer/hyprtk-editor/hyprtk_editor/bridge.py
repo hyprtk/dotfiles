@@ -12,17 +12,31 @@ import os
 import shutil
 import subprocess
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
-from PySide6.QtCore import Property, QFileSystemWatcher, QObject, Signal, Slot
+from PySide6.QtCore import (
+    Property,
+    QCoreApplication,
+    QFileSystemWatcher,
+    QObject,
+    Signal,
+    Slot,
+)
 from PySide6.QtGui import QColor, QGuiApplication
 from PySide6.QtQuick import QQuickTextDocument
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QDialog, QFileDialog
 
-from . import __version__, dialogs, fileio, languages, palette, search, textops
-from .highlight import PAGE_BLOCKS, Highlighter, spans
+from . import __version__, dialogs, fileio, gitdiff, languages, palette, printdoc, search, textops
+from .highlight import MAX_HIGHLIGHT_CHARS, PAGE_BLOCKS, Highlighter, spans
 from .session import Drafts, Session
 from .settings import MONO_FAMILIES, Settings
+
+PDF_FILTER = "PDF document (*.pdf);;All files (*)"
+# Below this size tokenising is cheap enough to stay on the GUI thread, which
+# avoids a one-frame flicker on the file you are actually typing in. Above it,
+# the work goes to a worker: Pygments takes ~4 ms per KB of code.
+SPANS_INLINE_CHARS = 24_000
 
 OPEN_FILTER = (
     "Text and code (*.txt *.md *.markdown *.rst *.org *.py *.qml *.js *.ts "
@@ -49,6 +63,9 @@ class Bridge(QObject):
     draftsChanged = Signal()
     fileChanged = Signal(str)
     toast = Signal(str, str)
+    # Emitted from the tokenising worker; the connection to _on_spans_ready is
+    # queued, so QSyntaxHighlighter is only ever touched on the GUI thread.
+    spansReady = Signal(str, int, "QVariant")
 
     def __init__(self, parent=None, initial=None) -> None:
         super().__init__(parent)
@@ -61,6 +78,13 @@ class Bridge(QObject):
         self._watcher = QFileSystemWatcher(self)
         self._watcher.fileChanged.connect(self._on_file_changed)
         self._path_docs: dict[str, set[str]] = {}
+        self._spans_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="hyprtk-spans")
+        self._spans_generation: dict[str, int] = {}
+        self.spansReady.connect(self._on_spans_ready)
+        self._git = gitdiff.GitDiff()
+        app = QCoreApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self._shutdown)
 
         # Watch the live pywal palette so the editor follows a wallpaper change
         # without a restart, like the bar does.
@@ -189,9 +213,14 @@ class Bridge(QObject):
 
     @Slot(str, result=str)
     def saveDialog(self, suggested: str = ""):
+        return self._save_dialog(suggested, OPEN_FILTER)
+
+    def _save_dialog(self, suggested: str, name_filter: str) -> str:
         start = suggested or os.path.join(self._start_dir(), "Untitled.txt")
         dialog = self._file_dialog("Save File", start, QFileDialog.AnyFile)
         dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if name_filter:
+            dialog.setNameFilter(name_filter)
         chosen = dialog.selectedFiles() if dialog.exec() == QFileDialog.Accepted else []
         dialog.deleteLater()
         path = chosen[0] if chosen else ""
@@ -323,6 +352,7 @@ class Bridge(QObject):
 
     @Slot(str)
     def detach(self, doc_id: str):
+        self._spans_generation[str(doc_id)] = self._spans_generation.get(str(doc_id), 0) + 1
         item = self._editors.pop(str(doc_id), None)
         if item is not None:
             item.highlighter.setDocument(None)
@@ -367,14 +397,52 @@ class Bridge(QObject):
         item = self._editors.get(str(doc_id))
         if item is None:
             return
+        key = str(doc_id)
         text = item.document.toPlainText()
-        if not self.settings.get("syntax", True) or len(text) > 400_000:
+        if not self.settings.get("syntax", True) or len(text) > MAX_HIGHLIGHT_CHARS:
             item.highlighter.set_spans({})
             item.highlighter.set_enabled(False)
             return
         item.highlighter.set_enabled(True)
-        item.highlighter.set_spans(spans(text, item.alias))
-        self.refresh(doc_id, first, last)
+        # Every call supersedes the last one; a result carrying an older
+        # generation is dropped when it arrives.
+        generation = self._spans_generation.get(key, 0) + 1
+        self._spans_generation[key] = generation
+        alias = item.alias
+        if len(text) <= SPANS_INLINE_CHARS:
+            item.highlighter.set_spans(spans(text, alias))
+            self.refresh(doc_id, first, last)
+            return
+        self._spans_pool.submit(self._tokenise, key, text, alias, generation, first, last)
+
+    def _tokenise(self, key: str, text: str, alias: str, generation: int, first: int, last: int) -> None:
+        """Worker-thread half of :meth:`recompute`."""
+        try:
+            value = spans(text, alias)
+        except Exception:
+            value = {}
+        try:
+            self.spansReady.emit(key, generation, {"spans": value, "first": first, "last": last})
+        except RuntimeError:
+            # The bridge is gone (application exit): nothing to apply.
+            pass
+
+    @Slot(str, int, "QVariant")
+    def _on_spans_ready(self, key: str, generation: int, payload) -> None:
+        if self._spans_generation.get(str(key), 0) != int(generation):
+            return
+        item = self._editors.get(str(key))
+        if item is None:
+            return
+        try:
+            data = dict(payload or {})
+        except Exception:
+            return
+        item.highlighter.set_spans(data.get("spans") or {})
+        self.refresh(str(key), int(data.get("first") or 0), int(data.get("last") or 0))
+
+    def _shutdown(self) -> None:
+        self._spans_pool.shutdown(wait=False, cancel_futures=True)
 
     @Slot(str, str)
     def setLanguage(self, doc_id: str, alias: str):
@@ -436,6 +504,141 @@ class Bridge(QObject):
     def replaceAll(self, text: str, needle: str, replacement: str, case: bool, word: bool, regex: bool):
         new_text, count = search.replace_all(text, self._query(needle, case, word, regex), replacement)
         return {"text": new_text, "count": count}
+
+    # -- quick open ------------------------------------------------------
+    @Slot(str, result="QVariantList")
+    def quickOpen(self, current_path: str = ""):
+        """Candidates for Ctrl+P: recent files, then the current document's folder.
+
+        Entries carry ``path``/``name``/``folder``/``source``; the QML side adds
+        the documents that are already open (an unsaved buffer has no path, so it
+        can only come from there) and asks :meth:`rankFiles` to order the mix.
+        """
+        seen: set[str] = set()
+        out: list[dict] = []
+
+        def push(path: str, source: str) -> None:
+            path = str(path or "")
+            if not path or path in seen or not os.path.isfile(path):
+                return
+            seen.add(path)
+            out.append({
+                "path": path,
+                "name": fileio.display_name(path),
+                "folder": os.path.dirname(path),
+                "source": source,
+            })
+
+        for path in self.settings.get("recent") or []:
+            push(str(path), "recent")
+
+        folder = os.path.dirname(str(current_path or "")) or self._start_dir()
+        if folder and os.path.isdir(folder):
+            try:
+                entries = sorted(os.scandir(folder), key=lambda item: item.name.lower())
+            except OSError:
+                entries = []
+            for entry in entries:
+                if entry.name.startswith("."):
+                    continue
+                try:
+                    if not entry.is_file():
+                        continue
+                except OSError:
+                    continue
+                push(entry.path, "folder")
+                if len(out) >= 400:
+                    break
+        return out[:400]
+
+    @Slot("QVariantList", str, result="QVariantList")
+    def rankFiles(self, items, query: str = ""):
+        return search.rank(items, str(query or ""), limit=200)
+
+    # -- git gutter ------------------------------------------------------
+    @Slot(str, result="QVariantMap")
+    def gitStatus(self, path: str):
+        """Added/modified/deleted lines for the gutter, cached by mtime."""
+        status = self._git.status(str(path or ""))
+        return status.as_dict()
+
+    # -- printing --------------------------------------------------------
+    def _print_document(self, doc_id: str):
+        """Build a standalone light-theme document for a pane, or None."""
+        item = self._editors.get(str(doc_id))
+        if item is None:
+            return None, ""
+        text = item.document.toPlainText()
+        title = item.path and os.path.basename(item.path) or "Untitled"
+        document = printdoc.build(
+            text,
+            title=title,
+            alias=item.alias,
+            family=self.settings.resolved_font(),
+            size=printdoc.FONT_SIZE,
+            colour=bool(self.settings.get("print_colour", True)),
+        )
+        return document, title
+
+    @Slot(str, str, result="QVariantMap")
+    def writePdf(self, doc_id: str, path: str):
+        """Write the pane as PDF without a dialog (the export dialog's tail)."""
+        document, title = self._print_document(doc_id)
+        if document is None:
+            return {"ok": False, "error": "No such document"}
+        target = str(path or "")
+        if not target:
+            return {"ok": False, "error": "No path"}
+        try:
+            size = printdoc.write_pdf(document, target, title)
+        except Exception as exc:  # a bad path, a read-only directory
+            return {"ok": False, "error": str(exc)}
+        if not size:
+            return {"ok": False, "error": "Could not write " + target}
+        return {"ok": True, "path": target, "bytes": size, "title": title}
+
+    @Slot(str, result="QVariantMap")
+    def exportPdf(self, doc_id: str):
+        item = self._editors.get(str(doc_id))
+        if item is None:
+            return {"ok": False, "error": "No such document"}
+        directory, _ = os.path.split(item.path or "")
+        stem = os.path.splitext(os.path.basename(item.path))[0] if item.path else "Untitled"
+        suggested = os.path.join(directory, stem + ".pdf")
+        target = self._save_dialog(suggested, PDF_FILTER)
+        if not target:
+            return {"ok": False, "cancelled": True}
+        return self.writePdf(doc_id, target)
+
+    @Slot(str, result="QVariantMap")
+    def printDoc(self, doc_id: str):
+        document, title = self._print_document(doc_id)
+        if document is None:
+            return {"ok": False, "error": "No such document"}
+        try:
+            from PySide6.QtPrintSupport import QPrintDialog
+        except Exception as exc:
+            return {"ok": False, "error": "Printing is not available: " + str(exc)}
+
+        printer = printdoc.prepare_printer(title)
+        dialog = QPrintDialog(printer)
+        dialog.setWindowTitle("Print " + title)
+        dialogs.apply(dialog, self._palette, self.settings.resolved_font(),
+                      int(self.settings.get("font_size") or 13))
+        window = QGuiApplication.focusWindow()
+        if window is not None:
+            dialog.winId()
+            dialog.windowHandle().setTransientParent(window)
+        accepted = dialog.exec() == QDialog.Accepted
+        dialog.deleteLater()
+        if not accepted:
+            return {"ok": False, "cancelled": True}
+        try:
+            printdoc.print_to(printer, document)
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True, "title": title}
+
 
     # -- editing helpers -------------------------------------------------
     @Slot(str, int, int, str, str, int, bool, result="QVariantMap")

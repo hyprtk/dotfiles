@@ -153,6 +153,8 @@ Rectangle {
                             { key: "match_brackets", label: "Match brackets", hint: "" },
                             { key: "minimap", label: "Minimap", hint: "" },
                             { key: "syntax", label: "Syntax highlighting", hint: "Pygments; viewport only for speed" },
+                            { key: "git_gutter", label: "Git diff gutter", hint: "Added/modified/deleted lines, from git diff against HEAD" },
+                            { key: "print_colour", label: "Colour in printed output", hint: "Light syntax theme, so the page stays readable on paper" },
                             { key: "insert_spaces", label: "Insert spaces on Tab", hint: "" },
                             { key: "trim_trailing_on_save", label: "Trim trailing whitespace on save", hint: "" },
                             { key: "restore_session", label: "Restore session on start", hint: "" }
