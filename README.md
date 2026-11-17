@@ -16,6 +16,9 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Li
 
 ---
 
+> **The hyprtk suite** — this repository is the desktop itself.
+> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
+
 ## What is this?
 
 A curated, consistent desktop configuration that replaces the default look and feel of your Linux desktop with a polished Hyprland setup. One wallpaper drives every colour on screen via **pywal16** (bundled) — hyprtk-bar-qt, the app launcher, the lock screen and even your icons all stay in sync.
@@ -158,6 +161,26 @@ All theming (bar theme, pywal, icons, lock screen, SDDM/GRUB) is changed from
 | --- | --- |
 | `Super + left mouse` | Move a window |
 | `Super + Shift + left mouse` | Move a desktop widget (drop near another to snap them together) |
+
+## Suite repositories
+
+hyprtk is one desktop kept in seven repositories. **This one is the desktop**:
+the installer, the Hyprland configuration, the themes and the scripts. The apps
+are separate repositories, each with its own installer, vendored into this tree
+so a single install lays down all of them:
+
+| project | what it is | how it lands |
+| --- | --- | --- |
+| [**dotfiles**](https://github.com/hyprtk/dotfiles) | this repository — any-distro installer, Hyprland Lua config, themes, 60+ scripts | `1-install.sh` |
+| [**hyprtk-bar-qt**](https://github.com/hyprtk/hyprtk-bar-qt) | the Qt6/QML (Quickshell) bar: launcher, notifications, tray, quick settings, theme manager, desktop widgets | vendored, installed, autostarted |
+| [**hyprtk-fm**](https://github.com/hyprtk/hyprtk-file-manager) | the Qt6/QML file manager — default for `inode/directory`, `Super+F` and the bar's **Files** link | vendored in the bar installer |
+| [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor — default for `text/plain` and `text/markdown`, `Super+E` | vendored, installed after the bar |
+| [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
+| [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |
+| [**Hyprtk-ISO-Creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed | shipped installer app |
+
+The two apps without a standalone installer for the desktop itself
+(`hyprtk-usb`, `Hyprtk-ISO-Creator`) live in this tree under `installer/`.
 
 ## Applications
 

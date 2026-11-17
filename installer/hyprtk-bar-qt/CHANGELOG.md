@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — documentation
+
+- The README and this changelog now describe the project as one of the seven
+  repositories that make up the hyprtk suite, with links to the rest of them and
+  a note on how this one lands in the desktop. No code change.
+
 ## 0.43.8 — 2026-11-17
 
 - **System-wide install mode (`--system`).** The installer can put the bar
@@ -1236,3 +1242,7 @@ Initial Qt/QML rewrite scaffold (Quickshell + Python backend).
 
 Chosen architecture: QML presentation + Python/IPC logic, because PySide6/
 QtWidgets has no supported Wayland layer-shell binding.
+
+---
+
+Part of the **hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — documentation
+
+- The README and this changelog now describe the project as one of the seven
+  repositories that make up the hyprtk suite, with links to the rest of them and
+  a note on how this one lands in the desktop. No code change.
+
 ## 0.1.5 — 2026-11-17
 
 - The right-click menu over the text (and over the find, replace, prompt and
@@ -72,3 +78,7 @@ First working scaffold of the suite's text editor.
 - pywal/bar palette with palette-derived syntax colours and live reload
 - File watching + reload, drag and drop, hyprtk-fm/terminal/clipboard integration
 - Installer, desktop entry, icon, 73 unit tests and a QA script
+
+---
+
+Part of the **hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)

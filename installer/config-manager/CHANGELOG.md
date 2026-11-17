@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — documentation
+
+- The README and this changelog now describe the project as one of the seven
+  repositories that make up the hyprtk suite, with links to the rest of them and
+  a note on how this one lands in the desktop. No code change.
+
 ## 0.2.2 — 2026-10-23 (live monitor output/mode pickers)
 
 - New `monitors.list` RPC: reads every connected output and its
@@ -139,3 +145,7 @@ Initial scaffold for the hyprtk Hyprland configuration manager.
 ### Notes
 - `hyprtk-bar-qt` Animations move-out is planned for M3; this release only reads
   its animation keys.
+
+---
+
+Part of the **hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)

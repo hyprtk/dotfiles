@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — documentation
+
+- The README and this changelog now describe the project as one of the seven
+  repositories that make up the hyprtk suite, with links to the rest of them and
+  a note on how this one lands in the desktop. No code change.
+
 ## 1.8.7 — 2026-11-17
 
 ### Added
@@ -646,3 +652,7 @@ M1 core browser.
 - Drag and drop (manual verification pending).
 - No file operations yet (M2: copy/move/trash/rename, conflict dialog, undo).
 - Settings are in-memory only (persistence in M4).
+
+---
+
+Part of the **hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)

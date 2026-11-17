@@ -1,11 +1,13 @@
 # hyprtk-file-manager
 
+> **Part of the hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
+
 A fast, keyboard-first file manager for the hyprtk desktop — Qt 6 QML
 (Quickshell) on the front, a Python backend behind it. Clean like Nautilus,
 with the power of Dolphin/Yazi one shortcut away. It follows the suite's live
 pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 
-**Current version: 1.8.1** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 1.8.7** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -194,10 +196,24 @@ Notes and gotchas for contributors:
 
 ## Part of the hyprtk suite
 
-Vendored into the suite installer and used as the default file manager (the
-bar's **Files** quick link, `Super+F`, XDG `inode/directory`), with Thunar kept
-as a fallback. This repository remains the source of truth; update it first,
-then re-vendor.
+hyprtk is one desktop kept in seven repositories: every one of them installs
+or configures part of the same pywal-themed, Arch-first Hyprland setup.
+
+| project | what it is |
+| --- | --- |
+| [**dotfiles**](https://github.com/hyprtk/dotfiles) | the desktop itself: the any-distro installer, the Hyprland Lua config, themes and 60+ scripts |
+| [**hyprtk-bar-qt**](https://github.com/hyprtk/hyprtk-bar-qt) | the Qt6/QML (Quickshell) bar and everything it owns: launcher, notifications, tray, quick settings, desktop widgets |
+| [**hyprtk-fm**](https://github.com/hyprtk/hyprtk-file-manager) | the Qt6/QML file manager, default for `Super+F` and `inode/directory` |
+| [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor, default for `text/plain` and `text/markdown` |
+| [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI, opened from the bar's Settings |
+| [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a hyprtk ISO to a USB stick, with optional persistence |
+| [**ISO creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed |
+
+**This project is the file manager** in that list. It is the default handler
+for `inode/directory` and the bar's **Files** quick link, with Thunar kept as
+a fallback; the desktop as a whole lives in the
+[dotfiles](https://github.com/hyprtk/dotfiles) repository. This repository is
+the source of truth — update it first, then re-vendor.
 
 ## License
 

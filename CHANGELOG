@@ -3,6 +3,16 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.3] - 2026-11-17
+
+### Changed
+
+- **Documentation: the suite is now described as one desktop in seven
+  repositories.** Every app README and CHANGELOG (bar-qt, file manager, editor,
+  config-manager, hyprtk-usb, ISO creator) carries a suite banner, a
+  cross-linked table of the sibling projects and a note on how it lands in the
+  desktop; the wikis get the same in their shared footer.
+
 ## [v1.7.2] - 2026-11-17
 
 ### Fixed
