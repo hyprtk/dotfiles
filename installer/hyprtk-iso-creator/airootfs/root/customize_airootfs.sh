@@ -100,26 +100,23 @@ if [ -x /etc/skel/hyprtk/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.
     bash /etc/skel/hyprtk/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.sh >/dev/null 2>&1 || true
 fi
 
-log "running first-login setup for $LIVE_USER (hyprtk-bar-qt, hyprtk-editor + pywal)"
+log "installing the suite system-wide (hyprtk-bar-qt, hyprtk-fm, hyprtk-editor)"
+bash "$LIVE_HOME/hyprtk/installer/hyprtk-bar-qt/install.sh" --system --no-deps \
+    || log "WARN: system hyprtk-bar-qt install did not finish"
+bash "$LIVE_HOME/hyprtk/installer/hyprtk-file-manager/install.sh" --system \
+    || log "WARN: system hyprtk-file-manager install did not finish"
+bash "$LIVE_HOME/hyprtk/installer/hyprtk-editor/install.sh" --system \
+    || log "WARN: system hyprtk-editor install did not finish"
+
+log "running first-login setup for $LIVE_USER (config, palette, defaults)"
 runuser -u "$LIVE_USER" -- env \
     HOME="$LIVE_HOME" USER="$LIVE_USER" LOGNAME="$LIVE_USER" \
+    XDG_DATA_HOME="$LIVE_HOME/.local/share" \
+    XDG_CONFIG_HOME="$LIVE_HOME/.config" \
+    XDG_CACHE_HOME="$LIVE_HOME/.cache" \
     PATH="$LIVE_HOME/.local/bin:/usr/local/bin:/usr/bin" \
-    bash -c '
-        set -u
-        cd "$HOME" || exit 0
-        bash "$HOME/hyprtk/installer/hyprtk-bar-qt/install.sh" --no-deps \
-            || echo "[customize] WARN: hyprtk-bar-qt install did not finish"
-        bash "$HOME/hyprtk/installer/hyprtk-editor/install.sh" --set-default \
-            || echo "[customize] WARN: hyprtk-editor install did not finish"
-        bash "$HOME/hyprtk/installer/scripts/set-default-apps.sh" \
-            || echo "[customize] WARN: preferred-app registration did not finish"
-        command -v wal >/dev/null 2>&1 \
-            && wal -n -i "$HOME/hyprtk/assets/Wallpapers/default.png" >/dev/null 2>&1 || true
-        cp -f "$HOME/hyprtk/assets/Wallpapers/default.png" \
-              "$HOME/.cache/current-wallpaper.png" 2>/dev/null || true
-        mkdir -p "$HOME/.local/share/hyprtk"
-        touch "$HOME/.local/share/hyprtk/.first-run-done"
-    ' || log "WARN: live-user setup did not finish cleanly"
+    bash /usr/local/bin/hyprtk-first-run \
+    || log "WARN: live-user setup did not finish cleanly"
 chown -R "$LIVE_USER:users" "$LIVE_HOME"
 
 # ── 5. SDDM theme (only when Sugar-Candy made it onto the image) ───────────

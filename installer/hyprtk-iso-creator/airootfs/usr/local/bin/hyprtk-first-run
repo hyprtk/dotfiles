@@ -5,46 +5,92 @@
 # so every account created on the live ISO (or from the ISO's skel) gets a
 # working bar + pywal palette on first login. Idempotent: writes a stamp and
 # exits immediately on later runs.
+#
+# The suite itself is installed system-wide under /usr/local by the ISO build
+# (bar-qt, hyprtk-fm, hyprtk-editor). This script only seeds the *user* half:
+# config + bundled themes, the ~/.local/bin symlinks the dotfiles refer to,
+# the first pywal palette and the XDG defaults. On an older image without the
+# system payload it falls back to the per-user installers.
 set -u
 
 REPO="${HYPRTK_REPO:-$HOME/hyprtk}"
 STAMP="$HOME/.local/share/hyprtk/.first-run-done"
+SYS_BAR="${HYPRTK_SYS_BAR:-/usr/local/share/hyprtk-bar-qt}"
+SYS_SHELL="$SYS_BAR/shell"
+SYS_EDITOR="${HYPRTK_SYS_EDITOR:-/usr/local/share/hyprtk-editor}"
+SYS_FM="${HYPRTK_SYS_FM:-/usr/local/share/hyprtk-file-manager}"
+SYS_BIN="${HYPRTK_SYS_BIN:-/usr/local/bin}"
+CFG="$HOME/.config/hyprtk-bar-qt"
 
 [ -e "$STAMP" ] && exit 0
 [ -d "$REPO" ] || { echo "hyprtk-first-run: no hyprtk repo at $REPO" >&2; exit 0; }
 
 export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 
-# 1. hyprtk-bar-qt (bundled pywal16 comes with it). System deps are already on the
-#    ISO, so --no-deps is correct here.
-#    Gate on the installed venv, not on the ~/.local/bin launcher: ~/.local/bin
-#    is a symlink into the vendored repo, so a stale launcher (e.g. one left on
-#    the build host) can exist and be executable while the venv behind it is
-#    gone. Checking the launcher made first-run skip the install entirely.
-BAR_VENV="$HOME/.local/share/hyprtk-bar-qt/venv"
-if [ ! -x "$BAR_VENV/bin/python3" ]; then
-    # Clear any stale launchers so the reinstall starts clean.
-    rm -f "$HOME/.local/bin/hyprtk-bar-qt" "$HOME/.local/bin/wal"
-    rm -f "$HOME"/.local/bin/hyprtk-bar-qt-*
-    bash "$REPO/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.sh" >/dev/null 2>&1 || true
-    bash "$REPO/installer/hyprtk-bar-qt/install.sh" --no-deps \
-        || echo "hyprtk-first-run: hyprtk-bar-qt install did not finish" >&2
+bar_ready=1
+editor_ready=1
+[ -d "$SYS_SHELL" ] || bar_ready=0
+[ -d "$SYS_EDITOR" ] || editor_ready=0
+
+# 1. Fallback: per-user installers, only when the image has no system payload.
+if [ "$bar_ready" -eq 0 ]; then
+    BAR_VENV="$HOME/.local/share/hyprtk-bar-qt/venv"
+    if [ ! -x "$BAR_VENV/bin/python3" ]; then
+        # Clear stale launchers left by a build host; the venv is the truth.
+        rm -f "$HOME/.local/bin/hyprtk-bar-qt" "$HOME/.local/bin/wal"
+        rm -f "$HOME"/.local/bin/hyprtk-bar-qt-*
+        bash "$REPO/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.sh" >/dev/null 2>&1 || true
+        bash "$REPO/installer/hyprtk-bar-qt/install.sh" --no-deps \
+            || echo "hyprtk-first-run: hyprtk-bar-qt install did not finish" >&2
+    fi
+    [ -x "$BAR_VENV/bin/python3" ] && bar_ready=1
 fi
 
-# 1b. hyprtk-editor (PySide6 + Pygments are baked into the image).
-if [ ! -x "$HOME/.local/bin/hyprtk-edit" ]; then
-    bash "$REPO/installer/hyprtk-editor/install.sh" \
-        || echo "hyprtk-first-run: hyprtk-editor install did not finish" >&2
+if [ "$editor_ready" -eq 0 ]; then
+    if [ ! -x "$HOME/.local/bin/hyprtk-edit" ]; then
+        bash "$REPO/installer/hyprtk-editor/install.sh" \
+            || echo "hyprtk-first-run: hyprtk-editor install did not finish" >&2
+    fi
+    [ -x "$HOME/.local/bin/hyprtk-edit" ] && editor_ready=1
 fi
-bash "$REPO/installer/scripts/set-default-apps.sh" >/dev/null 2>&1 || true
 
-# 2. First palette from the default wallpaper.
+# 2. Seed the per-user config and bundled themes from the system install.
+mkdir -p "$CFG"
+if [ -f "$SYS_BAR/config.json" ] && [ ! -f "$CFG/config.json" ]; then
+    cp -f "$SYS_BAR/config.json" "$CFG/config.json" 2>/dev/null || true
+fi
+for theme in themes widget-themes; do
+    if [ -d "$SYS_BAR/$theme" ] && [ ! -d "$CFG/$theme" ]; then
+        cp -a "$SYS_BAR/$theme" "$CFG/$theme" 2>/dev/null || true
+    fi
+done
+
+# 3. The dotfiles call ~/.local/bin/... and ~/.local/share/hyprtk-bar-qt/...
+#    Link the system payload there (per-user installs already created them).
+mkdir -p "$HOME/.local/bin" "$HOME/.local/share/hyprtk-bar-qt"
+for name in hyprtk-bar-qt hyprtk-bar-qt-arc-toggle hyprtk-bar-qt-clipboard-toggle \
+            hyprtk-bar-qt-launcher-toggle hyprtk-bar-qt-menu-toggle \
+            hyprtk-bar-qt-settings-toggle hyprtk-bar-qt-themer-toggle \
+            hyprtk-bar-qt-widget-move hyprtk-screenshot wal \
+            hyprtk-fm hyprtk-edit; do
+    [ -x "$SYS_BIN/$name" ] || continue
+    ln -sfn "$SYS_BIN/$name" "$HOME/.local/bin/$name"
+done
+for item in scripts hyprquickframe; do
+    [ -e "$SYS_BAR/$item" ] || continue
+    [ -e "$HOME/.local/share/hyprtk-bar-qt/$item" ] || \
+        ln -sfn "$SYS_BAR/$item" "$HOME/.local/share/hyprtk-bar-qt/$item"
+done
+
+# 4. First palette from the default wallpaper, and the XDG defaults
+#    (hyprtk-fm for folders, hyprtk-edit for text, bar quick links).
 if command -v wal >/dev/null 2>&1; then
     wal -n -i "$REPO/assets/Wallpapers/default.png" >/dev/null 2>&1 || true
 fi
 cp -f "$REPO/assets/Wallpapers/default.png" "$HOME/.cache/current-wallpaper.png" 2>/dev/null || true
+bash "$REPO/installer/scripts/set-default-apps.sh" >/dev/null 2>&1 || true
 
-# 3. Locker fallback. hyprlock is the default (installed from the official repo)
+# 5. Locker fallback. hyprlock is the default (installed from the official repo)
 #    and reads its colours from the pywal fragment rendered above. If the AUR
 #    swaylock-effects did not make it onto the image, drop a plain-swaylock
 #    config so the fallback lock screen still works instead of erroring on the
@@ -75,12 +121,12 @@ bs-hl-color=FF0000
 EOF
 fi
 
-# Stamp only once the bar is actually installed, so a failed run (no network,
-# transient error) is retried on the next login instead of being skipped
-# forever by the unit's ConditionPathExists=!stamp guard.
-if [ -x "$BAR_VENV/bin/python3" ] && [ -x "$HOME/.local/bin/hyprtk-edit" ]; then
+# 6. Stamp only once the bar and editor are actually usable, so a failed run
+#    (no network, transient error) is retried on the next login instead of
+#    being skipped forever by the unit's ConditionPathExists=!stamp guard.
+if [ "$bar_ready" -eq 1 ] && [ "$editor_ready" -eq 1 ]; then
     mkdir -p "$(dirname "$STAMP")"
     touch "$STAMP"
 else
-    echo "hyprtk-first-run: bar venv or editor still missing — will retry next login" >&2
+    echo "hyprtk-first-run: bar or editor still missing — will retry next login" >&2
 fi

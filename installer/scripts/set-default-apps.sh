@@ -14,14 +14,18 @@ apps_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 bar_cfg="${XDG_CONFIG_HOME:-$HOME/.config}/hyprtk-bar-qt/config.json"
 
 fm_desktop="thunar.desktop"
-if [ -f "$apps_dir/hyprtk-file-manager.desktop" ] || [ -f "/usr/share/applications/hyprtk-file-manager.desktop" ]; then
+if [ -f "$apps_dir/hyprtk-file-manager.desktop" ] \
+    || [ -f "/usr/local/share/applications/hyprtk-file-manager.desktop" ] \
+    || [ -f "/usr/share/applications/hyprtk-file-manager.desktop" ]; then
     fm_desktop="hyprtk-file-manager.desktop"
 fi
 
 # hyprtk-editor owns plain text and Markdown when it is installed; other
 # handlers (a distro's gedit/kate) stay available for their own MIME types.
 editor_desktop=""
-if [ -f "$apps_dir/hyprtk-editor.desktop" ] || [ -f "/usr/share/applications/hyprtk-editor.desktop" ]; then
+if [ -f "$apps_dir/hyprtk-editor.desktop" ] \
+    || [ -f "/usr/local/share/applications/hyprtk-editor.desktop" ] \
+    || [ -f "/usr/share/applications/hyprtk-editor.desktop" ]; then
     editor_desktop="hyprtk-editor.desktop"
 fi
 

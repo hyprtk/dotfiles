@@ -3,6 +3,17 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.0] - 2026-11-17
+
+### Changed
+
+- **The live ISO installs the suite system-wide.** hyprtk-bar-qt, hyprtk-fm and
+  hyprtk-editor are installed into `/usr/local` at image build (launchers,
+  desktop entries, bar venv/scripts) and carried to the deployed system, so
+  every account gets them with no install step. `hyprtk-first-run` now only
+  seeds per-user config/themes, `~/.local/bin` links, the pywal palette and XDG
+  defaults; it falls back to the per-user installers on older images.
+
 ## [v1.6.1] - 2026-11-17
 
 ### Added

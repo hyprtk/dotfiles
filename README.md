@@ -170,6 +170,10 @@ All system theming (wallpaper, pywal, icons, lock screen, SDDM/GRUB) now lives i
 | **Files** | hyprtk-fm — native Qt6/QML file manager: tabs, dual pane, breadcrumbs, thumbnail grid, previews, undo/trash and LAN share browsing; pywal-themed | `Super + F`, the bar's **Files** quick link, or opening any folder |
 | **Editor** | hyprtk-edit — native Qt6/QML text editor: tabs, session restore, autosaved crash-recovery drafts, regex search, command palette, line operations, minimap and 600+ Pygments syntaxes, with a syntax theme derived from pywal | `Super + E`, the bar's **Editor** quick link, or opening any text file |
 
+On the live ISO the suite is installed **system-wide** under `/usr/local`
+(bar, file manager and editor); first login only seeds the per-user config,
+themes, `~/.local/bin` links and the pywal palette.
+
 hyprtk-fm is the suite's default file manager (registered for
 `inode/directory`), installed by the bar's installer from its vendored snapshot;
 Thunar remains available as a fallback. **hyprtk-edit** is the default handler

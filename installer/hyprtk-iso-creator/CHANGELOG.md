@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0] - 2026-11-17
+
+### Changed
+
+- **The suite is installed system-wide.** The live image runs the bar, file
+  manager and editor installers with `--system` into `/usr/local`
+  (`share/hyprtk-*`, `bin`, `applications`), so the payload is part of the image
+  and is carried to the deployed disk by `hyprtk-deploy`. `pyside6` and
+  `python-pygments` are baked into the package set.
+- **First-run seeds only the user half.** `hyprtk-first-run` copies the default
+  config and bundled themes, links the system launchers into `~/.local/bin` (the
+  paths the dotfiles use), renders the first pywal palette and registers the XDG
+  defaults. It falls back to the per-user installers only when the system
+  payload is absent, and its stamp requires both the bar and the editor.
+
 ## [0.2.9] - 2026-11-17
 
 ### Added

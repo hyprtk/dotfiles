@@ -7,6 +7,7 @@
 #        ./install.sh --dry-run   — check requirements, install nothing
 #        ./install.sh --no-deps   — install without touching system packages
 #        ./install.sh --no-extras — install without the optional feature binaries
+#        ./install.sh --system    — install under /usr/local for all users (ISO)
 #        ./install.sh --wal-only  — provision only the bundled pywal16 (wal)
 #        ./install.sh --uninstall — remove everything
 #        ./install.sh --help      — show this message
@@ -14,10 +15,10 @@
 set -euo pipefail
 
 APP_NAME="hyprtk-bar-qt"
-INSTALL_DIR="${HOME:?}/.local/share/$APP_NAME"
-QS_DIR="${XDG_CONFIG_HOME:-${HOME:?}/.config}/quickshell/$APP_NAME"
-BIN_DIR="${HOME:?}/.local/bin"
-APPS_DIR="${HOME:?}/.local/share/applications"
+INSTALL_DIR="${HYPRTK_BAR_DIR:-${HOME:?}/.local/share/$APP_NAME}"
+QS_DIR="${HYPRTK_QS_DIR:-${XDG_CONFIG_HOME:-${HOME:?}/.config}/quickshell/$APP_NAME}"
+BIN_DIR="${HYPRTK_BIN_DIR:-${HOME:?}/.local/bin}"
+APPS_DIR="${HYPRTK_APPS_DIR:-${HOME:?}/.local/share/applications}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG_DIR="${XDG_CONFIG_HOME:-${HOME:?}/.config}/$APP_NAME"
 CONFIG_FILE="$CONFIG_DIR/config.json"
@@ -40,6 +41,7 @@ SKIP_DEPS=0
 SKIP_EXTRAS=0
 WAL_ONLY=0
 DO_UNINSTALL=0
+SYSTEM_INSTALL=0
 
 for _arg in "$@"; do
     case "$_arg" in
@@ -48,6 +50,7 @@ for _arg in "$@"; do
         --dry-run) DRY_RUN=1 ;;
         --no-deps) SKIP_DEPS=1 ;;
         --no-extras) SKIP_EXTRAS=1 ;;
+        --system) SYSTEM_INSTALL=1 ;;
         --wal-only)
             # pywal16 is pure vendored Python: provisioning `wal` needs neither
             # Quickshell/Qt nor any optional feature binaries. Skipping both means
@@ -59,9 +62,29 @@ for _arg in "$@"; do
     esac
 done
 
+if [ "$SYSTEM_INSTALL" -eq 1 ]; then
+    # System-wide install (used by the live ISO): /usr/local, all users.
+    # Per-user config/state still lives under $HOME; first-run seeds it.
+    INSTALL_DIR="${HYPRTK_BAR_DIR:-/usr/local/share/$APP_NAME}"
+    QS_DIR="${HYPRTK_QS_DIR:-$INSTALL_DIR/shell}"
+    BIN_DIR="${HYPRTK_BIN_DIR:-/usr/local/bin}"
+    APPS_DIR="${HYPRTK_APPS_DIR:-/usr/local/share/applications}"
+    THEME_DIR="$INSTALL_DIR/themes"
+    WIDGET_DIR="$INSTALL_DIR/widget-themes"
+    FONT_DIR="${HYPRTK_FONT_DIR:-/usr/local/share/fonts}"
+else
+    THEME_DIR="$CONFIG_DIR/themes"
+    WIDGET_DIR="$CONFIG_DIR/widget-themes"
+    FONT_DIR="$HOME/.local/share/fonts"
+fi
+
 if [ "$DO_UNINSTALL" -eq 1 ]; then
     echo ":: Uninstalling $APP_NAME..."
-    rm -rf "${INSTALL_DIR:?}" "${QS_DIR:?}" "${CACHE_DIR:?}"
+    if [ "$SYSTEM_INSTALL" -eq 1 ]; then
+        rm -rf "${INSTALL_DIR:?}" "${QS_DIR:?}"
+    else
+        rm -rf "${INSTALL_DIR:?}" "${QS_DIR:?}" "${CACHE_DIR:?}"
+    fi
     rm -f "$BIN_DIR/wal"
     # Remove the prebuilt-Quickshell launcher only if it is ours (never a system qs).
     if [ -f "$BIN_DIR/qs" ] && grep -q 'hyprtk-bar-qt prebuilt Quickshell launcher' "$BIN_DIR/qs" 2>/dev/null; then
@@ -73,8 +96,8 @@ if [ "$DO_UNINSTALL" -eq 1 ]; then
     done
     rm -f "$APPS_DIR/$APP_NAME.desktop"
     update-desktop-database "$APPS_DIR" 2>/dev/null || true
-    rm -f "$HOME/.local/share/fonts/SymbolsNerdFont-Regular.ttf"
-    command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1 || true
+    rm -f "$FONT_DIR/SymbolsNerdFont-Regular.ttf"
+    command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$FONT_DIR" >/dev/null 2>&1 || true
     for f in "$HOME/.config/hypr/autostart.lua" "$HOME/.config/hypr/hyprland.lua"; do
         [ -f "$f" ] || continue
         if grep -q -- "-- >>> hyprtk-bar-qt autostart" "$f" 2>/dev/null \
@@ -549,32 +572,35 @@ fi
 
 echo ":: Installing $APP_NAME..."
 
-mkdir -p "$INSTALL_DIR" "$QS_DIR" "$BIN_DIR" "$APPS_DIR" "$CONFIG_DIR" "$CACHE_DIR"
+mkdir -p "$INSTALL_DIR" "$QS_DIR" "$BIN_DIR" "$APPS_DIR"
+if [ "$SYSTEM_INSTALL" -eq 0 ]; then
+    mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
+fi
 
 # ── Nerd Font for the glyph icons ──────────────────────────────────────────
 if [ -f "$SCRIPT_DIR/assets/fonts/SymbolsNerdFont-Regular.ttf" ]; then
-    mkdir -p "$HOME/.local/share/fonts"
-    cp -n "$SCRIPT_DIR/assets/fonts/SymbolsNerdFont-Regular.ttf" "$HOME/.local/share/fonts/"
-    command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1 || true
-    echo ":: Installed Symbols Nerd Font (glyph icons)"
+    mkdir -p "$FONT_DIR"
+    cp -n "$SCRIPT_DIR/assets/fonts/SymbolsNerdFont-Regular.ttf" "$FONT_DIR/"
+    command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$FONT_DIR" >/dev/null 2>&1 || true
+    echo ":: Installed Symbols Nerd Font into $FONT_DIR"
 fi
 
 # ── Bundled bar themes ─────────────────────────────────────────────────────
 if [ -d "$SCRIPT_DIR/themes" ]; then
-    mkdir -p "$CONFIG_DIR/themes"
-    cp -rf "$SCRIPT_DIR/themes/." "$CONFIG_DIR/themes/"
-    echo ":: Installed bundled bar themes into $CONFIG_DIR/themes"
+    mkdir -p "$THEME_DIR"
+    cp -rf "$SCRIPT_DIR/themes/." "$THEME_DIR/"
+    echo ":: Installed bundled bar themes into $THEME_DIR"
 fi
 
 # ── Bundled desktop-widget themes ──────────────────────────────────────────
 if [ -d "$SCRIPT_DIR/assets/widgets" ]; then
-    mkdir -p "$CONFIG_DIR/widget-themes"
-    cp -rf "$SCRIPT_DIR/assets/widgets/." "$CONFIG_DIR/widget-themes/"
-    echo ":: Installed bundled widget themes into $CONFIG_DIR/widget-themes"
+    mkdir -p "$WIDGET_DIR"
+    cp -rf "$SCRIPT_DIR/assets/widgets/." "$WIDGET_DIR/"
+    echo ":: Installed bundled widget themes into $WIDGET_DIR"
 fi
 
 # ── Bundled wallpapers ─────────────────────────────────────────────────────
-if [ -d "$SCRIPT_DIR/Wallpapers" ]; then
+if [ "$SYSTEM_INSTALL" -eq 0 ] && [ -d "$SCRIPT_DIR/Wallpapers" ]; then
     WALL_DIR="$HOME/Pictures/Wallpapers"
     mkdir -p "$WALL_DIR"
     cp -n "$SCRIPT_DIR"/Wallpapers/* "$WALL_DIR/" 2>/dev/null || true
@@ -582,7 +608,7 @@ if [ -d "$SCRIPT_DIR/Wallpapers" ]; then
 fi
 
 # ── Preserve the user's live config across install/update ─────────────────
-if [ -f "$CONFIG_FILE" ]; then
+if [ "$SYSTEM_INSTALL" -eq 0 ] && [ -f "$CONFIG_FILE" ]; then
     cp -f "$CONFIG_FILE" "$CONFIG_DIR/config.json.bak" 2>/dev/null || true
     echo ":: Backed up existing config to $CONFIG_DIR/config.json.bak"
 fi
@@ -625,7 +651,9 @@ else
 fi
 
 # ── Vendored hyprtk-file-manager (separate installer) ─────────────────────
-if [ -f "$SCRIPT_DIR/vendor/hyprtk-file-manager/install.sh" ]; then
+if [ "$SYSTEM_INSTALL" -eq 1 ]; then
+    echo ":: System install — hyprtk-file-manager is installed separately."
+elif [ -f "$SCRIPT_DIR/vendor/hyprtk-file-manager/install.sh" ]; then
     echo ":: Installing vendored hyprtk-file-manager ..."
     if PATH="$BIN_DIR:$PATH" bash "$SCRIPT_DIR/vendor/hyprtk-file-manager/install.sh"; then
         echo ":: Installed hyprtk-file-manager (hyprtk-fm)"
@@ -639,12 +667,16 @@ fi
 # ── Seed the default config on a fresh install ─────────────────────────────
 # bar-qt has its own config; on a machine that also has the GTK bar the backend
 # migrates from it once. Ship a default so a standalone install works too.
-if [ ! -f "$CONFIG_FILE" ] && [ -f "$SCRIPT_DIR/config.json" ]; then
-    cp -f "$SCRIPT_DIR/config.json" "$CONFIG_FILE"
+if [ "$SYSTEM_INSTALL" -eq 1 ]; then
+    [ -f "$INSTALL_DIR/config.json" ] || cp -f "$SCRIPT_DIR/config.json" "$INSTALL_DIR/config.json"
+else
+    if [ ! -f "$CONFIG_FILE" ] && [ -f "$SCRIPT_DIR/config.json" ]; then
+        cp -f "$SCRIPT_DIR/config.json" "$CONFIG_FILE"
+    fi
+    # Seed from the GTK config when present (the backend's own migrator).
+    python3 "$INSTALL_DIR/backend/hyprtk_bar_qt/paths.py" >/dev/null 2>&1 || true
+    python3 "$QS_DIR/backend/hyprtk_bar_qt/paths.py" >/dev/null 2>&1 || true
 fi
-# Seed from the GTK config when present (the backend's own migrator).
-python3 "$INSTALL_DIR/backend/hyprtk_bar_qt/paths.py" >/dev/null 2>&1 || true
-python3 "$QS_DIR/backend/hyprtk_bar_qt/paths.py" >/dev/null 2>&1 || true
 
 # ── Bundled `wal` (vendored pywal16) + venv ────────────────────────────────
 if [ -d "$SCRIPT_DIR/vendor/pywal16/pywal" ]; then
@@ -712,10 +744,12 @@ configure_autostart() {
     echo ":: Added hyprtk-bar-qt autostart to $target"
 }
 
-configure_autostart
+if [ "$SYSTEM_INSTALL" -eq 0 ]; then
+    configure_autostart
+fi
 
 # Restore the config if the live file is missing but a backup exists.
-if [ ! -f "$CONFIG_FILE" ] && [ -f "$CONFIG_DIR/config.json.bak" ]; then
+if [ "$SYSTEM_INSTALL" -eq 0 ] && [ ! -f "$CONFIG_FILE" ] && [ -f "$CONFIG_DIR/config.json.bak" ]; then
     cp -f "$CONFIG_DIR/config.json.bak" "$CONFIG_FILE" 2>/dev/null || true
     echo ":: Restored config from backup"
 fi

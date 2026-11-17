@@ -8,6 +8,7 @@
 #   ./install.sh                 install
 #   ./install.sh --uninstall     remove
 #   ./install.sh --set-default   also make it the default text/plain handler
+#   ./install.sh --system        install under /usr/local (ISO / all users)
 #
 # Env: HYPRTK_DRYRUN=1, XDG_DATA_HOME, PYTHON.
 # ──────────────────────────────────────────────────────────────────────────
@@ -15,10 +16,10 @@ set -euo pipefail
 
 SELF=$(readlink -f "$0")
 ROOT=$(cd -- "$(dirname -- "$SELF")" && pwd)
-DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
-PREFIX="$DATA/hyprtk-editor"
-BIN="$HOME/.local/bin"
-APPS="$DATA/applications"
+DATA="${HYPRTK_DATA_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}}"
+PREFIX="${HYPRTK_EDITOR_DIR:-$DATA/hyprtk-editor}"
+BIN="${HYPRTK_BIN_DIR:-$HOME/.local/bin}"
+APPS="${HYPRTK_APPS_DIR:-$DATA/applications}"
 PY="${PYTHON:-python3}"
 
 set_default=0
@@ -33,6 +34,12 @@ for arg in "$@"; do
             exit 0
             ;;
         --set-default) set_default=1 ;;
+        --system)
+            # System-wide install (used by the live ISO): /usr/local, all users.
+            PREFIX="${HYPRTK_EDITOR_DIR:-/usr/local/share/hyprtk-editor}"
+            BIN="${HYPRTK_BIN_DIR:-/usr/local/bin}"
+            APPS="${HYPRTK_APPS_DIR:-/usr/local/share/applications}"
+            ;;
         -h|--help)
             sed -n '2,14p' "$SELF" | sed 's/^# \{0,1\}//'
             exit 0

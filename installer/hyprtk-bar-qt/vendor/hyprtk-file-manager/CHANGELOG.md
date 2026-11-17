@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.7 — 2026-11-17
+
+### Added
+
+- Installer: `--system` installs under `/usr/local` (share + bin + desktop
+  entry) for the live ISO, so every user gets the file manager without a
+  per-user install. Per-user remains the default.
+
 ## 1.8.6 — 2026-11-16
 
 ### Added

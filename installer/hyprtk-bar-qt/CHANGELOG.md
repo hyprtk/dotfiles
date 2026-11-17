@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.43.8 — 2026-11-17
+
+- **System-wide install mode (`--system`).** The installer can put the bar
+  (shell, venv, scripts, launchers, desktop entry) under `/usr/local` for the
+  live ISO, leaving per-user config/themes to first-run. The default per-user
+  install is unchanged.
+- **Vendor hyprtk-file-manager 1.8.7**, which adds the same `--system` mode.
+
 ## 0.43.7 — 2026-11-17
 
 - **Editor quick link.** The quick-links row and the arc menu gain an **Editor**

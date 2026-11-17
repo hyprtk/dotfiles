@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 — 2026-11-17
+
+- Installer: `--system` installs under `/usr/local` (share + bin + desktop
+  entry) for the live ISO, so every user gets the editor without a per-user
+  install. Per-user remains the default.
+
 ## 0.1.1 — 2026-11-17
 
 - Installer: fall back to a private PyPI venv when the distro's PySide6 lacks

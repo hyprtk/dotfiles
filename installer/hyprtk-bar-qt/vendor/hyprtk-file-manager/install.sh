@@ -3,10 +3,21 @@ set -euo pipefail
 
 SELF=$(readlink -f "$0")
 ROOT=$(cd -- "$(dirname -- "$SELF")" && pwd)
-DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
-PREFIX="$DATA/hyprtk-file-manager"
-BIN="$HOME/.local/bin"
-APPS="$DATA/applications"
+DATA="${HYPRTK_DATA_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}}"
+PREFIX="${HYPRTK_FM_DIR:-$DATA/hyprtk-file-manager}"
+BIN="${HYPRTK_BIN_DIR:-$HOME/.local/bin}"
+APPS="${HYPRTK_APPS_DIR:-$DATA/applications}"
+
+for _arg in "$@"; do
+    case "$_arg" in
+        --system)
+            # System-wide install (used by the live ISO): /usr/local, all users.
+            PREFIX="${HYPRTK_FM_DIR:-/usr/local/share/hyprtk-file-manager}"
+            BIN="${HYPRTK_BIN_DIR:-/usr/local/bin}"
+            APPS="${HYPRTK_APPS_DIR:-/usr/local/share/applications}"
+            ;;
+    esac
+done
 
 if [ "${1:-}" = "--uninstall" ]; then
     rm -rf "$PREFIX"
