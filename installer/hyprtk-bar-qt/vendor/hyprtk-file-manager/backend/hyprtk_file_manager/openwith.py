@@ -81,7 +81,7 @@ def _gio_entries(mime: str) -> list[dict]:
     seen: set[str] = set()
     entries: list[dict] = []
 
-    def add(app, recommended: bool) -> None:
+    def add(app, recommended: bool, generic: bool = False) -> None:
         if app is None or not app.should_show():
             return
         app_id = app.get_id() or app.get_name() or ""
@@ -108,6 +108,7 @@ def _gio_entries(mime: str) -> list[dict]:
             "desktopFile": filename,
             "default": app_id == default_id,
             "recommended": recommended,
+            "generic": generic,
             "argv": argv,
         })
 
@@ -123,6 +124,12 @@ def _gio_entries(mime: str) -> list[dict]:
         everything = []
     for app in everything:
         add(app, False)
+    try:
+        every_app = Gio.AppInfo.get_all() or []
+    except Exception:
+        every_app = []
+    for app in every_app:
+        add(app, False, True)
     return entries
 
 
@@ -205,8 +212,22 @@ def _exec_argv(exec_line: str, target: str) -> list[str]:
     return argv
 
 
+def _desktop_app(path: Path, data: dict) -> dict:
+    return {
+        "id": path.name,
+        "name": data.get("Name") or path.name,
+        "icon": data.get("Icon", ""),
+        "desktopFile": str(path),
+        "default": False,
+        "recommended": False,
+        "generic": True,
+        "argv": [],
+    }
+
+
 def _desktop_entries(mime: str) -> list[dict]:
     entries: list[dict] = []
+    others: list[dict] = []
     for path in _desktop_ids():
         data = _read_desktop(path)
         if not data:
@@ -215,25 +236,21 @@ def _desktop_entries(mime: str) -> list[dict]:
             continue
         if data.get("NoDisplay", "").strip().lower() == "true":
             continue
-        if not _matches_mime(data, mime):
-            continue
         exec_line = data.get("Exec", "")
         if not exec_line:
             continue
         try_exec = data.get("TryExec", "").strip()
         if try_exec and not shutil.which(try_exec):
             continue
-        entries.append({
-            "id": path.name,
-            "name": data.get("Name") or path.name,
-            "icon": data.get("Icon", ""),
-            "desktopFile": str(path),
-            "default": False,
-            "recommended": False,
-            "argv": [],
-        })
+        if _matches_mime(data, mime):
+            entry = _desktop_app(path, data)
+            entry["generic"] = False
+            entries.append(entry)
+        else:
+            others.append(_desktop_app(path, data))
     entries.sort(key=lambda item: item["name"].lower())
-    return entries
+    others.sort(key=lambda item: item["name"].lower())
+    return entries + others
 
 
 def _config_home() -> Path:
@@ -330,10 +347,15 @@ def _entries(path: str) -> list[dict]:
         if item["recommended"] and not item["default"]
     ]
     rest = sorted(
-        (item for item in entries if not item["recommended"] and not item["default"]),
+        (item for item in entries
+         if not item["recommended"] and not item["default"] and not item.get("generic")),
         key=lambda item: item["name"].lower(),
     )
-    return default + recommended + rest
+    generic = sorted(
+        (item for item in entries if item.get("generic") and not item["default"]),
+        key=lambda item: item["name"].lower(),
+    )
+    return default + recommended + rest + generic
 
 
 def applications(path: str) -> dict:
@@ -342,13 +364,20 @@ def applications(path: str) -> dict:
         raise FileNotFoundError(str(target))
     mime = _content_type(str(target))
     apps = []
+    seen_generic = False
     for item in _entries(str(target)):
+        generic = bool(item.get("generic"))
+        first = generic and not seen_generic
+        if generic:
+            seen_generic = True
         apps.append({
             "id": item["id"],
             "name": item["name"],
             "icon": item.get("icon", ""),
             "desktopFile": item.get("desktopFile", ""),
             "default": bool(item.get("default", False)),
+            "generic": generic,
+            "firstGeneric": first,
         })
     return {
         "kind": "open_with",

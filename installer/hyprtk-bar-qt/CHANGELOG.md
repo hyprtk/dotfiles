@@ -1,10 +1,16 @@
 # Changelog
 
-## Unreleased — documentation
+## 0.43.9 — 2026-11-17
 
-- The README and this changelog now describe the project as one of the seven
+- **Vendor hyprtk-file-manager 1.8.8.** The file manager's “Open With” dialog now
+  lists every application, not just the ones registered for the file's MIME
+  type, so apps without a `MimeType=` line (VectorCraft, for one) can be picked.
+
+### Documentation
+
+- The README and this changelog describe the project as one of the seven
   repositories that make up the hyprtk suite, with links to the rest of them and
-  a note on how this one lands in the desktop. No code change.
+  a note on how this one lands in the desktop.
 
 ## 0.43.8 — 2026-11-17
 

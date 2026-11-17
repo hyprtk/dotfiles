@@ -173,6 +173,9 @@ Item {
                     anchors.margins: 4
                     model: root.apps
                     spacing: 2
+                    // Without an explicit cache the view creeps downward while the
+                    // delegate heights settle, so a long list opened part-way down.
+                    cacheBuffer: 0
                     boundsBehavior: Flickable.StopAtBounds
                     focus: true
                     keyNavigationEnabled: false
@@ -189,69 +192,88 @@ Item {
                     Keys.onEnterPressed: root.launchCurrent()
                     Keys.onEscapePressed: root.cancel()
 
-                    delegate: Rectangle {
+                    delegate: Item {
                         required property var modelData
                         required property int index
                         width: appList.width
-                        height: 38
-                        radius: 6
-                        color: ListView.isCurrentItem
-                            ? Theme.alpha(Theme.accent, 0.25)
-                            : (appHover.hovered ? Theme.alpha(Theme.foreground, 0.08) : "transparent")
-
-                        MouseArea {
-                            id: appHover
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onEntered: appList.currentIndex = index
-                            onClicked: {
-                                appList.currentIndex = index;
-                                root.launchCurrent();
-                            }
-                        }
-
-                        Image {
-                            id: appIcon
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 22
-                            height: 22
-                            sourceSize: Qt.size(22, 22)
-                            source: Quickshell.iconPath(modelData.icon || "application-x-executable",
-                                                         "application-x-executable")
-                        }
+                        height: groupHeader.height + rowRect.height
 
                         Text {
-                            anchors.left: appIcon.right
+                            id: groupHeader
+                            anchors.left: parent.left
                             anchors.leftMargin: 10
-                            anchors.right: defaultBadge.left
-                            anchors.rightMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: modelData.name
-                            color: Theme.foreground
-                            font.pixelSize: 12
-                            elide: Text.ElideRight
+                            anchors.top: parent.top
+                            visible: modelData.firstGeneric === true
+                            height: visible ? implicitHeight + 8 : 0
+                            text: "All applications"
+                            color: Theme.muted
+                            font.pixelSize: 9
+                            font.bold: true
                         }
 
                         Rectangle {
-                            id: defaultBadge
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: modelData.default === true
-                            width: defaultText.implicitWidth + 12
-                            height: 18
-                            radius: 9
-                            color: Theme.alpha(Theme.accent, 0.3)
+                            id: rowRect
+                            anchors.top: groupHeader.bottom
+                            width: parent.width
+                            height: 38
+                            radius: 6
+                            color: ListView.isCurrentItem
+                                ? Theme.alpha(Theme.accent, 0.25)
+                                : (appHover.hovered ? Theme.alpha(Theme.foreground, 0.08) : "transparent")
+
+                            MouseArea {
+                                id: appHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    appList.currentIndex = index;
+                                    root.launchCurrent();
+                                }
+                            }
+
+                            Image {
+                                id: appIcon
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 22
+                                height: 22
+                                sourceSize: Qt.size(22, 22)
+                                source: Quickshell.iconPath(modelData.icon || "application-x-executable",
+                                                             "application-x-executable")
+                            }
 
                             Text {
-                                id: defaultText
-                                anchors.centerIn: parent
-                                text: "Default"
+                                anchors.left: appIcon.right
+                                anchors.leftMargin: 10
+                                anchors.right: defaultBadge.left
+                                anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.name
                                 color: Theme.foreground
-                                font.pixelSize: 9
+                                font.pixelSize: 12
+                                elide: Text.ElideRight
+                            }
+
+                            Rectangle {
+                                id: defaultBadge
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: modelData.default === true
+                                width: defaultText.implicitWidth + 12
+                                height: 18
+                                radius: 9
+                                color: Theme.alpha(Theme.accent, 0.3)
+
+                                Text {
+                                    id: defaultText
+                                    anchors.centerIn: parent
+                                    text: "Default"
+                                    color: Theme.foreground
+                                    font.pixelSize: 9
+                                }
                             }
                         }
                     }

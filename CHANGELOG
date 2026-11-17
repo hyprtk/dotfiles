@@ -3,6 +3,23 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.6] - 2026-11-17
+
+### Changed
+
+- **hyprtk-file-manager 1.8.8** — vendored from tag `v1.8.8` (byte-identical in
+  `installer/hyprtk-file-manager/` and the bar's
+  `vendor/hyprtk-file-manager/`): the “Open With” dialog now lists every
+  application, not only the ones registered for the file's MIME type. Apps that
+  ship no `MimeType=` line (VectorCraft, for one) appear in an “All
+  applications” section after the default, recommended and type-registered
+  entries, and can be launched or remembered as the default from there. The
+  dialog also no longer opens part-way down a long application list.
+- **hyprtk-bar-qt 0.43.9** — vendor bump only.
+- No package or installer surface changed; the gate was re-run anyway
+  (T1 1340 resolvable / 26 AUR / 89 allow-listed / 0 unexpected, T2 9/9, audit
+  0 unexpected with the 16 known provides-only TODOs).
+
 ## [v1.7.5] - 2026-11-17
 
 ### Changed

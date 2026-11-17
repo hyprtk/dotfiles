@@ -1,10 +1,22 @@
 # Changelog
 
-## Unreleased — documentation
+## 1.8.8 — 2026-11-17
 
-- The README and this changelog now describe the project as one of the seven
+### Fixed
+
+- **“Open With” now lists every application.** The dialog only offered
+  applications that register the file's MIME type, so an app that describes
+  itself without a `MimeType=` line — VectorCraft for one — could never appear.
+  The list still shows the default, recommended and type-registered apps first,
+  then an “All applications” section with everything else; launching and
+  “Remember as default” work for those entries too.
+- The dialog no longer opens part-way down a long application list.
+
+### Documentation
+
+- The README and this changelog describe the project as one of the seven
   repositories that make up the hyprtk suite, with links to the rest of them and
-  a note on how this one lands in the desktop. No code change.
+  a note on how this one lands in the desktop.
 
 ## 1.8.7 — 2026-11-17
 
