@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.9] - 2026-11-17
+
+### Added
+
+- **hyprtk-editor on the ISO.** The live image now bakes `pyside6` +
+  `python-pygments`, installs the editor for the live user with
+  `--set-default`, and registers it (with hyprtk-fm) through
+  `set-default-apps.sh`. `hyprtk-first-run` installs it for accounts created on
+  the deployed system as well; the first-run stamp now requires both the bar
+  venv and `hyprtk-edit`.
+
 All notable changes to **Hyprtk-ISO-Creator** are documented in this file.
 Dates are in `YYYY-MM-DD` format.
 

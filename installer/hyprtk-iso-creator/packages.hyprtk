@@ -83,11 +83,13 @@ polkit
 polkit-gnome
 gnome-keyring
 
-## Python (hyprtk-bar-qt venv + bundled pywal16)
+## Python (hyprtk-bar-qt venv + bundled pywal16 + hyprtk-editor)
 python
 python-pip
 python-virtualenv
 python-gobject
+pyside6
+python-pygments
 python-cairo
 python-psutil
 python-rich

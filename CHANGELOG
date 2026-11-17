@@ -3,6 +3,17 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.6.1] - 2026-11-17
+
+### Added
+
+- **hyprtk-editor on the live ISO.** The image bakes `pyside6` and
+  `python-pygments`, installs the editor for the live user with
+  `--set-default`, and registers it (alongside hyprtk-fm) through
+  `set-default-apps.sh`. `hyprtk-first-run` installs it for accounts created on
+  the deployed system; the first-run stamp now requires both the bar venv and
+  `hyprtk-edit`.
+
 ## [v1.6.0] - 2026-11-17
 
 ### Added

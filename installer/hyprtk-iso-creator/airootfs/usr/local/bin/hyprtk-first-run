@@ -31,6 +31,13 @@ if [ ! -x "$BAR_VENV/bin/python3" ]; then
         || echo "hyprtk-first-run: hyprtk-bar-qt install did not finish" >&2
 fi
 
+# 1b. hyprtk-editor (PySide6 + Pygments are baked into the image).
+if [ ! -x "$HOME/.local/bin/hyprtk-edit" ]; then
+    bash "$REPO/installer/hyprtk-editor/install.sh" \
+        || echo "hyprtk-first-run: hyprtk-editor install did not finish" >&2
+fi
+bash "$REPO/installer/scripts/set-default-apps.sh" >/dev/null 2>&1 || true
+
 # 2. First palette from the default wallpaper.
 if command -v wal >/dev/null 2>&1; then
     wal -n -i "$REPO/assets/Wallpapers/default.png" >/dev/null 2>&1 || true
@@ -71,9 +78,9 @@ fi
 # Stamp only once the bar is actually installed, so a failed run (no network,
 # transient error) is retried on the next login instead of being skipped
 # forever by the unit's ConditionPathExists=!stamp guard.
-if [ -x "$BAR_VENV/bin/python3" ]; then
+if [ -x "$BAR_VENV/bin/python3" ] && [ -x "$HOME/.local/bin/hyprtk-edit" ]; then
     mkdir -p "$(dirname "$STAMP")"
     touch "$STAMP"
 else
-    echo "hyprtk-first-run: bar venv still missing — will retry next login" >&2
+    echo "hyprtk-first-run: bar venv or editor still missing — will retry next login" >&2
 fi

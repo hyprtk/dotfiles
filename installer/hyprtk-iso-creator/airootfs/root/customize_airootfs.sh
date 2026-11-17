@@ -100,7 +100,7 @@ if [ -x /etc/skel/hyprtk/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.
     bash /etc/skel/hyprtk/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.sh >/dev/null 2>&1 || true
 fi
 
-log "running first-login setup for $LIVE_USER (hyprtk-bar-qt + pywal)"
+log "running first-login setup for $LIVE_USER (hyprtk-bar-qt, hyprtk-editor + pywal)"
 runuser -u "$LIVE_USER" -- env \
     HOME="$LIVE_HOME" USER="$LIVE_USER" LOGNAME="$LIVE_USER" \
     PATH="$LIVE_HOME/.local/bin:/usr/local/bin:/usr/bin" \
@@ -109,6 +109,10 @@ runuser -u "$LIVE_USER" -- env \
         cd "$HOME" || exit 0
         bash "$HOME/hyprtk/installer/hyprtk-bar-qt/install.sh" --no-deps \
             || echo "[customize] WARN: hyprtk-bar-qt install did not finish"
+        bash "$HOME/hyprtk/installer/hyprtk-editor/install.sh" --set-default \
+            || echo "[customize] WARN: hyprtk-editor install did not finish"
+        bash "$HOME/hyprtk/installer/scripts/set-default-apps.sh" \
+            || echo "[customize] WARN: preferred-app registration did not finish"
         command -v wal >/dev/null 2>&1 \
             && wal -n -i "$HOME/hyprtk/assets/Wallpapers/default.png" >/dev/null 2>&1 || true
         cp -f "$HOME/hyprtk/assets/Wallpapers/default.png" \
