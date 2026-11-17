@@ -3,6 +3,20 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.1] - 2026-11-17
+
+### Fixed
+
+- **hyprtk-editor 0.1.4: the open/save dialogs.** Open file (Ctrl+O, the
+  Welcome button and the palette entry), Save As and Open Folder did nothing:
+  the slots asked `QGuiApplication` for an `activeWindow` it does not have and
+  raised before a dialog was built.
+- The dialogs also came up as the native GTK chooser, because the launcher sets
+  `QT_QPA_PLATFORMTHEME=gtk3`, which ignores the app's palette. They now insist
+  on the Qt dialog and wear the pywal theme (background, surfaces, selection,
+  accent primary button, editor font), float over the editor instead of being
+  tiled beside it, and open at a workable size with a readable places sidebar.
+
 ## [v1.7.0] - 2026-11-17
 
 ### Changed

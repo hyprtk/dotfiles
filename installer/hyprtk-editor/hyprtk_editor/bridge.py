@@ -19,7 +19,7 @@ from PySide6.QtGui import QColor, QGuiApplication
 from PySide6.QtQuick import QQuickTextDocument
 from PySide6.QtWidgets import QFileDialog
 
-from . import __version__, fileio, languages, palette, search, textops
+from . import __version__, dialogs, fileio, languages, palette, search, textops
 from .highlight import PAGE_BLOCKS, Highlighter, spans
 from .session import Drafts, Session
 from .settings import MONO_FAMILIES, Settings
@@ -146,6 +146,31 @@ class Bridge(QObject):
         return uuid.uuid4().hex
 
     # -- file dialogs ----------------------------------------------------
+    def _file_dialog(self, title: str, start: str, mode) -> QFileDialog:
+        """Build a dialog that is a real child of the editor window.
+
+        A Qt Quick app has no QWidget parent, and the compositor treats a
+        parentless widget dialog as an ordinary toplevel (Hyprland tiles it next
+        to the editor). Parent it at the QWindow level instead: that marks the
+        window transient, so it floats over the editor and closes with it.
+        ``winId()`` has to run first, because the platform window only exists
+        once the widget owns one.
+        """
+        dialog = dialogs.ThemedFileDialog(
+            self._palette,
+            self.settings.resolved_font(),
+            int(self.settings.get("font_size") or 13),
+        )
+        dialog.setWindowTitle(title)
+        dialog.setDirectory(start)
+        dialog.setNameFilter(OPEN_FILTER)
+        dialog.setFileMode(mode)
+        window = QGuiApplication.focusWindow()
+        if window is not None:
+            dialog.winId()
+            dialog.windowHandle().setTransientParent(window)
+        return dialog
+
     def _start_dir(self) -> str:
         last = str(self.settings.get("last_open_dir") or "")
         if last and os.path.isdir(last):
@@ -155,25 +180,33 @@ class Bridge(QObject):
 
     @Slot(result="QVariantList")
     def openDialog(self):
-        parent = QGuiApplication.activeWindow()
-        files, _ = QFileDialog.getOpenFileNames(parent, "Open File", self._start_dir(), OPEN_FILTER)
+        dialog = self._file_dialog("Open File", self._start_dir(), QFileDialog.ExistingFiles)
+        files = dialog.selectedFiles() if dialog.exec() == QFileDialog.Accepted else []
+        dialog.deleteLater()
         if files:
             self.settings.set("last_open_dir", os.path.dirname(files[0]))
         return files
 
     @Slot(str, result=str)
     def saveDialog(self, suggested: str = ""):
-        parent = QGuiApplication.activeWindow()
         start = suggested or os.path.join(self._start_dir(), "Untitled.txt")
-        path, _ = QFileDialog.getSaveFileName(parent, "Save File", start, OPEN_FILTER)
+        dialog = self._file_dialog("Save File", start, QFileDialog.AnyFile)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        chosen = dialog.selectedFiles() if dialog.exec() == QFileDialog.Accepted else []
+        dialog.deleteLater()
+        path = chosen[0] if chosen else ""
         if path:
             self.settings.set("last_open_dir", os.path.dirname(path))
         return path
 
     @Slot(str, result=str)
     def folderDialog(self, suggested: str = ""):
-        parent = QGuiApplication.activeWindow()
-        path = QFileDialog.getExistingDirectory(parent, "Open Folder", suggested or self._start_dir())
+        dialog = self._file_dialog("Open Folder", suggested or self._start_dir(),
+                                   QFileDialog.Directory)
+        dialog.setOption(QFileDialog.ShowDirsOnly, True)
+        chosen = dialog.selectedFiles() if dialog.exec() == QFileDialog.Accepted else []
+        dialog.deleteLater()
+        path = chosen[0] if chosen else ""
         if path:
             self.settings.set("last_open_dir", path)
         return path
