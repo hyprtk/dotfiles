@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.8.4] - 2026-11-18
+
+### Fixed
+
+- **hyprtk-term's README shows its search screenshot again** (`hyprtk-term`
+  0.2.2). `docs/search.png` was ignored by the app's `.gitignore`, so it existed
+  in the working tree and in this tree's vendored copy but never in the app's
+  repository — GitHub rendered a broken image. The ignore rule is gone and the
+  image is regenerated against the current UI.
+
+The app's test suite now checks that every relative markdown link resolves and
+that every image the README shows is tracked by git.
+
+Documentation and one vendored image only; no package or installer-target
+change, so the gate was carried from v1.8.0 (T1 1350/26/88/0, T2 9/9, audit
+1464 rows / 0 unexpected / 17 known TODOs).
+
 ## [v1.8.3] - 2026-11-18
 
 ### Fixed

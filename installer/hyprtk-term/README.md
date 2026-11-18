@@ -8,7 +8,7 @@ underneath. It follows the wallpaper, opens in a few hundred milliseconds and
 keeps a real shell honest: alt screen, truecolor, wide characters, scrollback,
 mouse reporting and bracketed paste all work.
 
-**Current version: 0.2.1** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
+**Current version: 0.2.2** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
 
 ![hyprtk-term](hyprtk_term/assets/hyprtk-term.svg)
 
@@ -128,7 +128,7 @@ grid, ~3 ms to paint it. Numbers and method in [RESEARCH.md](RESEARCH.md).
 ## Development
 
 ```bash
-make test     # 120 unit tests, no display needed
+make test     # 122 unit tests, no display needed
 make qa       # tests + qmllint + headless boot + installer round-trip
 make shot     # offscreen screenshot to docs/probe.png
 make run

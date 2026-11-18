@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.2 — 2026-11-18
+
+### Fixed
+
+- **The scrollback-search screenshot in the README renders again.**
+  `docs/search.png` was added to the README while `.gitignore` still ignored
+  `docs/*.png` (only `probe.png` was un-ignored), so the file existed locally,
+  in the vendored copy and on disk — just never in the repository. GitHub showed
+  a broken image. The ignore rule is gone and the image is regenerated against
+  the current UI.
+- New `tests/test_docs.py`: every relative link and image in the markdown must
+  exist, and every image the README shows must be tracked by git (the second
+  half is what actually catches this class of bug).
+
 ## 0.2.1 — 2026-11-18
 
 ### Fixed
