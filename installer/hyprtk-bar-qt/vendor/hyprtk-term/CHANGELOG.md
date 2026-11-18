@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.5 — 2026-11-18
+
+### Fixed
+
+- **Block art and box drawing render correctly with any font.** The default
+  `JetBrainsMono Nerd Font Mono` ships only U+2588 out of the whole U+2500-U+259F
+  range, so Qt fell back to a proportional face for the rest: `opencode`'s logo
+  came out as scattered squares and its frame as a dashed line, while the same
+  screen was correct in alacritty (which uses FiraCode). Every code point in that
+  range is now painted as rectangles, lines and arcs inside its cell — half and
+  full blocks tile exactly, light/heavy/double frames join without crossing,
+  dashes, rounded corners and diagonals are drawn to size. `boxdraw.py` is
+  Qt-free and covered by `tests/test_boxdraw.py`, including an assertion that
+  nothing is drawn outside its cell for all 160 code points.
+- `vt.py` now splits a row into one run per geometric cell, so the painter can
+  address the cell exactly; `row_runs` and scrollback runs are otherwise
+  unchanged.
+
 ## 0.2.4 — 2026-11-18
 
 ### Fixed

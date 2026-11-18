@@ -14,6 +14,7 @@ from PySide6.QtCore import QPointF, QRectF, Property, QTimer, Signal, Slot, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetricsF, QGuiApplication, QPainter, QPen
 from PySide6.QtQuick import QQuickItem, QQuickPaintedItem
 
+from . import boxdraw
 from . import palette as palette_mod
 from . import search as search_mod
 from . import select as select_mod
@@ -45,6 +46,59 @@ KEYMAP = {
 }
 for _n in range(1, 13):
     KEYMAP[getattr(Qt, f"Key_F{_n}")] = KEY["FUNCTION_0"] + _n
+
+
+class _Canvas:
+    """Adapter that lets :mod:`boxdraw` paint through a ``QPainter``.
+
+    Rectangles are drawn without antialiasing on purpose: adjacent block
+    elements must share an edge exactly, and a softened edge would leave a
+    visible seam between two cells that should look like one shape.
+    """
+
+    __slots__ = ("_painter", "_colour")
+
+    def __init__(self, painter: QPainter):
+        self._painter = painter
+        self._colour = QColor("#ffffff")
+
+    def set_colour(self, colour: QColor) -> None:
+        self._colour = colour
+
+    def fill_rect(self, x: float, y: float, w: float, h: float,
+                  alpha: float = 1.0) -> None:
+        if w <= 0 or h <= 0:
+            return
+        colour = self._colour
+        if alpha < 1.0:
+            colour = QColor(colour)
+            colour.setAlphaF(max(0.0, min(1.0, alpha)))
+        self._painter.fillRect(QRectF(x, y, w, h), colour)
+
+    def line(self, x0: float, y0: float, x1: float, y1: float,
+             thickness: float) -> None:
+        painter = self._painter
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        pen = QPen(self._colour, thickness)
+        pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(pen)
+        painter.drawLine(QPointF(x0, y0), QPointF(x1, y1))
+        painter.restore()
+
+    def arc(self, cx: float, cy: float, radius: float, start: float,
+            span: float, thickness: float) -> None:
+        painter = self._painter
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        pen = QPen(self._colour, thickness)
+        pen.setCapStyle(Qt.FlatCap)
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawArc(QRectF(cx - radius, cy - radius, 2 * radius, 2 * radius),
+                        int(start * 16), int(span * 16))
+        painter.restore()
+
 
 
 class TerminalView(QQuickPaintedItem):
@@ -306,6 +360,7 @@ class TerminalView(QQuickPaintedItem):
         top = self._top_line()
         blink_on = self._cursor_on or not self._blink_enabled()
         cell_w, cell_h = self._cw, self._ch
+        canvas = _Canvas(painter)
 
         for row in range(vt.rows):
             line = top + row
@@ -336,10 +391,15 @@ class TerminalView(QQuickPaintedItem):
                     x += width
                     continue
                 fg = QColor(run.fg)
-                painter.setPen(fg)
-                painter.setFont(self._font_for(run.flags))
                 baseline = y + max(0.0, (cell_h - self._font_height) / 2) + self._ascent
-                painter.drawText(QPointF(x, baseline), run.text)
+                painted = False
+                if len(run.text) == 1:
+                    canvas.set_colour(fg)
+                    painted = boxdraw.draw(canvas, run.text, x, y, width, cell_h)
+                if not painted:
+                    painter.setPen(fg)
+                    painter.setFont(self._font_for(run.flags))
+                    painter.drawText(QPointF(x, baseline), run.text)
                 if run.flags & A_UNDERLINE:
                     style = (run.flags >> UNDERLINE_STYLE_SHIFT) & 0b11
                     pen = QPen(fg, 1.0)

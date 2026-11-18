@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.43.14 — 2026-11-18
+
+- **Vendor hyprtk-term 0.2.5** (byte-identical snapshot). Box drawing and block
+  elements are now painted as geometry instead of coming from the font, so
+  `opencode`'s logo, btop's frames and every other U+2500-U+259F art render
+  correctly even though `JetBrainsMono Nerd Font Mono` ships only U+2588 of that
+  range.
+
 ## 0.43.13 — 2026-11-18
 
 - **Vendor hyprtk-term 0.2.4.** The bar installer now provisions the suite

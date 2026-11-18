@@ -1,5 +1,25 @@
 # Changelog
 
+## [v1.8.8] - 2026-11-18
+
+### Fixed
+
+- **Box drawing and block elements render correctly in `hyprtk-term`**
+  (`hyprtk-term` 0.2.5, vendored by `hyprtk-bar-qt` 0.43.14). The default
+  `JetBrainsMono Nerd Font Mono` ships only U+2588 out of the whole
+  U+2500-U+259F range, so Qt fell back to a proportional face for the rest:
+  `opencode`'s logo came out as scattered squares and its input frame as a
+  dashed line, while the same screen was correct in alacritty (which uses
+  FiraCode). All 160 code points in that range are now painted as rectangles,
+  lines and arcs inside the cell — blocks and quadrants tile exactly,
+  light/heavy/double frames join without crossing, and dashes, rounded corners
+  and diagonals are drawn to size — so frames and block art are correct with
+  any font, including one that has the glyphs but sizes them to the em box.
+
+No package or installer-target surface changed; the gate was re-run
+(T1 1350 resolvable / 26 AUR / 88 allow-listed / 0 unexpected, T2 9/9,
+audit 1464 rows / 0 unexpected / 17 known provides-only TODOs).
+
 ## [v1.8.7] - 2026-11-18
 
 ### Changed

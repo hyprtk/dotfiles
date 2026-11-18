@@ -19,8 +19,12 @@ import ctypes as C
 from collections import deque
 from dataclasses import dataclass
 
+from . import boxdraw
 from . import vtcapi as V
 from .vtcapi import ATTR, COLOR_DEFAULT_MASK, COLOR_TYPE_MASK, KEY, MOD
+
+# Code points painted as geometry (boxdraw.py) instead of by the font.
+BOX_FIRST, BOX_LAST = boxdraw.FIRST, boxdraw.LAST
 
 # Our own attribute bits (libvterm's bitfield order is awkward to test against).
 A_BOLD = 1 << 0
@@ -556,6 +560,14 @@ def _build_runs(cells: list[tuple], term: "VTerminal", cols: int) -> list[Run]:
         if not cps and bgc == term.background and not flags:
             flush()
             key = None
+            continue
+        if len(cps) == 1 and BOX_FIRST <= cps[0] <= BOX_LAST:
+            # Box drawing and block elements are painted as geometry rather
+            # than by the font (see boxdraw.py), so each one gets a run of its
+            # own and the painter can address its cell exactly.
+            flush()
+            key = None
+            runs.append(Run(chr(cps[0]), span, fgc, bgc, flags))
             continue
         new_key = (fgc, bgc, flags)
         if new_key != key:

@@ -30,6 +30,9 @@ every supported archive) and paints a grid on the CPU — which the benchmarks i
 - 16-colour palette from pywal, 256-colour cube, 24-bit truecolor
 - Bold, italic, underline (single/double/curly), strike, reverse, conceal, blink
 - Wide (CJK) and combining characters, emoji fallback through the system font
+- **Box drawing and block elements are drawn, not typed**: every code point in
+  U+2500-U+259F is painted as rectangles, lines and arcs inside its cell, so
+  frames, rules and block art stay seamless whatever the font contains
 - OSC 52 clipboard (both directions), OSC 0/2 window title, bracketed paste
 - Mouse reporting (click, drag, any-motion) for TUI apps, with Shift to override
 
@@ -120,6 +123,9 @@ PTY (pty.fork)  ->  libvterm (ctypes)  ->  row runs  ->  QPainter  ->  QML
 - `hyprtk_term/terminal.py` — one QT object per tab, PTY watched by a
   `QSocketNotifier` on the GUI thread.
 - `hyprtk_term/view.py` — the painted grid, selection, mouse, keys.
+- `hyprtk_term/boxdraw.py` — geometry for box drawing and block elements,
+  emitted through a small canvas protocol so it needs no Qt and is unit tested
+  against a recording canvas.
 - `hyprtk_term/qml/` — tabs, settings, theme.
 
 Measured on this machine: 12 MB/s parse throughput, ~2 ms to re-read an 80x24
