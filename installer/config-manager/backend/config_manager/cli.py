@@ -180,6 +180,9 @@ def cmd_open(args) -> int:
     import os
 
     env = dict(os.environ)
+    # Quickshell defaults the Wayland app id to "org.quickshell", which loses the
+    # desktop entry lookup (bar tasklist icon, window rules). Match the .desktop id.
+    env.setdefault("QS_APP_ID", "hyprtk-config-manager")
     if args.page:
         env["HYPR_CM_PAGE"] = args.page
     if getattr(args, "overlay", False):

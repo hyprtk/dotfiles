@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.11 — 2026-11-18
+
+- **Vendor hyprtk-file-manager 1.8.10.** The file manager's window now sets
+  `QS_APP_ID`, so it reports `hyprtk-file-manager` instead of Quickshell's
+  default `org.quickshell`. The task list resolves its desktop entry again and
+  shows the suite mark rather than the generic executable icon.
+
 ## 0.43.10 — 2026-11-17
 
 - **New app icon.** The suite's v09 mark (monogram plus a bar badge) replaces

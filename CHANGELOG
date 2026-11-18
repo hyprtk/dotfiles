@@ -3,6 +3,22 @@
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 
+## [v1.7.8] - 2026-11-18
+
+### Fixed
+
+- **The Quickshell apps identify themselves to the compositor.** Quickshell
+  names every Wayland toplevel `org.quickshell` unless `QS_APP_ID` is set, so
+  the file manager and the config manager had no link to their desktop entries:
+  the bar's task list showed the generic executable icon instead of the v09
+  suite mark, and app-id window rules could not match them. Both launchers now
+  export their desktop id (`hyprtk-file-manager` 1.8.10,
+  `hyprtk-config-manager` 0.2.4).
+
+### Changed
+
+- `hyprtk-bar-qt` 0.43.11 vendors `hyprtk-file-manager` 1.8.10.
+
 ## [v1.7.7] - 2026-11-17
 
 ### Changed

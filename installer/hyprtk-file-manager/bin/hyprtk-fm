@@ -2,6 +2,12 @@
 set -eu
 : "${QT_QPA_PLATFORMTHEME:=gtk3}"
 export QT_QPA_PLATFORMTHEME
+# Quickshell names every Wayland toplevel "org.quickshell" unless QS_APP_ID is
+# set, which costs the app its identity: the bar tasklist icon, the desktop
+# entry lookup (class/icon in hyprctl) and the app-id window rules. Match the
+# desktop entry id instead.
+: "${QS_APP_ID:=hyprtk-file-manager}"
+export QS_APP_ID
 
 SELF=$(readlink -f "$0")
 ROOT=$(CDPATH= cd -- "$(dirname -- "$SELF")/.." && pwd)

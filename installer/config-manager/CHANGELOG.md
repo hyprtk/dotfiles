@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.4 — 2026-11-18
+
+### Fixed
+
+- **The window now carries the app's identity.** Quickshell names every Wayland
+  toplevel `org.quickshell` unless `QS_APP_ID` is set, so the settings window had
+  no link to `hyprtk-config-manager.desktop` and the bar's task list fell back to
+  the generic executable icon. `hyprtk-config-manager open` now sets
+  `QS_APP_ID=hyprtk-config-manager` for the front end it spawns.
+
 ## 0.2.3 — 2026-11-17
 
 ### Changed

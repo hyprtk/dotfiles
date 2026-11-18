@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.10 — 2026-11-18
+
+### Fixed
+
+- **The window now carries the app's identity.** Quickshell names every Wayland
+  toplevel `org.quickshell` unless `QS_APP_ID` is set, so the window had no link
+  to `hyprtk-file-manager.desktop`: the bar's task list showed the generic
+  executable icon instead of the suite mark, and app-id window rules could not
+  match. The launcher now exports `QS_APP_ID=hyprtk-file-manager`.
+
 ## 1.8.9 — 2026-11-17
 
 ### Changed
