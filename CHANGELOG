@@ -1,5 +1,19 @@
 # Changelog
 
+## [v1.8.1] - 2026-11-18
+
+### Fixed
+
+- **The bar's Terminal quick link takes effect without a relogin.**
+  `set-default-apps.sh` now writes an explicit `hyprtk-term` command when the
+  terminal is installed. The shipped default stays empty (it resolves
+  `$TERMINAL`), but `$TERMINAL` is only re-read at session start, so an existing
+  session kept opening alacritty until the next login.
+
+No package or installer-target surface changed; the gate was carried from
+v1.8.0 (T1 1350 resolvable / 26 AUR / 88 allow-listed / 0 unexpected, T2 9/9,
+audit 1464 rows / 0 unexpected / 17 known provides-only TODOs).
+
 ## [v1.8.0] - 2026-11-18
 
 ### Added

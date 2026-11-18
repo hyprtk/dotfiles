@@ -61,12 +61,13 @@ fi
 # hyprtk-fm (and relabel it), keeping every other link untouched. Back up once.
 if [ -f "$bar_cfg" ] && command -v python3 >/dev/null 2>&1; then
     [ -f "$bar_cfg.bak" ] || cp -a "$bar_cfg" "$bar_cfg.bak" 2>/dev/null || true
-    python3 - "$bar_cfg" <<'PY'
+    python3 - "$bar_cfg" "${term_desktop:+1}" <<'PY'
 import json
 import os
 import sys
 
 path = sys.argv[1]
+term_installed = len(sys.argv) > 2 and sys.argv[2] == "1"
 try:
     with open(path, encoding="utf-8") as handle:
         data = json.load(handle)
@@ -81,10 +82,11 @@ def patch(node):
             if "label" in node:
                 node["label"] = "Files"
         elif node.get("id") == "terminal" or node.get("tooltip") == "Terminal":
-            # Empty command means "resolve $TERMINAL at runtime" (the bar's
-            # Quicklinks.defaultCommand does that); TERMINAL is now hyprtk-term.
-            if node.get("command") in ("alacritty", "kitty", "hyprtk-term"):
-                node["command"] = ""
+            # An explicit command takes effect in the *running* session too:
+            # $TERMINAL is only re-read at session start, so a fresh login gets
+            # the same result through the shipped empty-command default.
+            if term_installed and node.get("command") in ("", "alacritty", "kitty", "hyprtk-term"):
+                node["command"] = "hyprtk-term"
             if "label" in node:
                 node["label"] = "Terminal"
         elif node.get("command") == "thunar":
