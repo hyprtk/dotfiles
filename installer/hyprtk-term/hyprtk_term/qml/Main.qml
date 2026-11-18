@@ -20,7 +20,11 @@ ApplicationWindow {
     readonly property var cfg: Bridge.config
     readonly property string mono: cfg.font_family
 
-    property var tabs: []          // [{id, label, alerted}]
+    // Tabs live in a ListModel, not in a JS array: reassigning an array makes
+    // the Repeater destroy and recreate every delegate, and doing that from
+    // inside the delegate's own click handler loses the mouse grab (the tab
+    // strip stopped responding after a tab was added). setProperty updates the
+    // one delegate in place.
     property string activeId: ""
     property string activeLabel: ""
     property int counter: 0
@@ -32,6 +36,8 @@ ApplicationWindow {
     property real menuX: 0
     property real menuY: 0
 
+    ListModel { id: tabModel }
+
     Component.onCompleted: {
         fonts = Bridge.monoFonts();
         newTab();
@@ -40,35 +46,38 @@ ApplicationWindow {
     // ---------------------------------------------------------------- tabs --
 
     function indexOf(id) {
-        for (var i = 0; i < tabs.length; i++)
-            if (tabs[i].id === id)
+        for (var i = 0; i < tabModel.count; i++)
+            if (tabModel.get(i).tabId === id)
                 return i;
         return -1;
     }
 
     function labelOf(id) {
         var i = indexOf(id);
-        return i < 0 ? "" : tabs[i].label;
+        return i < 0 ? "" : tabModel.get(i).label;
+    }
+
+    function tabCount() {
+        return tabModel.count;
     }
 
     function setLabel(id, label) {
-        var next = tabs.slice();
         var i = indexOf(id);
         if (i < 0)
             return;
-        next[i] = { id: id, label: label || "Terminal", alerted: next[i].alerted };
-        tabs = next;
+        var text = label || "Terminal";
+        if (tabModel.get(i).label === text)
+            return;
+        tabModel.setProperty(i, "label", text);
         if (id === activeId)
-            activeLabel = next[i].label;
+            activeLabel = text;
     }
 
     function setAlerted(id, value) {
         var i = indexOf(id);
-        if (i < 0)
+        if (i < 0 || tabModel.get(i).alerted === value)
             return;
-        var next = tabs.slice();
-        next[i] = { id: id, label: next[i].label, alerted: value };
-        tabs = next;
+        tabModel.setProperty(i, "alerted", value);
     }
 
     function newTab() {
@@ -95,7 +104,7 @@ ApplicationWindow {
             win.menuY = y;
             termMenu.popup(win.contentItem, x, y);
         });
-        tabs = tabs.concat([{ id: id, label: "Terminal", alerted: false }]);
+        tabModel.append({ tabId: id, label: "Terminal", alerted: false });
         activate(id);
         return id;
     }
@@ -126,23 +135,22 @@ ApplicationWindow {
             view.kill();
             view.destroy();
         }
-        var next = tabs.slice();
-        next.splice(i, 1);
-        tabs = next;
-        if (tabs.length === 0) {
+        tabModel.remove(i);
+        if (tabModel.count === 0) {
+            activeId = "";
             newTab();
             return;
         }
         if (id === activeId)
-            activate(tabs[Math.min(i, tabs.length - 1)].id);
+            activate(tabModel.get(Math.min(i, tabModel.count - 1)).tabId);
     }
 
     function cycle(direction) {
-        if (tabs.length < 2)
+        if (tabModel.count < 2)
             return;
         var i = indexOf(activeId);
-        i = (i + direction + tabs.length) % tabs.length;
-        activate(tabs[i].id);
+        i = (i + direction + tabModel.count) % tabModel.count;
+        activate(tabModel.get(i).tabId);
     }
 
     function activeView() {
@@ -191,15 +199,17 @@ ApplicationWindow {
             spacing: 5
 
             Repeater {
-                model: win.tabs
+                model: tabModel
                 delegate: TabButton {
+                    objectName: "tabButton"
+                    property string tabKey: model.tabId
                     theme: win.th
                     monoFamily: win.mono
-                    label: modelData.label
-                    alerted: modelData.alerted
-                    active: modelData.id === win.activeId
-                    onActivated: win.activate(modelData.id)
-                    onClosed: win.closeTab(modelData.id)
+                    label: model.label
+                    alerted: model.alerted
+                    active: model.tabId === win.activeId
+                    onActivated: win.activate(model.tabId)
+                    onClosed: win.closeTab(model.tabId)
                 }
             }
 

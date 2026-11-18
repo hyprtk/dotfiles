@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.8.3] - 2026-11-18
+
+### Fixed
+
+- **hyprtk-term tabs stay put.** A tab's width came from its title, so each OSC
+  title change (zsh sets one per prompt) resized it and pushed the tabs to its
+  right along — up to 129 px. Clicking a tab could land on its neighbour or on
+  the gap that had just opened. Fixed 150 px tabs (`hyprtk-term` 0.2.1).
+- **The terminal's settings sheet fits its card.** Label, value and the two
+  stepper pills summed past the content width, so the "+" button sat outside
+  the sheet and could not be clicked (same release).
+
+Tabs also moved to a `ListModel`, so adding, closing or re-labelling no longer
+destroys every delegate mid-click.
+
+No package or installer-target surface changed; the gate was carried from
+v1.8.0 (T1 1350 resolvable / 26 AUR / 88 allow-listed / 0 unexpected, T2 9/9,
+audit 1464 rows / 0 unexpected / 17 known provides-only TODOs).
+
 ## [v1.8.2] - 2026-11-18
 
 ### Changed

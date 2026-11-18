@@ -25,6 +25,7 @@ Rectangle {
 
     Rectangle {
         id: card
+        objectName: "settingsCard"
         anchors.centerIn: parent
         width: 420
         height: content.implicitHeight + 40
@@ -185,8 +186,10 @@ Rectangle {
         width: parent.width
         spacing: 8
 
+        // label + value + two 26 px pills + three 8 px gaps must fit the card's
+        // content width, or the "+" lands outside the sheet.
         Text {
-            width: parent.width - 132
+            width: Math.max(60, parent.width - 168)
             text: label
             color: Util.alpha(sheet.theme.muted, 0.95)
             font.pixelSize: 11
@@ -194,7 +197,7 @@ Rectangle {
             elide: Text.ElideRight
         }
         Text {
-            width: 96
+            width: 84
             text: value
             color: sheet.theme.foreground
             font.family: sheet.cfg.font_family
@@ -204,11 +207,13 @@ Rectangle {
             elide: Text.ElideRight
         }
         Pill {
+            objectName: "stepperMinus"
             label: "\u2212"
             width: 26
             onClicked: parent.step(-1)
         }
         Pill {
+            objectName: "stepperPlus"
             label: "+"
             width: 26
             onClicked: parent.step(1)

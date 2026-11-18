@@ -1,6 +1,27 @@
 # Changelog
 
-## 0.2.0 — 2026-11-18
+## 0.2.1 — 2026-11-18
+
+### Fixed
+
+- **Tabs no longer move while you click them.** A tab's width was derived from
+  its title, so every OSC title change (zsh sets one on each prompt) resized the
+  tab and pushed everything to its right along — the second tab shifted by up to
+  129 px. Fixed width (150 px), title elided; the active tab's full title is in
+  the window title.
+- **The settings sheet's "+" buttons sit inside the card.** Label, value and the
+  two 26 px pills summed past the card's content width, so the right-hand pill
+  hung outside the sheet (and could not be clicked).
+
+### Changed
+
+- Tabs are stored in a `ListModel` and updated with `setProperty`, so adding,
+  closing or re-labelling a tab no longer destroys and recreates every delegate
+  mid-click.
+- The headless gate now checks both: tab geometry must survive a title change,
+  clicking each tab must activate it, and every stepper button must fit its card.
+
+## 0.2.0 — 2026-11-18## 0.2.0 — 2026-11-18
 
 ### Added
 

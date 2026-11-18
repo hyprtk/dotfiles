@@ -15,8 +15,12 @@ Rectangle {
     signal activated()
     signal closed()
 
+    // Fixed width on purpose: a width derived from the title made every tab to
+    // the right shift whenever a shell set its OSC title (zsh does it on every
+    // prompt), so a click aimed at a tab could land on its neighbour or on the
+    // gap that had just opened up.
     height: 28
-    width: Math.max(104, Math.min(240, titleText.implicitWidth + 58))
+    width: 150
     radius: 7
     color: active ? Util.alpha(theme.surface_alt, 0.95)
                   : (mouse.containsMouse ? Util.alpha(theme.surface, 0.85) : "transparent")
@@ -42,7 +46,7 @@ Rectangle {
         Text {
             id: titleText
             anchors.verticalCenter: parent.verticalCenter
-            width: tab.width - 64
+            width: tab.width - 60
             text: Util.shortTitle(tab.label)
             elide: Text.ElideRight
             font.family: tab.monoFamily
