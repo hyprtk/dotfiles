@@ -36,11 +36,15 @@ dnf)
           gvfs-smb 7zip unzip unrar)
     ;;
 zypper)
+    # quickshell is deliberately absent: Tumbleweed's only provider is
+    # noctalia-qs, a fork pinned at 0.0.12 while upstream is 0.3.x, so
+    # srcapps-install.sh builds the real thing from source instead (the same
+    # path apt and apk take).
     PKGS=(hyprland xdg-desktop-portal-wlr swayidle hyprlock hypridle swappy cliphist xhost nwg-look
           curl wget ImageMagick jq bc brightnessctl playerctl libadwaita-1-0
-          gtk3 libgtk-layer-shell0 gtk4 desktop-file-utils python3 python3-pip
-          python3-virtualenv python3-gobject wob hyprsunset lua54 swaylock quickshell libQt6Core6 libQt6Qml6 libQt6Quick6 libQt6Svg6 gvfs
-          gvfs-backends p7zip unzip unrar)
+          libgtk-3-0 libgtk-layer-shell0 libgtk-4-1 desktop-file-utils python313 python313-pip
+          python313-virtualenv python313-gobject wob hyprsunset lua54 swaylock libQt6Core6 libQt6Qml6 libQt6Quick6 libQt6Svg6 gvfs
+          gvfs-backends 7zip unzip unrar)
     ;;
 xbps)
     # hyprland, wob and hyprsunset are not packaged on Void (a packaging-

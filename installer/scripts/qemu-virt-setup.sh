@@ -34,7 +34,7 @@ case "$HYPRTK_PM" in
                     bridge-utils swtpm libguestfs-tools
         ;;
     zypper)
-        pkg_install qemu-kvm libvirt-daemon virt-manager dnsmasq bridge-utils swtpm libguestfs
+        pkg_install qemu libvirt-daemon virt-manager dnsmasq bridge-utils swtpm libguestfs
         ;;
     xbps)
         pkg_install qemu libvirt virt-manager dnsmasq bridge-utils swtpm libguestfs

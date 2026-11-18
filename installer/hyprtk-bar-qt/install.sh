@@ -143,7 +143,7 @@ declare -A DEPS
 DEPS[pacman]="quickshell qt6-base qt6-declarative qt6-svg python python-pip"
 DEPS[apt]="qt6-base-dev qt6-declarative-dev libqt6svg6-dev python3 python3-venv python3-pip"
 DEPS[dnf]="qt6-qtbase qt6-qtdeclarative qt6-qtsvg python3 python3-pip"
-DEPS[zypper]="libQt6Core6 libQt6Gui6 libQt6Qml6 libQt6Quick6 libQt6Svg6 python3 python3-pip"
+DEPS[zypper]="libQt6Core6 libQt6Gui6 libQt6Qml6 libQt6Quick6 libQt6Svg6 python313 python313-pip"
 DEPS[xbps]="qt6-base qt6-declarative qt6-svg python3 python3-pip python3-virtualenv"
 DEPS[apk]="qt6-qtbase qt6-qtdeclarative qt6-qtsvg python3 py3-pip py3-virtualenv"
 DEPS[emerge]="gui-apps/quickshell dev-qt/qtbase dev-qt/qtdeclarative dev-qt/qtsvg dev-lang/python"
@@ -157,9 +157,9 @@ DEPS[nix]="quickshell qt6.qtbase qt6.qtdeclarative qt6.qtsvg python3"
 declare -A QS_BUILD_DEPS
 QS_BUILD_DEPS[apt]="git build-essential cmake ninja-build pkg-config qt6-base-dev qt6-base-private-dev qt6-declarative-dev qt6-declarative-private-dev qt6-wayland-dev libqt6svg6-dev qt6-shadertools-dev libspirv-tools-dev libcli11-dev libjemalloc-dev libdrm-dev libgbm-dev libegl1-mesa-dev libwayland-dev wayland-protocols libxcb1-dev"
 QS_BUILD_DEPS[dnf]="git gcc-c++ cmake ninja-build pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsvg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
-QS_BUILD_DEPS[zypper]="git gcc-c++ cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
+QS_BUILD_DEPS[zypper]="git gcc-c++ cmake ninja pkgconf-pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
 QS_BUILD_DEPS[xbps]="git base-devel cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11 jemalloc-devel libdrm-devel wayland-devel wayland-protocols libxcb-devel"
-QS_BUILD_DEPS[apk]="git build-base cmake ninja pkgconf qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qtsvg-dev jemalloc-dev libdrm-dev wayland-dev wayland-protocols libxcb-dev"
+QS_BUILD_DEPS[apk]="git build-base cmake samurai pkgconf qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qtsvg-dev jemalloc-dev libdrm-dev wayland-dev wayland-protocols libxcb-dev"
 
 # CLI11 is a header-only library Quickshell #includes directly (<CLI/CLI.hpp>) —
 # it does not call find_package, so headers on the default include path are

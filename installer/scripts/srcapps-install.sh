@@ -50,15 +50,15 @@ say() { echo "srcapps: $*"; }
 declare -A G4_DEPS SWAPPY_DEPS NWG_DEPS
 G4_DEPS[apt]="git build-essential meson ninja-build pkg-config libgtk-4-dev libwayland-dev wayland-protocols"
 G4_DEPS[dnf]="git gcc gcc-c++ meson ninja-build pkgconf-pkg-config gtk4-devel wayland-devel wayland-protocols-devel"
-G4_DEPS[zypper]="git gcc gcc-c++ meson ninja pkg-config gtk4-devel wayland-devel wayland-protocols-devel"
+G4_DEPS[zypper]="git gcc gcc-c++ meson ninja pkgconf-pkg-config gtk4-devel wayland-devel wayland-protocols-devel"
 G4_DEPS[xbps]="git base-devel meson ninja pkg-config gtk4-devel wayland-devel wayland-protocols"
-G4_DEPS[apk]="git build-base meson ninja pkgconf gtk4.0-dev wayland-dev wayland-protocols"
+G4_DEPS[apk]="git build-base meson samurai pkgconf gtk4.0-dev wayland-dev wayland-protocols"
 
 SWAPPY_DEPS[apt]="git build-essential meson ninja-build pkg-config libgtk-3-dev libwlroots-dev libwayland-dev wayland-protocols libpango1.0-dev libcairo2-dev libgdk-pixbuf-2.0-dev"
 SWAPPY_DEPS[dnf]="git gcc gcc-c++ meson ninja-build pkgconf-pkg-config gtk3-devel wlroots-devel wayland-devel wayland-protocols-devel pango-devel cairo-devel gdk-pixbuf2-devel"
-SWAPPY_DEPS[zypper]="git gcc gcc-c++ meson ninja pkg-config gtk3-devel wlroots-devel wayland-devel wayland-protocols-devel pango-devel cairo-devel gdk-pixbuf-devel"
+SWAPPY_DEPS[zypper]="git gcc gcc-c++ meson ninja pkgconf-pkg-config gtk3-devel wlroots-devel wayland-devel wayland-protocols-devel pango-devel cairo-devel gdk-pixbuf-devel"
 SWAPPY_DEPS[xbps]="git base-devel meson ninja pkg-config gtk+3-devel wlroots-devel wayland-devel wayland-protocols pango-devel cairo-devel gdk-pixbuf-devel"
-SWAPPY_DEPS[apk]="git build-base meson ninja pkgconf gtk+3.0-dev wlroots-dev wayland-dev wayland-protocols pango-dev cairo-dev gdk-pixbuf-dev"
+SWAPPY_DEPS[apk]="git build-base meson samurai pkgconf gtk+3.0-dev wlroots0.20-dev wayland-dev wayland-protocols pango-dev cairo-dev gdk-pixbuf-dev"
 
 NWG_DEPS[apt]="git golang-go libgtk-3-dev gcc"
 NWG_DEPS[dnf]="git golang gtk3-devel gcc"
@@ -98,7 +98,7 @@ WOB_DEPS[xbps]="git meson ninja wayland-devel wayland-protocols inih-devel libse
 declare -A HYPRCHAIN_DEPS
 HYPRCHAIN_DEPS[apt]="git cmake build-essential pkg-config libpixman-1-dev libpugixml-dev libwayland-dev wayland-protocols libxkbcommon-dev libcairo2-dev libpango1.0-dev libjpeg-dev"
 HYPRCHAIN_DEPS[dnf]="git cmake gcc gcc-c++ pkgconf-pkg-config pixman-devel pugixml-devel wayland-devel wayland-protocols-devel libxkbcommon-devel cairo-devel pango-devel libjpeg-turbo-devel"
-HYPRCHAIN_DEPS[zypper]="git cmake gcc gcc-c++ pkg-config libpixman-1-0-devel pugixml-devel wayland-devel wayland-protocols-devel libxkbcommon-devel cairo-devel pango-devel libjpeg8-devel"
+HYPRCHAIN_DEPS[zypper]="git cmake gcc gcc-c++ pkgconf-pkg-config libpixman-1-0-devel pugixml-devel wayland-devel wayland-protocols-devel libxkbcommon-devel cairo-devel pango-devel libjpeg8-devel"
 HYPRCHAIN_DEPS[xbps]="git cmake base-devel pkg-config pixman-devel pugixml-devel wayland-devel wayland-protocols libxkbcommon-devel cairo-devel pango-devel libjpeg-turbo-devel"
 HYPRCHAIN_DEPS[apk]="git cmake build-base pkgconf pixman-dev pugixml-dev wayland-dev wayland-protocols libxkbcommon-dev cairo-dev pango-dev libjpeg-turbo-dev"
 
@@ -169,9 +169,9 @@ build_meson() {
 declare -A QS_DEPS
 QS_DEPS[apt]="git build-essential cmake ninja-build pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev libcli11-dev libjemalloc-dev libdrm-dev libwayland-dev wayland-protocols libxcb1-dev"
 QS_DEPS[dnf]="git gcc-c++ cmake ninja-build pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsvg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
-QS_DEPS[zypper]="git gcc-c++ cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
+QS_DEPS[zypper]="git gcc-c++ cmake ninja pkgconf-pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11-devel jemalloc-devel libdrm-devel wayland-devel wayland-protocols-devel libxcb-devel"
 QS_DEPS[xbps]="git base-devel cmake ninja pkg-config qt6-base-devel qt6-declarative-devel qt6-svg-devel cli11 jemalloc-devel libdrm-devel wayland-devel wayland-protocols libxcb-devel"
-QS_DEPS[apk]="git build-base cmake ninja pkgconf qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qtsvg-dev jemalloc-dev libdrm-dev wayland-dev wayland-protocols libxcb-dev"
+QS_DEPS[apk]="git build-base cmake samurai pkgconf qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qtsvg-dev jemalloc-dev libdrm-dev wayland-dev wayland-protocols libxcb-dev"
 
 # CLI11 is header-only and Quickshell #includes <CLI/CLI.hpp> directly (no
 # find_package), so headers on the default include path are enough. Every family

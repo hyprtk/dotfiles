@@ -49,7 +49,7 @@ dnf)
 zypper)
     PKGS=(alacritty kitty chromium starship ranger neovim mpv freerdp
           xfce4-power-manager thunar mousepad fontawesome-fonts fira-code-fonts vlc
-          eza python3-pip python3-psutil python3-rich python3-click
+          eza python313-pip python313-psutil python313-rich python313-click
           xdg-desktop-portal-gtk pavucontrol tumbler blueman sddm papirus-icon-theme
           btop NetworkManager NetworkManager-applet git nano xdg-user-dirs
           xdg-user-dirs-gtk os-prober polkit-gnome gnome-keyring gvfs gvfs-backends

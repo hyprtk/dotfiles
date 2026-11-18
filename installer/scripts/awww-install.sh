@@ -49,7 +49,7 @@ NATIVE_PKG[apk]="swww"
 declare -A BUILD_DEPS
 BUILD_DEPS[apt]="build-essential pkg-config git curl ca-certificates libwayland-dev wayland-protocols liblz4-dev libxkbcommon-dev"
 BUILD_DEPS[dnf]="gcc gcc-c++ make pkgconf-pkg-config git curl ca-certificates wayland-devel wayland-protocols-devel lz4-devel libxkbcommon-devel"
-BUILD_DEPS[zypper]="gcc gcc-c++ make pkg-config git curl ca-certificates wayland-devel wayland-protocols-devel liblz4-devel libxkbcommon-devel"
+BUILD_DEPS[zypper]="gcc gcc-c++ make pkgconf-pkg-config git curl ca-certificates wayland-devel wayland-protocols-devel liblz4-devel libxkbcommon-devel"
 BUILD_DEPS[xbps]="base-devel pkg-config git curl wayland-devel wayland-protocols liblz4-devel libxkbcommon-devel"
 BUILD_DEPS[apk]="build-base pkgconf git curl wayland-dev wayland-protocols lz4-dev libxkbcommon-dev"
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.43.16 — 2026-11-18
+
+- **Exact package names on openSUSE and Alpine.** Three entries in this
+  installer only resolved as *capabilities*: `python3`/`python3-pip` and
+  `pkg-config` on zypper, and `ninja` on apk. They work today because zypper and
+  apk resolve provides, but the literal names are wrong — openSUSE ships
+  `python313`/`python313-pip` and `pkgconf-pkg-config`, and Alpine's ninja is
+  `samurai`. Now that T1/T2 are required to report zero `Extra (TODO)` rows, the
+  names are the real ones.
+
 ## 0.43.15 — 2026-11-18
 
 - **Vendor hyprtk-term 0.2.6** (byte-identical snapshot). The terminal no longer

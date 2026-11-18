@@ -1,5 +1,48 @@
 # Changelog
 
+## [v1.8.10] - 2026-11-18
+
+### Changed
+
+- **The T1/T2 audit is at zero `Extra (TODO)` rows.** Seventeen package names
+  only resolved as *capabilities* — `zypper` and `apk` accept provides, so the
+  install worked, but the literal names were wrong. All are now the real
+  packages:
+
+  | openSUSE Tumbleweed | | Alpine | |
+  |---|---|---|---|
+  | `gtk3` | → `libgtk-3-0` | `ninja` | → `samurai` |
+  | `gtk4` | → `libgtk-4-1` | `wlroots-dev` | → `wlroots0.20-dev` |
+  | `p7zip` | → `7zip` | | |
+  | `pkg-config` | → `pkgconf-pkg-config` | | |
+  | `python3` | → `python313` | | |
+  | `python3-click` | → `python313-click` | | |
+  | `python3-gobject` | → `python313-gobject` | | |
+  | `python3-pip` | → `python313-pip` | | |
+  | `python3-psutil` | → `python313-psutil` | | |
+  | `python3-pygments` | → `python313-Pygments` | | |
+  | `python3-pyside6` | → `python313-pyside6` | | |
+  | `python3-rich` | → `python313-rich` | | |
+  | `python3-virtualenv` | → `python313-virtualenv` | | |
+  | `qemu-kvm` | → `qemu` | | |
+  | `quickshell` | → *removed* | | |
+
+  The `python313-*` names are versioned and will go red when Tumbleweed moves to
+  3.14 — that is the point: the gate should be loud instead of resolving through
+  a capability forever.
+- **`quickshell` is no longer requested on openSUSE.** Tumbleweed's only
+  provider is `noctalia-qs`, a fork pinned at 0.0.12 while upstream is 0.3.2;
+  installing it made `srcapps-install.sh` think Quickshell was present and skip
+  the source build, leaving the bar on a two-year-old fork. It is now left out
+  so the same source-build path apt and apk already take is used.
+- **`hyprtk-bar-qt` 0.43.16** applies the same fix to its own installer
+  (`python313`, `python313-pip`, `pkgconf-pkg-config`, `samurai`).
+
+Gate: **T1 1348 resolvable / 26 AUR / 88 allow-listed / 0 unexpected**, **T2
+9/9**, audit **1462 rows / 0 unexpected / 0 TODO** (1348 Resolved, 88 Allowed,
+26 AUR). Name counts drop by two: `quickshell` from the zypper list and `ninja`
+from the apk list (`samurai` was already there).
+
 ## [v1.8.9] - 2026-11-18
 
 ### Fixed

@@ -232,7 +232,7 @@ _ensure_void_hypr_libs() {
 
 # ── Per-family build dependencies (apk = Alpine) ────────────────────────────
 declare -A HYPR_SRC_DEPS
-HYPR_SRC_DEPS[apk]="cmake ninja samurai build-base pkgconf git jq lua5.5-dev
+HYPR_SRC_DEPS[apk]="cmake samurai build-base pkgconf git jq lua5.5-dev
     aquamarine-dev cairo-dev elogind-dev glaze hyprcursor-dev hyprgraphics-dev
     hyprland-protocols hyprlang-dev hyprutils-dev hyprwayland-scanner hyprwire-dev
     libdrm-dev libei-dev libinput-dev libliftoff-dev libxcb-dev libxcursor-dev

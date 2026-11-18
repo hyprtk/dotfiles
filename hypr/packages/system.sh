@@ -40,8 +40,8 @@ dnf)
     ;;
 zypper)
     PKGS=(sddm blueman fzf font-manager fontawesome-fonts fira-code-fonts eza
-          python3-pip python3-psutil python3-rich python3-click python3-pygments
-          python3-pyside6 qt6-declarative-imports
+          python313-pip python313-psutil python313-rich python313-click python313-Pygments
+          python313-pyside6 qt6-declarative-imports
           xdg-desktop-portal-gtk
           xdg-user-dirs           xdg-user-dirs-gtk os-prober polkit-gnome gnome-keyring
           libgtk4-layer-shell0 hyprpicker)
