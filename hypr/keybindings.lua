@@ -11,6 +11,7 @@ hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-fm; [ -x \"$p\" ] && exec \"$p\"; exec thunar'"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-edit; [ -x \"$p\" ] && exec \"$p\"; exec xdg-open \"$HOME\"'"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-calc; [ -x \"$p\" ] && exec \"$p\"'"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("brave"))
 hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd("chromium"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"), { description = "Toggle split" })
@@ -101,6 +102,9 @@ hl.bind(mainMod .. " + SHIFT + down", hl.dsp.window.resize({ x = 0, y = 100, rel
 
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set 100%"), { repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 70%"), { repeating = true })
+
+-- The Calculator key on keyboards that have one, wherever the session is.
+hl.bind("XF86Calculator", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-calc; [ -x \"$p\" ] && exec \"$p\"'"))
 
 -- ----------------------------------------------------- 
 -- Passthrough SUPER KEY to Virtual Machine

@@ -101,3 +101,16 @@ hl.window_rule({
     size = "1000 650",
 })
 
+
+-- hyprtk-calc: a utility window, not a document. Without this it tiles to the
+-- whole work area and ignores the size it asks for. The class is the desktop
+-- id it sets through setDesktopFileName.
+hl.window_rule({
+    name = "windowrule-hyprtk-calc",
+    match = {
+        class = "hyprtk-calc",
+    },
+    float = true,
+    center = true,
+    size = "480 740",
+})

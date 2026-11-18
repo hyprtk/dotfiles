@@ -1079,6 +1079,11 @@ else
         _spin "Installing hyprtk-term..." "bash $SCRIPT_DIR/installer/hyprtk-term/install.sh" "$LOG_FILE"
         _ok "hyprtk-term installed (hyprtk-term; session terminal via \$TERMINAL)"
 
+        # ── hyprtk-calc (GUI) ──────────────────────────────────────
+        _step "Installing hyprtk-calc"
+        _spin "Installing hyprtk-calc..." "bash $SCRIPT_DIR/installer/hyprtk-calc/install.sh" "$LOG_FILE"
+        _ok "hyprtk-calc installed (hyprtk-calc; GUI + shell calculator)"
+
         # ── Preferred apps (XDG + bar quick links) ─────────────────
         # Point XDG and the bar's Files/terminal quick links at hyprtk-fm and
         # hyprtk-term; Thunar and alacritty stay installed as fallbacks (the gum

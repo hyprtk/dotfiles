@@ -100,7 +100,7 @@ if [ -x /etc/skel/hyprtk/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.
     bash /etc/skel/hyprtk/installer/hyprtk-bar-qt/scripts/fix-imagemagick-policy.sh >/dev/null 2>&1 || true
 fi
 
-log "installing the suite system-wide (hyprtk-bar-qt, hyprtk-fm, hyprtk-editor, hyprtk-term)"
+log "installing the suite system-wide (hyprtk-bar-qt, hyprtk-fm, hyprtk-editor, hyprtk-term, hyprtk-calc)"
 bash "$LIVE_HOME/hyprtk/installer/hyprtk-bar-qt/install.sh" --system --no-deps \
     || log "WARN: system hyprtk-bar-qt install did not finish"
 bash "$LIVE_HOME/hyprtk/installer/hyprtk-file-manager/install.sh" --system \
@@ -109,6 +109,8 @@ bash "$LIVE_HOME/hyprtk/installer/hyprtk-editor/install.sh" --system \
     || log "WARN: system hyprtk-editor install did not finish"
 bash "$LIVE_HOME/hyprtk/installer/hyprtk-term/install.sh" --system \
     || log "WARN: system hyprtk-term install did not finish"
+bash "$LIVE_HOME/hyprtk/installer/hyprtk-calc/install.sh" --system \
+    || log "WARN: system hyprtk-calc install did not finish"
 
 log "running first-login setup for $LIVE_USER (config, palette, defaults)"
 runuser -u "$LIVE_USER" -- env \

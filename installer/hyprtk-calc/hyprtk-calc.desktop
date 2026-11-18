@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Calculator
+GenericName=Calculator
+Comment=hyprtk calculator — exact decimal, scientific and programmer modes
+Exec=hyprtk-calc
+Icon=hyprtk-calc
+Terminal=false
+Categories=Utility;Calculator;
+Keywords=calc;math;arithmetic;scientific;programmer;hex;binary;
+StartupNotify=true
+StartupWMClass=hyprtk-calc

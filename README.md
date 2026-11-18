@@ -17,7 +17,7 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Li
 ---
 
 > **The hyprtk suite** — this repository is the desktop itself.
-> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
+> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
 
 ## What is this?
 
@@ -70,7 +70,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | --- | --- |
 | **Terminal** | hyprtk-term (Qt Quick + libvterm) + starship prompt |
 | **Editor** | Neovim (Vim fallback) |
-| **App launcher** | Rofi (plus the in-bar start menu) |
+| **App launcher** | the in-bar start menu/launcher (no rofi) |
 | **Status bar** | hyprtk-bar-qt — Qt6/QML (Quickshell) pywal-themed taskbar with built-in menus |
 | **Desktop widgets** | Clock, weather, audio visualizer, hard disks, network, CPU/RAM and system info — free-floating surfaces you drag into place and snap into groups, themed by pywal |
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
@@ -83,6 +83,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Logout** | hyprlogout |
 | **Files** | hyprtk-fm — Qt6/QML file manager (tabs, dual pane, thumbnail grid, LAN share browsing); Thunar fallback |
 | **Text editor** | hyprtk-edit — Qt6/QML text editor (tabs, session restore, crash drafts, find/replace, minimap, 600+ syntaxes); pywal-themed |
+| **Calculator** | hyprtk-calc — exact-decimal calculator (live expression line, basic/scientific/programmer keypads, history, `0x`/binary, and a shell mode); pywal-themed |
 | **Icons** | Papirus (recolored to match the theme) |
 | **Cursor** | Adwaita (session theme via `XCURSOR_THEME`/`XCURSOR_SIZE`) |
 | **Browser** | Brave / Chromium |
@@ -103,6 +104,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | `Super + D` | App launcher (in-bar) |
 | `Super + F` | File manager (hyprtk-fm) |
 | `Super + E` | Text editor (hyprtk-edit) |
+| `Super + N` | Calculator (hyprtk-calc) |
 | `Super + B` / `Super + Ctrl + B` | Brave / Chromium |
 | `Super + X` | Exit session |
 | `Super + M` | Toggle fullscreen |
@@ -176,6 +178,7 @@ so a single install lays down all of them:
 | [**hyprtk-fm**](https://github.com/hyprtk/hyprtk-file-manager) | the Qt6/QML file manager — default for `inode/directory`, `Super+F` and the bar's **Files** link | vendored in the bar installer |
 | [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor — default for `text/plain` and `text/markdown`, `Super+E` | vendored, installed after the bar |
 | [**hyprtk-term**](https://github.com/hyprtk/hyprtk-term) | the Qt Quick terminal on libvterm — tabs, scrollback search, pywal ANSI palette, `$TERMINAL` | vendored in the bar installer, installed after the editor |
+| [**hyprtk-calc**](https://github.com/hyprtk/hyprtk-calc) | the exact-decimal calculator — live expression line, three keypads, history, four-base readout, and a shell mode in the same binary | vendored, installed after the terminal |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |
 | [**Hyprtk-ISO-Creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed | shipped installer app |
@@ -194,10 +197,11 @@ All system theming (wallpaper, pywal, icons, lock screen, SDDM/GRUB) now lives i
 | **Files** | hyprtk-fm — native Qt6/QML file manager: tabs, dual pane, breadcrumbs, thumbnail grid, previews, undo/trash and LAN share browsing; pywal-themed | `Super + F`, the bar's **Files** quick link, or opening any folder |
 | **Editor** | hyprtk-edit — native Qt6/QML text editor: tabs, session restore, autosaved crash-recovery drafts, regex search, command palette, line operations, minimap and 600+ Pygments syntaxes, with a syntax theme derived from pywal | `Super + E`, the bar's **Editor** quick link, or opening any text file |
 | **Terminal** | hyprtk-term — native Qt6/QML terminal on libvterm: tabs with OSC titles, 10k-line scrollback with search, truecolor/wide-character/mouse/paste support, ANSI palette from pywal; alacritty stays for the gum menus that tag their window with `--class` | `Super + Return`, the bar's **Terminal** quick link, or `$TERMINAL` from any app |
+| **Calculator** | hyprtk-calc — native Qt6/QML calculator on Python's `Decimal`: `0.1+0.2` is `0.3`, a live expression line, basic/scientific/programmer keypads with a HEX/DEC/OCT/BIN readout, persisted history and a pywal palette; the same binary answers `hyprtk-calc "2+2"` in a shell | `Super + N`, the Calculator key if your keyboard has one, or `hyprtk-calc` |
 
 On the live ISO the suite is installed **system-wide** under `/usr/local`
-(bar, file manager and editor); first login only seeds the per-user config,
-themes, `~/.local/bin` links and the pywal palette.
+(bar, file manager, editor, terminal and calculator); first login only seeds the
+per-user config, themes, `~/.local/bin` links and the pywal palette.
 
 hyprtk-fm is the suite's default file manager (registered for
 `inode/directory`), installed by the bar's installer from its vendored snapshot;

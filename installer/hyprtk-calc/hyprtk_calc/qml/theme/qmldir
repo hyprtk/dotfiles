@@ -1,0 +1,2 @@
+module hyprtk.calc.theme
+singleton Glyph 1.0 Glyph.qml
