@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.8.2] - 2026-11-18
+
+### Changed
+
+- **Dropped the `xdg-settings set default-terminal-emulator` call.** xdg-utils
+  does not define that property (checked on Arch and Debian bookworm); it was a
+  silent no-op. The terminal's contract is `$TERMINAL` from
+  `hypr/environment.lua` plus the `.desktop` entry, and every suite app (bar,
+  file manager, editor) already resolves it that way.
+
+Gate carried from v1.8.0 (T1 1350/26/88/0, T2 9/9, audit 1464 rows / 0
+unexpected / 17 known TODOs); no package surface changed.
+
 ## [v1.8.1] - 2026-11-18
 
 ### Fixed

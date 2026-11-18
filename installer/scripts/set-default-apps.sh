@@ -52,9 +52,10 @@ if command -v xdg-settings >/dev/null 2>&1; then
             break
         fi
     done
-    if [ -n "$term_desktop" ]; then
-        xdg-settings set default-terminal-emulator "$term_desktop" 2>/dev/null || true
-    fi
+    # No terminal registration here: xdg-settings only knows URL handlers and
+    # the web browser (checked on xdg-utils 1.2 on Arch and Debian). The suite's
+    # terminal contract is $TERMINAL, set in hypr/environment.lua, plus the
+    # .desktop entry for anything that scans TerminalEmulator entries.
 fi
 
 # The bar's "Files" quick link: replace an explicit Thunar command with
