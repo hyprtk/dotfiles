@@ -9,7 +9,10 @@ from pathlib import Path
 
 
 def terminal_argv(path: str) -> list[str]:
+    # The suite terminal first, then whatever $TERMINAL points at, then the
+    # usual suspects. hyprtk-term opens its working directory with -d.
     candidates = [
+        ["hyprtk-term", "-d", path],
         ["alacritty", "--working-directory", path],
         ["kitty", "--directory", path],
         ["foot", "--working-directory", path],
@@ -17,7 +20,7 @@ def terminal_argv(path: str) -> list[str]:
     ]
     env_terminal = os.environ.get("TERMINAL")
     if env_terminal:
-        candidates.append(env_terminal.split())
+        candidates.insert(1, env_terminal.split())
     for argv in candidates:
         executable = shutil.which(argv[0])
         if executable:

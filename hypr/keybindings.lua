@@ -5,7 +5,7 @@
 
 local mainMod = "SUPER"
 
-hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd("alacritty"))
+hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-term; [ -x \"$p\" ] && exec \"$p\"; exec alacritty'"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-qt-menu-toggle"))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))

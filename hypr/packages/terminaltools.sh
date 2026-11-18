@@ -4,14 +4,20 @@
 _PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 . "$_PKGDIR/../../installer/scripts/pkgmanager.sh"
 
-PKGS=(eza micro xfce4-terminal btop alacritty kitty starship ranger nano neovim fastfetch)
+PKGS=(eza micro xfce4-terminal btop alacritty kitty libvterm starship ranger nano neovim fastfetch)
 AUR=()
 case "$HYPRTK_PM" in
     pacman) AUR=(fastfetch) ;;
     # openSUSE names the editor micro-editor; the rest of the list is shared.
-    zypper) PKGS=(eza micro-editor xfce4-terminal btop alacritty kitty starship
+    zypper) PKGS=(eza micro-editor xfce4-terminal btop alacritty kitty libvterm0 starship
                   ranger nano neovim fastfetch) ;;
 esac
+
+# hyprtk-term's emulator core. Debian/Ubuntu package it as libvterm0 (the same
+# soname the app loads); everywhere else the package is libvterm.
+if [ "$HYPRTK_PM" = apt ]; then
+    PKGS=("${PKGS[@]/libvterm/libvterm0}")
+fi
 
 if [ "${1:-}" = "--list" ]; then printf '%s ' "${PKGS[@]}" "${AUR[@]}"; echo; exit 0; fi
 

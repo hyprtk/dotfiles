@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Terminal
+GenericName=Terminal Emulator
+Comment=hyprtk terminal emulator
+Exec=hyprtk-term
+Icon=hyprtk-term
+Terminal=false
+Categories=System;TerminalEmulator;Utility;
+Keywords=shell;prompt;command;commandline;terminal;console;
+StartupNotify=true
+StartupWMClass=hyprtk-term

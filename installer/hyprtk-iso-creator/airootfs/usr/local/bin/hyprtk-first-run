@@ -29,8 +29,10 @@ export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 
 bar_ready=1
 editor_ready=1
+term_ready=1
 [ -d "$SYS_SHELL" ] || bar_ready=0
 [ -d "$SYS_EDITOR" ] || editor_ready=0
+[ -x "$SYS_BIN/hyprtk-term" ] || term_ready=0
 
 # 1. Fallback: per-user installers, only when the image has no system payload.
 if [ "$bar_ready" -eq 0 ]; then
@@ -54,6 +56,14 @@ if [ "$editor_ready" -eq 0 ]; then
     [ -x "$HOME/.local/bin/hyprtk-edit" ] && editor_ready=1
 fi
 
+if [ "$term_ready" -eq 0 ]; then
+    if [ ! -x "$HOME/.local/bin/hyprtk-term" ]; then
+        bash "$REPO/installer/hyprtk-term/install.sh" \
+            || echo "hyprtk-first-run: hyprtk-term install did not finish" >&2
+    fi
+    [ -x "$HOME/.local/bin/hyprtk-term" ] && term_ready=1
+fi
+
 # 2. Seed the per-user config and bundled themes from the system install.
 mkdir -p "$CFG"
 if [ -f "$SYS_BAR/config.json" ] && [ ! -f "$CFG/config.json" ]; then
@@ -72,7 +82,7 @@ for name in hyprtk-bar-qt hyprtk-bar-qt-arc-toggle hyprtk-bar-qt-clipboard-toggl
             hyprtk-bar-qt-launcher-toggle hyprtk-bar-qt-menu-toggle \
             hyprtk-bar-qt-settings-toggle hyprtk-bar-qt-themer-toggle \
             hyprtk-bar-qt-widget-move hyprtk-screenshot wal \
-            hyprtk-fm hyprtk-edit; do
+            hyprtk-fm hyprtk-edit hyprtk-term; do
     [ -x "$SYS_BIN/$name" ] || continue
     ln -sfn "$SYS_BIN/$name" "$HOME/.local/bin/$name"
 done
@@ -121,12 +131,13 @@ bs-hl-color=FF0000
 EOF
 fi
 
-# 6. Stamp only once the bar and editor are actually usable, so a failed run
-#    (no network, transient error) is retried on the next login instead of
-#    being skipped forever by the unit's ConditionPathExists=!stamp guard.
-if [ "$bar_ready" -eq 1 ] && [ "$editor_ready" -eq 1 ]; then
+# 6. Stamp only once the bar, editor and terminal are actually usable, so a
+#    failed run (no network, transient error) is retried on the next login
+#    instead of being skipped forever by the unit's ConditionPathExists=!stamp
+#    guard.
+if [ "$bar_ready" -eq 1 ] && [ "$editor_ready" -eq 1 ] && [ "$term_ready" -eq 1 ]; then
     mkdir -p "$(dirname "$STAMP")"
     touch "$STAMP"
 else
-    echo "hyprtk-first-run: bar or editor still missing — will retry next login" >&2
+    echo "hyprtk-first-run: bar, editor or terminal still missing — will retry next login" >&2
 fi

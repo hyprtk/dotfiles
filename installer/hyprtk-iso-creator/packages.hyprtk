@@ -90,6 +90,8 @@ python-virtualenv
 python-gobject
 pyside6
 python-pygments
+# hyprtk-term's emulator core (the app dlopens libvterm.so.0)
+libvterm
 python-cairo
 python-psutil
 python-rich

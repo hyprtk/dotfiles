@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.43.12 — 2026-11-18
+
+- **The terminal quick link follows `$TERMINAL`.** The shipped quicklink no
+  longer hard-codes `alacritty`: an empty command makes `Quicklinks` resolve
+  `$TERMINAL` (now `hyprtk-term`) and fall back to alacritty. The launcher's
+  `run_in_terminal` resolves the same way, so "run in terminal" opens the suite
+  terminal too.
+- **Arc menu terminal entry** prefers `hyprtk-term` and falls back to alacritty
+  with a one-line shell guard, since the arc menu executes its `command`
+  verbatim.
+- Vendor hyprtk-file-manager 1.8.11 (its "Open Terminal Here" prefers
+  hyprtk-term as well).
+
 ## 0.43.11 — 2026-11-18
 
 - **Vendor hyprtk-file-manager 1.8.10.** The file manager's window now sets

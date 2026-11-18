@@ -49,7 +49,7 @@ Singleton {
 
     // ── start menu / quicklinks / arc menu ─────────────────────────────
     property var quicklinksLinks: [
-        { glyph: "\uf120", command: "alacritty", alt: "thunar", tooltip: "Terminal" },
+        { glyph: "\uf120", command: "", alt: "thunar", tooltip: "Terminal" },
         { glyph: "\uf044", command: "hyprtk-edit", tooltip: "Editor" },
         { glyph: "\uf07c", command: "thunar", tooltip: "Files" },
         { glyph: "\uf0ac", command: "firefox", tooltip: "Browser" },
@@ -58,7 +58,7 @@ Singleton {
     ]
     property string arcMenuPosition: "top-right"
     property var arcMenuItems: [
-        { glyph: "\uf120", command: "alacritty", tooltip: "Terminal" },
+        { glyph: "\uf120", command: "sh -c 'command -v hyprtk-term >/dev/null && exec hyprtk-term || exec alacritty'", tooltip: "Terminal" },
         { glyph: "\uf044", command: "hyprtk-edit", tooltip: "Editor" },
         { glyph: "\uf07c", command: "thunar", tooltip: "Files" },
         { glyph: "\uf0ac", command: "firefox", tooltip: "Browser" },

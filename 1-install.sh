@@ -1074,9 +1074,15 @@ else
         _spin "Installing hyprtk-editor..." "bash $SCRIPT_DIR/installer/hyprtk-editor/install.sh" "$LOG_FILE"
         _ok "hyprtk-editor installed (hyprtk-edit; default text editor)"
 
+        # ── hyprtk-term (GUI) ──────────────────────────────────────
+        _step "Installing hyprtk-term"
+        _spin "Installing hyprtk-term..." "bash $SCRIPT_DIR/installer/hyprtk-term/install.sh" "$LOG_FILE"
+        _ok "hyprtk-term installed (hyprtk-term; session terminal via \$TERMINAL)"
+
         # ── Preferred apps (XDG + bar quick links) ─────────────────
-        # Point XDG and the bar's Files quick link at hyprtk-fm; Thunar stays
-        # installed as a fallback. The session terminal is $TERMINAL.
+        # Point XDG and the bar's Files/terminal quick links at hyprtk-fm and
+        # hyprtk-term; Thunar and alacritty stay installed as fallbacks (the gum
+        # menus still launch alacritty because they tag the window with --class).
         _spin "Registering preferred apps..." "bash $SCRIPT_DIR/installer/scripts/set-default-apps.sh" "$LOG_FILE"
         _ok "Preferred apps registered"
 

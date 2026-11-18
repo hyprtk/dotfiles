@@ -1,5 +1,39 @@
 # Changelog
 
+## [v1.8.0] - 2026-11-18
+
+### Added
+
+- **hyprtk-term 0.2.0 — the suite's own terminal emulator.** Qt Quick/QML
+  chrome over Python, with **libvterm** (Neovim's emulator core) driven through
+  ctypes: xterm/DEC parsing, alt screen, reflow, 256-colour and truecolor,
+  wide/combining characters, mouse reporting, bracketed paste and OSC 52.
+  Tabs carry the running program's OSC title, scrollback keeps 10,000 lines of
+  raw cells (lossless reverse scroll), and `Ctrl+Shift+F` searches history and
+  screen with plain or regex matching. The 16 ANSI slots come from the same
+  pywal/bar palette as the editor, so a wallpaper change re-skins every tab.
+- `installer/hyprtk-term/` and a `1-install.sh` step after the editor.
+- `libvterm` in the `terminaltools` package list, named per family
+  (`libvterm` on Arch/Fedora/Void/Alpine, `libvterm0` on Debian/Ubuntu/openSUSE).
+- ISO: `packages.hyprtk` bakes `libvterm`, `customize_airootfs.sh` installs the
+  terminal system-wide, and `hyprtk-first-run` links `hyprtk-term` into
+  `~/.local/bin`.
+
+### Changed
+
+- **`$TERMINAL` is `hyprtk-term`.** `Super + Return` launches it with an
+  alacritty fallback. Alacritty stays installed: the gum menus and the update
+  splash tag their window with `--class`, which hyprtk-term does not implement.
+- **The bar's Terminal quick link follows `$TERMINAL`** instead of hard-coding
+  alacritty, and the launcher's "run in terminal" resolves the same way
+  (`hyprtk-bar-qt` 0.43.12, which vendors `hyprtk-file-manager` 1.8.11).
+- **"Open Terminal Here" and the editor's terminal action prefer hyprtk-term**
+  (`hyprtk-file-manager` 1.8.11, `hyprtk-editor` 0.2.3).
+- `installer/scripts/set-default-apps.sh` registers the terminal as the XDG
+  default terminal emulator and retargets the bar's terminal link.
+- `hyprtk-editor` 0.2.3, `hyprtk-file-manager` 1.8.11,
+  `hyprtk-bar-qt` 0.43.12, `hyprtk-term` 0.2.0.
+
 All notable changes to hyprtk-merged (the unified dotfiles installer) are
 documented in this file. Dates are in YYYY-MM-DD format.
 

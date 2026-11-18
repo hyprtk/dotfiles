@@ -17,7 +17,7 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Li
 ---
 
 > **The hyprtk suite** — this repository is the desktop itself.
-> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
+> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
 
 ## What is this?
 
@@ -68,7 +68,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 
 | Area | What you get |
 | --- | --- |
-| **Terminal** | Alacritty + starship prompt |
+| **Terminal** | hyprtk-term (Qt Quick + libvterm) + starship prompt |
 | **Editor** | Neovim (Vim fallback) |
 | **App launcher** | Rofi (plus the in-bar start menu) |
 | **Status bar** | hyprtk-bar-qt — Qt6/QML (Quickshell) pywal-themed taskbar with built-in menus |
@@ -97,7 +97,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 
 | Key | Action |
 | --- | --- |
-| `Super + Return` | Terminal (Alacritty) |
+| `Super + Return` | Terminal (hyprtk-term) |
 | `Super + Space` | Start menu (in-bar) |
 | `Super + Q` | Close window |
 | `Super + D` | App launcher (in-bar) |
@@ -175,6 +175,7 @@ so a single install lays down all of them:
 | [**hyprtk-bar-qt**](https://github.com/hyprtk/hyprtk-bar-qt) | the Qt6/QML (Quickshell) bar: launcher, notifications, tray, quick settings, theme manager, desktop widgets | vendored, installed, autostarted |
 | [**hyprtk-fm**](https://github.com/hyprtk/hyprtk-file-manager) | the Qt6/QML file manager — default for `inode/directory`, `Super+F` and the bar's **Files** link | vendored in the bar installer |
 | [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor — default for `text/plain` and `text/markdown`, `Super+E` | vendored, installed after the bar |
+| [**hyprtk-term**](https://github.com/hyprtk/hyprtk-term) | the Qt Quick terminal on libvterm — tabs, scrollback search, pywal ANSI palette, `$TERMINAL` | vendored, installed after the editor |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |
 | [**Hyprtk-ISO-Creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed | shipped installer app |
@@ -192,6 +193,7 @@ All system theming (wallpaper, pywal, icons, lock screen, SDDM/GRUB) now lives i
 | **Arc menu** | FAB in a screen corner that fans its items out on click | `Super + Ctrl + M` (or the FAB) |
 | **Files** | hyprtk-fm — native Qt6/QML file manager: tabs, dual pane, breadcrumbs, thumbnail grid, previews, undo/trash and LAN share browsing; pywal-themed | `Super + F`, the bar's **Files** quick link, or opening any folder |
 | **Editor** | hyprtk-edit — native Qt6/QML text editor: tabs, session restore, autosaved crash-recovery drafts, regex search, command palette, line operations, minimap and 600+ Pygments syntaxes, with a syntax theme derived from pywal | `Super + E`, the bar's **Editor** quick link, or opening any text file |
+| **Terminal** | hyprtk-term — native Qt6/QML terminal on libvterm: tabs with OSC titles, 10k-line scrollback with search, truecolor/wide-character/mouse/paste support, ANSI palette from pywal; alacritty stays for the gum menus that tag their window with `--class` | `Super + Return`, the bar's **Terminal** quick link, or `$TERMINAL` from any app |
 
 On the live ISO the suite is installed **system-wide** under `/usr/local`
 (bar, file manager and editor); first login only seeds the per-user config,

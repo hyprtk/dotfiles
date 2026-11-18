@@ -97,7 +97,7 @@ Singleton {
     readonly property string urlLauncher: cfg.drun_url_launcher || cfg.url_launcher || "xdg-open"
 
     // ── run mode ───────────────────────────────────────────────────────
-    readonly property string terminal: cfg.terminal || "alacritty"
+    readonly property string terminal: cfg.terminal || Quickshell.env("TERMINAL") || "alacritty"
     readonly property string runCommand: cfg.run_command || "{cmd}"
     readonly property string runInTerminal: cfg.run_shell_command
         || cfg.run_in_terminal || "{terminal} -e {cmd}"

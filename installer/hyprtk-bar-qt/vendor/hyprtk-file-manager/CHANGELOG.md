@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.11 — 2026-11-18
+
+- **"Open Terminal Here" opens the suite terminal.** `launch.terminal_argv()`
+  tries `hyprtk-term -d <path>` first, then `$TERMINAL`, then the distro
+  terminals. The root variant carries the same order through `pkexec env`.
+
 ## 1.8.10 — 2026-11-18
 
 ### Fixed

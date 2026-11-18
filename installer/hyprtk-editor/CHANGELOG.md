@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3 — 2026-11-18
+
+- **"Open terminal here" prefers the suite terminal.** `Bridge.openTerminal`
+  tries `hyprtk-term -d <dir>` first and falls back to alacritty, kitty, foot,
+  xterm as before.
+
 ## 0.2.2 — 2026-11-17
 
 ### Changed

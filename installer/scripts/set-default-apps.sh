@@ -20,6 +20,15 @@ if [ -f "$apps_dir/hyprtk-file-manager.desktop" ] \
     fm_desktop="hyprtk-file-manager.desktop"
 fi
 
+# hyprtk-term is the session terminal when it is installed; alacritty stays
+# because the gum menus still launch through it (they need --class).
+term_desktop=""
+if [ -f "$apps_dir/hyprtk-term.desktop" ] \
+    || [ -f "/usr/local/share/applications/hyprtk-term.desktop" ] \
+    || [ -f "/usr/share/applications/hyprtk-term.desktop" ]; then
+    term_desktop="hyprtk-term.desktop"
+fi
+
 # hyprtk-editor owns plain text and Markdown when it is installed; other
 # handlers (a distro's gedit/kate) stay available for their own MIME types.
 editor_desktop=""
@@ -43,6 +52,9 @@ if command -v xdg-settings >/dev/null 2>&1; then
             break
         fi
     done
+    if [ -n "$term_desktop" ]; then
+        xdg-settings set default-terminal-emulator "$term_desktop" 2>/dev/null || true
+    fi
 fi
 
 # The bar's "Files" quick link: replace an explicit Thunar command with
@@ -68,6 +80,13 @@ def patch(node):
             node["command"] = "hyprtk-fm"
             if "label" in node:
                 node["label"] = "Files"
+        elif node.get("id") == "terminal" or node.get("tooltip") == "Terminal":
+            # Empty command means "resolve $TERMINAL at runtime" (the bar's
+            # Quicklinks.defaultCommand does that); TERMINAL is now hyprtk-term.
+            if node.get("command") in ("alacritty", "kitty", "hyprtk-term"):
+                node["command"] = ""
+            if "label" in node:
+                node["label"] = "Terminal"
         elif node.get("command") == "thunar":
             label = str(node.get("label") or node.get("tooltip") or "").lower()
             if "file" in label or "thunar" in label:
@@ -117,4 +136,4 @@ os.replace(tmp, path)
 PY
 fi
 
-echo "preferred apps registered (file manager: ${fm_desktop%.desktop}; text: ${editor_desktop:-unchanged}; bar quick links: hyprtk-fm + hyprtk-edit; browser: brave if present)"
+echo "preferred apps registered (file manager: ${fm_desktop%.desktop}; text: ${editor_desktop:-unchanged}; terminal: ${term_desktop:-unchanged}; bar quick links: hyprtk-fm + hyprtk-edit + terminal; browser: brave if present)"

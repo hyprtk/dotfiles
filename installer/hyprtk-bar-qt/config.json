@@ -70,9 +70,9 @@
       },
       {
         "id": "terminal",
-        "label": "Alacritty",
+        "label": "Terminal",
         "icon": "",
-        "command": "alacritty",
+        "command": "",
         "command_right": "",
         "command_middle": ""
       },
@@ -195,7 +195,7 @@
       },
       {
         "glyph": "",
-        "command": "alacritty",
+        "command": "command -v hyprtk-term >/dev/null && exec hyprtk-term || exec alacritty",
         "tooltip": "Terminal",
         "action": ""
       },
@@ -278,7 +278,7 @@
     "drun_show_actions": false,
     "window_format": "{w} · {c} · {t}",
     "window_command": "",
-    "terminal": "alacritty",
+    "terminal": "",
     "run_command": "{cmd}",
     "run_in_terminal": "{terminal} -e {cmd}",
     "run_list_command": "",
@@ -582,7 +582,7 @@
   "quicklinksLinks": [
     {
       "glyph": "",
-      "command": "alacritty",
+      "command": "",
       "alt": "thunar",
       "tooltip": "Terminal"
     },
@@ -611,7 +611,7 @@
   "arcMenuItems": [
     {
       "glyph": "",
-      "command": "alacritty",
+      "command": "command -v hyprtk-term >/dev/null && exec hyprtk-term || exec alacritty",
       "tooltip": "Terminal"
     },
     {

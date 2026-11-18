@@ -15,7 +15,7 @@ and run sudo mkinitcpio -P (Please ensure you have your kernels headers installe
   Super = Windows Key
 
 # common operations
-  Super          Return   *term* (`alacritty`)
+  Super          Return   *term* (`hyprtk-term`, alacritty fallback)
   Super          q        *quit* (kill focused window)
   Super          d        *show app launcher* (`hyprtk-bar-qt-launcher-toggle`)
   Super   Ctrl   q        *show hyprlogout* (lock/suspend/logout/reboot/shutdown)

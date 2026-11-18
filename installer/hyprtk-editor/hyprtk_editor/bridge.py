@@ -734,6 +734,7 @@ class Bridge(QObject):
         target = path if os.path.isdir(path) else os.path.dirname(path)
         target = target or os.path.expanduser("~")
         candidates = [
+            ("hyprtk-term", ["-d", target]),
             ("alacritty", ["--working-directory", target]),
             ("kitty", ["--directory", target]),
             ("foot", ["--working-directory", target]),

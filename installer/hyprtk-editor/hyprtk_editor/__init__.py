@@ -6,7 +6,7 @@ and regex search, viewport-scoped syntax highlighting for 600+ languages,
 a command palette, line operations and a minimap.
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 APP_NAME = "hyprtk-editor"
 APP_ID = "hyprtk-editor"

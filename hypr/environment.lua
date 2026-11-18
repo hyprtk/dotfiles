@@ -8,10 +8,12 @@ hl.env("XCURSOR_THEME", "Adwaita")
 hl.env("XCURSOR_SIZE", "24")
 hl.env("GTK_THEME", "Kripton-v40:dark")
 hl.env("XDG_SESSION_TYPE", "wayland")
--- Preferred terminal for the session: hyprtk-bar's quick links (and other tools
--- that honour $TERMINAL) resolve this to the suite's terminal rather than the
--- distro default.
-hl.env("TERMINAL", "alacritty")
+-- Preferred terminal for the session: hyprtk-bar's quick links, hyprtk-fm's
+-- "Open terminal here", the editor's terminal action and anything else that
+-- honours $TERMINAL resolve this to the suite's terminal. Alacritty stays
+-- installed as the fallback (and because the gum menus tag their window with
+-- `--class`, which hyprtk-term does not implement).
+hl.env("TERMINAL", "hyprtk-term")
 
 -- GUI apps (bar, launchers) need ~/.local/bin on PATH; the login session does
 -- not add it, which made `command -v hyprtk-fm` fall back to Thunar.
