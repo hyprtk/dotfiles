@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.43.15 — 2026-11-18
+
+- **Vendor hyprtk-term 0.2.6** (byte-identical snapshot). The terminal no longer
+  strands zsh's `PROMPT_SP` marker as a highlighted `%` above the prompt: it
+  spawns the shell into the settled grid instead of resizing it four times
+  during startup, and coalesces layout churn so a resize burst reaches the shell
+  once.
+
 ## 0.43.14 — 2026-11-18
 
 - **Vendor hyprtk-term 0.2.5** (byte-identical snapshot). Box drawing and block

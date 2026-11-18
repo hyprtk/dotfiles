@@ -119,7 +119,10 @@ class TerminalView(QQuickPaintedItem):
         self.setAcceptHoverEvents(True)
         self.setRenderTarget(QQuickPaintedItem.Image)
 
-        self._cfg = settings_mod.Settings()
+        # The saved settings, not the dataclass defaults: the grid is derived
+        # from the font, and the shell is spawned with it. Starting from the
+        # defaults means every launch spawns at the wrong size and then resizes.
+        self._cfg = settings_mod.Settings.load()
         self._colors = palette_mod.resolve()
         self._term: Terminal | None = None
         self._title = ""
@@ -154,6 +157,18 @@ class TerminalView(QQuickPaintedItem):
         self._paint_timer.setInterval(8)
         self._paint_timer.timeout.connect(self.update)
 
+        # Grid resizes are coalesced: see _resize_grid().
+        self._resize_timer = QTimer(self)
+        self._resize_timer.setSingleShot(True)
+        self._resize_timer.setInterval(40)
+        self._resize_timer.timeout.connect(self._apply_resize)
+
+        # The shell is not spawned until the window has stopped being laid out.
+        self._settle_timer = QTimer(self)
+        self._settle_timer.setSingleShot(True)
+        self._settle_timer.setInterval(80)
+        self._settle_timer.timeout.connect(self.spawn)
+
         self._blink_timer = QTimer(self)
         self._blink_timer.setInterval(530)
         self._blink_timer.timeout.connect(self._blink)
@@ -168,6 +183,13 @@ class TerminalView(QQuickPaintedItem):
         self.heightChanged.connect(self._on_size_changed)
 
     def _on_size_changed(self) -> None:
+        if self._term is None:
+            # Still being laid out. Spawning the shell into a size that is
+            # about to change means resizing it immediately, and a resize that
+            # lands while the shell draws its first prompt can strand zsh's
+            # partial-line marker on screen. Wait for the size to hold still.
+            self._settle_timer.start()
+            return
         self._resize_grid()
 
     # ------------------------------------------------------------ properties --
@@ -228,7 +250,8 @@ class TerminalView(QQuickPaintedItem):
 
     def componentComplete(self) -> None:            # noqa: N802 (Qt override)
         super().componentComplete()
-        self.spawn()
+        # Not spawned yet: see _on_size_changed().
+        self._settle_timer.start()
 
     def spawn(self) -> None:
         if self._term is not None:
@@ -248,7 +271,7 @@ class TerminalView(QQuickPaintedItem):
         self._term.bell.connect(self._on_bell)
         self._term.exited.connect(self._on_exit)
         self._term.bind_clipboard(self._clipboard_get, self._clipboard_put)
-        self._resize_grid()
+        self._apply_resize()
         self._schedule_paint()
         self.stateChanged.emit()
 
@@ -313,6 +336,23 @@ class TerminalView(QQuickPaintedItem):
         return cols, rows
 
     def _resize_grid(self) -> None:
+        """Coalesce layout churn before any of it reaches the shell.
+
+        A window is laid out more than once before it settles -- the compositor
+        tiles it after the QML default size, so 940 becomes 1917 and then 1910.
+        Every intermediate width is a SIGWINCH, and a resize that lands while
+        the shell is drawing its prompt leaves the shell believing a width the
+        grid no longer has: zsh then fills its partial-line marker with more
+        spaces than fit, the marker's own erase wraps to the next line, and a
+        stray ``%`` strands above the prompt. Only the settled size is worth
+        telling the shell about, so the timer absorbs the rest.
+        """
+        if not self._term:
+            return
+        if not self._resize_timer.isActive():
+            self._resize_timer.start()
+
+    def _apply_resize(self) -> None:
         if not self._term:
             return
         cols, rows = self._grid()
@@ -324,7 +364,7 @@ class TerminalView(QQuickPaintedItem):
 
     def geometryChanged(self, new, old) -> None:    # noqa: N802
         super().geometryChanged(new, old)
-        self._resize_grid()
+        self._on_size_changed()
 
     # --------------------------------------------------------------- painting --
 

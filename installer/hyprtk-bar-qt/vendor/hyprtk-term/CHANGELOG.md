@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.2.6 — 2026-11-18
+
+### Fixed
+
+- **No stray `%` above the prompt.** zsh's `PROMPT_SP` prints a bold reverse
+  `%` after output that did not end in a newline, fills the rest of the line
+  with `COLUMNS - 1` spaces, then erases the mark with `CR`, space, `CR`. If a
+  grid resize lands in the middle of that sequence and the shell still believes
+  the previous, wider `COLUMNS`, the fill wraps onto the next line, the erase
+  lands there instead, and the `%` is stranded on screen. The startup layout was
+  doing exactly that: the view was constructed with the *default* settings and
+  spawned the shell at the wrong grid, then resized it four times in 130 ms
+  (103 → 132 → 272 → 271) as the real font loaded and the compositor tiled the
+  window — the last of those a one-column *shrink*, which is the dangerous
+  direction.
+  - The saved settings are now loaded at construction, so the font and the grid
+    are right the first time.
+  - The shell is spawned only once the window has stopped being laid out
+    (80 ms settle), so its startup sees no resizes at all.
+  - Grid resizes are coalesced (40 ms), so a layout burst reaches the shell once
+    instead of four times.
+- `Terminal.resize()` returns whether the grid changed. It returned `None`, so
+  the "drop search matches on resize" branch in the view never ran.
+
+`scripts/bootcheck.py` gained a gate for the coalescing: a two-step resize must
+reach the shell exactly once (it reached it four times before).
+
 ## 0.2.5 — 2026-11-18
 
 ### Fixed

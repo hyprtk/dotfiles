@@ -116,10 +116,13 @@ class Terminal(QObject):
         if text:
             self.write(self.vt.paste(text))
 
-    def resize(self, rows: int, cols: int) -> None:
+    def resize(self, rows: int, cols: int) -> bool:
+        """True when the grid actually changed (and the shell was told)."""
         if self.vt.resize(rows, cols):
             self.pty.resize(rows, cols)
             self.changed.emit()
+            return True
+        return False
 
     def close(self, sig: int = signal.SIGHUP) -> None:
         if not self._exited:

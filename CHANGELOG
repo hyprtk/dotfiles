@@ -1,5 +1,25 @@
 # Changelog
 
+## [v1.8.9] - 2026-11-18
+
+### Fixed
+
+- **No stray highlighted `%` above the prompt in `hyprtk-term`** (`hyprtk-term`
+  0.2.6, vendored by `hyprtk-bar-qt` 0.43.15). zsh's `PROMPT_SP` prints a bold
+  reverse `%` after output that did not end in a newline, fills the line with
+  `COLUMNS - 1` spaces and then erases the mark; a resize landing mid-sequence,
+  while the shell still believes the previous wider `COLUMNS`, makes the fill
+  wrap so the erase misses and the mark is stranded. The terminal was doing
+  exactly that at startup — it spawned the shell with the *default* settings and
+  then resized it four times in 130 ms (103 → 132 → 272 → 271, the last a
+  one-column shrink) as the real font loaded and the compositor tiled the
+  window. It now loads the saved settings at construction, spawns the shell only
+  once the window has settled, and coalesces layout churn into one resize.
+
+No package or installer-target surface changed; the gate was re-run
+(T1 1350 resolvable / 26 AUR / 88 allow-listed / 0 unexpected, T2 9/9,
+audit 1464 rows / 0 unexpected / 17 known provides-only TODOs).
+
 ## [v1.8.8] - 2026-11-18
 
 ### Fixed
