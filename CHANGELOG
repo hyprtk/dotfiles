@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.8.5] - 2026-11-18
+
+### Added
+
+- **hyprtk-term's settings sheet shows the app version** in its bottom-left
+  corner (`hyprtk-term` 0.2.3), so the running build is identifiable without a
+  terminal round-trip. The headless gate asserts the label matches the package
+  version.
+
+UI-only change in one vendored app; no package or installer-target surface
+changed, so the gate was carried from v1.8.0 (T1 1350/26/88/0, T2 9/9, audit
+1464 rows / 0 unexpected / 17 known TODOs).
+
 ## [v1.8.4] - 2026-11-18
 
 ### Fixed

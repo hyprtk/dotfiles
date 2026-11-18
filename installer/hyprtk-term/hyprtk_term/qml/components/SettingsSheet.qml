@@ -12,7 +12,11 @@ Rectangle {
     property var cfg
     property var fonts: []
     property int alpha: 0
+    // Captured once: reading Bridge again at teardown logs a TypeError.
+    property string appVersion: ""
     signal closed()
+
+    Component.onCompleted: appVersion = Bridge ? Bridge.version : ""
 
     anchors.fill: parent
     color: Util.alpha(theme.background, 0.55 * (alpha / 255))
@@ -36,6 +40,17 @@ Rectangle {
         opacity: sheet.alpha / 255
 
         MouseArea { anchors.fill: parent }
+
+        Text {
+            objectName: "appVersion"
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 20
+            anchors.bottomMargin: 15
+            text: sheet.appVersion ? "hyprtk-term " + sheet.appVersion : ""
+            color: Util.alpha(sheet.theme.muted, 0.65)
+            font.pixelSize: 10
+        }
 
         Column {
             id: content

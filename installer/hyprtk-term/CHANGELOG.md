@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.3 — 2026-11-18
+
+### Added
+
+- **The settings sheet shows the app version** in its bottom-left corner
+  (`hyprtk-term 0.2.3`), captured once at startup so the label cannot break at
+  teardown. The headless gate asserts the text matches `hyprtk_term.__version__`,
+  so a stale or empty label fails the build.
+
 ## 0.2.2 — 2026-11-18
 
 ### Fixed
