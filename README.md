@@ -1,5 +1,12 @@
 <div align="center">
 
+<img src="assets/branding/banner.png" alt="hyprtk — the desktop and the suite" width="100%" />
+
+[![suite](https://img.shields.io/badge/suite-v1.9.1-02DEDE?style=flat-square&labelColor=05060B)](CHANGELOG)
+[![distros](https://img.shields.io/badge/distributions-18-FD4FB6?style=flat-square&labelColor=05060B)](README.md#portability)
+[![license](https://img.shields.io/badge/license-GPL--2.0-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
+[![palette](https://img.shields.io/badge/palette-02DEDE%20%C2%B7%20FD4FB6-8A93A6?style=flat-square&labelColor=05060B)](#branding)
+
 # hyprtk dots
 
 A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Linux distribution** — with **XFCE (Xorg)** kept as a safety net.
@@ -166,7 +173,7 @@ All theming (bar theme, pywal, icons, lock screen, SDDM/GRUB) is changed from
 
 ## Suite repositories
 
-hyprtk is one desktop kept in seven repositories. **This one is the desktop**:
+hyprtk is one desktop kept in nine repositories. **This one is the desktop**:
 the installer, the Hyprland configuration, the themes and the scripts. The apps
 are separate repositories, each with its own installer, vendored into this tree
 so a single install lays down all of them:
@@ -229,6 +236,33 @@ Both are configured from the bar settings dialogue (*Menu* and *Arc Menu* tabs) 
 | ![RebornOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn1.png) | ![RebornOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn2.png) | ![RebornOS](https://github.com/hyprtk/dotfiles/blob/main/assets/screenshots/reborn3.png) |
 
 More screenshots per distro live in [`assets/screenshots/`](https://github.com/hyprtk/dotfiles/tree/main/assets/screenshots).
+
+## Branding
+
+<img src="assets/branding/palette.png" alt="hyprtk palette: cyan #02DEDE, magenta #FD4FB6, navy #000044, ink #05060B, white #F2F6FF, muted #8A93A6" width="100%" />
+
+The suite is one mark, one palette and one typeface across every repository,
+wiki and app icon. The mark is the **v09** direction: a near-black disc, a
+gradient ring, the oversized `ht` anchor and the component glyph in a
+gradient-ringed badge. The wordmark is **KoblenzSerial Bold** — `hypr` in cyan,
+`tk` in magenta — converted to outlines, so nothing needs the font installed.
+
+| token | hex | use |
+| --- | --- | --- |
+| cyan | `#02DEDE` | primary accent, `hypr` |
+| magenta | `#FD4FB6` | secondary accent, `tk` |
+| navy | `#000044` | deep field |
+| ink | `#05060B` | background |
+| white | `#F2F6FF` | foreground |
+| muted | `#8A93A6` | tags, secondary text |
+
+Rules: keep one cap height of clear space around the mark, never stretch it,
+never re-colour the cyan/magenta split, and below 44 px use the glyph-led
+`-small` icon. The icon names match the desktop entries (`hyprtk`,
+`hyprtk-bar-qt`, `hyprtk-file-manager`, `hyprtk-editor`, `hyprtk-term`,
+`hyprtk-calc`, `hyprtk-config-manager`, `hyprtk-usb`, `hyprtk-iso-creator`).
+Banners, icons and the palette strip in this README are generated from the
+brand kit's `gen/docs.py`.
 
 ## License
 

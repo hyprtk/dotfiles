@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.9.1] - 2026-11-18
+
+### Documentation
+
+- **The v09 brand now runs through every repository.** Each README opens with a
+  v09 banner — the `ht` monogram, the outlined KoblenzSerial wordmark and the
+  product name on the ink field — followed by suite, version and licence badges
+  in the brand palette and a Branding section with the palette strip.
+- The same treatment lands on the dotfiles, bar-qt and file-manager wikis, on
+  `hyprtk.github.io` (brand tokens, mark favicon, hero banner, brand social
+  card) and on the profile README.
+- No code, package or configuration change: this docs-only publish carries the
+  v1.9.0 gate (T1 1348/26/88/0, T2 9/9, audit 0 Unexpected / 0 TODO).
+
+
 ## [v1.9.0] - 2026-11-18
 
 ### Added
