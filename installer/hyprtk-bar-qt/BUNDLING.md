@@ -9,6 +9,7 @@ so a machine with Quickshell/Qt6 installed needs no extra downloads.
 |------|------|--------------|
 | pywal16 (`wal`) | `vendor/pywal16/` | `~/.local/share/hyprtk-bar-qt/vendor/pywal16` (+ a `wal` launcher in the venv, symlinked to `~/.local/bin/wal`) |
 | hyprtk-file-manager | `vendor/hyprtk-file-manager/` | `~/.local/share/hyprtk-file-manager` (+ `~/.local/bin/hyprtk-fm`, Files desktop entry) |
+| hyprtk-term | `vendor/hyprtk-term/` | `~/.local/share/hyprtk-term` (+ `~/.local/bin/hyprtk-term`, Terminal desktop entry) |
 | Nerd Font | `assets/fonts/SymbolsNerdFont-Regular.ttf` | `~/.local/share/fonts/` |
 | Bar themes | `themes/` | `~/.config/hyprtk-bar-qt/themes/` |
 | Clock widget themes | `assets/widgets/clock/` | `~/.config/hyprtk-bar-qt/widget-themes/clock/` |
@@ -28,6 +29,24 @@ default file manager (`Super + F`, the bar's **Files** quick link and
 place because it has its own installer. The standalone repo remains
 authoritative — never patch the vendored tree; re-vendor it (its `vendor/`
 snapshot and the suite's `installer/hyprtk-file-manager/`) on each release.
+
+## hyprtk-term
+
+`vendor/hyprtk-term/` is a byte-identical copy of
+[hyprtk/hyprtk-term](https://github.com/hyprtk/hyprtk-term), the suite's native
+terminal (Qt Quick over libvterm). `install.sh` runs its installer, which puts
+the app under `~/.local/share/hyprtk-term`, the `hyprtk-term` launcher in
+`~/.local/bin`, and a **Terminal** desktop entry. The bar's Terminal quick link
+and the launcher's "run in terminal" open it, but the session contract is
+`$TERMINAL`, so a machine without it still works. `--uninstall` leaves it in
+place because it has its own installer, and `--system` skips it because the ISO
+installs the whole suite under `/usr/local`.
+
+It needs **libvterm** at runtime (`libvterm0` on Debian/Ubuntu/openSUSE), which
+this installer does not manage; it checks and prints the package name when it is
+missing. The standalone repo remains authoritative — never patch the vendored
+tree; re-vendor it (here and in the suite's `installer/hyprtk-term/`) on each
+release.
 
 ## pywal16
 

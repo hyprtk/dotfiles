@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.8.7] - 2026-11-18
+
+### Changed
+
+- **hyprtk-bar-qt also provisions the terminal** (`hyprtk-bar-qt` 0.43.13
+  vendors `hyprtk-term` 0.2.4). The bar installer already installs the vendored
+  file manager; it now installs the terminal beside it, so a bar-only install
+  has a working **Terminal** quick link and "run in terminal" instead of a dead
+  command. `--system` mode still skips it — the ISO installs the suite under
+  `/usr/local` itself — and `1-install.sh` continues to install the merged copy
+  afterwards, which is the same double-provisioning the file manager has always
+  had. libvterm stays a distro package (`terminaltools.sh`); the vendored
+  installer checks for it and names it per family.
+
+No package or installer-target surface changed; the gate was carried from
+v1.8.0 (T1 1350 resolvable / 26 AUR / 88 allow-listed / 0 unexpected, T2 9/9,
+audit 1464 rows / 0 unexpected / 17 known provides-only TODOs).
+
 ## [v1.8.6] - 2026-11-18
 
 ### Fixed

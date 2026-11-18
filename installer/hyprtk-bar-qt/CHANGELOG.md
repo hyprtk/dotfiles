@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.43.13 — 2026-11-18
+
+- **Vendor hyprtk-term 0.2.4.** The bar installer now provisions the suite
+  terminal alongside the file manager, so a bar-only install has a working
+  **Terminal** quick link and "run in terminal" instead of a dead command. It
+  sits at `vendor/hyprtk-term/` (byte-identical snapshot), installs to
+  `~/.local/share/hyprtk-term` + `~/.local/bin/hyprtk-term` + a Terminal desktop
+  entry, and is skipped in `--system` mode (the ISO installs it system-wide).
+- libvterm is *not* managed here: the vendored installer checks for it and
+  prints the package name per distro when it is missing.
+
 ## 0.43.12 — 2026-11-18
 
 - **The terminal quick link follows `$TERMINAL`.** The shipped quicklink no

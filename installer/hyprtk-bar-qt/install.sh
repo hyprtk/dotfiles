@@ -664,6 +664,22 @@ else
     echo ":: WARN: vendored hyprtk-file-manager missing — hyprtk-fm unavailable." >&2
 fi
 
+# ── Vendored hyprtk-term (separate installer) ─────────────────────────────
+# Optional: the bar's Terminal quick link and "run in terminal" open it, but the
+# session terminal is $TERMINAL, so a machine without it still works.
+if [ "$SYSTEM_INSTALL" -eq 1 ]; then
+    echo ":: System install — hyprtk-term is installed separately."
+elif [ -f "$SCRIPT_DIR/vendor/hyprtk-term/install.sh" ]; then
+    echo ":: Installing vendored hyprtk-term ..."
+    if PATH="$BIN_DIR:$PATH" bash "$SCRIPT_DIR/vendor/hyprtk-term/install.sh"; then
+        echo ":: Installed hyprtk-term"
+    else
+        echo ":: WARN: vendored hyprtk-term installer failed — hyprtk-term unavailable." >&2
+    fi
+else
+    echo ":: WARN: vendored hyprtk-term missing — hyprtk-term unavailable." >&2
+fi
+
 # ── Seed the default config on a fresh install ─────────────────────────────
 # bar-qt has its own config; on a machine that also has the GTK bar the backend
 # migrates from it once. Ship a default so a standalone install works too.
