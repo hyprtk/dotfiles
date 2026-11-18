@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.4 — 2026-11-18
+
+### Fixed
+
+- **The window is one surface again.** The tab strip painted the theme
+  background at `max(0.75, opacity)` while the grid painted it at `opacity`, so
+  below 100% the two halves showed different amounts of wallpaper and the grid
+  never matched the strip. Both now use the configured opacity, and the headless
+  gate samples a strip pixel against a grid pixel at 58% to prove it.
+- **The right-click menu is themed, not GTK.** It was a `QtQuick.Controls`
+  `Menu`, which takes its palette from QQuickTheme (the platform theme, i.e.
+  GTK) and ignores pywal entirely — a white box with black text. Replaced with
+  `components/ContextMenu.qml`: a `Popup` that supplies only the window/dismiss
+  behaviour, with our own surface, rows, hover tint, disabled state, separator
+  and focus return to the terminal.
+
 ## 0.2.3 — 2026-11-18
 
 ### Added

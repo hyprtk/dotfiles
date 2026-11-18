@@ -102,7 +102,7 @@ ApplicationWindow {
         view.contextMenuRequested.connect(function (x, y) {
             win.menuX = x;
             win.menuY = y;
-            termMenu.popup(win.contentItem, x, y);
+            win.showContextMenu(view, x, y);
         });
         tabModel.append({ tabId: id, label: "Terminal", alerted: false });
         activate(id);
@@ -162,6 +162,38 @@ ApplicationWindow {
             views[id].applySettings(cfg, th);
     }
 
+    function showContextMenu(view, x, y) {
+        termMenu.items = [
+            { id: "copy", label: "Copy", enabled: view.hasSelection },
+            { id: "paste", label: "Paste", enabled: true },
+            { id: "selectall", label: "Select all", enabled: true },
+            { id: "sep", separator: true },
+            { id: "clear", label: "Clear scrollback", enabled: true },
+            { id: "settings", label: "Settings", enabled: true }
+        ];
+        // The popup lives in the window's content item; the view reports its
+        // own coordinates, so add the strip's height.
+        termMenu.openAt(x, y + bar.height);
+    }
+
+    function runContextAction(action) {
+        var view = win.activeView();
+        if (action === "settings") {
+            win.settingsOpen = true;
+            return;
+        }
+        if (!view)
+            return;
+        if (action === "copy")
+            view.copy();
+        else if (action === "paste")
+            view.paste();
+        else if (action === "selectall")
+            view.selectAll();
+        else if (action === "clear")
+            view.clearScrollback();
+    }
+
     function toast(text) {
         toastText = text;
         toastTimer.restart();
@@ -189,7 +221,7 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         height: 38
-        color: Util.alpha(win.th.background, Math.max(0.75, win.cfg.opacity))
+        color: Util.alpha(win.th.background, win.cfg.opacity)
 
         Row {
             id: strip
@@ -379,15 +411,14 @@ ApplicationWindow {
 
     // ----------------------------------------------------------------- menu --
 
-    Menu {
+    ContextMenu {
         id: termMenu
-        MenuItem { text: "Copy"; enabled: win.activeView() && win.activeView().hasSelection
-                   onTriggered: win.activeView() && win.activeView().copy() }
-        MenuItem { text: "Paste"; onTriggered: win.activeView() && win.activeView().paste() }
-        MenuItem { text: "Select all"; onTriggered: win.activeView() && win.activeView().selectAll() }
-        MenuSeparator {}
-        MenuItem { text: "Clear scrollback"; onTriggered: win.activeView() && win.activeView().clearScrollback() }
-        MenuItem { text: "Settings"; onTriggered: win.settingsOpen = true }
+        theme: win.th
+        onTriggered: function (action) { win.runContextAction(action); }
+        onClosed: {
+            if (win.activeView())
+                win.activeView().forceActiveFocus();
+        }
     }
 
     // ------------------------------------------------------------ shortcuts --

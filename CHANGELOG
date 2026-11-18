@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.8.6] - 2026-11-18
+
+### Fixed
+
+- **hyprtk-term's window is a single surface** (`hyprtk-term` 0.2.4). The tab
+  strip painted the theme background at 75% while the grid painted it at the
+  configured opacity, so below 100% the grid showed more wallpaper than the
+  strip and the two never matched. Both use the configured opacity now.
+- **The terminal's right-click menu follows pywal.** It was a
+  `QtQuick.Controls` `Menu`, whose palette comes from QQuickTheme (GTK here) and
+  ignores the theme entirely — a white box with black text. It is now a Popup
+  drawn by the app: themed surface, hover tint, disabled state, separator, and
+  focus returned to the terminal on close.
+
+UI-only changes in one vendored app; no package or installer-target surface
+changed, so the gate was carried from v1.8.0 (T1 1350/26/88/0, T2 9/9, audit
+1464 rows / 0 unexpected / 17 known TODOs).
+
 ## [v1.8.5] - 2026-11-18
 
 ### Added

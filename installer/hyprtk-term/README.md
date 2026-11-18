@@ -8,7 +8,7 @@ underneath. It follows the wallpaper, opens in a few hundred milliseconds and
 keeps a real shell honest: alt screen, truecolor, wide characters, scrollback,
 mouse reporting and bracketed paste all work.
 
-**Current version: 0.2.3** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
+**Current version: 0.2.4** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
 
 ![hyprtk-term](hyprtk_term/assets/hyprtk-term.svg)
 
