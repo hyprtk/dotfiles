@@ -14,6 +14,7 @@ APP_DIR = "hyprtk-shot"
 
 DEFAULTS = {
     "mode": "region",
+    "picker": "overlay",     # region selection: frozen overlay, or slurp (cross-output)
     "delay": 0,              # seconds before the freeze
     "copy": True,            # copy after saving
     "save": True,            # write a file at all
@@ -98,6 +99,8 @@ class Settings:
         try:
             if key == "mode":
                 return value if value in MODES else default
+            if key == "picker":
+                return value if value in ("overlay", "slurp") else default
             if key == "delay":
                 return max(0, min(30, int(value)))
             if key == "format":

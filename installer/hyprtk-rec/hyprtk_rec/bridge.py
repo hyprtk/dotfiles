@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -51,10 +52,15 @@ class Bridge(QObject):
         self.recorder = recorder or Recorder()
         self.history = History()
         self._palette = palette.resolve()
+        # Before status(): asking for the status clears a stale state file, and
+        # a crash's partial file is exactly what must not be forgotten.
+        recovered = self.recorder.recover()
         self._status = self.recorder.status()
         self._countdown = 0
         self._pending_source = ""
         self._recent = self._load_recent()
+        if recovered is not None:
+            self._salvage(recovered)
         self._monitors = []
         self._windows = []
         self.refreshSources()
@@ -124,6 +130,17 @@ class Bridge(QObject):
     def windows(self):
         return self._windows
 
+    @Property(str, notify=settingsChanged)
+    def windowLabel(self):
+        """What the Window source will record: a picked title, or "Focused"."""
+        address = str(self.settings.get("window") or "")
+        if not address:
+            return "Focused window"
+        for row in self._windows:
+            if row.get("address") == address:
+                return str(row.get("title") or row.get("class") or "Window")
+        return "Focused window"
+
     @Property("QVariantList", constant=True)
     def audioSources(self):
         return [{"name": row["name"], "label": row["label"], "monitor": row["monitor"]}
@@ -162,6 +179,24 @@ class Bridge(QObject):
             })
         return rows
 
+    def _salvage(self, rec) -> None:
+        """Keep a crashed recording: log it, and say what happened."""
+        try:
+            size = os.path.getsize(rec.path)
+        except OSError:
+            size = 0
+        self.history.add({
+            "path": str(rec.path),
+            "source": rec.source,
+            "duration": rec.elapsed(),
+            "bytes": size,
+            "ts": datetime.now().isoformat(timespec="seconds"),
+            "recovered": True,
+        })
+        self._recent = self._load_recent()
+        self.recentChanged.emit()
+        self._notify("Recording recovered", f"{Path(rec.path).name} ({human_size(size)})")
+
     def _set_status(self) -> None:
         self._status = self.recorder.status()
         if self._status.get("recording"):
@@ -175,7 +210,7 @@ class Bridge(QObject):
         self._set_status()
 
     def _notify(self, title: str, body: str) -> None:
-        if not bool(self.settings.get("notify")):
+        if not bool(self.settings.get("notify")) or os.environ.get("HYPRTK_REC_NOTIFY") == "0":
             return
         icon = str(Path(__file__).resolve().parent / "assets" / "hyprtk-rec.svg")
         _send_notification(title, body, icon=icon)
@@ -190,7 +225,24 @@ class Bridge(QObject):
             self._windows = [row.as_row() for row in windows()]
         except SourceError:
             self._windows = []
+        # A picked window that has closed must not pin the recording to a
+        # geometry nobody is drawing any more.
+        picked = str(self.settings.get("window") or "")
+        if picked and not any(row.get("address") == picked for row in self._windows):
+            self.settings.set("window", "")
+            self.settings.save()
+            self.settingsChanged.emit()
         self.sourcesChanged.emit()
+
+    @Slot(str)
+    def pickWindow(self, address: str) -> None:
+        """Choose a window by address; an empty address means "focused"."""
+        address = str(address or "")
+        if not any(row.get("address") == address for row in self._windows):
+            address = ""
+        if self.settings.set("window", address):
+            self.settings.save()
+            self.settingsChanged.emit()
 
     # -- recording -------------------------------------------------------
     @Slot()
@@ -227,7 +279,7 @@ class Bridge(QObject):
         self._countdown = 0
         source = self._pending_source or str(self.settings.get("source") or "output")
         try:
-            target = resolve_source(source)
+            target = resolve_source(source, window=str(self.settings.get("window") or "") or None)
         except SourceError as exc:
             message = str(exc)
             if message != "cancelled":
@@ -250,6 +302,7 @@ class Bridge(QObject):
                 audio=str(self.settings.get("audio") or "none"),
                 cursor=bool(self.settings.get("cursor")),
                 backend=str(self.settings.get("backend") or "auto"),
+                container=container,
             )
         except RecorderError as exc:
             self.toast.emit("Cannot start", str(exc))
@@ -287,8 +340,26 @@ class Bridge(QObject):
         })
         self._recent = self._load_recent()
         self.recentChanged.emit()
-        self._notify("Recording saved", f"{Path(path).name} ({human_size(size)})")
+        self._notify_saved(str(path))
         self.toast.emit("Saved", str(path))
+
+    def _notify_saved(self, path: str) -> None:
+        """A notification with "Open folder" / "Copy path" buttons.
+
+        notify-send only reports the pressed button while the notification is
+        alive, so the waiter is a detached helper process, not this one.
+        """
+        if not bool(self.settings.get("notify")) or os.environ.get("HYPRTK_REC_NOTIFY") == "0":
+            return
+        argv = [sys.executable, "-m", "hyprtk_rec", "notify-saved", path]
+        env = dict(os.environ)
+        root = str(Path(__file__).resolve().parents[1])
+        env["PYTHONPATH"] = root + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        try:
+            subprocess.Popen(argv, env=env, start_new_session=True,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            self._notify("Recording saved", str(path))
 
     @Slot()
     def toggle(self) -> None:

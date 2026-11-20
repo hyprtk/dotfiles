@@ -317,6 +317,7 @@ def resolve_target(
     *,
     region: str | None = None,
     output: str | None = None,
+    window: str | None = None,
 ) -> dict:
     """Work out what to capture, before any pixels move.
 
@@ -355,15 +356,18 @@ def resolve_target(
         }
 
     if mode == "window":
-        window = active_window()
-        if window is None:
+        target_window = None
+        if window:
+            target_window = next((row for row in windows() if row.address == window), None)
+        target_window = target_window or active_window()
+        if target_window is None:
             raise CaptureError("no window to capture")
         return {
             "mode": mode,
-            "geometry": window.geometry,
+            "geometry": target_window.geometry,
             "output": None,
-            "label": window.title or window.app_class or "Window",
-            "logical_width": window.width,
+            "label": target_window.title or target_window.app_class or "Window",
+            "logical_width": target_window.width,
         }
 
     if mode == "output":

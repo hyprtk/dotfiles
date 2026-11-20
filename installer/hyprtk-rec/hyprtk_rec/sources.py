@@ -202,11 +202,13 @@ def select_region() -> str | None:
 
 
 def resolve_source(source: str, *, region: str | None = None,
-                   output: str | None = None) -> dict:
+                   output: str | None = None, window: str | None = None) -> dict:
     """Work out the target before the recorder starts.
 
     Returns ``{"source", "geometry", "output", "label"}``. A region runs slurp
-    here, so cancelling happens before a countdown begins.
+    here, so cancelling happens before a countdown begins. ``window`` is a
+    Hyprland client address from the picker; when it is gone the focused window
+    is used instead, because a stale address must not block recording.
     """
     if source not in SOURCES:
         raise SourceError(f"unknown source: {source}")
@@ -218,14 +220,18 @@ def resolve_source(source: str, *, region: str | None = None,
         return {"source": "region", "geometry": geometry, "output": None, "label": "Region"}
 
     if source == "window":
-        window = active_window()
-        if window is None:
+        chosen = None
+        if window:
+            chosen = next((row for row in windows() if row.address == window), None)
+        target_window = chosen or active_window()
+        if target_window is None:
             raise SourceError("no window to record")
         return {
             "source": "window",
-            "geometry": window.geometry,
+            "geometry": target_window.geometry,
             "output": None,
-            "label": window.title or window.app_class or "Window",
+            "label": target_window.title or target_window.app_class or "Window",
+            "address": target_window.address,
         }
 
     monitor = None if output else focused_output()

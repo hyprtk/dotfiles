@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.2.0 — 2026-11-20
+
+Placing the selection exactly, and a region that can cross outputs.
+
+### Added
+
+- **Shift locks the box square** while dragging, anchored at the press point.
+- **Arrow keys nudge the selection** by 1 px, `Shift` + arrow by 10 px, clamped
+  to the image edge (it moves, it never resizes).
+- **Cross-output region** — the launcher's "Cross-output" toggle, `--slurp`, or
+  `"picker": "slurp"` selects with slurp (which spans every output). The frozen
+  overlay stays the default; slurp is the explicit choice.
+- **Window picker** — the Window card lists the open windows (focused row first)
+  instead of only capturing whichever window happens to have focus;
+  `--window ADDRESS` does the same from the command line, and a closed window
+  falls back to the focused one.
+- **Crop after the fact** — eight grips (corners and edge midpoints) resize a
+  selection that already has annotations; the opposite edge stays anchored, and
+  annotations are stored in image coordinates so they move with the crop.
+- Undo/redo now covers **selection changes and Clear**, not only annotations.
+
+### Changed
+
+- Undo history stores whole-state snapshots (annotations + selection), so a
+  mixed history redoes exactly what was on screen at that point.
+- `--slurp` / `--overlay` choose the region picker from the command line; the
+  no-editor path uses slurp instead of demanding `--region`.
+
 ## 0.1.1 — 2026-11-20
 
 ### Fixed

@@ -8,7 +8,9 @@ Rectangle {
     property bool checked: false
     signal toggled()
 
-    width: label.length > 0 ? toggleText.implicitWidth + 46 : 40
+    // A labelled toggle reserves the knob's lane on both sides, so the knob
+    // never sits on top of the text in either state.
+    width: label.length > 0 ? toggleText.implicitWidth + 56 : 40
     height: 24
     radius: 12
     color: checked ? toggle.th.accent : toggle.th.panel
@@ -19,7 +21,7 @@ Rectangle {
         id: toggleText
         visible: toggle.label.length > 0
         anchors.left: parent.left
-        anchors.leftMargin: 10
+        anchors.leftMargin: 28
         anchors.verticalCenter: parent.verticalCenter
         text: toggle.label
         color: toggle.checked ? toggle.th.textOnAccent : toggle.th.foreground

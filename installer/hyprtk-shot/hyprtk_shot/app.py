@@ -19,7 +19,7 @@ def qml_dir() -> Path:
 
 
 def create(argv: list[str] | None = None, *, mode: str = "", open_path: str = "",
-           region: str = "", overrides: dict | None = None):
+           region: str = "", window: str = "", overrides: dict | None = None):
     """Build the app, engine and bridge; returns them for tests and screenshots."""
     argv = list(argv if argv is not None else sys.argv)
     app = QGuiApplication(argv)
@@ -46,6 +46,7 @@ def create(argv: list[str] | None = None, *, mode: str = "", open_path: str = ""
             settings.set(key, value)
     bridge = Bridge(settings=settings)
     bridge.pending_region = region
+    bridge.pending_window = window
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("Bridge", bridge)
     engine.rootContext().setContextProperty("initialMode", mode)
@@ -59,7 +60,8 @@ def create(argv: list[str] | None = None, *, mode: str = "", open_path: str = ""
 
 
 def run(argv: list[str] | None = None, *, mode: str = "", open_path: str = "",
-        region: str = "", overrides: dict | None = None) -> int:
+        region: str = "", window: str = "", overrides: dict | None = None) -> int:
     app, _engine, _bridge = create(argv, mode=mode, open_path=open_path,
-                                   region=region, overrides=overrides)
+                                   region=region, window=window,
+                                   overrides=overrides)
     return app.exec()

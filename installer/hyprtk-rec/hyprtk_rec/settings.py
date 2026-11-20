@@ -15,6 +15,7 @@ APP_DIR = "hyprtk-rec"
 
 DEFAULTS = {
     "source": "output",
+    "window": "",             # Hyprland client address picked in the UI; "" = focused
     "fps": 60,
     "codec": "h264",
     "quality": "medium",
@@ -110,6 +111,8 @@ class Settings:
                 return max(0, min(30, int(value)))
             if key == "recent":
                 return max(0, min(60, int(value)))
+            if key == "window":
+                return str(value or "").strip()
             if key == "dir":
                 text = str(value or "").strip()
                 return os.path.expanduser(text) if text else ""

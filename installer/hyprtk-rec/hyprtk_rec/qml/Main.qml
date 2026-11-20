@@ -16,7 +16,7 @@ ApplicationWindow {
     // The idle summary: what pressing Record would do right now.
     readonly property string sourceLabel: {
         if (cfg.source === "region") return "Region";
-        if (cfg.source === "window") return "Focused window";
+        if (cfg.source === "window") return Bridge.windowLabel;
         var rows = Bridge.monitors;
         for (var i = 0; i < rows.length; i++)
             if (rows[i].focused) return rows[i].name;
@@ -27,6 +27,9 @@ ApplicationWindow {
         + (cfg.audio === "none" ? "no audio" : (cfg.audio === "mic" ? "microphone" : "system audio"))
 
     property bool blink: true
+    // The window picker is a plain overlay with our own colours: a Controls
+    // Popup/Menu would take its palette from the GTK platform theme.
+    property bool picking: false
 
     visible: true
     width: 560
@@ -209,6 +212,26 @@ ApplicationWindow {
                     }
                     Item { Layout.fillWidth: true }
                     Text {
+                        visible: cfg.source === "window"
+                        text: Bridge.windowLabel
+                        color: th.mutedText
+                        font.pixelSize: 11
+                        elide: Text.ElideRight
+                        Layout.maximumWidth: 120
+                    }
+                    Text {
+                        visible: cfg.source === "window"
+                        text: "Pick"
+                        color: th.accent2
+                        font.pixelSize: 11
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: win.picking = true
+                        }
+                    }
+                    Text {
+                        visible: cfg.source !== "window"
                         text: win.sourceLabel
                         color: th.mutedText
                         font.pixelSize: 11
@@ -273,6 +296,25 @@ ApplicationWindow {
                         current: Number(cfg.countdown)
                         options: [{ v: 0, l: "off" }, { v: 3, l: "3s" }, { v: 5, l: "5s" }]
                         onPicked: function (value) { Bridge.setConfig("countdown", value); }
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Text { text: "Format"; color: th.muted; font.pixelSize: 12; Layout.preferredWidth: 58 }
+                    Segmented {
+                        th: win.th
+                        current: cfg.container
+                        options: [{ v: "mp4", l: "MP4" }, { v: "mkv", l: "MKV" },
+                                  { v: "webm", l: "WebM" }, { v: "gif", l: "GIF" }]
+                        onPicked: function (value) { Bridge.setConfig("container", value); }
+                    }
+                    Text {
+                        text: cfg.container === "gif" ? "GIF · 30 fps max · wf-recorder" : ""
+                        color: th.mutedText
+                        font.pixelSize: 11
                     }
                     Item { Layout.fillWidth: true }
                 }
@@ -410,6 +452,108 @@ ApplicationWindow {
         MouseArea {
             anchors.fill: parent
             onClicked: Bridge.stop()
+        }
+    }
+
+
+    // -- window picker ----------------------------------------------------
+    Rectangle {
+        id: picker
+        anchors.fill: parent
+        visible: win.picking
+        color: Qt.rgba(0, 0, 0, 0.5)
+        z: 25
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: win.picking = false
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 60, 430)
+            height: Math.min(parent.height - 90, 430)
+            radius: 12
+            color: th.panel
+            border.width: 1
+            border.color: th.border
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Text {
+                        text: "Record a window"
+                        color: th.foreground
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: Bridge.windows.length + " open"
+                        color: th.mutedText
+                        font.pixelSize: 11
+                    }
+                    Text {
+                        text: "Focused"
+                        color: th.accent2
+                        font.pixelSize: 11
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: { Bridge.pickWindow(""); win.picking = false; }
+                        }
+                    }
+                }
+
+                ListView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: Bridge.windows
+                    spacing: 2
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: ListView.view.width
+                        height: 34
+                        radius: 6
+                        color: pickRow.containsMouse ? th.panelHover : "transparent"
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 8
+                            Text {
+                                text: modelData.class
+                                color: th.muted
+                                font.pixelSize: 11
+                                Layout.maximumWidth: 110
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                text: modelData.title
+                                color: th.foreground
+                                font.pixelSize: 12
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        MouseArea {
+                            id: pickRow
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: { Bridge.pickWindow(modelData.address); win.picking = false; }
+                        }
+                    }
+                }
+            }
         }
     }
 

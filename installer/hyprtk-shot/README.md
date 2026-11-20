@@ -13,11 +13,18 @@ prompt.
 
 ## What it does
 
-- **Four capture modes** — region, focused window, focused monitor, all outputs.
-  Region freezes the focused monitor; the box you draw is the crop.
+- **Four capture modes** — region, any open window (a picker, focused row
+  first), focused monitor, all outputs.
+  Region freezes the focused monitor; the box you draw is the crop. A
+  cross-output region comes from `slurp` instead (one toggle in the launcher,
+  `--slurp` on the command line).
 - **Frozen overlay** — the screen stops while you select, like a still frame.
 - **Annotation** — pen, line, arrow, rectangle, ellipse, highlighter, numbered
   step markers, text, blur and pixelate.
+- **Selection you can place exactly** — hold `Shift` while dragging for a
+  square, nudge the box with the arrow keys (1 px, `Shift` = 10 px), drag any of
+  the eight grips to resize after annotating, and undo a selection change the
+  same way you undo a stroke.
 - **Save / copy / both** — `wl-copy` for the clipboard, PNG/JPEG/WebP on disk,
   named `hyprtk-YYYY-MM-DD_HH-MM-SS-<mode>.png` under `~/Pictures/Screenshots`.
 - **Scriptable** — `hyprtk-shot region --copy`, `--stdout` for pipes, `--json`
@@ -36,9 +43,9 @@ prompt.
 ```
 
 Requirements: `python3` + PySide6 (Qt Quick), `grim`, `wl-clipboard`
-(`wl-copy`), and libnotify for the "saved" notification. `slurp` is not needed
-for the overlay; it becomes an option for cross-output region selection in
-v0.2.
+(`wl-copy`), and libnotify for the "saved" notification. `slurp` is optional:
+the overlay is the default region picker, and slurp is only used for
+cross-output selection.
 
 Debian/Ubuntu ship PySide6 without the QML bindings; the installer detects that
 and builds a private venv, the same fallback the editor and terminal use.
@@ -50,18 +57,22 @@ and builds a private venv, the same fallback the editor and terminal use.
 | Launcher | `hyprtk-shot` |
 | Region → annotate | `hyprtk-shot region` (keyboard: `Print`) |
 | Focused window | `hyprtk-shot window` |
+| A specific window | `hyprtk-shot window --window 0x55b1…` |
 | Focused monitor | `hyprtk-shot output` |
 | All outputs | `hyprtk-shot full` |
 | Reopen the last capture | `hyprtk-shot last` |
 | Open any image in the editor | `hyprtk-shot open shot.png` |
+| Region across every output | `hyprtk-shot region --slurp` |
 | Straight to clipboard | `hyprtk-shot region --copy --no-edit` |
 | Straight to a file | `hyprtk-shot full --save ~/Pictures/shot.png --no-edit` |
 | Pipe it | `hyprtk-shot output --stdout > shot.png` |
 | Status / scripting | `hyprtk-shot window --no-edit --json` |
 
-In the overlay: drag to select, drag inside the selection to move it, `Esc`
+In the overlay: drag to select, hold `Shift` for a square, drag inside the
+selection to move it, nudge it with the arrow keys (`Shift` = 10 px), `Esc`
 cancels, `Enter` saves and copies, `Ctrl+S` saves, `Ctrl+C` copies,
-`Ctrl+Z`/`Ctrl+Shift+Z` undo/redo, `Ctrl+A` selects the whole frame.
+`Ctrl+Z`/`Ctrl+Shift+Z` undo/redo (selection changes and `Clear` are undoable
+too), `Ctrl+A` selects the whole frame.
 Tool shortcuts are `V` select, `P` pen, `L` line, `A` arrow, `R` rectangle,
 `E` ellipse, `H` highlighter, `M` step marker, `T` text, `B` blur, `X` pixelate.
 
@@ -73,6 +84,7 @@ setting the overlay changes:
 | key | meaning |
 |---|---|
 | `mode` | default capture mode |
+| `picker` | region selection: `overlay` (default) or `slurp` (cross-output) |
 | `delay` | seconds before the freeze (0–30) |
 | `copy`, `save` | act after capture |
 | `dir` | save directory (empty = `~/Pictures/Screenshots`) |
@@ -92,11 +104,12 @@ launcher can list recent files.
 hyprtk_shot/
   capture.py   grim argv + hyprctl monitors/clients parsing (no Qt)
   annotate.py  Shape model + QPainter renderer (preview and final share it)
+  selection.py selection maths: square, clamp, nudge, resize
   canvas.py    QQuickPaintedItem: fit, select, drag, draw, veil
   store.py     naming, save, clipboard, history
   settings.py  validated config file
   palette.py   pywal/bar theme → tokens
-  bridge.py    QML facade: session, undo, save/copy, recents
+  bridge.py    QML facade: session, snapshot undo/redo, save/copy, recents
   cli.py       modes and flags, no-editor path
   app.py       QGuiApplication + QQmlApplicationEngine
   qml/         Main.qml (launcher, overlay window, toolbar)

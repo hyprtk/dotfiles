@@ -16,6 +16,7 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPen
 from PySide6.QtQuick import QQuickPaintedItem
 
 from .annotate import Shape, paint_shape, render
+from .selection import HANDLES, resize, square
 
 HANDLE = 7
 
@@ -42,6 +43,9 @@ class CaptureCanvas(QQuickPaintedItem):
         self._move_rect: QRectF | None = None
         self._selecting = False
         self._select_origin: tuple[float, float] | None = None
+        self._resizing: str | None = None
+        self._resize_rect: QRectF | None = None
+        self._before_selection: tuple[float, float, float, float] | None = None
 
     # -- bridge ----------------------------------------------------------
     def _get_bridge(self):
@@ -59,6 +63,9 @@ class CaptureCanvas(QQuickPaintedItem):
 
     def _on_session(self) -> None:
         self._draft = None
+        self._resizing = None
+        self._resize_rect = None
+        self._before_selection = None
         self._cache = None
         self._cache_rev = -1
         self._sync()
@@ -187,10 +194,13 @@ class CaptureCanvas(QQuickPaintedItem):
         painter.setPen(frame)
         painter.drawRect(QRectF(left, top, max(1.0, right - left), max(1.0, bottom - top)))
 
-        if not self._draft and not self._moving:
+        if not self._draft and not self._moving and not self._resizing:
             painter.setBrush(accent)
             painter.setPen(Qt.NoPen)
-            for hx, hy in ((left, top), (right, top), (left, bottom), (right, bottom)):
+            midx, midy = (left + right) / 2.0, (top + bottom) / 2.0
+            for hx, hy in ((left, top), (midx, top), (right, top),
+                           (right, midy), (right, bottom), (midx, bottom),
+                           (left, bottom), (left, midy)):
                 painter.drawRect(QRectF(hx - HANDLE / 2, hy - HANDLE / 2, HANDLE, HANDLE))
             painter.setBrush(Qt.NoBrush)
 
@@ -202,6 +212,37 @@ class CaptureCanvas(QQuickPaintedItem):
             painter.restore()
 
     # -- interaction -----------------------------------------------------
+    def _handle_positions(self):
+        """Grip centres in image pixels, in :data:`HANDLES` order."""
+        session = self._session()
+        if session is None:
+            return {}
+        rect = session.selection
+        midx = rect.center().x()
+        midy = rect.center().y()
+        return {
+            "nw": (rect.left(), rect.top()),
+            "n": (midx, rect.top()),
+            "ne": (rect.right(), rect.top()),
+            "e": (rect.right(), midy),
+            "se": (rect.right(), rect.bottom()),
+            "s": (midx, rect.bottom()),
+            "sw": (rect.left(), rect.bottom()),
+            "w": (rect.left(), midy),
+        }
+
+    def _handle_at(self, x: float, y: float) -> str | None:
+        scale, _ox, _oy = self._layout()
+        if scale <= 0:
+            return None
+        # The grip is HANDLE item pixels wide; allow a little slack for aim.
+        tolerance = (HANDLE + 4) / scale
+        for name in ("nw", "ne", "sw", "se", "n", "e", "s", "w"):
+            hx, hy = self._handle_positions()[name]
+            if abs(x - hx) <= tolerance and abs(y - hy) <= tolerance:
+                return name
+        return None
+
     def _clamp_to_selection(self, x: float, y: float) -> tuple[float, float]:
         session = self._session()
         rect = session.selection
@@ -225,6 +266,13 @@ class CaptureCanvas(QQuickPaintedItem):
         rect = session.selection
 
         if tool == "cursor":
+            self._before_selection = (rect.x(), rect.y(), rect.width(), rect.height())
+            grip = self._handle_at(x, y)
+            if grip is not None:
+                self._resizing = grip
+                self._resize_rect = QRectF(rect)
+                self.setCursor(self._grip_cursor(grip))
+                return
             inside = rect.contains(QPointF(x, y))
             if inside:
                 self._moving = True
@@ -255,8 +303,19 @@ class CaptureCanvas(QQuickPaintedItem):
             return
         x, y = self.to_image(event.position().x(), event.position().y())
 
+        if self._resizing and self._resize_rect is not None:
+            rect = self._resize_rect
+            x, y, w, h = resize(self._resizing, rect.x(), rect.y(), rect.width(),
+                                rect.height(), x, y, session.width, session.height)
+            self._bridge.setSelection(x, y, w, h)
+            return
+
         if self._selecting and self._select_origin is not None:
             ox, oy = self._select_origin
+            # Shift locks the box square while the pointer moves; the image
+            # is the clamp, the constraint is the user's choice.
+            if event.modifiers() & Qt.ShiftModifier:
+                x, y = square(ox, oy, x, y)
             self._bridge.setSelection(ox, oy, x - ox, y - oy)
             return
 
@@ -297,11 +356,25 @@ class CaptureCanvas(QQuickPaintedItem):
             self._select_origin = None
             if session.selection.width() < 4 or session.selection.height() < 4:
                 self._bridge.selectAll()
+            elif self._before_selection is not None:
+                # One drag is one undo step, not one per mouse-move event.
+                self._bridge.recordSelection(*self._before_selection)
+            self._before_selection = None
+            return
+        if self._resizing:
+            self._resizing = None
+            self._resize_rect = None
+            if self._before_selection is not None:
+                self._bridge.recordSelection(*self._before_selection)
+            self._before_selection = None
             return
         if self._moving:
             self._moving = False
             self._move_origin = None
             self._move_rect = None
+            if self._before_selection is not None:
+                self._bridge.recordSelection(*self._before_selection)
+            self._before_selection = None
             return
         if self._draft is not None:
             draft, self._draft = self._draft, None
@@ -330,11 +403,27 @@ class CaptureCanvas(QQuickPaintedItem):
     def hoverMoveEvent(self, event) -> None:
         if self._bridge is None:
             return
-        if str(self._bridge.tool) != "cursor":
-            self.setCursor(Qt.CrossCursor)
-            return
         session = self._session()
         if session is None:
             return
         x, y = self.to_image(event.position().x(), event.position().y())
-        self.setCursor(Qt.OpenHandCursor if session.selection.contains(QPointF(x, y)) else Qt.CrossCursor)
+        if str(self._bridge.tool) != "cursor":
+            self.setCursor(Qt.CrossCursor)
+            return
+        grip = self._handle_at(x, y)
+        if grip is not None:
+            self.setCursor(self._grip_cursor(grip))
+        elif session.selection.contains(QPointF(x, y)):
+            self.setCursor(Qt.OpenHandCursor)
+        else:
+            self.setCursor(Qt.CrossCursor)
+
+    @staticmethod
+    def _grip_cursor(grip: str):
+        if grip in ("nw", "se"):
+            return Qt.SizeFDiagCursor
+        if grip in ("ne", "sw"):
+            return Qt.SizeBDiagCursor
+        if grip in ("n", "s"):
+            return Qt.SizeVerCursor
+        return Qt.SizeHorCursor

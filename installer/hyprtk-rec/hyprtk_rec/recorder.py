@@ -23,8 +23,12 @@ from dataclasses import asdict, dataclass, field
 
 CODECS = ("h264", "hevc", "vp9", "av1")
 QUALITIES = ("low", "medium", "high")
-CONTAINERS = ("mp4", "mkv", "webm")
+CONTAINERS = ("mp4", "mkv", "webm", "gif")
 BACKENDS = ("auto", "wf-recorder", "wl-screenrec")
+
+#: A GIF is a frame stack, not a video stream: above this the file is enormous
+#: and the encoder cannot keep up with a live capture.
+GIF_MAX_FPS = 30
 
 #: Subjective quality -> x264-style CRF. wl-screenrec wants a bitrate instead;
 #: the mapping there is rough on purpose (bits/s for a 1080p60-ish picture).
@@ -75,8 +79,15 @@ def available(which=shutil.which) -> list[str]:
     return found
 
 
-def pick_backend(preference: str = "auto", which=shutil.which) -> str:
+def pick_backend(preference: str = "auto", which=shutil.which, *,
+                 container: str = "mp4") -> str:
     """Resolve the backend, preferring hardware encoding when available."""
+    if container == "gif":
+        # wl-screenrec has no GIF encoder; this is a wf-recorder job even when
+        # the user asked for wl-screenrec, and saying why beats a broken file.
+        if not which("wf-recorder"):
+            raise RecorderError("GIF output needs wf-recorder")
+        return "wf-recorder"
     if preference == "auto":
         found = available(which)
         if not found:
@@ -96,6 +107,7 @@ class Recording:
     backend: str
     source: str
     path: str
+    container: str = "mp4"
     geometry: str | None = None
     output: str | None = None
     audio: str = "none"
@@ -126,6 +138,19 @@ class Recording:
 
 def build_argv(rec: Recording) -> list[str]:
     """The exact command line for a recording; pure enough to assert on."""
+    if rec.container == "gif":
+        # `-c gif` needs a pixel format the gif encoder accepts; rgb8 is the
+        # one that opens without an avcodec argument error.
+        argv = ["wf-recorder", "-f", rec.path, "-c", "gif", "-x", "rgb8"]
+        argv += ["-r", str(int(rec.fps))]
+        if rec.geometry:
+            argv += ["-g", rec.geometry]
+        elif rec.output:
+            argv += ["-o", rec.output]
+        if not rec.cursor:
+            argv += ["--no-cursor"]
+        return argv
+
     if rec.backend == "wl-screenrec":
         argv = ["wl-screenrec", "-f", rec.path, "-m", str(int(rec.fps))]
         argv += ["--codec", WS_CODEC.get(rec.codec, "avc")]
@@ -156,6 +181,9 @@ def build_argv(rec: Recording) -> list[str]:
 
 def with_audio(argv: list[str], rec: Recording) -> list[str]:
     """Append the audio flags after the backend-specific ones are built."""
+    if rec.container == "gif":
+        # A GIF has no audio track; asking for one fails the whole capture.
+        return argv
     from .audio import apply
 
     return apply(argv, rec.audio, rec.backend, rec.audio_device)
@@ -225,24 +253,27 @@ class Recorder:
     def start(self, *, path: str, source: str = "output", geometry: str | None = None,
               output: str | None = None, codec: str = "h264", quality: str = "medium",
               fps: int = 60, audio: str = "none", audio_device: str | None = None,
-              cursor: bool = True, backend: str = "auto") -> Recording:
+              cursor: bool = True, backend: str = "auto",
+              container: str = "mp4") -> Recording:
         current = self.active()
         if current is not None:
             raise RecorderError(f"already recording to {current.path}")
 
-        backend = pick_backend(backend, self._which)
+        container = container if container in CONTAINERS else "mp4"
+        backend = pick_backend(backend, self._which, container=container)
         rec = Recording(
             pid=0,
             backend=backend,
             source=source,
             path=str(path),
+            container=container,
             geometry=geometry,
             output=output,
             audio=audio,
             audio_device=audio_device,
             codec=codec if codec in CODECS else "h264",
             quality=quality if quality in QUALITIES else "medium",
-            fps=max(1, min(240, int(fps))),
+            fps=max(1, min(GIF_MAX_FPS if container == "gif" else 240, int(fps))),
             cursor=bool(cursor),
             started=self._clock(),
         )
@@ -310,6 +341,31 @@ class Recorder:
             return None
         return target
 
+    def recover(self) -> Recording | None:
+        """A crashed recording: the encoder is gone but the file may be fine.
+
+        Returns the orphaned :class:`Recording` and clears the state file. The
+        file was written under its final name from the first frame, so there is
+        nothing to rename — only the decision of whether to keep it.
+        """
+        data = self.read_state()
+        if not data:
+            return None
+        try:
+            rec = Recording.from_dict(data)
+        except TypeError:
+            self._clear_state()
+            return None
+        if self._alive(rec.pid):
+            return None
+        self._clear_state()
+        try:
+            if os.path.getsize(rec.path) > 0:
+                return rec
+        except OSError:
+            pass
+        return None
+
     def pause(self) -> bool:
         rec = self.active()
         if rec is None or rec.paused_at is not None:
@@ -352,6 +408,7 @@ class Recorder:
             "backend": rec.backend,
             "source": rec.source,
             "audio": rec.audio,
+            "container": rec.container,
             "codec": rec.codec,
             "fps": rec.fps,
             "bytes": size,

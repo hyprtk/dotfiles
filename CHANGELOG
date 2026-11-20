@@ -1,5 +1,46 @@
 # Changelog
 
+## [v1.11.0] - 2026-11-20
+
+### Added
+
+- **hyprtk-shot 0.2.0** — the selection can be placed, not just drawn. `Shift`
+  locks the box square, the arrow keys nudge it (1 px, `Shift` = 10 px, clamped
+  to the image), and eight grips crop it after the annotations exist (the
+  opposite edge stays anchored). Undo/redo is now a whole-state history, so
+  selection drags, nudges, select-all and `Clear` are undoable too. Undo for
+  strokes is unchanged; redo after a mixed history restores exactly what was on
+  screen.
+- **Cross-output region** in hyprtk-shot — the launcher's "Cross-output" toggle,
+  `--slurp`, or `"picker": "slurp"` selects with `slurp` (which spans every
+  output). The frozen overlay remains the default, so the fast keypress path
+  still has one selection step.
+- **Window picker** in hyprtk-shot — the Window card lists `hyprctl clients`
+  (focused row first) instead of only photographing whichever window has focus;
+  `--window ADDRESS` does the same from a script.
+- **hyprtk-rec 0.2.0: GIF output** — `container: gif` writes through
+  `wf-recorder -c gif -x rgb8`, frame rate capped at 30 and audio dropped.
+  `wl-screenrec` cannot write a GIF, so that container forces `wf-recorder`
+  (and says so when it is missing).
+- **Window picker** in hyprtk-rec — record any open window, stored by Hyprland
+  client address; a closed window falls back to the focused one.
+  `--window ADDRESS` from the CLI.
+- **Trim** — `hyprtk-rec trim PATH --from 12 --to 30` (or `--last`) cuts a
+  finished file with ffmpeg's stream copy. `--reencode` is the frame-accurate
+  option, `--replace` overwrites the original instead of writing a `-trimmed`
+  sibling. Times accept seconds, `MM:SS` or `HH:MM:SS`.
+- **Crash recovery** — the next start adopts a partial recording whose encoder
+  is gone (history entry + notification) instead of forgetting it.
+- **Notification actions** — "Open folder" and "Copy path" on the "Recording
+  saved" notification, handled by a detached helper so they work after the
+  window closes. Daemons without action support get the same notification
+  without buttons rather than nothing.
+
+### Fixed
+
+- A labelled toggle no longer draws its knob over its own label when it is off
+  (the cross-output toggle was the first one to expose it).
+
 ## [v1.10.1] - 2026-11-20
 
 ### Fixed

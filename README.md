@@ -83,8 +83,8 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
 | **Wallpaper** | Matuwall film-strip picker + gum list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
-| **Screenshots** | hyprtk-shot — frozen overlay, region/window/monitor/all-outputs, in-app annotation (arrow, shapes, text, blur, pixelate, steps), save or copy; pywal theme |
-| **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window, system or mic audio, countdown, pause; pywal theme |
+| **Screenshots** | hyprtk-shot — frozen overlay, region (overlay or slurp across outputs)/any window/monitor/all-outputs, in-app annotation (arrow, shapes, text, blur, pixelate, steps), crop with eight grips, save or copy; pywal theme |
+| **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window picker, system or mic audio, countdown, pause, GIF, trim, crash recovery; pywal theme |
 | **Clipboard** | cliphist |
 | **Screen lock** | hyprlock (swaylock-effects fallback) |
 | **Logout** | hyprlogout |
@@ -155,23 +155,31 @@ the crop.
 
 - Annotate in place: pen, line, arrow, rectangle, ellipse, highlighter, numbered
   step markers, text, blur and pixelate; colour swatches, stroke width, undo.
+- The box is yours to place: `Shift` while dragging locks it square, the arrow
+  keys nudge it (1 px, `Shift` = 10 px), and the eight grips resize it after the
+  annotations are drawn. Undo covers selection changes too.
 - `Enter` saves and copies, `Ctrl+S` saves, `Ctrl+C` copies, `Esc` cancels;
   `V/P/L/A/R/E/H/M/T/B/X` pick tools.
 - Files go to `~/Pictures/Screenshots` (`hyprtk-shot open PATH` reopens any
   image in the editor; `--stdout`, `--json`, `--no-edit` for scripting).
 - The launcher (`hyprtk-shot`) offers region/window/monitor/all-outputs, a
-  delay, copy/annotate/cursor toggles and recent captures.
+  window picker (any open window, not just the focused one), a cross-output
+  region through `slurp`, a delay, copy/annotate/cursor toggles and recents.
 
 `Super + Shift + Print` toggles **hyprtk-rec**; `Super + Alt + Print` stops it.
 
-- Sources: the focused monitor, a region drawn with `slurp`, or the focused
-  window's geometry.
+- Sources: the focused monitor, a region drawn with `slurp`, or any window from
+  the picker (the focused one by default; `--window ADDRESS`).
 - Audio: off, system (the default sink's monitor) or the microphone, plus any
   named source with `--device`.
-- 60 fps H.264 by default, CRF-based low/medium/high quality, MP4/MKV/WebM,
-  optional countdown; `wl-screenrec` is used automatically when installed.
+- 60 fps H.264 by default, CRF-based low/medium/high quality, MP4/MKV/WebM or
+  GIF (capped at 30 fps), optional countdown; `wl-screenrec` is used
+  automatically when installed.
 - Files go to `~/Videos/Recordings`; `hyprtk-rec status --json` is the scriptable
   state, and the window offers pause, a live timer and a recent list.
+- Trim without re-encoding: `hyprtk-rec trim --last --from 5 --to 20` (also
+  `--replace`, `--reencode`). A crash does not lose the file: the next window
+  adopts the partial recording.
 - The old `wf-record-start.sh`/`wf-record-stop.sh` scripts and the HyprQuickFrame
   overlay remain as fallbacks for one release while these settle in.
 
@@ -197,8 +205,8 @@ so a single install lays down all of them:
 | [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor — default for `text/plain` and `text/markdown`, `Super+E` | vendored, installed after the bar |
 | [**hyprtk-term**](https://github.com/hyprtk/hyprtk-term) | the Qt Quick terminal on libvterm — tabs, scrollback search, pywal ANSI palette, `$TERMINAL` | vendored in the bar installer, installed after the editor |
 | [**hyprtk-calc**](https://github.com/hyprtk/hyprtk-calc) | the exact-decimal calculator — live expression line, three keypads, history, four-base readout, and a shell mode in the same binary | vendored, installed after the terminal |
-| [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool — grim capture, frozen overlay, annotations, save/copy, CLI | vendored, installed after the calculator |
-| [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder — wf-recorder/wl-screenrec, audio, countdown, state file, CLI | vendored, installed after hyprtk-shot |
+| [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool — grim capture, frozen overlay, annotations, crop grips, window picker, save/copy, CLI | vendored, installed after the calculator |
+| [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder — wf-recorder/wl-screenrec, audio, window picker, GIF, trim, recovery, CLI | vendored, installed after hyprtk-shot |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |
 | [**Hyprtk-ISO-Creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed | shipped installer app |

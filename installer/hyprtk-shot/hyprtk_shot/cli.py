@@ -34,6 +34,9 @@ options:
   -c, --copy      copy the result to the clipboard (default from settings)
       --no-copy   do not copy
       --region G  capture "x,y WxH" instead of selecting on the overlay
+      --window A  capture this Hyprland window address (see hyprctl clients)
+      --slurp     pick the region with slurp (works across every output)
+      --overlay   pick the region on the frozen overlay (default)
   -s, --save P    save to P (a directory, or a file name)
       --no-save   do not write a file
       --stdout    write PNG bytes to stdout, no file, no editor
@@ -53,6 +56,8 @@ class Options:
     delay: int | None = None
     copy: bool | None = None
     region: str = ""
+    picker: str = ""
+    window: str = ""
     save: str = ""
     no_save: bool = False
     stdout: bool = False
@@ -98,6 +103,17 @@ def parse(argv: list[str]) -> Options:
             opts.region = argv[index]
         elif arg.startswith("--region="):
             opts.region = arg.split("=", 1)[1]
+        elif arg == "--window":
+            index += 1
+            if index >= len(argv):
+                raise ValueError("--window needs an address")
+            opts.window = argv[index]
+        elif arg.startswith("--window="):
+            opts.window = arg.split("=", 1)[1]
+        elif arg == "--slurp":
+            opts.picker = "slurp"
+        elif arg == "--overlay":
+            opts.picker = "overlay"
         elif arg == "--no-save":
             opts.no_save = True
         elif arg == "--stdout":
@@ -144,12 +160,24 @@ def _quick_capture(opts: Options, settings: Settings) -> int:
     mode = opts.mode or str(settings.get("mode") or "region")
     if opts.cursor is not None:
         settings.set("cursor", opts.cursor)
-    if mode == "region" and not opts.region:
-        print(f'{BIN_NAME}: region capture without the editor needs --region "x,y WxH"',
-              file=sys.stderr)
-        return 2
+    geometry = opts.region or None
+    if mode == "region" and not geometry:
+        if str(settings.get("picker")) == "slurp":
+            from .capture import select_region
+
+            try:
+                geometry = select_region()
+            except CaptureError as exc:
+                print(f"{BIN_NAME}: {exc}", file=sys.stderr)
+                return 1
+            if not geometry:
+                return 3
+        else:
+            print(f'{BIN_NAME}: region capture without the editor needs '
+                  f'--region "x,y WxH" or --slurp', file=sys.stderr)
+            return 2
     try:
-        target = resolve_target(mode, region=opts.region or None)
+        target = resolve_target(mode, region=geometry, window=opts.window or None)
         data = capture(
             mode,
             geometry=target.get("geometry"),
@@ -246,6 +274,8 @@ def main(argv: list[str] | None = None) -> int:
         settings.set("delay", max(0, min(30, opts.delay)))
     if opts.cursor is not None:
         settings.set("cursor", opts.cursor)
+    if opts.picker:
+        settings.set("picker", opts.picker)
 
     if mode == "open" or mode == "last":
         from .app import run
@@ -284,7 +314,8 @@ def main(argv: list[str] | None = None) -> int:
 
     overrides = {"copy": bool(opts.copy) if opts.copy is not None else None,
                  "save": False if opts.no_save else None}
-    return run([sys.argv[0]], mode=mode, region=opts.region, overrides=overrides)
+    return run([sys.argv[0]], mode=mode, region=opts.region,
+               window=opts.window, overrides=overrides)
 
 
 if __name__ == "__main__":  # pragma: no cover

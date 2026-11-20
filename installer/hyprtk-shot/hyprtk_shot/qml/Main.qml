@@ -25,6 +25,8 @@ ApplicationWindow {
         { key: "pixelate", label: "Pixel", hint: "Pixelate an area (redaction)" }
     ]
     readonly property var swatches: ["#fd4fb6", "#02dede", "#f9e2af", "#a6e3a1", "#89b4fa", "#ffffff"]
+    // Window capture is a choice, not a guess: the card opens this list.
+    property bool picking: false
 
     visible: initialMode === "" && initialPath === "" && !Bridge.busy && !Bridge.overlayVisible
     width: 560
@@ -101,7 +103,7 @@ ApplicationWindow {
             Repeater {
                 model: [
                     { mode: "region", title: "Region", sub: "Drag a box on a frozen screen" },
-                    { mode: "window", title: "Window", sub: "The focused window" },
+                    { mode: "window", title: "Window", sub: "Any open window, from a list" },
                     { mode: "output", title: "Monitor", sub: "The monitor with focus" },
                     { mode: "full", title: "All outputs", sub: "The whole layout in one image" }
                 ]
@@ -137,7 +139,14 @@ ApplicationWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Bridge.capture(modelData.mode)
+                        onClicked: {
+                            if (modelData.mode === "window") {
+                                Bridge.refreshWindows();
+                                win.picking = true;
+                            } else {
+                                Bridge.capture(modelData.mode);
+                            }
+                        }
                     }
                 }
             }
@@ -191,6 +200,12 @@ ApplicationWindow {
                     spacing: 14
                     Toggle { th: win.th; label: "Copy after save"; checked: cfg.copy === true; onToggled: Bridge.setConfig("copy", !checked) }
                     Toggle { th: win.th; label: "Annotate"; checked: cfg.annotate === true; onToggled: Bridge.setConfig("annotate", !checked) }
+                    Toggle {
+                        th: win.th
+                        label: "Cross-output"
+                        checked: cfg.picker === "slurp"
+                        onToggled: Bridge.setConfig("picker", checked ? "overlay" : "slurp")
+                    }
                     Item { Layout.fillWidth: true }
                 }
 
@@ -294,7 +309,7 @@ ApplicationWindow {
         RowLayout {
             Layout.fillWidth: true
             Text {
-                text: "Print → region · Super+Shift+Print → recorder"
+                text: "Print → region · Shift = square · arrows nudge"
                 color: th.muted
                 font.pixelSize: 11
             }
@@ -304,6 +319,120 @@ ApplicationWindow {
                 text: "grim is missing"
                 color: th.danger
                 font.pixelSize: 11
+            }
+        }
+    }
+
+
+    // -- window picker ----------------------------------------------------
+    Rectangle {
+        anchors.fill: parent
+        visible: win.picking
+        color: Qt.rgba(0, 0, 0, 0.5)
+        z: 20
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: win.picking = false
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 60, 430)
+            height: Math.min(parent.height - 90, 430)
+            radius: 12
+            color: th.panel
+            border.width: 1
+            border.color: th.border
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Text {
+                        text: "Capture a window"
+                        color: th.foreground
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: Bridge.windows.length + " open"
+                        color: th.muted
+                        font.pixelSize: 11
+                    }
+                }
+
+                // The fast path stays one click away.
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 34
+                    radius: 6
+                    color: focusedRow.containsMouse ? th.panelHover : "transparent"
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Focused window"
+                        color: th.accent2
+                        font.pixelSize: 12
+                    }
+                    MouseArea {
+                        id: focusedRow
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { win.picking = false; Bridge.capture("window"); }
+                    }
+                }
+
+                ListView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: Bridge.windows
+                    spacing: 2
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: ListView.view.width
+                        height: 34
+                        radius: 6
+                        color: pickRow.containsMouse ? th.panelHover : "transparent"
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 8
+                            Text {
+                                text: modelData.class
+                                color: th.muted
+                                font.pixelSize: 11
+                                Layout.maximumWidth: 110
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                text: modelData.title
+                                color: th.foreground
+                                font.pixelSize: 12
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        MouseArea {
+                            id: pickRow
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: { win.picking = false; Bridge.captureWindow(modelData.address); }
+                        }
+                    }
+                }
             }
         }
     }
@@ -348,7 +477,7 @@ ApplicationWindow {
                 anchors.centerIn: parent
                 text: {
                     var sel = Bridge.selectionInfo;
-                    if (!sel.width) return "Drag to select · Esc to close";
+                    if (!sel.width) return "Drag to select · Shift = square · Esc to close";
                     return sel.width + " × " + sel.height + "  ·  " + info.label;
                 }
                 color: th.foreground
@@ -520,6 +649,16 @@ ApplicationWindow {
         Shortcut { sequence: "Ctrl+Z"; onActivated: Bridge.undo() }
         Shortcut { sequence: "Ctrl+Shift+Z"; onActivated: Bridge.redo() }
         Shortcut { sequence: "Ctrl+A"; onActivated: Bridge.selectAll() }
+        // Arrows nudge the selection; disabled while the text tool has a field
+        // open, so they move the caret instead of the box.
+        Shortcut { sequence: "Left"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(-1, 0) }
+        Shortcut { sequence: "Right"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(1, 0) }
+        Shortcut { sequence: "Up"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(0, -1) }
+        Shortcut { sequence: "Down"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(0, 1) }
+        Shortcut { sequence: "Shift+Left"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(-10, 0) }
+        Shortcut { sequence: "Shift+Right"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(10, 0) }
+        Shortcut { sequence: "Shift+Up"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(0, -10) }
+        Shortcut { sequence: "Shift+Down"; enabled: !textEntry.visible; onActivated: Bridge.nudgeSelection(0, 10) }
         Shortcut { sequence: "P"; onActivated: Bridge.setTool("pen") }
         Shortcut { sequence: "L"; onActivated: Bridge.setTool("line") }
         Shortcut { sequence: "A"; onActivated: Bridge.setTool("arrow") }

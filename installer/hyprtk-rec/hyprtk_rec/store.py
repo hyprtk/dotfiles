@@ -13,7 +13,9 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-CONTAINERS = ("mp4", "mkv", "webm")
+# One list, owned by the recorder: a container make_name() would refuse is a
+# file the recorder could never write.
+from .recorder import CONTAINERS  # noqa: F401  (re-exported for callers)
 
 
 def _config_home() -> Path:
