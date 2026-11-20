@@ -1,9 +1,10 @@
 """Audio sources, read from PipeWire/PulseAudio through ``pactl``.
 
-The recorder offers three honest choices: nothing, the default output's monitor
-(system audio), or the default input (microphone). "Both at once" needs a mixed
-source, which is a v0.2 feature — pretending it works by recording one of them
-would be worse than leaving it out.
+Four honest choices: nothing, the default output's monitor (system audio), the
+default input (microphone), or **both**. Both is a real mixed source: a null sink
+with two loopbacks feeding it (the sink monitor and the mic), recorded from that
+sink's monitor. It cannot be faked by recording one side, and the modules have to
+be unloaded again or a crash leaves a sink named ``hyprtk-rec-mix`` behind.
 """
 
 from __future__ import annotations
@@ -12,7 +13,14 @@ import re
 import shutil
 import subprocess
 
-AUDIO = ("none", "system", "mic")
+AUDIO = ("none", "system", "mic", "mix")
+
+#: The null sink that carries the mix; its monitor is what gets recorded.
+MIX_SINK = "hyprtk-rec-mix"
+
+
+class AudioError(RuntimeError):
+    """The mix could not be created; the message is safe to show a user."""
 
 
 def _pactl(*args: str) -> str:
@@ -58,6 +66,55 @@ def system_monitor() -> str:
     return ""
 
 
+def load_module(*args: str) -> int:
+    """Load a pactl module; returns its id, or 0 when that failed."""
+    out = _pactl("load-module", *args).strip()
+    try:
+        return int(out.splitlines()[-1])
+    except (ValueError, IndexError):
+        return 0
+
+
+def unload(modules: list[int]) -> None:
+    for module in modules:
+        if module:
+            _pactl("unload-module", str(module))
+
+
+def start_mix() -> tuple[list[int], str]:
+    """Create the mix sink and return ``(module ids, source to record)``.
+
+    Two loopbacks are needed because a monitor is just another source: one from
+    the default sink's monitor (system audio) and one from the default input
+    (microphone). Both land in a null sink, so nothing is routed back to the
+    speakers.
+    """
+    sink = default_sink()
+    mic = default_source()
+    if not sink:
+        raise AudioError("no default output to take system audio from")
+    if not mic:
+        raise AudioError("no default microphone to mix in")
+
+    modules: list[int] = []
+    null_sink = load_module("module-null-sink", f"sink_name={MIX_SINK}")
+    if not null_sink:
+        raise AudioError("pactl could not create the mix sink")
+    modules.append(null_sink)
+    for source in (sink + ".monitor", mic):
+        module = load_module("module-loopback", f"sink={MIX_SINK}", f"source={source}")
+        if not module:
+            unload(modules)
+            raise AudioError(f"pactl could not add {source} to the mix")
+        modules.append(module)
+    return modules, f"{MIX_SINK}.monitor"
+
+
+def stop_mix(modules: list[int]) -> None:
+    """Unload a mix, newest module first (the sink goes last)."""
+    unload(list(reversed(modules or [])))
+
+
 def sources() -> list[dict]:
     """Every capture source pactl reports, monitor and microphone alike."""
     rows = []
@@ -91,6 +148,8 @@ def device_for(kind: str) -> str | None:
         return system_monitor() or None
     if kind == "mic":
         return default_source() or None
+    if kind == "mix":
+        return f"{MIX_SINK}.monitor"
     raise ValueError(f"unknown audio mode: {kind}")
 
 
@@ -113,4 +172,5 @@ def describe(mode: str) -> str:
         "none": "No audio",
         "system": "System audio",
         "mic": "Microphone",
+        "mix": "System + microphone",
     }.get(mode, mode)

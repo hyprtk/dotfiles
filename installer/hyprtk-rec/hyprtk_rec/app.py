@@ -20,7 +20,6 @@ def create(argv: list[str] | None = None, *, overrides: dict | None = None):
     argv = list(argv if argv is not None else sys.argv)
     app = QGuiApplication(argv)
     app.setApplicationName(APP_ID)
-    app.setApplicationDisplayName("Screen Recorder")
     app.setApplicationVersion(__version__)
     app.setOrganizationName("hyprtk")
     # The Wayland app id: window rules and the bar's task list need the desktop

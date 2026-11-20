@@ -17,7 +17,7 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 from PySide6.QtGui import QColor, QGuiApplication
 
 from . import __version__, audio, palette
-from .recorder import Recorder, RecorderError, available as backends_available
+from .recorder import Recorder, RecorderError, available as backends_available, vaapi_status
 from .settings import Settings
 from .sources import SOURCES, SourceError, outputs, resolve_source, windows
 from .store import History, default_dir, human_duration, human_size, make_name, unique_path
@@ -63,13 +63,16 @@ class Bridge(QObject):
             self._salvage(recovered)
         self._monitors = []
         self._windows = []
+        self._vaapi: tuple[bool, str, str] | None = None
         self.refreshSources()
 
+        # Always running: a recording can be started from a keybinding in
+        # another process, and the window (and the HUD) must notice. Idle ticks
+        # are cheap and slower; a running recording ticks twice a second.
         self._ticker = QTimer(self)
-        self._ticker.setInterval(500)
+        self._ticker.setInterval(1000)
         self._ticker.timeout.connect(self._tick)
-        if self._status.get("recording"):
-            self._ticker.start()
+        self._ticker.start()
 
     # -- properties ------------------------------------------------------
     @Property("QVariantMap", notify=paletteChanged)
@@ -159,6 +162,22 @@ class Bridge(QObject):
     def canRecord(self):
         return bool(backends_available())
 
+    def _vaapi_state(self) -> tuple[bool, str, str]:
+        if self._vaapi is None:
+            try:
+                self._vaapi = vaapi_status()
+            except OSError:
+                self._vaapi = (False, "", "VAAPI probe failed")
+        return self._vaapi
+
+    @Property(bool, constant=True)
+    def vaapiAvailable(self):
+        return self._vaapi_state()[0]
+
+    @Property(str, constant=True)
+    def vaapiReason(self):
+        return self._vaapi_state()[2]
+
     # -- helpers ---------------------------------------------------------
     def _load_recent(self) -> list[dict]:
         rows = []
@@ -198,13 +217,15 @@ class Bridge(QObject):
         self._notify("Recording recovered", f"{Path(rec.path).name} ({human_size(size)})")
 
     def _set_status(self) -> None:
-        self._status = self.recorder.status()
-        if self._status.get("recording"):
-            if not self._ticker.isActive():
-                self._ticker.start()
-        elif self._ticker.isActive():
-            self._ticker.stop()
-        self.stateChanged.emit()
+        status = self.recorder.status()
+        changed = status != self._status
+        self._status = status
+        recording = bool(status.get("recording"))
+        self._ticker.setInterval(500 if recording else 1000)
+        if not self._ticker.isActive():
+            self._ticker.start()
+        if changed:
+            self.stateChanged.emit()
 
     def _tick(self) -> None:
         self._set_status()
@@ -303,6 +324,7 @@ class Bridge(QObject):
                 cursor=bool(self.settings.get("cursor")),
                 backend=str(self.settings.get("backend") or "auto"),
                 container=container,
+                vaapi=bool(self.settings.get("vaapi")) and self.vaapiAvailable,
             )
         except RecorderError as exc:
             self.toast.emit("Cannot start", str(exc))

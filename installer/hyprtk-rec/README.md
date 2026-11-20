@@ -13,16 +13,25 @@ region or a window, choose audio, press record. The app drives `wf-recorder` (or
 - **Three sources** — the focused monitor (or a named one), a region drawn with
   `slurp`, or a window: the focused one by default, or any open window chosen
   from the picker (`--window ADDRESS` on the command line).
-- **Audio** — off, system audio (the default sink's monitor), or the default
-  microphone; any named PipeWire/PulseAudio source via `--device`.
+- **Audio** — off, system audio (the default sink's monitor), the default
+  microphone, or **both** (a null sink fed by two loopbacks, so the recording has
+  one mixed track); any named PipeWire/PulseAudio source via `--device`.
 - **Sensible defaults** — 60 fps, H.264, CRF-based quality, MP4, cursor
-  included, countdown off.
+  included, countdown off, CPU encoding.
+- **VAAPI (opt-in)** — `--vaapi` / Encoder → VAAPI for h264 and hevc. The device
+  is probed before it is offered: a `renderD*` node is not the same as a working
+  VAAPI stack, and the window says why when it is not.
 - **A real toggle** — `hyprtk-rec --toggle` starts if idle and stops if
   recording, from a keybinding, with no window involved.
 - **State that survives the process** — the running recording is described in
   `$XDG_RUNTIME_DIR/hyprtk-rec/state.json`, so `status` and `stop` work from a
   second invocation and a stale file is cleaned up after a crash.
 - **Pause and resume** — `SIGSTOP`/`SIGCONT`, best effort, documented below.
+- **A recording HUD** — a pinned 240x56 window with the timer and Pause/Stop,
+  visible for as long as a recording runs (including one started by a
+  keybinding), and it never takes focus.
+
+![The recording HUD](docs/rec-hud.png)
 - **Recent list** — every finished file with duration and size, open or delete.
 - **GIF output** — `container: gif` writes an animated GIF through
   `wf-recorder` (frame rate capped at 30, no audio track). Everything else stays
@@ -56,6 +65,7 @@ notifications.
 | Action | How |
 |---|---|
 | Window | `hyprtk-rec` |
+| HUD | appears by itself while recording |
 | Start / stop | `hyprtk-rec --toggle` (keyboard: `Super+Shift+Print`) |
 | Start with a region | `hyprtk-rec start --source region --countdown 3` |
 | Start with system audio | `hyprtk-rec start --audio system` |
@@ -67,9 +77,9 @@ notifications.
 
 Options: `--source output|region|window`, `--output NAME`, `--region "x,y WxH"`,
 `--fps 5-240`, `--codec h264|hevc|vp9|av1`, `--quality low|medium|high`,
-`--audio none|system|mic`, `--device NAME`, `--countdown N`, `--dir PATH`,
+`--audio none|system|mic|mix`, `--device NAME`, `--countdown N`, `--dir PATH`,
 `--backend auto|wf-recorder|wl-screenrec`, `--container mp4|mkv|webm|gif`,
-`--window ADDRESS`, `--no-cursor`, `--json`.
+`--window ADDRESS`, `--vaapi`, `--no-cursor`, `--json`.
 
 In the window: `Ctrl+R` toggles recording, `Space` pauses, `Esc` quits.
 
@@ -83,12 +93,13 @@ In the window: `Ctrl+R` toggles recording, `Space` pauses, `Esc` quits.
 | `window` | Hyprland client address from the picker (empty = focused) |
 | `fps` | 5–240 |
 | `codec`, `quality` | `h264`/`hevc`/`vp9`/`av1`, `low`/`medium`/`high` |
-| `audio` | `none`, `system`, `mic` |
+| `audio` | `none`, `system`, `mic`, `mix` |
 | `countdown` | seconds before recording (0–30) |
 | `dir` | output directory (empty = `~/Videos/Recordings`) |
 | `backend` | `auto`, `wf-recorder`, `wl-screenrec` |
 | `container` | `mp4`, `mkv`, `webm`, `gif` |
 | `cursor` | include the pointer |
+| `vaapi` | GPU encoding (probed; off by default) |
 | `notify` | start/stop notifications |
 
 Files are named `hyprtk-YYYY-MM-DD_HH-MM-SS-<source>.mp4` and logged to

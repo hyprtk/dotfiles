@@ -6,7 +6,7 @@ it is installed). The app owns the source picker, the audio choice, the
 countdown, the running state and the finished file — not the encoder.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 APP_NAME = "hyprtk-rec"
 APP_ID = "hyprtk-rec"

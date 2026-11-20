@@ -1,5 +1,38 @@
 # Changelog
 
+## [v1.12.0] - 2026-11-20
+
+### Added
+
+- **hyprtk-rec 0.2.1: mixed audio ("Both")** — system audio and the microphone
+  in one track, through a null sink (`hyprtk-rec-mix`) fed by two loopbacks. The
+  module ids are stored in the recording state, so a stop from another process,
+  a crash recovery and a failed start all unload them; no sink is left behind.
+- **VAAPI encoding (opt-in)** — `--vaapi` or Encoder → VAAPI in the window, for
+  h264 and hevc. Availability is **probed** with `ffmpeg -init_hw_device`,
+  because a `renderD*` node is not a working VAAPI stack: when the probe fails
+  the window says why and the option stays off, and asking for it anyway is a
+  start error rather than a silent CPU fallback.
+- **A recording HUD** — a pinned 240×56 window with the timer, Pause/Resume and
+  Stop, visible while a recording runs (including one started by a keybinding in
+  another process) and never taking focus.
+- **Two window rules for hyprtk-rec** — the window rule now matches the exact
+  titles instead of the class, and a second rule floats and pins the HUD at
+  `move 16 56` (Hyprland 0.57.2 accepts `move` in the Lua window rules).
+
+### Fixed
+
+- **An open recorder window did not notice a keybinding-started recording** —
+  the state poll only ran while a recording was already active. It now runs
+  always: once a second idle, twice a second while recording, and only emits
+  when the state actually changed.
+- **Window titles carried a `" — Screen Recorder"` suffix** (Qt appends the
+  application display name when the title differs), which broke the window rule
+  that matches `^(Screen Recorder|Recording)$`. The display name is gone.
+- **Closing the recorder window left a hidden process.** It now quits; the
+  encoder keeps running in its own session and the state file still answers
+  `stop`, exactly like a keybinding-started recording.
+
 ## [v1.11.0] - 2026-11-20
 
 ### Added

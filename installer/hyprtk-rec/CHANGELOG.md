@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.2.1 — 2026-11-20
+
+The last two audio and encoder items from the v0.2 list.
+
+### Added
+
+- **Mixed audio ("Both")** — system audio and the microphone in one track. It is
+  a real mix: a null sink (`hyprtk-rec-mix`) fed by two loopbacks (the default
+  sink's monitor and the default input), recorded from that sink's monitor. The
+  module ids live in the state file, so a stop from another process — or a
+  recovery after a crash — unloads them instead of leaving a sink behind.
+  Available as `--audio mix` and as the "Both" option in the window.
+- **VAAPI encoding (opt-in)** — `--vaapi` or Encoder → VAAPI in the window, for
+  `wf-recorder` with h264 or hevc. Availability is **probed**, not assumed: a
+  `renderD*` node can exist and still fail `vaInitialize` (it does on this
+  machine), so the probe initialises the device and the window shows the
+  reason instead of offering a button that cannot work. A failed probe is a
+  start error, never a silent fall back to the CPU.
+
+- **Recording HUD** — a small pinned window (240x56, top-left) with the elapsed
+  timer, Pause/Resume and Stop, shown for as long as a recording is active. It
+  never takes focus, so showing it does not pull the keyboard away from the app
+  being recorded, and it appears for a recording started by a keybinding in
+  another process as well as one started from the window.
+- The window and the HUD are positioned by two Hyprland window rules (matched on
+  their exact titles); a recording started with `--toggle` has no HUD, because
+  there is no long-lived process to draw one.
+
+### Fixed
+
+- **The window only polled the state while it was already recording**, so a
+  recording started from a keybinding was invisible to an open window (no
+  timer, no HUD). The poll now runs always: once a second when idle, twice a
+  second while recording, and only emits when the state actually changed.
+- **Window titles carried a " — Screen Recorder" suffix**, so the window rules
+  that match on `^(Screen Recorder|Recording)$` matched nothing. The application
+  display name is gone and the titles are exactly what the QML sets.
+- Closing the window left a hidden process behind; it now quits. The encoder
+  keeps running in its own session and the state file still answers `stop`, the
+  same as a keybinding-started recording.
+
+### Changed
+
+- `Recorder.status()` reports `vaapi` alongside `container`, and the recording
+  state carries the device it used.
 ## 0.2.0 — 2026-11-20
 
 Output formats, a window picker and a notification that can act.

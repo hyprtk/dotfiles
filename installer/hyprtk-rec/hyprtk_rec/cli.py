@@ -40,12 +40,13 @@ options:
       --fps N         5-240
       --codec C       h264 | hevc | vp9 | av1
       --quality Q     low | medium | high
-      --audio A       none | system | mic
+      --audio A       none | system | mic | mix (system + mic)
       --device NAME   a specific PulseAudio/PipeWire source
       --countdown N   seconds before recording starts
       --dir PATH      output directory
       --backend B     auto | wf-recorder | wl-screenrec
-      --container C   mp4 | mkv | webm
+      --container C   mp4 | mkv | webm | gif
+      --vaapi         encode with the GPU (h264/hevc; probed, not assumed)
       --no-cursor     hide the pointer
 
   trim options:
@@ -82,6 +83,7 @@ class Options:
     path: str = ""
     start: str = ""
     end: str = ""
+    vaapi: bool = False
     replace: bool = False
     reencode: bool = False
     last: bool = False
@@ -158,6 +160,8 @@ def parse(argv: list[str]) -> Options:
             opts.end = argv[index] if index < len(argv) else ""
         elif arg.startswith("--to="):
             opts.end = arg.split("=", 1)[1]
+        elif arg == "--vaapi":
+            opts.vaapi = True
         elif arg == "--replace":
             opts.replace = True
         elif arg == "--reencode":
@@ -205,6 +209,8 @@ def _apply(opts: Options, settings: Settings) -> Settings:
         settings.set("container", opts.container)
     if opts.window:
         settings.set("window", opts.window)
+    if opts.vaapi:
+        settings.set("vaapi", True)
     if opts.cursor is not None:
         settings.set("cursor", opts.cursor)
     return settings
@@ -279,6 +285,7 @@ def cmd_start(opts: Options, settings: Settings) -> int:
             cursor=bool(settings.get("cursor")),
             backend=str(settings.get("backend") or "auto"),
             container=container,
+            vaapi=bool(settings.get("vaapi")),
         )
     except RecorderError as exc:
         print(f"{BIN_NAME}: {exc}", file=sys.stderr)

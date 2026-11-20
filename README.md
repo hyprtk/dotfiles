@@ -84,7 +84,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Wallpaper** | Matuwall film-strip picker + gum list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
 | **Screenshots** | hyprtk-shot — frozen overlay, region (overlay or slurp across outputs)/any window/monitor/all-outputs, in-app annotation (arrow, shapes, text, blur, pixelate, steps), crop with eight grips, save or copy; pywal theme |
-| **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window picker, system or mic audio, countdown, pause, GIF, trim, crash recovery; pywal theme |
+| **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window picker, system/mic/**both** audio, countdown, pause, GIF, trim, crash recovery, a pinned HUD, optional VAAPI; pywal theme |
 | **Clipboard** | cliphist |
 | **Screen lock** | hyprlock (swaylock-effects fallback) |
 | **Logout** | hyprlogout |
@@ -170,13 +170,18 @@ the crop.
 
 - Sources: the focused monitor, a region drawn with `slurp`, or any window from
   the picker (the focused one by default; `--window ADDRESS`).
-- Audio: off, system (the default sink's monitor) or the microphone, plus any
-  named source with `--device`.
+- Audio: off, system (the default sink's monitor), the microphone, or **both**
+  mixed into one track (a null sink fed by two loopbacks); any named source with
+  `--device`.
 - 60 fps H.264 by default, CRF-based low/medium/high quality, MP4/MKV/WebM or
   GIF (capped at 30 fps), optional countdown; `wl-screenrec` is used
-  automatically when installed.
+  automatically when installed. VAAPI is opt-in and only offered when the device
+  actually probes as working.
 - Files go to `~/Videos/Recordings`; `hyprtk-rec status --json` is the scriptable
   state, and the window offers pause, a live timer and a recent list.
+- A pinned HUD (top-left, `move 16 56` in the window rules) shows the timer with
+  Pause and Stop for as long as a recording runs — including one started by the
+  keybinding — and never takes focus.
 - Trim without re-encoding: `hyprtk-rec trim --last --from 5 --to 20` (also
   `--replace`, `--reencode`). A crash does not lose the file: the next window
   adopts the partial recording.
@@ -206,7 +211,7 @@ so a single install lays down all of them:
 | [**hyprtk-term**](https://github.com/hyprtk/hyprtk-term) | the Qt Quick terminal on libvterm — tabs, scrollback search, pywal ANSI palette, `$TERMINAL` | vendored in the bar installer, installed after the editor |
 | [**hyprtk-calc**](https://github.com/hyprtk/hyprtk-calc) | the exact-decimal calculator — live expression line, three keypads, history, four-base readout, and a shell mode in the same binary | vendored, installed after the terminal |
 | [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool — grim capture, frozen overlay, annotations, crop grips, window picker, save/copy, CLI | vendored, installed after the calculator |
-| [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder — wf-recorder/wl-screenrec, audio, window picker, GIF, trim, recovery, CLI | vendored, installed after hyprtk-shot |
+| [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder — wf-recorder/wl-screenrec, system+mic mix, window picker, GIF, trim, recovery, HUD, CLI | vendored, installed after hyprtk-shot |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |
 | [**Hyprtk-ISO-Creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed | shipped installer app |

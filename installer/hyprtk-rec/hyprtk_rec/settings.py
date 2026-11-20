@@ -25,6 +25,7 @@ DEFAULTS = {
     "dir": "",
     "backend": "auto",
     "container": "mp4",
+    "vaapi": False,          # opt-in: GPU encoding when the device really works
     "notify": True,
     "recent": 12,
 }

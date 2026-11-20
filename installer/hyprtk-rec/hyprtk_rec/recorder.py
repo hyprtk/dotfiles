@@ -13,8 +13,10 @@ survives a reboot.
 
 from __future__ import annotations
 
+import glob
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -29,6 +31,10 @@ BACKENDS = ("auto", "wf-recorder", "wl-screenrec")
 #: A GIF is a frame stack, not a video stream: above this the file is enormous
 #: and the encoder cannot keep up with a live capture.
 GIF_MAX_FPS = 30
+
+#: VAAPI picks a quantiser, not a CRF, and only for these codecs here.
+VAAPI_CODEC = {"h264": "h264_vaapi", "hevc": "hevc_vaapi"}
+VAAPI_QP = {"low": 28, "medium": 24, "high": 20}
 
 #: Subjective quality -> x264-style CRF. wl-screenrec wants a bitrate instead;
 #: the mapping there is rough on purpose (bits/s for a 1080p60-ish picture).
@@ -70,6 +76,55 @@ def pid_alive(pid: int) -> bool:
     return True
 
 
+def render_devices() -> list[str]:
+    return sorted(glob.glob("/dev/dri/renderD*"))
+
+
+def vaapi_probe(device: str, *, runner=None, program: str = "ffmpeg") -> tuple[bool, str]:
+    """Actually open the device: a render node is not the same as VAAPI.
+
+    Mesa can expose ``renderD128`` and still fail ``vaInitialize`` (the box this
+    was written on does exactly that), so the probe initialises the device and
+    reports why it could not.
+    """
+    runner = runner or subprocess.run
+    if not os.path.exists(device):
+        return (False, "no render node")
+    argv = [program, "-hide_banner", "-loglevel", "error",
+            "-init_hw_device", f"vaapi=va:{device}", "-f", "null", "-"]
+    try:
+        result = runner(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE, timeout=15, check=False)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return (False, str(exc) or "ffmpeg could not probe the device")
+    if result.returncode != 0:
+        detail = (getattr(result, "stderr", b"") or b"").decode("utf-8", "replace").strip()
+        lines = [line.strip() for line in detail.splitlines() if line.strip()]
+        # ffmpeg ends with a generic "Error parsing global options", so prefer
+        # the line that actually names the VAAPI failure.
+        for line in lines:
+            if "vaapi" in line.lower() or "device creation failed" in line.lower():
+                # Drop ffmpeg's "[VAAPI @ 0x55...] " prefix; the tail is the reason.
+                return (False, re.sub(r"^\[[^\]]+\]\s*", "", line))
+        return (False, lines[-1] if lines else "VAAPI device could not be opened")
+    return (True, "")
+
+
+def vaapi_status(*, runner=None, program: str = "ffmpeg") -> tuple[bool, str, str]:
+    """``(available, device, reason)`` for the first working render node."""
+    devices = render_devices()
+    if not devices:
+        return (False, "", "no /dev/dri/renderD* device")
+    if not shutil.which(program):
+        return (False, "", "ffmpeg is not installed")
+    reason = ""
+    for device in devices:
+        ok, reason = vaapi_probe(device, runner=runner, program=program)
+        if ok:
+            return (True, device, "")
+    return (False, "", reason)
+
+
 def available(which=shutil.which) -> list[str]:
     found = []
     if which("wl-screenrec"):
@@ -108,10 +163,13 @@ class Recording:
     source: str
     path: str
     container: str = "mp4"
+    vaapi: bool = False
+    vaapi_device: str | None = None
     geometry: str | None = None
     output: str | None = None
     audio: str = "none"
     audio_device: str | None = None
+    audio_modules: list[int] = field(default_factory=list)
     codec: str = "h264"
     quality: str = "medium"
     fps: int = 60
@@ -142,6 +200,21 @@ def build_argv(rec: Recording) -> list[str]:
         # `-c gif` needs a pixel format the gif encoder accepts; rgb8 is the
         # one that opens without an avcodec argument error.
         argv = ["wf-recorder", "-f", rec.path, "-c", "gif", "-x", "rgb8"]
+        argv += ["-r", str(int(rec.fps))]
+        if rec.geometry:
+            argv += ["-g", rec.geometry]
+        elif rec.output:
+            argv += ["-o", rec.output]
+        if not rec.cursor:
+            argv += ["--no-cursor"]
+        return argv
+
+    if rec.vaapi and rec.backend == "wf-recorder":
+        codec = VAAPI_CODEC.get(rec.codec, "h264_vaapi")
+        argv = ["wf-recorder", "-f", rec.path, "-c", codec]
+        if rec.vaapi_device:
+            argv += ["-d", rec.vaapi_device]
+        argv += ["-p", f"qp={VAAPI_QP.get(rec.quality, 24)}"]
         argv += ["-r", str(int(rec.fps))]
         if rec.geometry:
             argv += ["-g", rec.geometry]
@@ -235,6 +308,14 @@ class Recorder:
         except FileNotFoundError:
             pass
 
+    def _discard(self, rec: Recording) -> None:
+        """Forget a dead recording and take its audio mix down with it."""
+        from . import audio as audio_module
+
+        if rec.audio_modules:
+            audio_module.stop_mix(rec.audio_modules)
+        self._clear_state()
+
     def active(self) -> Recording | None:
         data = self.read_state()
         if not data:
@@ -245,7 +326,7 @@ class Recorder:
             self._clear_state()
             return None
         if not self._alive(rec.pid):
-            self._clear_state()
+            self._discard(rec)
             return None
         return rec
 
@@ -254,23 +335,44 @@ class Recorder:
               output: str | None = None, codec: str = "h264", quality: str = "medium",
               fps: int = 60, audio: str = "none", audio_device: str | None = None,
               cursor: bool = True, backend: str = "auto",
-              container: str = "mp4") -> Recording:
+              container: str = "mp4", vaapi: bool = False) -> Recording:
         current = self.active()
         if current is not None:
             raise RecorderError(f"already recording to {current.path}")
 
         container = container if container in CONTAINERS else "mp4"
         backend = pick_backend(backend, self._which, container=container)
+        vaapi_device = None
+        if vaapi and backend == "wf-recorder":
+            if codec not in VAAPI_CODEC:
+                raise RecorderError(
+                    f"VAAPI cannot encode {codec} here (use h264 or hevc)")
+            ok, vaapi_device, reason = vaapi_status()
+            if not ok:
+                raise RecorderError(f"VAAPI is not available: {reason}")
+        else:
+            vaapi = False
+        mix_modules: list[int] = []
+        if audio == "mix" and not audio_device:
+            from . import audio as audio_module
+
+            try:
+                mix_modules, audio_device = audio_module.start_mix()
+            except audio_module.AudioError as exc:
+                raise RecorderError(str(exc)) from exc
         rec = Recording(
             pid=0,
             backend=backend,
             source=source,
             path=str(path),
             container=container,
+            vaapi=bool(vaapi),
+            vaapi_device=vaapi_device,
             geometry=geometry,
             output=output,
             audio=audio,
             audio_device=audio_device,
+            audio_modules=mix_modules,
             codec=codec if codec in CODECS else "h264",
             quality=quality if quality in QUALITIES else "medium",
             fps=max(1, min(GIF_MAX_FPS if container == "gif" else 240, int(fps))),
@@ -279,7 +381,12 @@ class Recorder:
         )
         argv = with_audio(build_argv(rec), rec)
         os.makedirs(os.path.dirname(rec.path) or ".", exist_ok=True)
-        process = self._spawn(argv)
+        try:
+            process = self._spawn(argv)
+        except Exception:
+            if mix_modules:
+                audio_module.stop_mix(mix_modules)
+            raise
         rec.pid = int(getattr(process, "pid", 0) or 0)
         self._process = process
         self._write_state(rec)
@@ -327,6 +434,10 @@ class Recorder:
             except Exception:
                 pass
 
+        if rec.audio_modules:
+            from . import audio as audio_module
+
+            audio_module.stop_mix(rec.audio_modules)
         self._clear_state()
         target = rec.path
         try:
@@ -358,7 +469,7 @@ class Recorder:
             return None
         if self._alive(rec.pid):
             return None
-        self._clear_state()
+        self._discard(rec)
         try:
             if os.path.getsize(rec.path) > 0:
                 return rec
@@ -409,6 +520,7 @@ class Recorder:
             "source": rec.source,
             "audio": rec.audio,
             "container": rec.container,
+            "vaapi": rec.vaapi,
             "codec": rec.codec,
             "fps": rec.fps,
             "bytes": size,

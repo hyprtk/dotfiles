@@ -24,7 +24,10 @@ ApplicationWindow {
     }
     readonly property string summary: sourceLabel + " · " + cfg.fps + " fps · "
         + String(cfg.codec).toUpperCase() + " · "
-        + (cfg.audio === "none" ? "no audio" : (cfg.audio === "mic" ? "microphone" : "system audio"))
+        + (cfg.audio === "none" ? "no audio"
+           : cfg.audio === "mic" ? "microphone"
+           : cfg.audio === "mix" ? "system + mic"
+           : "system audio")
 
     property bool blink: true
     // The window picker is a plain overlay with our own colours: a Controls
@@ -39,6 +42,11 @@ ApplicationWindow {
     color: th.background
     title: rec ? "Recording" : "Screen Recorder"
     flags: Qt.Window
+
+    // Closing the window ends the window process. The encoder keeps running on
+    // its own session and the state file still answers `stop`, which is exactly
+    // the same situation as a keybinding-started recording.
+    onClosing: Qt.quit()
 
     Timer {
         interval: 800
@@ -248,12 +256,13 @@ ApplicationWindow {
                         th: win.th
                         current: cfg.audio
                         options: [{ v: "none", l: "Off" }, { v: "system", l: "System" },
-                                  { v: "mic", l: "Mic" }]
+                                  { v: "mic", l: "Mic" }, { v: "mix", l: "Both" }]
                         onPicked: function (value) { Bridge.setConfig("audio", value); }
                     }
                     Item { Layout.fillWidth: true }
                     Text {
-                        text: cfg.audio === "mic" ? "SIGSTOP-safe · default input" : ""
+                        text: cfg.audio === "mic" ? "SIGSTOP-safe · default input"
+                              : cfg.audio === "mix" ? "null sink · unloaded on stop" : ""
                         color: th.mutedText
                         font.pixelSize: 11
                     }
@@ -317,6 +326,28 @@ ApplicationWindow {
                         font.pixelSize: 11
                     }
                     Item { Layout.fillWidth: true }
+                    Text { text: "Encoder"; color: th.muted; font.pixelSize: 12 }
+                    Segmented {
+                        th: win.th
+                        current: cfg.vaapi === true
+                        options: [{ v: false, l: "CPU" }, { v: true, l: "VAAPI" }]
+                        opacity: Bridge.vaapiAvailable ? 1 : 0.5
+                        onPicked: function (value) {
+                            if (value && !Bridge.vaapiAvailable) return;
+                            Bridge.setConfig("vaapi", value);
+                        }
+                    }
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: !Bridge.vaapiAvailable || cfg.vaapi === true
+                    text: Bridge.vaapiAvailable
+                          ? (cfg.vaapi === true ? "GPU encoding · h264/hevc only" : "")
+                          : "GPU encoding unavailable: " + Bridge.vaapiReason
+                    color: Bridge.vaapiAvailable ? th.mutedText : th.danger
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
                 }
 
                 RowLayout {
@@ -432,6 +463,95 @@ ApplicationWindow {
                 text: "v" + Bridge.version
                 color: th.mutedText
                 font.pixelSize: 11
+            }
+        }
+    }
+
+
+    // -- recording HUD ----------------------------------------------------
+    // A separate top-level window: the recorder window can be closed, tiled or
+    // on another workspace while a recording runs, so the only reliable place
+    // for the timer and the stop button is a pinned floating window.
+    Window {
+        id: hud
+        visible: Bridge.recording
+        width: 240
+        height: 56
+        color: "transparent"
+        title: "hyprtk-rec HUD"
+        // No focus: showing the HUD must not take the keyboard away from the
+        // app being recorded.
+        flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+               | Qt.WindowDoesNotAcceptFocus
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 12
+            color: th.panel
+            opacity: 0.96
+            border.width: 1
+            border.color: win.paused ? th.paused : th.record
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 8
+
+                Rectangle {
+                    Layout.preferredWidth: 10
+                    Layout.preferredHeight: 10
+                    radius: 5
+                    color: win.paused ? th.paused : th.record
+                    opacity: win.paused || win.blink ? 1 : 0.35
+                }
+
+                Text {
+                    text: Bridge.elapsed
+                    color: th.foreground
+                    font.pixelSize: 15
+                    font.bold: true
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Rectangle {
+                    Layout.preferredWidth: 52
+                    Layout.preferredHeight: 28
+                    radius: 7
+                    color: win.paused ? th.accent : th.panelAlt
+                    border.width: 1
+                    border.color: th.border
+                    Text {
+                        anchors.centerIn: parent
+                        text: win.paused ? "Resume" : "Pause"
+                        color: win.paused ? th.textOnAccent : th.foreground
+                        font.pixelSize: 10
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Bridge.togglePause()
+                    }
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: 44
+                    Layout.preferredHeight: 28
+                    radius: 7
+                    color: th.record
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Stop"
+                        color: "#ffffff"
+                        font.pixelSize: 10
+                        font.bold: true
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Bridge.stop()
+                    }
+                }
             }
         }
     }

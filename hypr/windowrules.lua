@@ -129,13 +129,43 @@ hl.window_rule({
     size = "560 640",
 })
 
--- hyprtk-rec: one window, and its title changes ("Recording") while it runs.
+-- hyprtk-rec: the window's title changes ("Recording") while it runs, so the
+-- rule matches both titles instead of the class alone — the recording HUD is
+-- the same class and must not be sized like the window.
 hl.window_rule({
     name = "windowrule-hyprtk-rec",
     match = {
         class = "hyprtk-rec",
+        title = "^(Screen Recorder|Recording)$",
     },
     float = true,
     center = true,
     size = "560 720",
+})
+
+-- hyprtk-shot's pinned capture: a floating image window, pinned so it stays
+-- across workspaces, sized by the app to the crop.
+hl.window_rule({
+    name = "windowrule-hyprtk-shot-pinned",
+    match = {
+        class = "hyprtk-shot",
+        title = "^(hyprtk-shot pinned)$",
+    },
+    float = true,
+    pin = true,
+    no_anim = true,
+})
+
+-- The HUD: pinned to the workspace, out of the way in the top-left corner.
+hl.window_rule({
+    name = "windowrule-hyprtk-rec-hud",
+    match = {
+        class = "hyprtk-rec",
+        title = "^(hyprtk-rec HUD)$",
+    },
+    float = true,
+    pin = true,
+    no_anim = true,
+    size = "240 56",
+    move = "16 56",
 })
