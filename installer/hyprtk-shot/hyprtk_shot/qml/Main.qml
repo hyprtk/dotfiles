@@ -35,6 +35,11 @@ ApplicationWindow {
     title: "Screenshot"
     flags: Qt.Window
 
+    // Closing the launcher must end the process. `visible` is a binding, so it
+    // is re-evaluated on the next state change and would otherwise bring a
+    // hidden window back (or leave a windowless process in the task list).
+    onClosing: Qt.quit()
+
     // A keybinding launch goes straight to the overlay and never shows this
     // window; a bare launch is the launcher.
     Component.onCompleted: {

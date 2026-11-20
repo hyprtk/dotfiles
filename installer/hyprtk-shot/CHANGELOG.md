@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 — 2026-11-20
+
+### Fixed
+
+- **Closing the launcher ends the process.** The window's `visible` property is
+  a binding (`initialMode === "" && ...`), so a compositor close could be
+  re-asserted on the next state change and leave a hidden process in the task
+  list. The window now quits the application on close.
+
 ## 0.1.0 — 2026-11-20
 
 First release. A screenshot tool for the hyprtk desktop: grim capture, a frozen
