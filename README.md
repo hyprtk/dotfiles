@@ -24,7 +24,7 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Li
 ---
 
 > **The hyprtk suite** — this repository is the desktop itself.
-> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
+> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [screenshot](https://github.com/hyprtk/hyprtk-shot) · [recorder](https://github.com/hyprtk/hyprtk-rec) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
 
 ## What is this?
 
@@ -83,8 +83,8 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
 | **Wallpaper** | Matuwall film-strip picker + gum list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
-| **Screenshots** | HyprQuickFrame overlay — region/window/full/temp, swappy/satty editor, optional KDE share, pywal theme |
-| **Screen recording** | wf-recorder |
+| **Screenshots** | hyprtk-shot — frozen overlay, region/window/monitor/all-outputs, in-app annotation (arrow, shapes, text, blur, pixelate, steps), save or copy; pywal theme |
+| **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window, system or mic audio, countdown, pause; pywal theme |
 | **Clipboard** | cliphist |
 | **Screen lock** | hyprlock (swaylock-effects fallback) |
 | **Logout** | hyprlogout |
@@ -140,29 +140,40 @@ All theming (bar theme, pywal, icons, lock screen, SDDM/GRUB) is changed from
 
 | Key | Action |
 | --- | --- |
-| `Super + Print` / `Super + P` | Screenshot |
-| `Super + Shift + Print` | Start screen recording |
-| `Super + Alt + Print` | Stop screen recording |
+| `Super + Print` / `Super + P` | Screenshot (hyprtk-shot) |
+| `Super + Shift + Print` | Start / stop recording (hyprtk-rec) |
+| `Super + Alt + Print` | Stop recording |
 | `Super + C` | Color picker (hyprpicker) |
 | `Super + Ctrl + Q` | Power menu (hyprlogout) |
 | `Super + R` | Reload Hyprland config |
 
-### Screenshots
+### Screenshots and recording
 
-`Super + Print` / `Super + P` opens the vendored **HyprQuickFrame** overlay:
+`Super + Print` / `Super + P` opens **hyprtk-shot**: `grim` captures the focused
+monitor, the frame freezes fullscreen, and you drag the box. The selection is
+the crop.
 
-- `r` region, `w` window, `s` full screen, `t` copy-only, `e` edit; `Esc`/`q` quits.
-- Saves to `~/Pictures/Screenshots`, copies to the clipboard and notifies
-  (`XDG_PICTURES_DIR` is honoured).
-- Editor: **swappy** (installed on every hyprtk distro) or satty; the Edit tab
-  appears only when one is available.
-- KDE Connect sharing is optional; the toggle is hidden without
-  `kdeconnect-cli`.
-- **NVIDIA**: defaults to a no-freeze `grim` + `slurp` capture to avoid the known
-  Quickshell screencopy/ICC failures; `HQF_FORCE_OVERLAY=1` opts into the frozen
-  overlay. Source-built Quickshell on NVIDIA disables the ICC backend.
-- The overlay follows pywal via `~/.config/hyprquickframe/theme.toml`, rendered
-  from this repo's wal template.
+- Annotate in place: pen, line, arrow, rectangle, ellipse, highlighter, numbered
+  step markers, text, blur and pixelate; colour swatches, stroke width, undo.
+- `Enter` saves and copies, `Ctrl+S` saves, `Ctrl+C` copies, `Esc` cancels;
+  `V/P/L/A/R/E/H/M/T/B/X` pick tools.
+- Files go to `~/Pictures/Screenshots` (`hyprtk-shot open PATH` reopens any
+  image in the editor; `--stdout`, `--json`, `--no-edit` for scripting).
+- The launcher (`hyprtk-shot`) offers region/window/monitor/all-outputs, a
+  delay, copy/annotate/cursor toggles and recent captures.
+
+`Super + Shift + Print` toggles **hyprtk-rec**; `Super + Alt + Print` stops it.
+
+- Sources: the focused monitor, a region drawn with `slurp`, or the focused
+  window's geometry.
+- Audio: off, system (the default sink's monitor) or the microphone, plus any
+  named source with `--device`.
+- 60 fps H.264 by default, CRF-based low/medium/high quality, MP4/MKV/WebM,
+  optional countdown; `wl-screenrec` is used automatically when installed.
+- Files go to `~/Videos/Recordings`; `hyprtk-rec status --json` is the scriptable
+  state, and the window offers pause, a live timer and a recent list.
+- The old `wf-record-start.sh`/`wf-record-stop.sh` scripts and the HyprQuickFrame
+  overlay remain as fallbacks for one release while these settle in.
 
 ### Desktop widgets
 
@@ -173,7 +184,7 @@ All theming (bar theme, pywal, icons, lock screen, SDDM/GRUB) is changed from
 
 ## Suite repositories
 
-hyprtk is one desktop kept in nine repositories. **This one is the desktop**:
+hyprtk is one desktop kept in eleven repositories. **This one is the desktop**:
 the installer, the Hyprland configuration, the themes and the scripts. The apps
 are separate repositories, each with its own installer, vendored into this tree
 so a single install lays down all of them:
@@ -186,6 +197,8 @@ so a single install lays down all of them:
 | [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor — default for `text/plain` and `text/markdown`, `Super+E` | vendored, installed after the bar |
 | [**hyprtk-term**](https://github.com/hyprtk/hyprtk-term) | the Qt Quick terminal on libvterm — tabs, scrollback search, pywal ANSI palette, `$TERMINAL` | vendored in the bar installer, installed after the editor |
 | [**hyprtk-calc**](https://github.com/hyprtk/hyprtk-calc) | the exact-decimal calculator — live expression line, three keypads, history, four-base readout, and a shell mode in the same binary | vendored, installed after the terminal |
+| [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool — grim capture, frozen overlay, annotations, save/copy, CLI | vendored, installed after the calculator |
+| [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder — wf-recorder/wl-screenrec, audio, countdown, state file, CLI | vendored, installed after hyprtk-shot |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |
 | [**Hyprtk-ISO-Creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed | shipped installer app |
@@ -205,9 +218,11 @@ All system theming (wallpaper, pywal, icons, lock screen, SDDM/GRUB) now lives i
 | **Editor** | hyprtk-edit — native Qt6/QML text editor: tabs, session restore, autosaved crash-recovery drafts, regex search, command palette, line operations, minimap and 600+ Pygments syntaxes, with a syntax theme derived from pywal | `Super + E`, the bar's **Editor** quick link, or opening any text file |
 | **Terminal** | hyprtk-term — native Qt6/QML terminal on libvterm: tabs with OSC titles, 10k-line scrollback with search, truecolor/wide-character/mouse/paste support, ANSI palette from pywal; alacritty stays for the gum menus that tag their window with `--class` | `Super + Return`, the bar's **Terminal** quick link, or `$TERMINAL` from any app |
 | **Calculator** | hyprtk-calc — native Qt6/QML calculator on Python's `Decimal`: `0.1+0.2` is `0.3`, a live expression line, basic/scientific/programmer keypads with a HEX/DEC/OCT/BIN readout, persisted history and a pywal palette; the same binary answers `hyprtk-calc "2+2"` in a shell | `Super + N`, the Calculator key if your keyboard has one, or `hyprtk-calc` |
+| **Screenshot** | hyprtk-shot — grim capture into a frozen fullscreen overlay, region/window/monitor/all-outputs, eleven annotation tools, save to `~/Pictures/Screenshots` and copy to the clipboard; the same binary scripts (`--copy`, `--stdout`, `--json`) | `Super + Print` (or `Super + P`), `Print`-less keyboards included |
+| **Screen recorder** | hyprtk-rec — a controller for `wf-recorder` (and `wl-screenrec` when installed): monitor/region/window, system or mic audio, fps/codec/quality, countdown, pause, a JSON state file and recent recordings | `Super + Shift + Print` to toggle, `Super + Alt + Print` to stop |
 
 On the live ISO the suite is installed **system-wide** under `/usr/local`
-(bar, file manager, editor, terminal and calculator); first login only seeds the
+(bar, file manager, editor, terminal, calculator, screenshot and recorder); first login only seeds the
 per-user config, themes, `~/.local/bin` links and the pywal palette.
 
 hyprtk-fm is the suite's default file manager (registered for
@@ -260,7 +275,8 @@ Rules: keep one cap height of clear space around the mark, never stretch it,
 never re-colour the cyan/magenta split, and below 44 px use the glyph-led
 `-small` icon. The icon names match the desktop entries (`hyprtk`,
 `hyprtk-bar-qt`, `hyprtk-file-manager`, `hyprtk-editor`, `hyprtk-term`,
-`hyprtk-calc`, `hyprtk-config-manager`, `hyprtk-usb`, `hyprtk-iso-creator`).
+`hyprtk-calc`, `hyprtk-shot`, `hyprtk-rec`, `hyprtk-config-manager`, `hyprtk-usb`,
+`hyprtk-iso-creator`).
 Banners, icons and the palette strip in this README are generated from the
 brand kit's `gen/docs.py`.
 

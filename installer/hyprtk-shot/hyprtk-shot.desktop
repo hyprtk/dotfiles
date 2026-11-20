@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Screenshot
+GenericName=Screenshot Tool
+Comment=hyprtk screenshot — freeze, select, annotate, save or copy
+Exec=hyprtk-shot
+Icon=hyprtk-shot
+Terminal=false
+Categories=Utility;Graphics;
+Keywords=screenshot;capture;grim;region;annotate;copy;snip;
+StartupNotify=true
+StartupWMClass=hyprtk-shot

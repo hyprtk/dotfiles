@@ -29,10 +29,12 @@ hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hyprpicker"))
 --##            added script to reset hyprland with hyprctl                ###
 --##      after taking screenshot where the keybindings stop working       ###
 
-hl.bind(mainMod .. " + PRINT", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/ssdetect.sh"))
+-- Screenshots: hyprtk-shot's frozen overlay (hyprtk-screenshot is the
+-- HyprQuickFrame launcher, kept as the fallback until it is retired).
+hl.bind(mainMod .. " + PRINT", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-shot; [ -x \"$p\" ] && exec \"$p\" region; exec $HOME/hyprtk/installer/scripts/ssdetect.sh'"))
 
 -- for users who have mini keyboards with no PrintScr
-hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/ssdetect.sh"))
+hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-shot; [ -x \"$p\" ] && exec \"$p\" region; exec $HOME/hyprtk/installer/scripts/ssdetect.sh'"))
 
 --##                                                                       ###
 
@@ -56,9 +58,9 @@ hl.bind(mainMod .. " + CTRL + RETURN", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-
 hl.bind(mainMod .. " + CTRL + F", hl.dsp.exec_cmd("~/hyprtk/installer/scripts/filemanager.sh"))
 hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-qt-clipboard-toggle"))
 hl.bind(mainMod .. " + CTRL + M", hl.dsp.exec_cmd("~/.local/bin/hyprtk-bar-qt-arc-toggle"))
-hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-start.sh"))
-hl.bind(mainMod .. " + ALT + Print", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))
-hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("~/hyprtk/hypr/scripts/wf-record-stop.sh"))
+hl.bind(mainMod .. " + SHIFT + Print", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-rec; [ -x \"$p\" ] && exec \"$p\" --toggle; exec $HOME/hyprtk/hypr/scripts/wf-record-start.sh'"))
+hl.bind(mainMod .. " + ALT + Print", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-rec; [ -x \"$p\" ] && exec \"$p\" stop; exec $HOME/hyprtk/hypr/scripts/wf-record-stop.sh'"))
+hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-rec; [ -x \"$p\" ] && exec \"$p\" stop; exec $HOME/hyprtk/hypr/scripts/wf-record-stop.sh'"))
 
 hl.bind(mainMod .. " + 1", hl.dsp.focus({ workspace = 1 }))
 hl.bind(mainMod .. " + 2", hl.dsp.focus({ workspace = 2 }))

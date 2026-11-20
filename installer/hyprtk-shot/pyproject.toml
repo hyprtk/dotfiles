@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyprtk-shot"
+dynamic = ["version"]
+description = "A Wayland-native screenshot tool for the hyprtk desktop"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.6"]
+
+[project.scripts]
+hyprtk-shot = "hyprtk_shot.__main__:main"
+
+[tool.setuptools]
+packages = ["hyprtk_shot"]
+
+[tool.setuptools.package-data]
+hyprtk_shot = [
+    "qml/*.qml",
+    "qml/components/*",
+    "assets/*.svg",
+    "assets/fonts/*.ttf",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "hyprtk_shot.__version__" }

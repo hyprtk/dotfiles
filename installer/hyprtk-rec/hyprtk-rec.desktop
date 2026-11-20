@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Screen Recorder
+GenericName=Screen Recorder
+Comment=hyprtk screen recorder — wf-recorder/wl-screenrec with audio and a countdown
+Exec=hyprtk-rec
+Icon=hyprtk-rec
+Terminal=false
+Categories=AudioVideo;Recorder;
+Keywords=record;recording;screen;capture;wf-recorder;wl-screenrec;screencast;video;
+StartupNotify=true
+StartupWMClass=hyprtk-rec

@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+set -eu
+
+# Suite conventions: GTK icons/fonts for the Qt platform theme, and the Basic
+# controls style so the app's own QML styling is what gets drawn.
+: "${QT_QPA_PLATFORMTHEME:=gtk3}"
+: "${QT_QUICK_CONTROLS_STYLE:=Basic}"
+export QT_QPA_PLATFORMTHEME QT_QUICK_CONTROLS_STYLE
+
+SELF=$(readlink -f "$0")
+ROOT=$(CDPATH= cd -- "$(dirname -- "$SELF")/.." && pwd)
+export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+
+# install.sh creates this only when the distro's PySide6 lacks the QML bindings.
+PY=python3
+[ -x "$ROOT/venv/bin/python" ] && PY="$ROOT/venv/bin/python"
+
+exec "$PY" -m hyprtk_rec "$@"

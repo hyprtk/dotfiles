@@ -20,21 +20,24 @@ and run sudo mkinitcpio -P (Please ensure you have your kernels headers installe
   Super          d        *show app launcher* (`hyprtk-bar-qt-launcher-toggle`)
   Super   Ctrl   q        *show hyprlogout* (lock/suspend/logout/reboot/shutdown)
 
-# screenshot
-  Super PrintSrc          *full screenshot*
-                          *active window screenshot*
-                          *full screenshot + timer*
+# screenshot  (`hyprtk-shot`)
+  Super PrintSrc          *region screenshot* — drag on the frozen frame
+  Super Shift PrintSrc    *start / stop screen recording* (`hyprtk-rec`)
+  Super Alt   PrintSrc    *stop screen recording*
 
-# screen recorder
-  Super Shift PrintSrc    *to start full screen recording* (`wf-recorder`)
+in the overlay: Enter saves+copies, Ctrl+S saves, Ctrl+C copies, Esc cancels,
+Ctrl+Z undo, and V/P/L/A/R/E/H/M/T/B/X pick the tools (select, pen, line, arrow,
+rect, ellipse, highlight, step, text, blur, pixelate)
 
-screen recordings are saved by default to your ~/videos/Recordings directory
+screenshots go to ~/Pictures/Screenshots, recordings to ~/Videos/Recordings
 
 # application shortcuts 
   Ctrl    Alt U           *pavucontrol*
   Ctrl    ALT P           *pamac-manager*
   Super   F               *file manager* (`hyprtk-fm`)
   Super   N               *calculator* (`hyprtk-calc`)
+  Super   PrintSrc        *screenshot* (`hyprtk-shot`)
+  Super Shift PrintSrc    *record screen* (`hyprtk-rec`)
   Super   B               *browser* (`brave`)
   Super   Ctrl B          *browser* (`chromium`)
 

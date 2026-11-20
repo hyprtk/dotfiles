@@ -1,5 +1,51 @@
 # Changelog
 
+## [v1.10.0] - 2026-11-20
+
+### Added
+
+- **hyprtk-shot**, the suite's screenshot tool (`hyprtk/hyprtk-shot`, v0.1.0).
+  `grim` captures the focused monitor, the frame freezes fullscreen, and the
+  box you drag is the crop — no portal prompt, no second selection UI, and no
+  way for the overlay to photograph itself. Annotate in place (pen, line,
+  arrow, rectangle, ellipse, highlighter, numbered steps, text, blur,
+  pixelate), save to `~/Pictures/Screenshots`, copy with `wl-copy`, or both.
+  The launcher offers region/window/monitor/all-outputs, a delay, copy/annotate
+  toggles and a recent list; the same binary scripts (`--copy`, `--save`,
+  `--stdout`, `--json`, `--no-edit`, `--list-outputs`). It owns `Print` and
+  `Super + P`.
+- **hyprtk-rec**, the suite's screen recorder (`hyprtk/hyprtk-rec`, v0.1.0).
+  A controller for `wf-recorder` (and `wl-screenrec` automatically when it is
+  installed): monitor, region (`slurp`) or window source, off/system/mic audio
+  through `pactl`, fps/codec/quality, countdown, pause, and a JSON state file
+  in `$XDG_RUNTIME_DIR` so `--toggle`/`status`/`stop` work from a keybinding in
+  another process. Files land in `~/Videos/Recordings` and the state file is
+  cleaned up after a crash. `Super + Shift + Print` toggles it,
+  `Super + Alt + Print` stops it.
+- **Both are vendored** into `installer/hyprtk-shot/` and
+  `installer/hyprtk-rec/`, installed by `1-install.sh` after hyprtk-calc, and
+  carried on the ISO system-wide (with first-run fallbacks and the
+  `~/.local/bin` links). Window rules float and size both launchers.
+- **Package surface**: `grim`, `slurp`, `wl-clipboard` and the distro's
+  libnotify package (`libnotify-bin` / `libnotify-tools`) join the media set on
+  every family; the ISO already carried all four.
+
+### Changed
+
+- The old screenshot/recording paths stay as **fallbacks for one release**:
+  `installer/scripts/ssdetect.sh` now prefers `hyprtk-shot` and falls back to
+  the vendored HyprQuickFrame overlay, and the `wf-record-*.sh` scripts remain
+  behind the new binds. Both are retireable next release.
+- `cheatsheet.md` and the README describe the new tools and shortcuts; the
+  suite is eleven repositories.
+
+### Gate
+
+- T1: 1384 resolvable / 26 AUR / 88 allow-listed / **0 unexpected**.
+- T2: **9/9** families dry-run clean.
+- Audit: **1498 rows / 0 Unexpected / 0 TODO**.
+
+
 ## [v1.9.2] - 2026-11-20
 
 ### Fixed

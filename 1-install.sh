@@ -1084,6 +1084,16 @@ else
         _spin "Installing hyprtk-calc..." "bash $SCRIPT_DIR/installer/hyprtk-calc/install.sh" "$LOG_FILE"
         _ok "hyprtk-calc installed (hyprtk-calc; GUI + shell calculator)"
 
+        # ── hyprtk-shot (GUI) ──────────────────────────────────────
+        _step "Installing hyprtk-shot"
+        _spin "Installing hyprtk-shot..." "bash $SCRIPT_DIR/installer/hyprtk-shot/install.sh" "$LOG_FILE"
+        _ok "hyprtk-shot installed (hyprtk-shot; screenshots — Print)"
+
+        # ── hyprtk-rec (GUI) ───────────────────────────────────────
+        _step "Installing hyprtk-rec"
+        _spin "Installing hyprtk-rec..." "bash $SCRIPT_DIR/installer/hyprtk-rec/install.sh" "$LOG_FILE"
+        _ok "hyprtk-rec installed (hyprtk-rec; screen recorder — Super+Shift+Print)"
+
         # ── Preferred apps (XDG + bar quick links) ─────────────────
         # Point XDG and the bar's Files/terminal quick links at hyprtk-fm and
         # hyprtk-term; Thunar and alacritty stay installed as fallbacks (the gum

@@ -114,3 +114,28 @@ hl.window_rule({
     center = true,
     size = "480 740",
 })
+
+-- hyprtk-shot's launcher. The capture overlay shares the class but titles
+-- itself "hyprtk-shot" and asks the compositor for fullscreen, so it is
+-- deliberately not matched here.
+hl.window_rule({
+    name = "windowrule-hyprtk-shot",
+    match = {
+        class = "hyprtk-shot",
+        title = "^(Screenshot)$",
+    },
+    float = true,
+    center = true,
+    size = "560 640",
+})
+
+-- hyprtk-rec: one window, and its title changes ("Recording") while it runs.
+hl.window_rule({
+    name = "windowrule-hyprtk-rec",
+    match = {
+        class = "hyprtk-rec",
+    },
+    float = true,
+    center = true,
+    size = "560 720",
+})
