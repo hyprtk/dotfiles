@@ -13,8 +13,9 @@ prompt.
 
 ## What it does
 
-- **Four capture modes** — region, any open window (a picker, focused row
-  first), focused monitor, all outputs.
+- **Four capture modes** — region, any window on the current workspace (a
+  picker, focused first), focused monitor, all outputs. Window capture is a
+  geometry crop, so a window that is not on screen cannot be captured.
   Region freezes the focused monitor; the box you draw is the crop. A
   cross-output region comes from `slurp` instead (one toggle in the launcher,
   `--slurp` on the command line).
@@ -72,13 +73,15 @@ and builds a private venv, the same fallback the editor and terminal use.
 | Pipe it | `hyprtk-shot output --stdout > shot.png` |
 | Status / scripting | `hyprtk-shot window --no-edit --json` |
 
-In the overlay: drag to draw the box (the first press on the untouched frame
-starts a new selection rather than grabbing it), hold `Shift` for a square,
-drag inside an existing selection to move it, nudge it with the arrow keys
-(`Shift` = 10 px), right-click or `Ctrl+A` to select everything, `Esc`
-cancels, `Enter` saves and copies, `Ctrl+S` saves, `Ctrl+C` copies,
-`Ctrl+Z`/`Ctrl+Shift+Z` undo/redo (selection changes and `Clear` are undoable
-too), `Ctrl+A` selects the whole frame. `Pin` leaves the crop on screen.
+In the overlay the first step is the region: the screen freezes with only the
+crosshair and a "Drag to select a region" hint. Drag the box (hold `Shift` for a
+square; move it by dragging inside; nudge it with the arrow keys, `Shift` =
+10 px), and once it exists the annotation toolbar appears with `Select` active.
+Then annotate, and `Enter` saves and copies (`Ctrl+S` saves, `Ctrl+C` copies,
+`Pin` leaves it on screen); right-click or `Ctrl+A` chooses the whole screen,
+`Ctrl+Z`/`Ctrl+Shift+Z` undo/redo (selection changes and `Clear` too), `Esc`
+cancels. Until a region is chosen, `Enter` does nothing — it cannot capture the
+whole screen by accident.
 Tool shortcuts are `V` select, `P` pen, `L` line, `A` arrow, `R` rectangle,
 `E` ellipse, `H` highlighter, `M` step marker, `T` text, `B` blur, `X` pixelate.
 
@@ -91,7 +94,7 @@ setting the overlay changes:
 |---|---|
 | `mode` | default capture mode |
 | `picker` | region selection: `overlay` (default) or `slurp` (cross-output) |
-| `delay` | seconds before the freeze (0–30) |
+| `delay` | seconds before the freeze (0–30); a countdown window is shown |
 | `copy`, `save` | act after capture |
 | `dir` | save directory (empty = `~/Pictures/Screenshots`) |
 | `format`, `quality` | `png`/`jpg`/`webp`, 40–100 |

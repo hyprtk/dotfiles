@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.2.3 — 2026-11-20
+
+### Fixed
+
+- **The window picker offered windows from other workspaces.** Capturing a
+  window is a geometry crop of the current screen, so a window that is not on
+  screen produces somebody else's pixels. The list is now the active
+  workspace's windows, focused first, and the bridge self-heals a pick that
+  leaves the workspace. (A tiled or maximised window *is* its tile, so its
+  capture looks like the workspace — that is the window, not a bug.)
+- **A delayed capture gave no sign it was waiting.** The delay hid the launcher
+  and then froze the screen, and the frozen frame looks exactly like the live
+  desktop, so starting the drag during the delay lost the press and nothing
+  could be selected. A 200×200 countdown window now runs for the delay and is
+  hidden 120 ms before `grim`, so the number is never in the capture.
+- **A leftover annotation tool ate the first drag.** The overlay now starts a
+  selection on any press while nothing is chosen (full frame), whatever tool is
+  active; the tool applies once a box exists.
+
+### Changed
+
+- **Region capture is two phases.** The overlay freezes with only the selection
+  active — no annotation toolbar, just "Drag to select a region" — and the
+  toolbar appears once a box exists, with the Select tool active so the box can
+  be moved or resized first. `Enter` (and Save/Copy) only work once a region has
+  been chosen; right-click or `Ctrl+A` count as choosing the whole screen, so an
+  accidental `Enter` can no longer capture everything.
+
 ## 0.2.2 — 2026-11-20
 
 ### Fixed

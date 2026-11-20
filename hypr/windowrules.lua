@@ -143,6 +143,19 @@ hl.window_rule({
     size = "560 720",
 })
 
+-- The capture countdown: a small floating number, never in the screenshot.
+hl.window_rule({
+    name = "windowrule-hyprtk-shot-countdown",
+    match = {
+        class = "hyprtk-shot",
+        title = "^(hyprtk-shot countdown)$",
+    },
+    float = true,
+    center = true,
+    no_anim = true,
+    size = "200 200",
+})
+
 -- hyprtk-shot's pinned capture: a floating image window, pinned so it stays
 -- across workspaces, sized by the app to the crop.
 hl.window_rule({

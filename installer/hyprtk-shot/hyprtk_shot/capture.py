@@ -122,6 +122,7 @@ class Window:
     monitor: int
     floating: bool
     focus_order: int
+    workspace: int = 0
 
     @property
     def geometry(self) -> str:
@@ -140,6 +141,7 @@ class Window:
             "width": self.width,
             "height": self.height,
             "geometry": self.geometry,
+            "workspace": self.workspace,
         }
 
 
@@ -199,10 +201,22 @@ def windows(*, visible_only: bool = True) -> list[Window]:
                 monitor=int(item.get("monitor") or 0),
                 floating=bool(item.get("floating")),
                 focus_order=int(item.get("focusHistoryID") or 0),
+                workspace=int((item.get("workspace") or {}).get("id") or 0),
             ))
         except (TypeError, ValueError, IndexError):
             continue
     return [row for row in result if row.width > 0 and row.height > 0]
+
+
+def active_workspace() -> int:
+    """The workspace id the focused monitor is showing (0 when unknown)."""
+    data = _hyprctl_json(["activeworkspace"])
+    if isinstance(data, dict):
+        try:
+            return int(data.get("id") or 0)
+        except (TypeError, ValueError):
+            return 0
+    return 0
 
 
 def active_window() -> Window | None:

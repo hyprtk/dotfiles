@@ -445,6 +445,39 @@ ApplicationWindow {
     }
 
 
+
+    // -- capture countdown ------------------------------------------------
+    // Shown only while the delay runs, and hidden 120 ms before grim so the
+    // number can never end up in the capture.
+    Window {
+        id: countdownWindow
+        visible: Bridge.countdown > 0
+        width: 200
+        height: 200
+        color: "transparent"
+        title: "hyprtk-shot countdown"
+        transientParent: null
+        flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+               | Qt.WindowDoesNotAcceptFocus
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 18
+            color: th.background
+            opacity: 0.94
+            border.width: 1
+            border.color: th.accent2
+
+            Text {
+                anchors.centerIn: parent
+                text: Bridge.countdown
+                color: th.foreground
+                font.pixelSize: 96
+                font.bold: true
+            }
+        }
+    }
+
     // -- pinned capture ---------------------------------------------------
     // A plain image window over the file Bridge.pin() wrote: the overlay is
     // fullscreen and has to close, so there is nothing left to paint from.
@@ -552,18 +585,21 @@ ApplicationWindow {
                 id: dims
                 anchors.centerIn: parent
                 text: {
+                    if (!Bridge.selectionReady)
+                        return "Drag to select a region · Esc to cancel";
                     var sel = Bridge.selectionInfo;
-                    if (!sel.width) return "Drag to select · Shift = square · Esc to close";
-                    return sel.width + " × " + sel.height + "  ·  " + info.label;
+                    return sel.width + " × " + sel.height + "  ·  " + info.label
+                           + "  ·  Enter saves";
                 }
                 color: th.foreground
                 font.pixelSize: 12
             }
         }
 
-        // Toolbar
+        // Toolbar: only once a region exists, so the first step is unambiguous.
         Rectangle {
             id: bar
+            visible: Bridge.selectionReady
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 26
             anchors.horizontalCenter: parent.horizontalCenter
@@ -719,9 +755,9 @@ ApplicationWindow {
             }
         }
 
-        Shortcut { sequence: "Escape"; onActivated: Bridge.close() }
-        Shortcut { sequence: "Return"; onActivated: Bridge.saveAndCopy() }
-        Shortcut { sequence: "Ctrl+S"; onActivated: { Bridge.save(); Bridge.close(); } }
+        Shortcut { sequence: "Escape"; onActivated: { console.log("KEY escape"); Bridge.close(); } }
+        Shortcut { sequence: "Return"; onActivated: { console.log("KEY return"); Bridge.saveAndCopy(); } }
+        Shortcut { sequence: "Ctrl+S"; onActivated: { console.log("KEY ctrl+s"); Bridge.save(); Bridge.close(); } }
         Shortcut { sequence: "Ctrl+C"; onActivated: { Bridge.copy(); Bridge.close(); } }
         Shortcut { sequence: "Ctrl+Z"; onActivated: Bridge.undo() }
         Shortcut { sequence: "Ctrl+Shift+Z"; onActivated: Bridge.redo() }

@@ -265,6 +265,18 @@ class CaptureCanvas(QQuickPaintedItem):
         tool = str(self._bridge.tool)
         rect = session.selection
 
+        # Nothing selected yet: any press draws the box, whatever tool is
+        # active. Otherwise a leftover pen/arrow tool silently eats the drag.
+        if is_full_frame(rect.x(), rect.y(), rect.width(), rect.height(),
+                         session.width, session.height):
+            if event.button() == Qt.RightButton:
+                return
+            self._before_selection = (rect.x(), rect.y(), rect.width(), rect.height())
+            self._selecting = True
+            self._select_origin = (x, y)
+            self._bridge.setSelection(x, y, 1, 1)
+            return
+
         if tool == "cursor":
             self._before_selection = (rect.x(), rect.y(), rect.width(), rect.height())
             # The default selection covers the whole frame. Moving it would be
@@ -359,10 +371,16 @@ class CaptureCanvas(QQuickPaintedItem):
             self._selecting = False
             self._select_origin = None
             if session.selection.width() < 4 or session.selection.height() < 4:
-                self._bridge.selectAll()
-            elif self._before_selection is not None:
-                # One drag is one undo step, not one per mouse-move event.
-                self._bridge.recordSelection(*self._before_selection)
+                # A click is not "capture everything": it is still "nothing
+                # chosen", so the tools stay hidden.
+                self._bridge.resetSelection()
+            else:
+                if self._before_selection is not None:
+                    # One drag is one undo step, not one per mouse-move event.
+                    self._bridge.recordSelection(*self._before_selection)
+                # The box exists; the tools can be used from a neutral state.
+                if str(self._bridge.tool) != "cursor":
+                    self._bridge.setTool("cursor")
             self._before_selection = None
             return
         if self._resizing:

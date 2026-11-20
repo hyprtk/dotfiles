@@ -153,13 +153,16 @@ All theming (bar theme, pywal, icons, lock screen, SDDM/GRUB) is changed from
 monitor, the frame freezes fullscreen, and you drag the box. The selection is
 the crop.
 
+- **Select first, annotate second** — the screen freezes with only the crosshair
+  and a hint; the annotation toolbar appears once the box exists.
 - Annotate in place: pen, line, arrow, rectangle, ellipse, highlighter, numbered
   step markers, text, blur and pixelate; colour swatches, stroke width, undo.
 - The box is yours to place: `Shift` while dragging locks it square, the arrow
   keys nudge it (1 px, `Shift` = 10 px), and the eight grips resize it after the
   annotations are drawn. Undo covers selection changes too.
 - `Enter` saves and copies, `Ctrl+S` saves, `Ctrl+C` copies, `Esc` cancels;
-  `V/P/L/A/R/E/H/M/T/B/X` pick tools.
+  `V/P/L/A/R/E/H/M/T/B/X` pick tools. Until a region is chosen `Enter` does
+  nothing (right-click or `Ctrl+A` choose the whole screen).
 - Files go to `~/Pictures/Screenshots` (`hyprtk-shot open PATH` reopens any
   image in the editor; `--stdout`, `--json`, `--no-edit` for scripting).
 - The launcher (`hyprtk-shot`) offers region/window/monitor/all-outputs, a

@@ -1,5 +1,34 @@
 # Changelog
 
+## [v1.12.4] - 2026-11-20
+
+### Changed
+
+- **hyprtk-shot 0.2.3: region capture is two phases.** The screen freezes with
+  only the selection active — no annotation toolbar, just "Drag to select a
+  region" — and the toolbar appears once a box exists, with `Select` active so
+  the box can be moved or resized first. `Enter` / Save / Copy do nothing until a
+  region is chosen; right-click or `Ctrl+A` choose the whole screen, so an
+  accidental `Enter` can no longer capture everything, and a stray click no
+  longer selects all.
+
+### Fixed
+
+- **The window picker listed windows from every workspace.** Capturing a window
+  is a geometry crop of the current screen, so an off-workspace window produced
+  somebody else's pixels (the reported "screenshot of workspace 1"). The list is
+  now the active workspace's windows, focused first, and a pick that leaves the
+  workspace self-heals. A tiled or maximised window *is* its tile, so its capture
+  looks like the workspace — that is the window.
+- **A delayed capture gave no sign it was waiting.** The frozen frame looks
+  exactly like the live desktop, so a drag started during the delay lost its
+  press. A 200×200 countdown window now runs for the delay and is hidden 120 ms
+  before `grim`, so the number never lands in the capture (window rule:
+  `^(hyprtk-shot countdown)$`, float/center 200×200).
+- **A leftover annotation tool ate the first drag.** Any press on the untouched
+  frame starts a selection whatever tool is active; the tool applies once a box
+  exists.
+
 ## [v1.12.3] - 2026-11-20
 
 ### Fixed

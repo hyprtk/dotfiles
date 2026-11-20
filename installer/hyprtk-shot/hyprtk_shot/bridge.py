@@ -19,8 +19,9 @@ from PySide6.QtGui import QColor, QGuiApplication, QImage
 
 from . import __version__, palette
 from .annotate import Shape, render
-from .capture import CaptureError, MODES, capture, resolve_target, select_region, windows
-from .selection import nudge
+from .capture import (CaptureError, MODES, active_workspace, capture, resolve_target,
+                      select_region, windows)
+from .selection import is_full_frame, nudge
 from .settings import Settings
 from .store import History, copy_to_clipboard, default_dir, human_size, make_name, save_image, unique_path
 
@@ -69,6 +70,7 @@ class Bridge(QObject):
     recentChanged = Signal()
     windowsChanged = Signal()
     pinChanged = Signal()
+    countdownChanged = Signal()
     toast = Signal(str, str)
     finished = Signal()
 
@@ -94,6 +96,12 @@ class Bridge(QObject):
         self.pending_window = ""
         self._pin_path = ""
         self._pin_size = (0, 0)
+        self._countdown = 0
+        self._pending_mode = "region"
+        # True when the whole frame was chosen on purpose (right-click, Ctrl+A),
+        # which is different from "nothing chosen yet" — the overlay starts on
+        # the full frame, and the tools stay hidden until a region exists.
+        self._explicit_all = False
         self._windows: list[dict] = []
         self._rev = 0
 
@@ -134,6 +142,17 @@ class Bridge(QObject):
     @Property(bool, notify=sessionChanged)
     def hasImage(self):
         return self._session is not None
+
+    @Property(bool, notify=selectionChanged)
+    def selectionReady(self):
+        """A region has been chosen, so the annotation tools can appear."""
+        if not self._session:
+            return False
+        session = self._session
+        rect = session.selection
+        full = is_full_frame(rect.x(), rect.y(), rect.width(), rect.height(),
+                             session.width, session.height)
+        return bool(self._explicit_all or not full)
 
     @Property(bool, notify=sessionChanged)
     def standalone(self):
@@ -204,6 +223,11 @@ class Bridge(QObject):
     def windows(self):
         return self._windows
 
+    @Property(int, notify=countdownChanged)
+    def countdown(self):
+        """Seconds left before the freeze, so the delay is visible."""
+        return self._countdown
+
     @Property(bool, notify=pinChanged)
     def pinned(self):
         return bool(self._pin_path)
@@ -249,11 +273,23 @@ class Bridge(QObject):
 
     @Slot()
     def refreshWindows(self) -> None:
-        """The open windows, for the picker; hyprctl is cheap but not free."""
+        """What is on screen now: the active workspace's windows, focused first.
+
+        Cropping by geometry can only capture pixels that are on the current
+        workspace, so listing windows from other workspaces offers a choice
+        whose result is somebody else's screen.
+        """
         try:
-            self._windows = [row.as_row() for row in windows()]
+            rows = windows()
         except CaptureError:
-            self._windows = []
+            rows = []
+        workspace = active_workspace()
+        if workspace:
+            on_screen = [row for row in rows if row.workspace == workspace]
+            if on_screen:
+                rows = on_screen
+        rows.sort(key=lambda row: row.focus_order)
+        self._windows = [row.as_row() for row in rows]
         self.windowsChanged.emit()
 
     def _bump(self) -> None:
@@ -309,9 +345,33 @@ class Bridge(QObject):
         self._last_error = ""
         self.sessionChanged.emit()
         delay = int(self.settings.get("delay") or 0)
+        self._pending_mode = mode
         # Let QML hide the launcher window before grabbing; a capture that
-        # includes our own window is the classic screenshot bug.
-        QTimer.singleShot(delay * 1000 + 120, lambda: self._grab(mode))
+        # includes our own window is the classic screenshot bug. The countdown
+        # window exists so a delayed capture is not invisible: the frozen frame
+        # looks exactly like the live desktop, and starting the drag too early
+        # loses the press.
+        if delay > 0:
+            self._countdown = delay
+            self.countdownChanged.emit()
+            QTimer.singleShot(1000, self._countdown_step)
+        else:
+            QTimer.singleShot(120, self._grab_now)
+
+    def _countdown_step(self) -> None:
+        if self._countdown <= 0:
+            return
+        self._countdown -= 1
+        self.countdownChanged.emit()
+        if self._countdown > 0:
+            QTimer.singleShot(1000, self._countdown_step)
+        else:
+            # The countdown window hides on 0; grim runs a beat later so it
+            # cannot photograph the number.
+            QTimer.singleShot(120, self._grab_now)
+
+    def _grab_now(self) -> None:
+        self._grab(self._pending_mode or str(self.settings.get("mode") or "region"))
 
     def _grab(self, mode: str) -> None:
         pending = self.pending_region or None
@@ -372,6 +432,7 @@ class Bridge(QObject):
         if logical_w:
             ratio = image.width() / float(logical_w)
 
+        self._explicit_all = False
         self._session = Session(
             image=image,
             mode=mode,
@@ -382,6 +443,8 @@ class Bridge(QObject):
         )
         self.pending_window = ""
         self._reset_history()
+        self._countdown = 0
+        self.countdownChanged.emit()
         self._busy = False
         self._overlay = True
         self.sessionChanged.emit()
@@ -416,6 +479,7 @@ class Bridge(QObject):
             self.finished.emit()
             return
         self._standalone = True
+        self._explicit_all = False
         self._session = Session(
             image=image,
             mode="edit",
@@ -448,8 +512,19 @@ class Bridge(QObject):
             return
         image = self._session.image
         before = self._snapshot()
+        self._explicit_all = True
         self._session.selection = QRectF(0, 0, image.width(), image.height())
         self._remember(before)
+        self.selectionChanged.emit()
+
+    @Slot()
+    def resetSelection(self) -> None:
+        """Back to "nothing chosen": the full frame, tools hidden."""
+        if not self._session:
+            return
+        session = self._session
+        session.selection = QRectF(0, 0, session.width, session.height)
+        self._explicit_all = False
         self.selectionChanged.emit()
 
     @Slot(float, float, float, float)
@@ -461,8 +536,10 @@ class Bridge(QObject):
         """
         if not self._session:
             return
+        self._explicit_all = False
         shapes, _current = self._snapshot()
         self._remember((shapes, (x, y, w, h)))
+        self.selectionChanged.emit()
 
     @Slot(int, int)
     def nudgeSelection(self, dx: int, dy: int) -> None:
@@ -611,6 +688,12 @@ class Bridge(QObject):
             pass
         self._pin_path = ""
         self._pin_size = (0, 0)
+        self._countdown = 0
+        self._pending_mode = "region"
+        # True when the whole frame was chosen on purpose (right-click, Ctrl+A),
+        # which is different from "nothing chosen yet" — the overlay starts on
+        # the full frame, and the tools stay hidden until a region exists.
+        self._explicit_all = False
         self.pinChanged.emit()
 
     @Slot()
@@ -692,6 +775,9 @@ class Bridge(QObject):
 
     @Slot()
     def saveAndCopy(self) -> None:
+        if not self.selectionReady:
+            self.toast.emit("Select a region first", "Drag a box, or right-click for the whole screen")
+            return
         path = self.save()
         copied = self.copy()
         if self._session and self._session.mode:
