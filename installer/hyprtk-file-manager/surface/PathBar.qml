@@ -90,15 +90,24 @@ Item {
     function stopEdit() {
         root.editing = false;
         field.focus = false;
-        if (root.parent)
-            root.parent.forceActiveFocus();
+        // Focus is handed back by the owning Pane (which re-focuses itself only
+        // when it is the active pane), so clicking the other pane does not get
+        // pulled back here.
     }
 
     function revealTail() {
         flick.contentX = Math.max(0, flick.contentWidth - flick.width);
     }
 
-    onPathChanged: Qt.callLater(root.revealTail)
+    // The editable box is seeded from the path only when editing starts, so a
+    // navigation that happens while it is open (sidebar, toolbar, another pane,
+    // a drop) would leave the old text on screen. Leaving edit mode on a path
+    // change keeps the bar showing the folder that is actually open.
+    onPathChanged: {
+        if (root.editing)
+            root.stopEdit();
+        Qt.callLater(root.revealTail);
+    }
     onWidthChanged: Qt.callLater(root.revealTail)
 
     Rectangle {
@@ -188,6 +197,14 @@ Item {
             selectionColor: Theme.accent
             selectedTextColor: Theme.textOnAccent
             font.pixelSize: Theme.fontSize
+            // Clicking the pane, the other pane or the sidebar moves active
+            // focus away from this input; close the edit box with it instead of
+            // leaving stale text pinned open. `focus` (not `activeFocus`) is
+            // used so merely deactivating the window does not cancel an edit.
+            onFocusChanged: {
+                if (!focus && root.editing)
+                    root.stopEdit();
+            }
             onAccepted: {
                 root.navigate(text);
                 root.stopEdit();

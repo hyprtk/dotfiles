@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.9.2] - 2026-11-20
+
+### Fixed
+
+- **hyprtk-fm 1.8.12 — the address bar keeps up with the pane.** Clicking the
+  path bar reveals the editable location, but navigating from the pane, the
+  sidebar, the toolbar or the other pane left the old path pinned in the box,
+  so stale text could be copied. The box now closes on a path change or when it
+  loses focus, so the bar always shows the folder that is actually open
+  (`Ctrl+L` re-seeds it from that folder).
+- **hyprtk-bar-qt 0.43.17** vendors the new snapshot byte-identically, along
+  with the file manager's branding docs that the previous docs-only publish
+  left out of the vendor.
+- Gate: T1 1348 resolvable / 26 AUR / 88 allow-listed / 0 unexpected, T2 9/9,
+  audit 1462 rows / 0 Unexpected / 0 TODO.
+
+
 ## [v1.9.1] - 2026-11-18
 
 ### Documentation

@@ -2,7 +2,7 @@
 
 <img src="assets/branding/banner.png" alt="hyprtk — the desktop and the suite" width="100%" />
 
-[![suite](https://img.shields.io/badge/suite-v1.9.1-02DEDE?style=flat-square&labelColor=05060B)](CHANGELOG)
+[![suite](https://img.shields.io/badge/suite-v1.9.2-02DEDE?style=flat-square&labelColor=05060B)](CHANGELOG)
 [![distros](https://img.shields.io/badge/distributions-18-FD4FB6?style=flat-square&labelColor=05060B)](README.md#portability)
 [![license](https://img.shields.io/badge/license-GPL--2.0-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 [![palette](https://img.shields.io/badge/palette-02DEDE%20%C2%B7%20FD4FB6-8A93A6?style=flat-square&labelColor=05060B)](#branding)

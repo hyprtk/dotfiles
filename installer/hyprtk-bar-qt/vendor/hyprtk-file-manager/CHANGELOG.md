@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.12 — 2026-11-20
+
+### Fixed
+
+- **The address bar follows the pane again.** Clicking the path bar reveals the
+  editable location, but navigating from the pane, the sidebar, the toolbar or
+  the other pane left the old path pinned in the box — stale text that could be
+  copied by mistake. The box now closes when the path changes or when it loses
+  focus, so the bar always shows the folder that is actually open (`Ctrl+L`
+  re-seeds it from that folder).
+
 ## 1.8.11 — 2026-11-18
 
 - **"Open Terminal Here" opens the suite terminal.** `launch.terminal_argv()`

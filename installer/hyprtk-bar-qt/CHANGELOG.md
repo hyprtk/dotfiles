@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.17 — 2026-11-20
+
+- **Vendor hyprtk-file-manager 1.8.12** (byte-identical snapshot). The address
+  bar no longer keeps stale text pinned in its editable box: navigating from
+  the pane, sidebar, toolbar or the other pane now closes the box, and losing
+  focus closes it too, so the bar always shows the folder that is open.
+
 ## 0.43.16 — 2026-11-18
 
 - **Exact package names on openSUSE and Alpine.** Three entries in this

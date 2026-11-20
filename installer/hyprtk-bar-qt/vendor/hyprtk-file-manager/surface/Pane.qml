@@ -1042,7 +1042,7 @@ Item {
                 }
                 onEditingChanged: {
                     root.editingPath = pathBar.editing;
-                    if (!pathBar.editing)
+                    if (!pathBar.editing && root.active)
                         root.forceActiveFocus();
                 }
             }
