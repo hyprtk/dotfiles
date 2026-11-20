@@ -47,6 +47,19 @@ def nudge(x: float, y: float, w: float, h: float, dx: float, dy: float,
     return (nx, ny, w, h)
 
 
+def is_full_frame(x: float, y: float, w: float, h: float,
+                  image_w: int, image_h: int, *, tolerance: float = 0.5) -> bool:
+    """True when the selection is still "everything".
+
+    A region capture starts with the whole frame selected, and moving that
+    selection is a no-op (it is already at every edge). Treating it as "nothing
+    chosen yet" is what lets the first drag draw a box instead of grab the
+    frame and save all of it.
+    """
+    return (abs(x) <= tolerance and abs(y) <= tolerance
+            and abs(w - image_w) <= tolerance and abs(h - image_h) <= tolerance)
+
+
 def resize(handle: str, x: float, y: float, w: float, h: float,
            px: float, py: float, image_w: int, image_h: int) -> tuple[float, float, float, float]:
     """Move one edge or corner of a selection to ``px``/``py``.

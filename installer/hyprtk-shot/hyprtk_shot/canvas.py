@@ -16,7 +16,7 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPen
 from PySide6.QtQuick import QQuickPaintedItem
 
 from .annotate import Shape, paint_shape, render
-from .selection import HANDLES, resize, square
+from .selection import HANDLES, is_full_frame, resize, square
 
 HANDLE = 7
 
@@ -267,13 +267,17 @@ class CaptureCanvas(QQuickPaintedItem):
 
         if tool == "cursor":
             self._before_selection = (rect.x(), rect.y(), rect.width(), rect.height())
-            grip = self._handle_at(x, y)
+            # The default selection covers the whole frame. Moving it would be
+            # a no-op, so a press there means "draw the box I want instead".
+            full = is_full_frame(rect.x(), rect.y(), rect.width(), rect.height(),
+                                 session.width, session.height)
+            grip = None if full else self._handle_at(x, y)
             if grip is not None:
                 self._resizing = grip
                 self._resize_rect = QRectF(rect)
                 self.setCursor(self._grip_cursor(grip))
                 return
-            inside = rect.contains(QPointF(x, y))
+            inside = rect.contains(QPointF(x, y)) and not full
             if inside:
                 self._moving = True
                 self._move_origin = (x, y)
@@ -410,10 +414,15 @@ class CaptureCanvas(QQuickPaintedItem):
         if str(self._bridge.tool) != "cursor":
             self.setCursor(Qt.CrossCursor)
             return
+        rect = session.selection
+        if is_full_frame(rect.x(), rect.y(), rect.width(), rect.height(),
+                         session.width, session.height):
+            self.setCursor(Qt.CrossCursor)
+            return
         grip = self._handle_at(x, y)
         if grip is not None:
             self.setCursor(self._grip_cursor(grip))
-        elif session.selection.contains(QPointF(x, y)):
+        elif rect.contains(QPointF(x, y)):
             self.setCursor(Qt.OpenHandCursor)
         else:
             self.setCursor(Qt.CrossCursor)

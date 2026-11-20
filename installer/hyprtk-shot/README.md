@@ -72,8 +72,10 @@ and builds a private venv, the same fallback the editor and terminal use.
 | Pipe it | `hyprtk-shot output --stdout > shot.png` |
 | Status / scripting | `hyprtk-shot window --no-edit --json` |
 
-In the overlay: drag to select, hold `Shift` for a square, drag inside the
-selection to move it, nudge it with the arrow keys (`Shift` = 10 px), `Esc`
+In the overlay: drag to draw the box (the first press on the untouched frame
+starts a new selection rather than grabbing it), hold `Shift` for a square,
+drag inside an existing selection to move it, nudge it with the arrow keys
+(`Shift` = 10 px), right-click or `Ctrl+A` to select everything, `Esc`
 cancels, `Enter` saves and copies, `Ctrl+S` saves, `Ctrl+C` copies,
 `Ctrl+Z`/`Ctrl+Shift+Z` undo/redo (selection changes and `Clear` are undoable
 too), `Ctrl+A` selects the whole frame. `Pin` leaves the crop on screen.

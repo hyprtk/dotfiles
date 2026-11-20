@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.12.3] - 2026-11-20
+
+### Fixed
+
+- **hyprtk-shot 0.2.2: a region drag draws the box again.** The overlay opens
+  with the whole frame selected; pressing inside that selection started a
+  *move*, and a full-frame selection cannot move (it is already at every edge,
+  and moving is clamped to the image), so the selection never changed and the
+  saved file was the whole monitor. A press on the untouched full-frame
+  selection now starts a new box, moving still applies once a box exists, the
+  eight grips still resize, and right-click / `Ctrl+A` still select everything.
+  The hover cursor over the untouched frame is the crosshair, not the grab hand.
+
 ## [v1.12.2] - 2026-11-20
 
 ### Added

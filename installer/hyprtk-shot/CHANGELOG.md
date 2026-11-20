@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.2 — 2026-11-20
+
+### Fixed
+
+- **A region capture saved the whole monitor.** The overlay opens with the
+  whole frame selected. Pressing inside that selection started a *move*, and a
+  full-frame selection cannot move — it is already at every edge — so the
+  selection never changed and the saved file was the entire screenshot.
+  A press on the untouched full-frame selection now starts a new box; moving
+  still works once a box exists, and the eight grips still resize.
+  Right-click or `Ctrl+A` still selects everything.
+
+### Tests
+
+- `selection.is_full_frame()` (unit) and a bootcheck drag that drives the real
+  canvas handlers: press 100,100 → 300,250 must leave a 200x150 selection, and
+  it fails on the old behaviour.
+
 ## 0.2.1 — 2026-11-20
 
 Pin to screen, the last item from the v0.2 list.
