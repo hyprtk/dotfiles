@@ -33,6 +33,10 @@ ApplicationWindow {
     // The window picker is a plain overlay with our own colours: a Controls
     // Popup/Menu would take its palette from the GTK platform theme.
     property bool picking: false
+    // The settings sheet holds what the daily panel does not: where files go,
+    // whether to notify, how long the recent list is, and which encoder wins.
+    property bool settingsOpen: false
+    property string dirText: cfg.dir
 
     visible: true
     width: 560
@@ -42,6 +46,12 @@ ApplicationWindow {
     color: th.background
     title: rec ? "Recording" : "Screen Recorder"
     flags: Qt.Window
+
+    function commitDir() {
+        var value = dirText.trim();
+        Bridge.setConfig("dir", value);
+        win.dirText = Bridge.config.dir;
+    }
 
     // Closing the window ends the window process. The encoder keeps running on
     // its own session and the state file still answers `stop`, which is exactly
@@ -88,6 +98,16 @@ ApplicationWindow {
                 text: Bridge.backendLabel
                 color: th.muted
                 font.pixelSize: 11
+            }
+            Text {
+                text: "Settings"
+                color: th.accent2
+                font.pixelSize: 11
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: { win.dirText = Bridge.config.dir; win.settingsOpen = true; }
+                }
             }
         }
 
@@ -174,6 +194,12 @@ ApplicationWindow {
                         visible: rec
                         label: paused ? "Resume" : "Pause"
                         onClicked: Bridge.togglePause()
+                    }
+                    ActionButton {
+                        th: win.th
+                        visible: rec && Bridge.replayActive
+                        label: "Save replay"
+                        onClicked: Bridge.saveReplay()
                     }
                     ActionButton {
                         th: win.th
@@ -475,7 +501,7 @@ ApplicationWindow {
     Window {
         id: hud
         visible: Bridge.recording
-        width: 240
+        width: Bridge.replayActive ? 300 : 240
         height: 56
         color: "transparent"
         title: "hyprtk-rec HUD"
@@ -535,6 +561,27 @@ ApplicationWindow {
                 }
 
                 Rectangle {
+                    visible: Bridge.replayActive
+                    Layout.preferredWidth: 46
+                    Layout.preferredHeight: 28
+                    radius: 7
+                    color: th.panelAlt
+                    border.width: 1
+                    border.color: th.border
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Save"
+                        color: th.foreground
+                        font.pixelSize: 10
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Bridge.saveReplay()
+                    }
+                }
+
+                Rectangle {
                     Layout.preferredWidth: 44
                     Layout.preferredHeight: 28
                     radius: 7
@@ -575,6 +622,220 @@ ApplicationWindow {
         }
     }
 
+
+
+    // -- settings sheet ---------------------------------------------------
+    Rectangle {
+        anchors.fill: parent
+        visible: win.settingsOpen
+        color: Qt.rgba(0, 0, 0, 0.5)
+        z: 22
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: win.settingsOpen = false
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 40, 500)
+            height: sheet.implicitHeight + 28
+            radius: 12
+            color: th.panel
+            border.width: 1
+            border.color: th.border
+
+            ColumnLayout {
+                id: sheet
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.margins: 14
+                spacing: 12
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        text: "Settings"
+                        color: th.foreground
+                        font.pixelSize: 15
+                        font.bold: true
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: "v" + Bridge.version
+                        color: th.mutedText
+                        font.pixelSize: 11
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+                    Text { text: "Save recordings to"; color: th.muted; font.pixelSize: 12 }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 32
+                            radius: 7
+                            color: th.panelAlt
+                            border.width: 1
+                            border.color: dirField.activeFocus ? th.accent2 : th.border
+                            TextInput {
+                                id: dirField
+                                anchors.fill: parent
+                                anchors.leftMargin: 9
+                                anchors.rightMargin: 9
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: th.foreground
+                                font.pixelSize: 12
+                                selectionColor: th.accent
+                                selectedTextColor: th.textOnAccent
+                                clip: true
+                                text: win.dirText
+                                onTextChanged: if (win.dirText !== text) win.dirText = text
+                                onAccepted: win.commitDir()
+                                onActiveFocusChanged: if (!activeFocus) win.commitDir()
+                            }
+                        }
+                        Text {
+                            text: "Open"
+                            color: th.accent2
+                            font.pixelSize: 11
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Bridge.openPath(Bridge.config.dir)
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Text { text: "Notifications"; color: th.muted; font.pixelSize: 12; Layout.preferredWidth: 110 }
+                    Segmented {
+                        th: win.th
+                        current: cfg.notify === true
+                        options: [{ v: true, l: "On" }, { v: false, l: "Off" }]
+                        onPicked: function (value) { Bridge.setConfig("notify", value); }
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Text { text: "Recent list"; color: th.muted; font.pixelSize: 12; Layout.preferredWidth: 110 }
+                    Segmented {
+                        th: win.th
+                        current: Number(cfg.recent)
+                        options: [{ v: 6, l: "6" }, { v: 12, l: "12" }, { v: 24, l: "24" }]
+                        onPicked: function (value) { Bridge.setConfig("recent", value); }
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Text { text: "Encoder backend"; color: th.muted; font.pixelSize: 12; Layout.preferredWidth: 110 }
+                    Segmented {
+                        th: win.th
+                        current: cfg.backend
+                        options: [{ v: "auto", l: "Auto" }, { v: "wf-recorder", l: "wf-recorder" },
+                                  { v: "wl-screenrec", l: "wl-screenrec" }]
+                        onPicked: function (value) { Bridge.setConfig("backend", value); }
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Text { text: "Replay buffer"; color: th.muted; font.pixelSize: 12; Layout.preferredWidth: 110 }
+                    Segmented {
+                        th: win.th
+                        current: Number(cfg.replay)
+                        opacity: Bridge.replayAvailable ? 1 : 0.5
+                        options: [{ v: 0, l: "Off" }, { v: 15, l: "15s" },
+                                  { v: 30, l: "30s" }, { v: 60, l: "60s" }]
+                        onPicked: function (value) {
+                            if (value && !Bridge.replayAvailable) return;
+                            Bridge.setConfig("replay", value);
+                        }
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: !Bridge.replayAvailable || Number(cfg.replay) > 0
+                    text: Bridge.replayAvailable
+                          ? "Save flushes the last " + cfg.replay + " s and keeps recording"
+                          : "needs wl-screenrec, which is not installed"
+                    color: Bridge.replayAvailable ? th.mutedText : th.danger
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Installed: " + (Bridge.backends.length ? Bridge.backends.join(", ") : "none") +
+                          " · wl-screenrec is used automatically when present"
+                    color: th.mutedText
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Rectangle {
+                        width: 96
+                        height: 30
+                        radius: 8
+                        color: th.panelAlt
+                        border.width: 1
+                        border.color: th.border
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Reset"
+                            color: th.danger
+                            font.pixelSize: 11
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: { Bridge.resetDefaults(); win.dirText = Bridge.config.dir; }
+                        }
+                    }
+                    Item { Layout.fillWidth: true }
+                    Rectangle {
+                        width: 76
+                        height: 30
+                        radius: 8
+                        color: th.accent
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Done"
+                            color: th.textOnAccent
+                            font.pixelSize: 11
+                            font.bold: true
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: win.settingsOpen = false
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // -- window picker ----------------------------------------------------
     Rectangle {

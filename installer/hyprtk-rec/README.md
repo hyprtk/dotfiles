@@ -33,6 +33,10 @@ region or a window, choose audio, press record. The app drives `wf-recorder` (or
 
 ![The recording HUD](docs/rec-hud.png)
 - **Recent list** — every finished file with duration and size, open or delete.
+- **A settings sheet** — the "Settings" link in the header opens the things the
+  daily panel does not hold: the save folder (editable, `~` expanded),
+  notifications on/off, the length of the recent list, the encoder backend
+  (auto / wf-recorder / wl-screenrec) and a reset to defaults.
 - **GIF output** — `container: gif` writes an animated GIF through
   `wf-recorder` (frame rate capped at 30, no audio track). Everything else stays
   a video container.
@@ -40,6 +44,10 @@ region or a window, choose audio, press record. The app drives `wf-recorder` (or
   detached helper so the buttons still work after the window has closed. A
   daemon that does not support actions gets the same notification without
   buttons rather than nothing.
+- **Replay buffer (where `wl-screenrec` installs)** — `--replay 30` keeps the last
+  30 seconds in memory; `Save replay` (window button, HUD, or
+  `hyprtk-rec save-replay`) flushes them and keeps recording. Without
+  `wl-screenrec` the setting is disabled and says why.
 - **Trim without re-encoding** — `hyprtk-rec trim clip.mp4 --from 12 --to 30`
   (or `--last`) cuts with ffmpeg's stream copy; `--reencode` is the
   frame-accurate, slower option, `--replace` overwrites the original.
@@ -65,6 +73,7 @@ notifications.
 | Action | How |
 |---|---|
 | Window | `hyprtk-rec` |
+| Settings | "Settings" in the window header |
 | HUD | appears by itself while recording |
 | Start / stop | `hyprtk-rec --toggle` (keyboard: `Super+Shift+Print`) |
 | Start with a region | `hyprtk-rec start --source region --countdown 3` |
@@ -72,6 +81,8 @@ notifications.
 | Stop and get the path | `hyprtk-rec stop --json` |
 | Is it recording? | `hyprtk-rec status --json` |
 | What can be recorded? | `hyprtk-rec sources` |
+| Start a 30 s replay buffer | `hyprtk-rec start --replay 30` |
+| Save the buffered seconds | `hyprtk-rec save-replay` |
 | Trim the last recording | `hyprtk-rec trim --last --from 5 --to 20` |
 | Trim a file (keep it) | `hyprtk-rec trim clip.mp4 --from 0:10 --to 0:45` |
 
@@ -79,7 +90,7 @@ Options: `--source output|region|window`, `--output NAME`, `--region "x,y WxH"`,
 `--fps 5-240`, `--codec h264|hevc|vp9|av1`, `--quality low|medium|high`,
 `--audio none|system|mic|mix`, `--device NAME`, `--countdown N`, `--dir PATH`,
 `--backend auto|wf-recorder|wl-screenrec`, `--container mp4|mkv|webm|gif`,
-`--window ADDRESS`, `--vaapi`, `--no-cursor`, `--json`.
+`--window ADDRESS`, `--vaapi`, `--replay N`, `--no-cursor`, `--json`.
 
 In the window: `Ctrl+R` toggles recording, `Space` pauses, `Esc` quits.
 
@@ -99,6 +110,7 @@ In the window: `Ctrl+R` toggles recording, `Space` pauses, `Esc` quits.
 | `backend` | `auto`, `wf-recorder`, `wl-screenrec` |
 | `container` | `mp4`, `mkv`, `webm`, `gif` |
 | `cursor` | include the pointer |
+| `replay` | seconds of replay history, `wl-screenrec` only (0 = off) |
 | `vaapi` | GPU encoding (probed; off by default) |
 | `notify` | start/stop notifications |
 

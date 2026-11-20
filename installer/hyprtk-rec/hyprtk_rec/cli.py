@@ -31,6 +31,7 @@ commands:
   status        print the current state
   sources       list monitors and windows Hyprland reports
   trim PATH     cut a finished file without re-encoding
+  save-replay   flush the buffered seconds (wl-screenrec --history)
 
 options:
   -o, --source S      output | region | window            (default from settings)
@@ -46,6 +47,7 @@ options:
       --dir PATH      output directory
       --backend B     auto | wf-recorder | wl-screenrec
       --container C   mp4 | mkv | webm | gif
+      --replay N      keep the last N seconds in memory (needs wl-screenrec)
       --vaapi         encode with the GPU (h264/hevc; probed, not assumed)
       --no-cursor     hide the pointer
 
@@ -60,7 +62,8 @@ options:
   -V, --version       version
 """
 
-COMMANDS = ("start", "stop", "toggle", "pause", "resume", "status", "sources", "trim")
+COMMANDS = ("start", "stop", "toggle", "pause", "resume", "status", "sources",
+            "trim", "save-replay")
 
 
 @dataclass
@@ -84,6 +87,7 @@ class Options:
     start: str = ""
     end: str = ""
     vaapi: bool = False
+    replay: int | None = None
     replace: bool = False
     reencode: bool = False
     last: bool = False
@@ -162,6 +166,11 @@ def parse(argv: list[str]) -> Options:
             opts.end = arg.split("=", 1)[1]
         elif arg == "--vaapi":
             opts.vaapi = True
+        elif arg == "--replay":
+            index += 1
+            if index >= len(argv):
+                raise ValueError("--replay needs a number of seconds")
+            opts.replay = int(argv[index])
         elif arg == "--replace":
             opts.replace = True
         elif arg == "--reencode":
@@ -211,6 +220,8 @@ def _apply(opts: Options, settings: Settings) -> Settings:
         settings.set("window", opts.window)
     if opts.vaapi:
         settings.set("vaapi", True)
+    if opts.replay is not None:
+        settings.set("replay", opts.replay)
     if opts.cursor is not None:
         settings.set("cursor", opts.cursor)
     return settings
@@ -286,6 +297,7 @@ def cmd_start(opts: Options, settings: Settings) -> int:
             backend=str(settings.get("backend") or "auto"),
             container=container,
             vaapi=bool(settings.get("vaapi")),
+            replay=int(settings.get("replay") or 0),
         )
     except RecorderError as exc:
         print(f"{BIN_NAME}: {exc}", file=sys.stderr)
@@ -379,6 +391,17 @@ def main(argv: list[str] | None = None) -> int:
 
     if opts.command == "trim":
         return cmd_trim(opts)
+
+    if opts.command == "save-replay":
+        path = recorder.save_replay()
+        if not path:
+            print(f"{BIN_NAME}: no replay buffer is recording", file=sys.stderr)
+            return 3
+        if opts.json:
+            print(json.dumps({"path": path, "flushed": True}, sort_keys=True))
+        else:
+            print(f"flushed the replay buffer → {path}")
+        return 0
 
     if opts.command == "sources":
         for row in outputs():

@@ -162,6 +162,14 @@ class Bridge(QObject):
     def canRecord(self):
         return bool(backends_available())
 
+    @Property(bool, constant=True)
+    def replayAvailable(self):
+        return "wl-screenrec" in backends_available()
+
+    @Property(bool, notify=stateChanged)
+    def replayActive(self):
+        return bool(self._status.get("replay"))
+
     def _vaapi_state(self) -> tuple[bool, str, str]:
         if self._vaapi is None:
             try:
@@ -325,6 +333,7 @@ class Bridge(QObject):
                 backend=str(self.settings.get("backend") or "auto"),
                 container=container,
                 vaapi=bool(self.settings.get("vaapi")) and self.vaapiAvailable,
+                replay=int(self.settings.get("replay") or 0) if self.replayAvailable else 0,
             )
         except RecorderError as exc:
             self.toast.emit("Cannot start", str(exc))
@@ -384,6 +393,18 @@ class Bridge(QObject):
             self._notify("Recording saved", str(path))
 
     @Slot()
+    def saveReplay(self) -> None:
+        """Flush the buffered seconds now (wl-screenrec keeps recording)."""
+        path = self.recorder.save_replay()
+        if not path:
+            self.toast.emit("No replay buffer", "Freeze it only while replay is recording")
+            return
+        seconds = int(self._status.get("replay") or 0)
+        self._notify("Replay saved", f"the last {seconds} s → {Path(path).name}")
+        self.toast.emit("Replay saved", f"the last {seconds} s")
+        self._set_status()
+
+    @Slot()
     def toggle(self) -> None:
         if self._status.get("recording") or self._countdown:
             self.stop()
@@ -421,8 +442,16 @@ class Bridge(QObject):
 
     @Slot()
     def resetConfig(self) -> None:
-        self.settings = Settings()
+        """Re-read the file (another process may have written it)."""
+        self.settings.load()
         self.settingsChanged.emit()
+        self.stateChanged.emit()
+
+    @Slot()
+    def resetDefaults(self) -> None:
+        self.settings.reset()
+        self.settingsChanged.emit()
+        self.stateChanged.emit()
 
     @Slot()
     def refreshPalette(self) -> None:

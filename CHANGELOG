@@ -1,5 +1,29 @@
 # Changelog
 
+## [v1.12.2] - 2026-11-20
+
+### Added
+
+- **hyprtk-rec 0.2.2: a settings sheet** — "Settings" in the window header opens
+  a panel with the save folder (editable, `~` expanded and validated, with an
+  Open action), notifications on/off, the length of the recent list, the encoder
+  backend (auto / wf-recorder / wl-screenrec, showing what is installed), the
+  replay buffer, a **Reset** back to the shipped defaults, and Done.
+- **Replay buffer (gated on `wl-screenrec`)** — `--replay N` keeps the last N
+  seconds in memory (`wl-screenrec --history`); *Save replay* (window button,
+  HUD, or `hyprtk-rec save-replay`) flushes them with `SIGUSR1` and keeps
+  recording. Where `wl-screenrec` is missing the setting is dimmed with the
+  reason and asking for it anyway is a start error, never a silent normal
+  recording.
+
+### Notes
+
+- The replay path is **argv/signal-tested only**: `wl-screenrec` is AUR-only and
+  its `ffmpeg-next` crate does not compile against Arch's ffmpeg 8
+  (non-exhaustive matches on new `AVSampleFormat` / `AVPixelFormat` /
+  `AVCodecID` variants), so it could not be installed and live-verified here.
+  The feature activates as soon as a working `wl-screenrec` is present.
+
 ## [v1.12.1] - 2026-11-20
 
 ### Added

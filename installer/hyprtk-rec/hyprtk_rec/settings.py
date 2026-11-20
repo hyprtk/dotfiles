@@ -25,6 +25,7 @@ DEFAULTS = {
     "dir": "",
     "backend": "auto",
     "container": "mp4",
+    "replay": 0,             # seconds of replay history (wl-screenrec only)
     "vaapi": False,          # opt-in: GPU encoding when the device really works
     "notify": True,
     "recent": 12,
@@ -81,6 +82,11 @@ class Settings:
         self._values[key] = cleaned
         return True
 
+    def reset(self) -> None:
+        """Back to the shipped defaults, and write that to disk."""
+        self._values = dict(DEFAULTS)
+        self.save()
+
     def as_dict(self) -> dict:
         values = dict(self._values)
         if not values.get("dir"):
@@ -108,6 +114,8 @@ class Settings:
                 return value if value in AUDIO else default
             if key == "fps":
                 return max(5, min(240, int(value)))
+            if key == "replay":
+                return max(0, min(600, int(value)))
             if key == "countdown":
                 return max(0, min(30, int(value)))
             if key == "recent":

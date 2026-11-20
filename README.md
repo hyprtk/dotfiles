@@ -84,7 +84,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Wallpaper** | Matuwall film-strip picker + gum list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
 | **Screenshots** | hyprtk-shot — frozen overlay, region (overlay or slurp across outputs)/any window/monitor/all-outputs, in-app annotation (arrow, shapes, text, blur, pixelate, steps), crop with eight grips, pin to screen, save or copy; pywal theme |
-| **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window picker, system/mic/**both** audio, countdown, pause, GIF, trim, crash recovery, a pinned HUD, optional VAAPI; pywal theme |
+| **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window picker, system/mic/**both** audio, countdown, pause, GIF, trim, crash recovery, a pinned HUD, settings sheet, optional VAAPI, replay buffer (with wl-screenrec); pywal theme |
 | **Clipboard** | cliphist |
 | **Screen lock** | hyprlock (swaylock-effects fallback) |
 | **Logout** | hyprlogout |
@@ -184,6 +184,9 @@ the crop.
 - A pinned HUD (top-left, `move 16 56` in the window rules) shows the timer with
   Pause and Stop for as long as a recording runs — including one started by the
   keybinding — and never takes focus.
+- **Settings** (header link) holds the save folder, notifications, recent-list
+  length, encoder backend and the replay buffer, plus Reset. The replay buffer
+  needs `wl-screenrec`; it is dimmed with the reason when that is missing.
 - Trim without re-encoding: `hyprtk-rec trim --last --from 5 --to 20` (also
   `--replace`, `--reencode`). A crash does not lose the file: the next window
   adopts the partial recording.

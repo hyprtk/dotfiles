@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.2.2 — 2026-11-20
+
+The settings sheet, for the things the daily panel has no room for.
+
+### Added
+
+- **Settings sheet** — "Settings" in the window header opens a panel with the
+  save folder (editable, `~` expanded and validated, with an Open action),
+  notifications on/off, the length of the recent list (6/12/24), the encoder
+  backend (auto / wf-recorder / wl-screenrec) with what is actually installed,
+  and **Reset** back to the shipped defaults.
+
+- **Replay buffer** — `--replay N` (or Replay buffer in Settings) keeps the last
+  N seconds in memory with `wl-screenrec --history`; "Save replay" flushes them
+  with `SIGUSR1` and keeps recording. Available only where `wl-screenrec` is
+  installed — the setting is dimmed with the reason otherwise, and asking for a
+  replay without it is a start error rather than a silent normal recording.
+  **Not live-tested on this machine**: the AUR `wl-screenrec` (0.3.2 and -git)
+  does not build against Arch's ffmpeg 8 — its `ffmpeg-next` crate has
+  non-exhaustive matches for new `AVSampleFormat`/`AVPixelFormat`/`AVCodecID`
+  variants — so the code path is argv- and signal-tested only.
+
+### Changed
+
+- `Bridge.resetConfig()` now re-reads the file (what its name says); the new
+  `resetDefaults()` is the one that writes the defaults back. `Settings.reset()`
+  does the write.
 ## 0.2.1 — 2026-11-20
 
 The last two audio and encoder items from the v0.2 list.

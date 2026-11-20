@@ -36,6 +36,9 @@ GIF_MAX_FPS = 30
 VAAPI_CODEC = {"h264": "h264_vaapi", "hevc": "hevc_vaapi"}
 VAAPI_QP = {"low": 28, "medium": 24, "high": 20}
 
+#: Seconds of replay history, and the signal that flushes it to the file.
+REPLAY_MAX = 600
+
 #: Subjective quality -> x264-style CRF. wl-screenrec wants a bitrate instead;
 #: the mapping there is rough on purpose (bits/s for a 1080p60-ish picture).
 CRF = {
@@ -163,6 +166,7 @@ class Recording:
     source: str
     path: str
     container: str = "mp4"
+    replay: int = 0
     vaapi: bool = False
     vaapi_device: str | None = None
     geometry: str | None = None
@@ -226,6 +230,10 @@ def build_argv(rec: Recording) -> list[str]:
 
     if rec.backend == "wl-screenrec":
         argv = ["wl-screenrec", "-f", rec.path, "-m", str(int(rec.fps))]
+        if rec.replay:
+            # Nothing is written until SIGUSR1: the encoder keeps the last N
+            # seconds in memory and flushes them to the file on demand.
+            argv += ["--history", str(int(rec.replay))]
         argv += ["--codec", WS_CODEC.get(rec.codec, "avc")]
         argv += ["-b", BITRATE.get(rec.quality, "6 MB")]
         if rec.geometry:
@@ -335,12 +343,22 @@ class Recorder:
               output: str | None = None, codec: str = "h264", quality: str = "medium",
               fps: int = 60, audio: str = "none", audio_device: str | None = None,
               cursor: bool = True, backend: str = "auto",
-              container: str = "mp4", vaapi: bool = False) -> Recording:
+              container: str = "mp4", vaapi: bool = False,
+              replay: int = 0) -> Recording:
         current = self.active()
         if current is not None:
             raise RecorderError(f"already recording to {current.path}")
 
         container = container if container in CONTAINERS else "mp4"
+        replay = max(0, min(REPLAY_MAX, int(replay or 0)))
+        if replay:
+            # The buffer is a wl-screenrec feature; wf-recorder has nothing
+            # equivalent, and a GIF cannot hold one.
+            if container == "gif":
+                raise RecorderError("a GIF cannot be a replay buffer")
+            if not self._which("wl-screenrec"):
+                raise RecorderError("the replay buffer needs wl-screenrec")
+            backend = "wl-screenrec"
         backend = pick_backend(backend, self._which, container=container)
         vaapi_device = None
         if vaapi and backend == "wf-recorder":
@@ -366,6 +384,7 @@ class Recorder:
             source=source,
             path=str(path),
             container=container,
+            replay=replay,
             vaapi=bool(vaapi),
             vaapi_device=vaapi_device,
             geometry=geometry,
@@ -477,6 +496,17 @@ class Recorder:
             pass
         return None
 
+    def save_replay(self) -> str | None:
+        """Flush the buffered seconds to the file and keep recording."""
+        rec = self.active()
+        if rec is None or not rec.replay:
+            return None
+        try:
+            self._signal(rec.pid, signal.SIGUSR1)
+        except (ProcessLookupError, OSError):
+            return None
+        return rec.path
+
     def pause(self) -> bool:
         rec = self.active()
         if rec is None or rec.paused_at is not None:
@@ -520,6 +550,7 @@ class Recorder:
             "source": rec.source,
             "audio": rec.audio,
             "container": rec.container,
+            "replay": rec.replay,
             "vaapi": rec.vaapi,
             "codec": rec.codec,
             "fps": rec.fps,
