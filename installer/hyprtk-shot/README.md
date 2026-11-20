@@ -25,6 +25,9 @@ prompt.
   square, nudge the box with the arrow keys (1 px, `Shift` = 10 px), drag any of
   the eight grips to resize after annotating, and undo a selection change the
   same way you undo a stroke.
+- **Pin to screen** — keep the finished crop on screen as a floating,
+  always-on-top window (`Pin` in the overlay, or `--pin` when opening a file);
+  double-click or the close button dismisses it.
 - **Save / copy / both** — `wl-copy` for the clipboard, PNG/JPEG/WebP on disk,
   named `hyprtk-YYYY-MM-DD_HH-MM-SS-<mode>.png` under `~/Pictures/Screenshots`.
 - **Scriptable** — `hyprtk-shot region --copy`, `--stdout` for pipes, `--json`
@@ -63,6 +66,7 @@ and builds a private venv, the same fallback the editor and terminal use.
 | Reopen the last capture | `hyprtk-shot last` |
 | Open any image in the editor | `hyprtk-shot open shot.png` |
 | Region across every output | `hyprtk-shot region --slurp` |
+| Pin a capture on screen | `hyprtk-shot open shot.png --pin` |
 | Straight to clipboard | `hyprtk-shot region --copy --no-edit` |
 | Straight to a file | `hyprtk-shot full --save ~/Pictures/shot.png --no-edit` |
 | Pipe it | `hyprtk-shot output --stdout > shot.png` |
@@ -72,7 +76,7 @@ In the overlay: drag to select, hold `Shift` for a square, drag inside the
 selection to move it, nudge it with the arrow keys (`Shift` = 10 px), `Esc`
 cancels, `Enter` saves and copies, `Ctrl+S` saves, `Ctrl+C` copies,
 `Ctrl+Z`/`Ctrl+Shift+Z` undo/redo (selection changes and `Clear` are undoable
-too), `Ctrl+A` selects the whole frame.
+too), `Ctrl+A` selects the whole frame. `Pin` leaves the crop on screen.
 Tool shortcuts are `V` select, `P` pen, `L` line, `A` arrow, `R` rectangle,
 `E` ellipse, `H` highlighter, `M` step marker, `T` text, `B` blur, `X` pixelate.
 
@@ -111,7 +115,7 @@ hyprtk_shot/
   palette.py   pywal/bar theme → tokens
   bridge.py    QML facade: session, snapshot undo/redo, save/copy, recents
   cli.py       modes and flags, no-editor path
-  app.py       QGuiApplication + QQmlApplicationEngine
+  app.py       QGuiApplication + QQmlApplicationEngine (overlay, launcher, pin)
   qml/         Main.qml (launcher, overlay window, toolbar)
 ```
 

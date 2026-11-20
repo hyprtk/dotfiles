@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -67,6 +68,7 @@ class Bridge(QObject):
     shapesChanged = Signal()
     recentChanged = Signal()
     windowsChanged = Signal()
+    pinChanged = Signal()
     toast = Signal(str, str)
     finished = Signal()
 
@@ -90,6 +92,8 @@ class Bridge(QObject):
         self._recent = self._load_recent()
         self.pending_region = ""
         self.pending_window = ""
+        self._pin_path = ""
+        self._pin_size = (0, 0)
         self._windows: list[dict] = []
         self._rev = 0
 
@@ -199,6 +203,22 @@ class Bridge(QObject):
     @Property("QVariantList", notify=windowsChanged)
     def windows(self):
         return self._windows
+
+    @Property(bool, notify=pinChanged)
+    def pinned(self):
+        return bool(self._pin_path)
+
+    @Property(str, notify=pinChanged)
+    def pinPath(self):
+        return self._pin_path
+
+    @Property(int, notify=pinChanged)
+    def pinWidth(self):
+        return self._pin_size[0]
+
+    @Property(int, notify=pinChanged)
+    def pinHeight(self):
+        return self._pin_size[1]
 
     @Property(str, notify=sessionChanged)
     def toastText(self):
@@ -527,6 +547,71 @@ class Bridge(QObject):
         before, after = self._redo.pop()
         self._restore(after)
         self._undo.append((before, after))
+
+    @Slot()
+    def pin(self) -> None:
+        """Keep the finished capture on screen as a floating window.
+
+        The overlay must close (it is fullscreen and would cover the pin), so
+        the image is written once to the runtime dir and the pinned window is a
+        plain `Image` over that file — no second paint path to keep in sync.
+        """
+        if not self._session:
+            return
+        image = self._final_image()
+        # The runtime dir, not /tmp: it is per-user and gone at logout, so a
+        # killed process cannot leave a pin behind for long.
+        base = Path(os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()) / "hyprtk-shot"
+        try:
+            base.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            self._set_error(str(exc))
+            return
+        # Sweep pins left by processes that no longer exist (a killed app).
+        for stale in base.glob("pin-*.png"):
+            try:
+                pid = int(stale.stem.split("-", 1)[1])
+            except (IndexError, ValueError):
+                continue
+            if pid == os.getpid():
+                continue
+            try:
+                os.kill(pid, 0)
+            except (ProcessLookupError, ValueError):
+                try:
+                    stale.unlink()
+                except OSError:
+                    pass
+            except PermissionError:
+                pass
+        target = base / f"pin-{os.getpid()}.png"
+        try:
+            if not image.save(str(target), "PNG"):
+                self._set_error("could not write the pinned image")
+                return
+        except OSError as exc:
+            self._set_error(str(exc))
+            return
+        self._clear_pin()
+        self._pin_path = str(target)
+        self._pin_size = (image.width(), image.height())
+        self.pinChanged.emit()
+        self.close()
+
+    @Slot()
+    def unpin(self) -> None:
+        self._clear_pin()
+
+    def _clear_pin(self) -> None:
+        if not self._pin_path:
+            return
+        try:
+            Path(self._pin_path).unlink()
+        except OSError:
+            pass
+        self._pin_path = ""
+        self._pin_size = (0, 0)
+        self.pinChanged.emit()
 
     @Slot()
     def clearShapes(self) -> None:

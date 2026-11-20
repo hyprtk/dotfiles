@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from PySide6.QtCore import QTimer
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterType
 
@@ -19,14 +20,17 @@ def qml_dir() -> Path:
 
 
 def create(argv: list[str] | None = None, *, mode: str = "", open_path: str = "",
-           region: str = "", window: str = "", overrides: dict | None = None):
+           region: str = "", window: str = "", pin: bool = False,
+           overrides: dict | None = None):
     """Build the app, engine and bridge; returns them for tests and screenshots."""
     argv = list(argv if argv is not None else sys.argv)
     app = QGuiApplication(argv)
     app.setApplicationName(APP_ID)
-    app.setApplicationDisplayName("Screenshot")
     app.setApplicationVersion(__version__)
     app.setOrganizationName("hyprtk")
+    # A pinned capture is a window on its own; closing the overlay must not be
+    # mistaken for "the last window closed" and quit the process.
+    app.setQuitOnLastWindowClosed(False)
     # Sets the Wayland app id, so the overlay's fullscreen request and window
     # rules see a real desktop id instead of python3.
     app.setDesktopFileName(APP_ID)
@@ -55,13 +59,22 @@ def create(argv: list[str] | None = None, *, mode: str = "", open_path: str = ""
     if not engine.rootObjects():
         raise RuntimeError("QML failed to load")
 
-    bridge.finished.connect(lambda: app.quit() if bridge.standalone else None)
+    if pin and open_path:
+        # From the loop, not from QML: a QML callLater into a slot here ended the
+        # event loop before the pin window could map.
+        QTimer.singleShot(300, bridge.pin)
+
+    # A pinned capture outlives the overlay: quitting on "finished" would take
+    # the floating image down with it.
+    bridge.finished.connect(
+        lambda: app.quit() if bridge.standalone and not bridge.pinned else None)
     return app, engine, bridge
 
 
 def run(argv: list[str] | None = None, *, mode: str = "", open_path: str = "",
-        region: str = "", window: str = "", overrides: dict | None = None) -> int:
+        region: str = "", window: str = "", pin: bool = False,
+        overrides: dict | None = None) -> int:
     app, _engine, _bridge = create(argv, mode=mode, open_path=open_path,
-                                   region=region, window=window,
+                                   region=region, window=window, pin=pin,
                                    overrides=overrides)
     return app.exec()

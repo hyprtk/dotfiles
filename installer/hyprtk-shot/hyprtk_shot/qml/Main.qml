@@ -40,7 +40,7 @@ ApplicationWindow {
     // Closing the launcher must end the process. `visible` is a binding, so it
     // is re-evaluated on the next state change and would otherwise bring a
     // hidden window back (or leave a windowless process in the task list).
-    onClosing: Qt.quit()
+    onClosing: Bridge.quit()
 
     // A keybinding launch goes straight to the overlay and never shows this
     // window; a bare launch is the launcher.
@@ -49,6 +49,7 @@ ApplicationWindow {
             Bridge.openFile(initialPath);
         else if (initialMode !== "")
             Bridge.startStandalone(initialMode);
+
     }
 
     Connections {
@@ -58,6 +59,12 @@ ApplicationWindow {
                 overlay.showFullScreen();
             else
                 overlay.close();
+        }
+        // Unpinning a keybinding-started capture ends the session; the window
+        // is the one that decides, so the bridge has no quit side effect.
+        function onPinChanged() {
+            if (!Bridge.pinned && Bridge.standalone && !Bridge.overlayVisible)
+                Bridge.quit();
         }
     }
 
@@ -437,6 +444,73 @@ ApplicationWindow {
         }
     }
 
+
+    // -- pinned capture ---------------------------------------------------
+    // A plain image window over the file Bridge.pin() wrote: the overlay is
+    // fullscreen and has to close, so there is nothing left to paint from.
+    Window {
+        id: pinnedWindow
+        visible: Bridge.pinned
+        width: Bridge.pinWidth
+        height: Bridge.pinHeight
+        color: "transparent"
+        title: "hyprtk-shot pinned"
+        // A pinned capture must survive the overlay closing: without this it is
+        // a transient child of the application window and dies with it.
+        transientParent: null
+        flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+
+        Image {
+            id: pinImage
+            anchors.fill: parent
+            source: Bridge.pinPath ? "file://" + Bridge.pinPath : ""
+            fillMode: Image.PreserveAspectFit
+            cache: false
+        }
+
+        // A compositor close (Super+Q on the pin) is a dismissal too.
+        onClosing: Bridge.unpin()
+
+        // Dismissal is deliberate: a close button that appears on hover, plus
+        // double-click. (A QML Shortcut and a Keys handler here both fired on
+        // their own when the window mapped.)
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+            hoverEnabled: true
+            onDoubleClicked: Bridge.unpin()
+            onClicked: pinHover.visible = true
+            onExited: pinHover.visible = false
+        }
+
+        Rectangle {
+            id: pinHover
+            visible: false
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 6
+            width: 22
+            height: 22
+            radius: 11
+            color: th.panel
+            border.width: 1
+            border.color: th.border
+            Text {
+                anchors.centerIn: parent
+                text: "×"
+                color: th.foreground
+                font.pixelSize: 14
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Bridge.unpin()
+            }
+        }
+
+
+    }
+
     // -- overlay ----------------------------------------------------------
     Window {
         id: overlay
@@ -448,8 +522,10 @@ ApplicationWindow {
         // Close from the compositor (a keybind, a window rule) must quit a
         // keybinding-started instance instead of leaving a hidden process.
         onClosing: function (event) {
-            if (Bridge.standalone)
-                Bridge.quit();
+            // The bridge's `finished` signal is the one place that decides
+            // whether the process ends (a pinned capture keeps it alive), so a
+            // compositor close just cancels the session.
+            Bridge.cancel();
         }
 
         CaptureCanvas {
@@ -579,6 +655,7 @@ ApplicationWindow {
                     Item { Layout.fillWidth: true }
                     BarButton { th: win.th; label: "Save"; onClicked: { Bridge.save(); Bridge.close(); } }
                     BarButton { th: win.th; label: "Copy"; onClicked: { Bridge.copy(); Bridge.close(); } }
+                    BarButton { th: win.th; label: "Pin"; onClicked: Bridge.pin() }
                     BarButton {
                         th: win.th
                         label: "Save + Copy"

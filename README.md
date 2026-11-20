@@ -83,7 +83,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | **Theming** | pywal16 (bundled), live, from your wallpaper |
 | **Wallpaper** | Matuwall film-strip picker + gum list + random (awww daemon, installed automatically) |
 | **Hyprland settings** | hyprmod — native GTK4/libadwaita settings app, tweak options and see them live (Arch/AUR) |
-| **Screenshots** | hyprtk-shot — frozen overlay, region (overlay or slurp across outputs)/any window/monitor/all-outputs, in-app annotation (arrow, shapes, text, blur, pixelate, steps), crop with eight grips, save or copy; pywal theme |
+| **Screenshots** | hyprtk-shot — frozen overlay, region (overlay or slurp across outputs)/any window/monitor/all-outputs, in-app annotation (arrow, shapes, text, blur, pixelate, steps), crop with eight grips, pin to screen, save or copy; pywal theme |
 | **Screen recording** | hyprtk-rec — wf-recorder (wl-screenrec when installed), monitor/region/window picker, system/mic/**both** audio, countdown, pause, GIF, trim, crash recovery, a pinned HUD, optional VAAPI; pywal theme |
 | **Clipboard** | cliphist |
 | **Screen lock** | hyprlock (swaylock-effects fallback) |
@@ -165,6 +165,8 @@ the crop.
 - The launcher (`hyprtk-shot`) offers region/window/monitor/all-outputs, a
   window picker (any open window, not just the focused one), a cross-output
   region through `slurp`, a delay, copy/annotate/cursor toggles and recents.
+- `Pin` leaves the crop on screen as a pinned floating window (`--pin` when
+  opening a file); double-click or the hover close button dismisses it.
 
 `Super + Shift + Print` toggles **hyprtk-rec**; `Super + Alt + Print` stops it.
 
@@ -210,7 +212,7 @@ so a single install lays down all of them:
 | [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor — default for `text/plain` and `text/markdown`, `Super+E` | vendored, installed after the bar |
 | [**hyprtk-term**](https://github.com/hyprtk/hyprtk-term) | the Qt Quick terminal on libvterm — tabs, scrollback search, pywal ANSI palette, `$TERMINAL` | vendored in the bar installer, installed after the editor |
 | [**hyprtk-calc**](https://github.com/hyprtk/hyprtk-calc) | the exact-decimal calculator — live expression line, three keypads, history, four-base readout, and a shell mode in the same binary | vendored, installed after the terminal |
-| [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool — grim capture, frozen overlay, annotations, crop grips, window picker, save/copy, CLI | vendored, installed after the calculator |
+| [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool — grim capture, frozen overlay, annotations, crop grips, window picker, pin to screen, save/copy, CLI | vendored, installed after the calculator |
 | [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder — wf-recorder/wl-screenrec, system+mic mix, window picker, GIF, trim, recovery, HUD, CLI | vendored, installed after hyprtk-shot |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |

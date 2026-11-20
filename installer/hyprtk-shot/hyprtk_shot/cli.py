@@ -35,6 +35,7 @@ options:
       --no-copy   do not copy
       --region G  capture "x,y WxH" instead of selecting on the overlay
       --window A  capture this Hyprland window address (see hyprctl clients)
+      --pin       with open/last: keep the image on screen after opening it
       --slurp     pick the region with slurp (works across every output)
       --overlay   pick the region on the frozen overlay (default)
   -s, --save P    save to P (a directory, or a file name)
@@ -58,6 +59,7 @@ class Options:
     region: str = ""
     picker: str = ""
     window: str = ""
+    pin: bool = False
     save: str = ""
     no_save: bool = False
     stdout: bool = False
@@ -110,6 +112,8 @@ def parse(argv: list[str]) -> Options:
             opts.window = argv[index]
         elif arg.startswith("--window="):
             opts.window = arg.split("=", 1)[1]
+        elif arg == "--pin":
+            opts.pin = True
         elif arg == "--slurp":
             opts.picker = "slurp"
         elif arg == "--overlay":
@@ -289,13 +293,13 @@ def main(argv: list[str] | None = None) -> int:
             if not target.is_file():
                 print(f"{BIN_NAME}: no such file: {target}", file=sys.stderr)
                 return 1
-            return run([sys.argv[0]], open_path=str(target))
+            return run([sys.argv[0]], open_path=str(target), pin=opts.pin)
 
         rows = History().recent_paths(1)
         if not rows:
             print(f"{BIN_NAME}: no captures in the history", file=sys.stderr)
             return 1
-        return run([sys.argv[0]], open_path=str(rows[0]["path"]))
+        return run([sys.argv[0]], open_path=str(rows[0]["path"]), pin=opts.pin)
 
     want_edit = opts.edit if opts.edit is not None else bool(settings.get("annotate"))
     if opts.no_save:

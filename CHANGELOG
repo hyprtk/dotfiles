@@ -1,5 +1,28 @@
 # Changelog
 
+## [v1.12.1] - 2026-11-20
+
+### Added
+
+- **hyprtk-shot 0.2.1: pin to screen** — the overlay's `Pin` button (or
+  `hyprtk-shot open PATH --pin`) keeps the finished crop on screen as a
+  frameless, always-on-top window sized to the image and pinned across
+  workspaces. Dismiss with the close button that appears on hover, a
+  double-click, or a compositor close; the image lives in
+  `$XDG_RUNTIME_DIR/hyprtk-shot/` and pins left by dead processes are swept on
+  the next pin. Drag it with the compositor (Super + drag) — Wayland gives an
+  app no way to move its own window.
+- The `^(hyprtk-shot pinned)$` window rule (float + pin) shipped with v1.12.0 and
+  starts matching as soon as this version is installed.
+
+### Fixed
+
+- **Screenshot window titles carried a `" — Screenshot"` suffix** (Qt appends
+  the application display name when the title differs from it), which would have
+  broken the window rules that match `^(Screenshot)$` and
+  `^(hyprtk-shot pinned)$`. The display name is gone; titles are exactly what
+  the QML sets.
+
 ## [v1.12.0] - 2026-11-20
 
 ### Added
