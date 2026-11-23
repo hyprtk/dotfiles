@@ -75,7 +75,7 @@ Singleton {
     // ── power actions (same strings as the GTK bar) ────────────────────
     property var menuPower: ({
         "lock": "pidof hyprlock swaylock || ~/.config/hypr/scripts/lock.sh 2>/dev/null || hyprlock || swaylock",
-        "logout": "hyprctl dispatch exit",
+        "logout": "hyprctl dispatch 'hl.dsp.exit()'",
         "reboot": "systemctl reboot",
         "shutdown": "systemctl poweroff",
         "suspend": "systemctl suspend",

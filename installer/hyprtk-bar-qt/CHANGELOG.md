@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.43.18 — 2026-11-23
+
+- **"Log out" in the start menu did nothing.** The power entry ran
+  `hyprctl dispatch exit`, which this Hyprland (0.57.2, Lua config) rejects —
+  dispatch takes Lua only ("expected a dispatcher") — so the item closed the
+  menu and ended nothing. It now uses `hyprctl dispatch 'hl.dsp.exit()'`, the
+  same call the Ctrl+Q power menu and `mainMod + X` already use. Existing configs
+  are repaired on the next bar start: `paths.repair_legacy_power()` rewrites only
+  values that are *exactly* the dead string, so a custom command is never
+  overwritten.
+
+
 ## 0.43.17 — 2026-11-20
 
 - **Vendor hyprtk-file-manager 1.8.12** (byte-identical snapshot). The address

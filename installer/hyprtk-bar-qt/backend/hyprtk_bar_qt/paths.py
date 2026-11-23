@@ -70,6 +70,40 @@ def _write(path: Path, data: dict) -> bool:
         return False
 
 
+# Hyprland 0.57 with a Lua config accepts only Lua dispatchers, so the legacy
+# `hyprctl dispatch exit` silently does nothing. Repair it in existing configs:
+# the shipped default is not re-applied to a config a user already has.
+LEGACY_POWER = {
+    "hyprctl dispatch exit": "hyprctl dispatch 'hl.dsp.exit()'",
+}
+
+
+def repair_legacy_power(path: Path = QT_CONFIG) -> bool:
+    """Rewrite known-dead power commands in an existing config.
+
+    Returns True when the file was changed. Only values that are *exactly* a
+    known-broken string are touched, so a custom command is never overwritten.
+    """
+    data = _read(path)
+    if not data:
+        return False
+    changed = False
+
+    def fix(block) -> None:
+        nonlocal changed
+        if not isinstance(block, dict):
+            return
+        value = block.get("logout")
+        if value in LEGACY_POWER:
+            block["logout"] = LEGACY_POWER[value]
+            changed = True
+
+    fix((data.get("menu") or {}).get("power"))
+    fix(data.get("menuPower"))
+    if not changed:
+        return False
+    return _write(path, data)
+
 def seed_from_gtk(path: Path = QT_CONFIG) -> bool:
     """Migrate the Qt config from the GTK config.
 
@@ -96,6 +130,7 @@ def seed_from_gtk(path: Path = QT_CONFIG) -> bool:
 
 def main() -> int:
     seed_from_gtk()
+    repair_legacy_power()
     return 0
 
 

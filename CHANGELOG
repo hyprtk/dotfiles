@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.12.7] - 2026-11-23
+
+### Fixed
+
+- **"Log out" in the bar's start menu did nothing.** The power entry ran
+  `hyprctl dispatch exit`, which this Hyprland (0.57.2, Lua config) rejects —
+  dispatch accepts Lua only ("expected a dispatcher") — so the menu closed and
+  the session stayed. It now uses `hyprctl dispatch 'hl.dsp.exit()'`, the same
+  call the Ctrl+Q power menu and `mainMod + X` already use. hyprtk-bar-qt
+  **0.43.18**.
+
+  Existing configs are repaired at the next bar start:
+  `paths.repair_legacy_power()` rewrites only `logout` values that are exactly
+  the dead string, so a custom power command is never overwritten.
+
 ## [v1.12.6] - 2026-11-23
 
 ### Fixed
