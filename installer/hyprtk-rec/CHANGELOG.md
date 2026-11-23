@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.4 — 2026-11-23
+
+A recording that dies must say so.
+
+### Fixed
+
+- **A dead encoder was reported as a recording.** If the encoder exits on its
+  first frame (a bad option, a missing libva driver), the state file looked
+  valid, the next read dropped it as stale, and what was left was a 0-byte file
+  with no explanation — from the window it looked like "it isn't saving". The
+  first half-second after spawn is now checked: an immediate exit raises with
+  the encoder's own last line (`the recorder exited immediately (status 1):
+  [VAAPI] Failed to initialise VAAPI connection: -1`), the state is not written
+  and the empty file is removed. The encoder's stderr is kept in `encoder.log`
+  next to the state file instead of going to /dev/null.
+
+- **`auto` chose a backend that cannot run on this machine.** `wl-screenrec`
+  always encodes through VAAPI and exits on failure; `auto` now probes the
+  device first and falls back to `wf-recorder` (software) when it cannot open,
+  so a session with a broken libva driver still records. An explicit
+  `--backend wl-screenrec` is still honoured exactly.
+
 ## 0.2.3 — 2026-11-23
 
 ### Fixed

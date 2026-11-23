@@ -20,6 +20,7 @@ import re
 import shutil
 import signal
 import subprocess
+import tempfile
 import time
 from dataclasses import asdict, dataclass, field
 
@@ -38,6 +39,10 @@ VAAPI_QP = {"low": 28, "medium": 24, "high": 20}
 
 #: Seconds of replay history, and the signal that flushes it to the file.
 REPLAY_MAX = 600
+
+#: An encoder that rejects its options dies in milliseconds; anything still
+#: running after this is treated as a real recording.
+START_GRACE = 0.6
 
 #: Subjective quality -> x264-style CRF. wl-screenrec wants a bitrate instead;
 #: the mapping there is rough on purpose (bits/s for a 1080p60-ish picture).
@@ -156,6 +161,15 @@ def pick_backend(preference: str = "auto", which=shutil.which, *,
         found = available(which)
         if not found:
             raise RecorderError("no recorder installed (wf-recorder or wl-screenrec)")
+        if found[0] == "wl-screenrec":
+            # wl-screenrec always encodes through VAAPI and exits rather than
+            # falling back, so "auto" must only pick it when the device opens.
+            # A machine whose session pins the wrong libva driver (or has no
+            # driver at all) then records with wf-recorder's software encoder
+            # instead of writing a 0-byte file.
+            ok, _device, _reason = vaapi_status()
+            if not ok and "wf-recorder" in found:
+                return "wf-recorder"
         return found[0]
     if preference not in ("wf-recorder", "wl-screenrec"):
         raise RecorderError(f"unknown backend: {preference}")
@@ -286,22 +300,75 @@ class Recorder:
     """Start/stop/pause the encoder, and keep the state file honest."""
 
     def __init__(self, path: str | None = None, *, spawn=None, which=shutil.which,
-                 clock=time.time, signal_fn=os.kill, alive_fn=pid_alive) -> None:
+                 clock=time.time, signal_fn=os.kill, alive_fn=pid_alive,
+                 grace: float = START_GRACE) -> None:
         self.path = path or state_path()
         self._spawn = spawn or self._default_spawn
         self._which = which
         self._clock = clock
         self._signal = signal_fn
         self._alive = alive_fn
+        self._grace = grace
         self._process = None
 
-    @staticmethod
-    def _default_spawn(argv: list[str]):
+    def _default_spawn(self, argv: list[str]):
+        log_path = self._encoder_log()
         try:
-            return subprocess.Popen(argv, stdout=subprocess.DEVNULL,
-                                    stderr=subprocess.DEVNULL, start_new_session=True)
+            os.makedirs(os.path.dirname(log_path) or ".", exist_ok=True)
+            log = open(log_path, "w", encoding="utf-8")
+        except OSError:
+            log = subprocess.DEVNULL
+        try:
+            return subprocess.Popen(argv, stdout=log, stderr=log,
+                                    start_new_session=True)
         except FileNotFoundError as exc:
             raise RecorderError(f"{argv[0]} is not installed") from exc
+
+    def _encoder_log(self) -> str:
+        """Where the encoder's stderr goes, so a dead start can be explained."""
+        base = os.path.dirname(os.path.abspath(self.path)) or tempfile.gettempdir()
+        return os.path.join(base, "encoder.log")
+
+    def _explain_exit(self, code: int) -> str:
+        head = f"the recorder exited immediately (status {code})"
+        detail = self._last_encoder_error()
+        return f"{head}: {detail}" if detail else head
+
+    def _last_encoder_error(self) -> str:
+        try:
+            with open(self._encoder_log(), encoding="utf-8", errors="replace") as handle:
+                lines = [line.strip() for line in handle if line.strip()]
+        except OSError:
+            return ""
+        if not lines:
+            return ""
+        # ffmpeg/ffmpeg-based encoders end with a generic line, so prefer the
+        # one that names the actual failure.
+        for line in lines:
+            if "vaapi" in line.lower() or "error" in line.lower():
+                return line
+        return lines[-1]
+
+    def _died_immediately(self, process) -> str:
+        """Empty string while the encoder is alive, else why it exited.
+
+        A recorder that rejects its options exits in milliseconds. Without this
+        check the state file looks valid, the next read drops it as stale, and
+        the user is left with a 0-byte file and a "recording" message.
+        """
+        poll = getattr(process, "poll", None)
+        if poll is None:
+            return ""
+        code = poll()  # an encoder that rejects its options has already exited
+        if code is not None:
+            return self._explain_exit(code)
+        deadline = time.monotonic() + self._grace
+        while time.monotonic() < deadline:
+            time.sleep(0.05)
+            code = poll()
+            if code is not None:
+                return self._explain_exit(code)
+        return ""
 
     # -- state io
     def read_state(self) -> dict:
@@ -418,8 +485,23 @@ class Recorder:
             raise
         rec.pid = int(getattr(process, "pid", 0) or 0)
         self._process = process
+        failure = self._died_immediately(process)
+        if failure:
+            self._process = None
+            if mix_modules:
+                audio_module.stop_mix(mix_modules)
+            self._remove_empty(rec.path)
+            raise RecorderError(failure)
         self._write_state(rec)
         return rec
+
+    @staticmethod
+    def _remove_empty(path: str) -> None:
+        try:
+            if os.path.getsize(path) == 0:
+                os.unlink(path)
+        except OSError:
+            pass
 
     def stop(self, *, timeout: float = 10.0) -> str | None:
         """Ask the encoder to finish, then report the file it wrote.

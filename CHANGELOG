@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.12.6] - 2026-11-23
+
+### Fixed
+
+- **hyprtk-rec 0.2.4: a recording that dies is reported instead of "saved".**
+  If the encoder exited on its first frame (bad option, no working libva), rec
+  wrote its state file, reported "recording", and the next read dropped the
+  state as stale — leaving a 0-byte file and no error, which read as "it isn't
+  saving". The first half-second after spawn is now checked: an immediate exit
+  raises with the encoder's own last line, writes no state and removes the empty
+  file. Encoder stderr is kept in `encoder.log` next to the state file instead
+  of going to `/dev/null`.
+
+- **hyprtk-rec's `auto` backend now probes the device it depends on.**
+  `wl-screenrec` has no software mode and exits when VAAPI cannot open, so a
+  session with a broken libva wrote nothing. `auto` now checks `vaapi_status()`
+  and falls back to `wf-recorder`'s software encoder; an explicit backend choice
+  is still honoured exactly.
+
 ## [v1.12.5] - 2026-11-23
 
 ### Fixed
