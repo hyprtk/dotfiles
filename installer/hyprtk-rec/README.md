@@ -68,6 +68,20 @@ is already a suite dependency; `wl-screenrec` is optional and faster. `slurp`
 for region selection, `pactl` for audio device discovery, libnotify for
 notifications.
 
+`wl-screenrec` is built from upstream's git head, not the AUR release: the 0.3.2
+tarball predates the ffmpeg-9 support commits, and the AUR `-git` lockfile pins
+`ffmpeg-next`/`ffmpeg-sys-next` 9.0.x, which do not compile against ffmpeg 9.1.
+`packaging/wl-screenrec-git/PKGBUILD` bumps both crates (semver-compatible with
+upstream's `9.0.0` requirement) and builds from main:
+
+```sh
+cd packaging/wl-screenrec-git && makepkg -f && sudo pacman -U wl-screenrec-git-*.pkg.tar.zst
+```
+
+VAAPI needs the Mesa driver (`libva-mesa-driver`) **and** a session that is not
+pinning `LIBVA_DRIVER_NAME` to another vendor — an NVIDIA env block applied on an
+AMD box makes `vainfo` fail with `-1` and both recorders lose the GPU path.
+
 ## Use
 
 | Action | How |

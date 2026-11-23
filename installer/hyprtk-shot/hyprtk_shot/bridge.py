@@ -94,6 +94,9 @@ class Bridge(QObject):
         self._recent = self._load_recent()
         self.pending_region = ""
         self.pending_window = ""
+        # `--save PATH` in the CLI; the overlay path used to ignore it and always
+        # write into the configured directory.
+        self.save_path_override = ""
         self._pin_path = ""
         self._pin_size = (0, 0)
         self._countdown = 0
@@ -716,9 +719,16 @@ class Bridge(QObject):
         return rendered.copy(rect)
 
     def _target_path(self, directory: str | None = None, fmt: str | None = None) -> Path:
-        base = Path(directory).expanduser() if directory else Path(str(self.settings.get("dir") or default_dir())).expanduser()
         ext = fmt or str(self.settings.get("format") or "png")
         name = make_name(self._session.mode if self._session else "capture", ext=ext)
+        if self.save_path_override:
+            target = Path(self.save_path_override).expanduser()
+            if target.is_dir() or self.save_path_override.endswith("/"):
+                target = target / name
+            elif not target.suffix:
+                target = target.with_suffix("." + ext)
+            return unique_path(target)
+        base = Path(directory).expanduser() if directory else Path(str(self.settings.get("dir") or default_dir())).expanduser()
         return unique_path(base / name)
 
     def _record(self, path: Path, image) -> None:

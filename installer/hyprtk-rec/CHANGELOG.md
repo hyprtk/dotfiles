@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.3 — 2026-11-23
+
+### Fixed
+
+- **The VAAPI probe could never succeed.** `vaapi_probe()` ran
+  `ffmpeg -init_hw_device vaapi=va:DEV -f null -` with no input, and ffmpeg
+  refuses an output with no stream ("Output file does not contain any stream"),
+  so every device was reported unavailable — including a working one. It now
+  feeds one frame of `nullsrc`, so the VAAPI toggle reports the truth.
+- **A replay buffer kept far more than it asked for.** The history trim can only
+  drop whole GOPs, so with the encoder's default GOP a 2 s buffer held ~5 s.
+  `--gop-size` is now pinned to one second of frames whenever replay is on.
+
+### Changed
+
+- **`packaging/` carries local build recipes.** `wl-screenrec-git` builds
+  upstream main with the 9.1.x ffmpeg crates (the AUR release tarball predates
+  ffmpeg 9 and its `-git` lockfile pins crates that do not compile against
+  ffmpeg 9.1); `ydotool-git` builds the upstream master whose uinput device
+  actually announces mouse buttons (Arch's 1.0.4 cannot click).
+
 ## 0.2.2 — 2026-11-20
 
 The settings sheet, for the things the daily panel has no room for.

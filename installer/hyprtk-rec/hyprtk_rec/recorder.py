@@ -94,7 +94,13 @@ def vaapi_probe(device: str, *, runner=None, program: str = "ffmpeg") -> tuple[b
     if not os.path.exists(device):
         return (False, "no render node")
     argv = [program, "-hide_banner", "-loglevel", "error",
-            "-init_hw_device", f"vaapi=va:{device}", "-f", "null", "-"]
+            "-init_hw_device", f"vaapi=va:{device}",
+            # ffmpeg refuses an output with no stream ("Output file does not
+            # contain any stream"), so a bare `-f null -` reported *every*
+            # device as broken. One frame of lavfi input is enough to force the
+            # device to open without touching the screen.
+            "-f", "lavfi", "-i", "nullsrc=s=32x32:d=1",
+            "-frames:v", "1", "-f", "null", "-"]
     try:
         result = runner(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE, timeout=15, check=False)
@@ -234,6 +240,10 @@ def build_argv(rec: Recording) -> list[str]:
             # Nothing is written until SIGUSR1: the encoder keeps the last N
             # seconds in memory and flushes them to the file on demand.
             argv += ["--history", str(int(rec.replay))]
+            # The trim can only drop whole GOPs (it keeps the span between the
+            # first two keyframes), so the encoder's default GOP makes "2 s"
+            # keep ~5 s. One keyframe per second keeps the window within ~1 s.
+            argv += ["--gop-size", str(max(1, int(rec.fps)))]
         argv += ["--codec", WS_CODEC.get(rec.codec, "avc")]
         argv += ["-b", BITRATE.get(rec.quality, "6 MB")]
         if rec.geometry:

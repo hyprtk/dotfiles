@@ -1,0 +1,64 @@
+# Local build recipe for wl-screenrec.
+#
+# Why this exists instead of the AUR packages:
+#  * `wl-screenrec` (0.3.2 tarball) depends on ffmpeg-next 7.x and its source
+#    predates upstream's "update to ffmpeg crate 9.0" / "fix compile on ffmpeg
+#    9" commits.
+#  * `wl-screenrec-git` tracks main, but upstream's Cargo.lock pinned
+#    ffmpeg-next 9.0.0 / ffmpeg-sys-next 9.0.0 on 2026-08, which do not build
+#    against Arch's ffmpeg 9.1:
+#      - ffmpeg-next 9.0.0: non-exhaustive matches on the new AVSampleFormat /
+#        AVPixelFormat / AVCodecID / AVFrameSideDataType / AVPacketSideDataType
+#        variants (fixed in ffmpeg-next 9.1.0)
+#      - ffmpeg-sys-next 9.0.0: its CUDA hwcontext stand-ins lack CUarray /
+#        CUDA_ARRAY3D_DESCRIPTOR, which FFmpeg 9.1's hwcontext_cuda.h now uses
+#        (fixed in ffmpeg-sys-next 9.1.1)
+#    Both crates are semver-compatible with upstream's "9.0.0" requirement, so a
+#    lockfile bump is the whole fix - no source patch.
+#
+# Build: makepkg -f && sudo pacman -U wl-screenrec-git-*.pkg.tar.zst
+# Deps (build): rust cargo clang git
+pkgname=wl-screenrec-git
+pkgver=r214.g32f7810
+pkgrel=1
+pkgdesc="High performance hardware accelerated wlroots screen recorder (local build, ffmpeg 9.1 lockfix)"
+arch=('x86_64')
+url="https://github.com/russelltg/wl-screenrec"
+license=('APACHE')
+provides=('wl-screenrec')
+conflicts=('wl-screenrec')
+depends=('ffmpeg' 'libva-driver' 'gcc-libs' 'glibc')
+makedepends=('cargo' 'git' 'clang')
+source=("$pkgname::git+https://github.com/russelltg/wl-screenrec")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$pkgname"
+  # Bump to the 9.1.x crates that understand ffmpeg 9.1. Both are semver
+  # compatible with the "9.0.0" requirement upstream declares.
+  cargo update -p ffmpeg-next --precise 9.1.0
+  cargo update -p ffmpeg-sys-next --precise 9.1.1
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$pkgname"
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release --all-features
+
+  ./target/release/wl-screenrec --generate-completions bash > wl-screenrec.bash
+  ./target/release/wl-screenrec --generate-completions zsh > wl-screenrec.zsh
+  ./target/release/wl-screenrec --generate-completions fish > wl-screenrec.fish
+}
+
+package() {
+  cd "$pkgname"
+  install -Dm755 "target/release/wl-screenrec" "$pkgdir/usr/bin/wl-screenrec"
+
+  install -Dm644 "README.md" "$pkgdir/usr/share/doc/${pkgname}/README.md"
+  install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
+
+  install -Dm644 "wl-screenrec.bash" "$pkgdir/usr/share/bash-completion/completions/wl-screenrec"
+  install -Dm644 "wl-screenrec.zsh" "$pkgdir/usr/share/zsh/site-functions/_wl-screenrec"
+  install -Dm644 "wl-screenrec.fish" "$pkgdir/usr/share/fish/vendor_completions.d/wl-screenrec.fish"
+}

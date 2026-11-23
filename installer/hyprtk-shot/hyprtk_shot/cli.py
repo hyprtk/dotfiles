@@ -319,7 +319,8 @@ def main(argv: list[str] | None = None) -> int:
     overrides = {"copy": bool(opts.copy) if opts.copy is not None else None,
                  "save": False if opts.no_save else None}
     return run([sys.argv[0]], mode=mode, region=opts.region,
-               window=opts.window, overrides=overrides)
+               window=opts.window, overrides=overrides,
+               save_path=opts.save or "")
 
 
 if __name__ == "__main__":  # pragma: no cover

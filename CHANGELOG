@@ -1,5 +1,35 @@
 # Changelog
 
+## [v1.12.5] - 2026-11-23
+
+### Fixed
+
+- **A recording could not use the GPU on an AMD box.** `hypr/nvidia.lua` was
+  required unconditionally, so the session exported
+  `LIBVA_DRIVER_NAME=nvidia`, `GBM_BACKEND=nvidia-drm` and the GLX/PRIME
+  variables on every machine. On Radeon that makes `vainfo` fail with
+  `vaInitialize failed -1`, so `wl-screenrec` and `wf-recorder -c *_vaapi` both
+  lost their hardware path (and hyprtk-rec reported VAAPI as unavailable). The
+  block now applies only when `/sys/module/nvidia/version` exists; use
+  `HYPRTK_NVIDIA=1` to force it or `=0` to suppress it.
+
+### Changed
+
+- **hyprtk-shot 0.2.4: `--save PATH` works for the region overlay.**
+  `hyprtk-shot region -s FILE` used to ignore the flag on the interactive path
+  and wrote into the configured screenshot folder under a generated name. It now
+  accepts a file name, a directory (a name is generated inside it) or a path
+  without a suffix, and never overwrites an existing file.
+- **hyprtk-rec 0.2.3: the replay buffer keeps the length it advertises, and
+  VAAPI is actually probed.** The history trim is keyframe-aligned, so with the
+  encoder's default GOP a "2 s" buffer held ~5 s — `--gop-size` is now one
+  second of frames whenever replay is on. `vaapi_probe()` ran ffmpeg with no
+  input, which always fails with "Output file does not contain any stream", so
+  the GPU toggle reported unavailable on a working device; it now feeds one
+  frame of `nullsrc`. The repo also carries `packaging/` recipes for
+  `wl-screenrec-git` (upstream main + the 9.1.x ffmpeg crates) and
+  `ydotool-git` (upstream master, which actually announces mouse buttons).
+
 ## [v1.12.4] - 2026-11-20
 
 ### Changed

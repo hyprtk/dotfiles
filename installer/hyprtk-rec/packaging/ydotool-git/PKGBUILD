@@ -1,0 +1,46 @@
+# Local build of ydotool from git.
+#
+# Arch's `extra/ydotool` is 1.0.4 (2023) and its uinput device does not advertise
+# mouse buttons: libinput reports the virtual device as `cap:kp` and `ydotool
+# click` emits nothing, so synthetic clicks never reach an application (pointer
+# motion and keyboard input do work). Upstream master (2025-12) emits the whole
+# BTN_* range and has a rewritten click command (-P/--press-release, hex button
+# codes: 0xC0 = left click, 0x41 = right down, 0xC1 = left down).
+#
+# Build: makepkg -f && sudo pacman -U ydotool-git-*.pkg.tar.zst
+pkgname=ydotool-git
+pkgver=r229.708e96f
+pkgrel=1
+pkgdesc="Generic command-line automation tool (git build, working mouse buttons)"
+arch=('x86_64')
+url="https://github.com/ReimuNotMoe/ydotool"
+license=('AGPL3')
+provides=('ydotool')
+conflicts=('ydotool')
+depends=('glibc' 'gcc-libs')
+makedepends=('cmake' 'git')
+source=("$pkgname::git+https://github.com/ReimuNotMoe/ydotool"
+        "ydotool.service")
+sha256sums=('SKIP'
+            'SKIP')
+
+pkgver() {
+  cd "$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cd "$pkgname"
+  cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build build -j"$(nproc)"
+}
+
+package() {
+  cd "$pkgname"
+  DESTDIR="$pkgdir" cmake --install build
+
+  # The daemon unit comes from the distro package; this build ships it too so
+  # removing `ydotool` does not take the unit away.
+  install -Dm644 "$srcdir/ydotool.service" \
+    "$pkgdir/usr/lib/systemd/user/ydotool.service"
+}

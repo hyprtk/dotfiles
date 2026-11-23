@@ -8,7 +8,7 @@ Qt Quick/QML chrome, Python geometry and rendering, and the same pywal palette
 as the rest of the suite.
 """
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 APP_NAME = "hyprtk-shot"
 APP_ID = "hyprtk-shot"

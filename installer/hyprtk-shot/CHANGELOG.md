@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.4 — 2026-11-23
+
+### Fixed
+
+- **`--save PATH` was ignored by the region overlay.** The flag only reached the
+  no-editor capture path, so `hyprtk-shot region -s /tmp/shot.png` still wrote
+  into the configured screenshot folder under a generated name. The overlay now
+  honours a file name, a directory (a name is generated inside it, `/` suffix
+  included) and a path without a suffix (the format is appended), and never
+  overwrites an existing file. Found by driving the overlay with injected input.
+
 ## 0.2.3 — 2026-11-20
 
 ### Fixed

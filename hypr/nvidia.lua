@@ -9,7 +9,7 @@
 --
 -- For people using systemd-boot you can do this adding nvidia_drm.modeset=1 to the end of /boot/loader/entries/arch.conf.
 --
--- For people using grub you can do this by adding nvidia_drm.modeset=1 to the end of GRUB_CMDLINE_LINUX_DEFAULT= in /etc/default/grub,
+-- For people using grub you can do this by adding nvidia_drm.modeset=1 to GRUB_CMDLINE_LINUX_DEFAULT= in /etc/default/grub,
 --
 -- then run # grub-mkconfig -o /boot/grub/grub.cfg For others check out kernel parameters and how to add nvidia_drm.modeset=1 to your specific bootloader.
 --
@@ -22,6 +22,28 @@
 -- I enable 1,2,3,4,5 for my 1650 ti
 --
 --------------------------------------------------------
+-- The block below is applied ONLY when the NVIDIA driver is loaded. Applied
+-- unconditionally on an AMD/Intel machine it exports LIBVA_DRIVER_NAME=nvidia
+-- (VAAPI then dies with "vaInitialize failed -1"), GBM_BACKEND=nvidia-drm and
+-- __GLX_VENDOR_LIBRARY_NAME=nvidia. Override with HYPRTK_NVIDIA=1 (force) or
+-- HYPRTK_NVIDIA=0 (never).
+--------------------------------------------------------
+
+local override = os.getenv("HYPRTK_NVIDIA")
+local has_nvidia = false
+
+do
+    local f = io.open("/sys/module/nvidia/version", "r")
+    if f then
+        has_nvidia = true
+        f:read("*l")
+        f:close()
+    end
+end
+
+if override == "0" or (not has_nvidia and override ~= "1") then
+    return
+end
 
 hl.env("__NV_PRIME_RENDER_OFFLOAD", "1")
 hl.env("__NV_PRIME_RENDER_OFFLOAD_PROVIDER", "NVIDIA-G0")
@@ -29,4 +51,3 @@ hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("__VK_LAYER_NV_optimus", "NVIDIA_only")
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("GBM_BACKEND", "nvidia-drm")
-
