@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
-from .. import form, util
+import json
+import re
+
+from .. import form, paths, util
 from . import base
+
+START = "-- >>> hyprtk-system-manager managed input (do not edit this block by hand)"
+END = "-- <<< hyprtk-system-manager managed input"
 
 OPTIONS = {
     "kb_layout": ("input:kb_layout", "str"),
@@ -60,7 +66,9 @@ def probe() -> dict:
     tap = _get("tap_to_click") == "true"
     dwt = _get("disable_while_typing") == "true"
 
-    return base.make_page("input", [
+    config = paths.input_file()
+    managed = bool(config and START in util.read_text(config))
+    page = base.make_page("input", [
         form.section("Keyboard", [
             form.text("kb_layout", "Layout", layout, help="XKB layout code, e.g. gb, us, de."),
             form.text("kb_variant", "Variant", variant),
@@ -87,11 +95,17 @@ def probe() -> dict:
             ),
         ]),
         form.section("Persistence", [
-            form.note("These changes last until Hyprland reloads its config. For a "
-                      "permanent setting use Hyprland settings (config-manager).", "warn"),
+            form.note("Changes apply to the running compositor immediately. Save them "
+                      "into input.lua to keep them after a reload or reboot; the block "
+                      "only contains the settings on this page.", "info"),
+            form.action("Save to input.lua", "input.persist", variant="primary"),
+            form.action("Remove saved settings", "input.clear_persistent"),
+            form.info("Config file", str(config) if config else "not found", mono=True),
             form.action("Open Hyprland settings", "input.open_hyprland"),
         ]),
-    ], status="live")
+    ], status="partial")
+    page["managed"] = managed
+    return page
 
 
 def apply(changes: dict) -> dict:
@@ -115,7 +129,80 @@ def apply(changes: dict) -> dict:
     return base.ok("Input settings applied for this session", details=details, live=True)
 
 
+def _values() -> dict:
+    return {
+        "kb_layout": _get("kb_layout") or "us",
+        "kb_variant": _get("kb_variant"),
+        "repeat_rate": int(float(_get("repeat_rate") or 25)),
+        "repeat_delay": int(float(_get("repeat_delay") or 600)),
+        "sensitivity": float(_get("sensitivity") or 0.0),
+        "accel_profile": _get("accel_profile"),
+        "natural_scroll": _get("natural_scroll") == "true",
+        "tap_to_click": _get("tap_to_click") == "true",
+        "disable_while_typing": _get("disable_while_typing") == "true",
+    }
+
+
+def _lua_block(values: dict) -> str:
+    lines = [
+        START,
+        "hl.config({",
+        "    input = {",
+        f"        kb_layout = {json.dumps(values['kb_layout'])},",
+        f"        kb_variant = {json.dumps(values['kb_variant'])},",
+        f"        repeat_rate = {values['repeat_rate']},",
+        f"        repeat_delay = {values['repeat_delay']},",
+        f"        sensitivity = {values['sensitivity']:g},",
+    ]
+    if values["accel_profile"]:
+        lines.append(f"        accel_profile = {json.dumps(values['accel_profile'])},")
+    lines += [
+        "        touchpad = {",
+        f"            natural_scroll = {'true' if values['natural_scroll'] else 'false'},",
+        f"            [\"tap-to-click\"] = {'true' if values['tap_to_click'] else 'false'},",
+        f"            disable_while_typing = {'true' if values['disable_while_typing'] else 'false'},",
+        "        },",
+        "    },",
+        "})",
+        END,
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _strip_block(text: str) -> str:
+    pattern = re.compile(re.escape(START) + r".*?" + re.escape(END) + r"\n?", re.DOTALL)
+    return pattern.sub("", text)
+
+
+def _write(block: str | None) -> dict:
+    target = paths.input_file()
+    if target is None:
+        return base.fail("No Hyprland Lua config found (input.lua)")
+    original = util.read_text(target)
+    stripped = _strip_block(original).rstrip()
+    updated = stripped + ("\n\n" + block if block else "\n")
+    if updated == original:
+        return base.ok("Nothing to change")
+    util.atomic_write(target, updated)
+    result = util.run(["hyprctl", "reload"], timeout=10)
+    if not result.ok:
+        util.atomic_write(target, original)
+        util.run(["hyprctl", "reload"], timeout=10)
+        return base.fail(f"Hyprland rejected the block: {result.text.strip()}")
+    return base.ok(
+        "Saved input settings to input.lua" if block else "Removed saved input settings",
+        details=[str(target)],
+    )
+
+
 def action(name: str, args: dict) -> dict:
+    if name == "input.persist":
+        return _write(_lua_block(_values()))
+    if name == "input.clear_persistent":
+        target = paths.input_file()
+        if target and START not in util.read_text(target):
+            return base.ok("No saved input settings to remove")
+        return _write(None)
     if name == "input.open_hyprland":
         argv = ["config-manager", "open", "--page", "input"]
         if util.which(argv[0]) is None:

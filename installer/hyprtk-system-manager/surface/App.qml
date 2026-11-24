@@ -51,6 +51,7 @@ Item {
     property var selectedGroups: []
     property var shellState: ({})
     property string selectedShell: ""
+    property var wifiState: ({})
     property var pickerState: ({})
     property string pickerPath: ""
     property string pickerParent: ""
@@ -325,6 +326,12 @@ Item {
     function requestAction(panelId, actionObj) {
         if (!actionObj || !actionObj.action)
             return;
+        if (actionObj.needs === "wifi") {
+            wifiState = { panelId: panelId, actionObj: actionObj };
+            wifiField.text = "";
+            wifiDialog.open = true;
+            return;
+        }
         if (actionObj.needs === "file") {
             pickerState = { panelId: panelId, actionObj: actionObj, mode: "file" };
             pickerSelected = "";
@@ -501,6 +508,7 @@ Item {
             if (confirmDialog.open) { confirmDialog.open = false; return; }
             if (groupsDialog.open) { groupsDialog.open = false; return; }
             if (shellDialog.open) { shellDialog.open = false; return; }
+            if (wifiDialog.open) { wifiDialog.open = false; return; }
             if (passwordDialog.open) { passwordDialog.open = false; return; }
             if (picker.open) { picker.open = false; return; }
             if (app.searchText.length > 0) { sidebar.clearSearch(); return; }
@@ -943,6 +951,43 @@ Item {
             choices: ((app.pageId === "users" ? app.pageModel.shells : []) || [])
                      .map(item => ({ value: item, label: item }))
             onSelected: (value) => app.selectedShell = value
+        }
+    }
+
+    Modal {
+        id: wifiDialog
+        title: "Connect to Wi-Fi"
+        message: ((app.wifiState.actionObj && app.wifiState.actionObj.args &&
+                   app.wifiState.actionObj.args.ssid) || "Network") +
+                 " · " + ((app.wifiState.actionObj && app.wifiState.actionObj.args &&
+                           app.wifiState.actionObj.args.security) || "secured")
+        confirmText: "Connect"
+        confirmEnabled: wifiField.text.length > 0
+        onAccepted: {
+            const state = app.wifiState;
+            wifiDialog.open = false;
+            app.runAction(state.panelId, state.actionObj,
+                          { password: wifiField.text });
+            wifiField.text = "";
+        }
+        onRejected: {
+            wifiDialog.open = false;
+            wifiField.text = "";
+        }
+
+        TTextField {
+            id: wifiField
+            preferredWidth: parent.width
+            placeholder: "Wi-Fi password"
+            echoMode: TextInput.Password
+        }
+        Text {
+            width: parent.width
+            text: "The password is handed to NetworkManager through a private 0600 file and is never stored by this app."
+            color: Theme.dim
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.size(0)
+            wrapMode: Text.WordWrap
         }
     }
 

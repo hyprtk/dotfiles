@@ -44,6 +44,11 @@ def monitors_file() -> Path | None:
     return (root / "monitors.lua") if root else None
 
 
+def input_file() -> Path | None:
+    root = hypr_dir()
+    return (root / "input.lua") if root else None
+
+
 def ensure_state() -> Path:
     CONFIG_ROOT.mkdir(parents=True, exist_ok=True)
     return CONFIG_ROOT

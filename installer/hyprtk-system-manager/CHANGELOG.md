@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0] — 2026-11-24
+
+### Added
+
+- **Network**: join Wi-Fi networks (secured ones prompt for the password),
+  disconnect or forget saved connections, and toggle/rescan the radio. The
+  password is handed to `nmcli connection up ... passwd-file` through a private
+  `0600` file, never in argv or the action result.
+- **Input**: save the exposed keyboard, pointer and touchpad settings into a
+  delimited block in `input.lua` (Hyprland reloads it), and remove the block
+  again. The file is restored if Hyprland rejects the reload.
+- **Displays**: per-monitor **variable refresh rate** (off / always /
+  fullscreen only), included in the live rule and the persistent block.
+- 85 tests: input persist/clear and reload rollback, VRR in the monitor spec.
+
 ## [0.2.0] — 2026-11-24
 
 ### Changed

@@ -74,6 +74,7 @@ def parse_monitors(payload) -> list[dict]:
             "y": int(mon.get("y") or 0),
             "scale": float(mon.get("scale") or 1.0),
             "transform": int(mon.get("transform") or 0),
+            "vrr": int(mon.get("vrr") or 0),
             "disabled": bool(mon.get("disabled")),
             "modes": modes,
             "currentMode": current,
@@ -140,7 +141,11 @@ def _spec(args: dict) -> str:
     y = int(args.get("y") or 0)
     scale = float(args.get("scale") or 1.0)
     transform = int(args.get("transform") or 0)
-    return f"{name},{mode},{x}x{y},{scale:g},{transform}"
+    vrr = int(args.get("vrr") or 0)
+    spec = f"{name},{mode},{x}x{y},{scale:g},{transform}"
+    if vrr:
+        spec += f",{vrr}"
+    return spec
 
 
 def _lua_block(monitors: list[dict]) -> str:
@@ -155,6 +160,9 @@ def _lua_block(monitors: list[dict]) -> str:
             fields.append("position = " + json.dumps(position))
             fields.append("scale = {:.2f}".format(float(mon.get("scale") or 1.0)).rstrip("0").rstrip("."))
             fields.append("transform = {}".format(int(mon.get("transform") or 0)))
+            vrr = int(mon.get("vrr") or 0)
+            if vrr:
+                fields.append("vrr = {}".format(vrr))
         lines.append("hl.monitor({ " + ", ".join(fields) + " })")
     lines.append(END)
     return "\n".join(lines) + "\n"

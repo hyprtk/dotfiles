@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.15.0] - 2026-11-24
+
+### Added
+
+- **hyprtk-system-manager 0.3.0**:
+  - Network: join Wi-Fi with a password dialog, disconnect/forget saved
+    connections, radio toggle and rescan; the PSK travels through a private
+    `0600` passwd-file, never argv.
+  - Input: save the exposed keyboard/pointer/touchpad settings into a managed
+    block in `input.lua`, with rollback if Hyprland rejects the reload.
+  - Displays: per-monitor variable refresh rate (off/always/fullscreen).
+- Installer/ISO entries unchanged from v1.13.0.
+
 ## [v1.14.0] - 2026-11-24
 
 ### Added

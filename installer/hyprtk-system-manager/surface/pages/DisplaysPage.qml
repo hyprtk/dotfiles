@@ -24,6 +24,12 @@ Flickable {
     property string configFile: model.configFile || ""
     property bool managed: !!model.managed
 
+    readonly property var vrrChoices: [
+        {value: "0", label: "Off"},
+        {value: "1", label: "Always on"},
+        {value: "2", label: "Fullscreen only"},
+    ]
+
     readonly property var scaleChoices: [
         {value: "0.75", label: "0.75×"}, {value: "1", label: "1.00×"},
         {value: "1.25", label: "1.25×"}, {value: "1.5", label: "1.50×"},
@@ -43,6 +49,7 @@ Flickable {
                 modes: JSON.stringify(mon.modes || []),
                 scale: String(mon.scale || 1),
                 transform: String(mon.transform || 0),
+                vrr: String(mon.vrr || 0),
                 x: mon.x,
                 y: mon.y,
                 disabled: mon.disabled,
@@ -75,6 +82,7 @@ Flickable {
             mode: item.mode,
             scale: parseFloat(item.scale) || 1,
             transform: parseInt(item.transform) || 0,
+            vrr: parseInt(item.vrr) || 0,
             x: item.x || 0,
             y: item.y || 0,
             disabled: !!item.disabled,
@@ -166,6 +174,17 @@ Flickable {
                             value: model.transform
                             choices: page.transforms
                             onSelected: (v) => layout.setProperty(index, "transform", v)
+                        }
+                    }
+                    SettingRow {
+                        label: "Variable refresh rate"
+                        help: "Adaptive sync; the monitor must support it."
+                        visible: !model.disabled
+                        Dropdown {
+                            preferredWidth: 200
+                            value: model.vrr
+                            choices: page.vrrChoices
+                            onSelected: (v) => layout.setProperty(index, "vrr", v)
                         }
                     }
                     SettingRow {
