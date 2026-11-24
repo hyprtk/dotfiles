@@ -4,20 +4,38 @@
     {"id": 1, "result": {...}}
     {"id": 1, "error": "message"}
 
-One request per line on stdin, one response per line on stdout.
+Requests are handled on a small thread pool: one slow probe (Updates runs
+``checkupdates``, which can take a minute) must never block the rest of the UI.
+Responses may therefore arrive out of order; the front end keys them by id.
+Apply/action calls are serialised so two writes cannot interleave.
+
+A background index warms the panel probes after ``hello``; ``search`` then
+matches row labels from the warmed models in addition to the catalog metadata.
 """
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import os
-import platform
 import sys
+import threading
+import time
 import traceback
 from pathlib import Path
 from typing import Any, Callable
 
 from . import __version__, apps, catalog, form, paths, priv, util
+
+PROBE_TTL = 600
+WARM_SKIP = {"updates"}  # network-bound; catalog keywords still cover it
+
+_CACHE: dict[str, tuple[float, dict]] = {}
+_CACHE_LOCK = threading.Lock()
+_WRITE_LOCK = threading.Lock()
+_PRINT_LOCK = threading.Lock()
+_WARM_LOCK = threading.Lock()
+_WARM = {"started": False, "running": False}
 
 
 class RpcError(RuntimeError):
@@ -33,7 +51,18 @@ def _module(panel_id: str):
         raise RpcError(f"panel {panel_id!r} failed to load: {type(exc).__name__}: {exc}") from exc
 
 
+def _cache_model(panel_id: str, model: dict) -> None:
+    with _CACHE_LOCK:
+        _CACHE[panel_id] = (time.time(), model)
+
+
+def _cached() -> list[tuple[str, dict]]:
+    with _CACHE_LOCK:
+        return [(panel_id, model) for panel_id, (_at, model) in _CACHE.items()]
+
+
 def _hello(params: dict) -> dict:
+    _start_warm()
     return {
         "version": __version__,
         "catalog": catalog.catalog(),
@@ -83,6 +112,7 @@ def _panel(params: dict) -> dict:
             form.section("Contract problems", [form.note("; ".join(problems), "danger")])
         )
     model["version"] = __version__
+    _cache_model(panel_id, model)
     return model
 
 
@@ -101,6 +131,8 @@ def _apply(params: dict) -> dict:
     result.setdefault("ok", True)
     result.setdefault("message", "Applied")
     result.setdefault("refresh", True)
+    with _CACHE_LOCK:
+        _CACHE.pop(panel_id, None)
     return result
 
 
@@ -125,9 +157,77 @@ def _action(params: dict) -> dict:
     return result
 
 
+def _row_texts(model: dict) -> list[str]:
+    """Every human-readable label inside a panel model."""
+    out: list[str] = []
+    for section in model.get("sections") or []:
+        if not isinstance(section, dict):
+            continue
+        if section.get("title"):
+            out.append(str(section["title"]))
+        for row in section.get("rows") or []:
+            if not isinstance(row, dict):
+                continue
+            for key in ("label", "help", "value", "text"):
+                value = row.get(key)
+                if isinstance(value, str) and value:
+                    out.append(value)
+            for item in row.get("items") or []:
+                if not isinstance(item, dict):
+                    continue
+                for key in ("label", "title", "subtitle", "value"):
+                    value = item.get(key)
+                    if isinstance(value, str) and value:
+                        out.append(value)
+    return out
+
+
+def _row_matches(model: dict, terms: list[str], limit: int = 4) -> list[str]:
+    labels: list[str] = []
+    for section in model.get("sections") or []:
+        for row in section.get("rows") or []:
+            if not isinstance(row, dict):
+                continue
+            label = str(row.get("label") or row.get("text") or "").strip()
+            texts = [str(row.get(k) or "") for k in ("label", "help", "value")]
+            texts += [str(item.get("label") or item.get("title") or "")
+                      for item in (row.get("items") or []) if isinstance(item, dict)]
+            hay = " ".join(texts).lower()
+            if label and all(term in hay for term in terms) and label not in labels:
+                labels.append(label)
+    return labels[:limit]
+
+
 def _search(params: dict) -> dict:
-    query = str(params.get("query") or "")
-    return {"query": query, "results": catalog.search(query)}
+    query = str(params.get("query") or "").strip()
+    terms = [part for part in query.lower().split() if part]
+    if not terms:
+        return {"query": query, "results": [], "indexed": len(_cached()),
+                "total": len(catalog.PANELS), "indexing": _WARM["running"]}
+
+    found: dict[str, dict] = {}
+    for hit in catalog.search(query):
+        found[hit["id"]] = dict(hit, matches=[])
+
+    for panel_id, model in _cached():
+        matches = _row_matches(model, terms)
+        if not matches:
+            continue
+        entry = found.get(panel_id)
+        if entry is None:
+            meta = catalog.PANEL_INDEX[panel_id]
+            entry = {
+                "id": panel_id, "title": meta["title"], "group": meta["group"],
+                "icon": meta["icon"], "description": meta["description"],
+                "status": meta["status"], "score": 3,
+            }
+            found[panel_id] = entry
+        entry["matches"] = matches
+        entry["score"] = entry.get("score", 0) + 2 * len(matches)
+
+    results = sorted(found.values(), key=lambda item: (-item["score"], item["title"]))
+    return {"query": query, "results": results[:30], "indexed": len(_cached()),
+            "total": len(catalog.PANELS), "indexing": _WARM["running"]}
 
 
 def _fs_list(params: dict) -> dict:
@@ -162,7 +262,11 @@ def _fs_list(params: dict) -> dict:
 
 def _ui_get(params: dict) -> dict:
     data = util.read_json(paths.UI_STATE, {})
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        return {}
+    recent = data.get("recent")
+    data["recent"] = [str(item) for item in recent] if isinstance(recent, list) else []
+    return data
 
 
 def _ui_set(params: dict) -> dict:
@@ -170,6 +274,11 @@ def _ui_set(params: dict) -> dict:
     if not isinstance(updates, dict):
         raise RpcError("values must be an object")
     current = _ui_get({})
+    if "last_page" in updates:
+        last = str(updates["last_page"])
+        recent = [item for item in current.get("recent", []) if item != last]
+        recent.insert(0, last)
+        updates["recent"] = recent[:5]
     current.update(updates)
     util.write_json(paths.UI_STATE, current)
     return current
@@ -182,8 +291,40 @@ def _status(params: dict) -> dict:
         "session": util.session_kind(),
         "privilege": priv.mode(),
         "panels": len(catalog.PANELS),
+        "indexed": len(_cached()),
+        "indexing": _WARM["running"],
         "suite": apps.all_apps(),
     }
+
+
+def _warm_index() -> None:
+    for panel in catalog.PANELS:
+        panel_id = panel["id"]
+        if panel_id in WARM_SKIP:
+            continue
+        with _CACHE_LOCK:
+            hit = _CACHE.get(panel_id)
+        if hit and (time.time() - hit[0]) < PROBE_TTL:
+            continue
+        try:
+            module = catalog.module_for(panel_id)
+            model = module.probe()
+            if isinstance(model, dict):
+                _cache_model(panel_id, model)
+        except Exception:  # noqa: BLE001 - the index is best effort
+            pass
+        time.sleep(0.05)
+    with _WARM_LOCK:
+        _WARM["running"] = False
+
+
+def _start_warm() -> None:
+    with _WARM_LOCK:
+        if _WARM["started"]:
+            return
+        _WARM["started"] = True
+        _WARM["running"] = True
+    threading.Thread(target=_warm_index, name="sm-index", daemon=True).start()
 
 
 HANDLERS: dict[str, Callable[[dict], Any]] = {
@@ -208,7 +349,13 @@ def handle(request: dict) -> dict:
         fn = HANDLERS.get(method)
         if fn is None:
             raise RpcError(f"unknown method {method!r}")
-        return {"id": rid, "result": fn(params if isinstance(params, dict) else {})}
+        args = params if isinstance(params, dict) else {}
+        if method in ("apply", "action"):
+            with _WRITE_LOCK:
+                result = fn(args)
+        else:
+            result = fn(args)
+        return {"id": rid, "result": result}
     except RpcError as exc:
         return {"id": rid, "error": str(exc)}
     except Exception as exc:  # noqa: BLE001 - report, never kill the session
@@ -217,15 +364,31 @@ def handle(request: dict) -> dict:
 
 
 def serve() -> int:
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=6, thread_name_prefix="sm-rpc")
+
+    def emit(future) -> None:
         try:
-            request = json.loads(line)
-        except json.JSONDecodeError as exc:
-            print(json.dumps({"id": None, "error": f"bad json: {exc}"}), flush=True)
-            continue
-        response = handle(request if isinstance(request, dict) else {})
-        print(json.dumps(response), flush=True)
+            response = future.result()
+        except Exception as exc:  # noqa: BLE001 - a pool error must still answer
+            response = {"id": None, "error": f"{type(exc).__name__}: {exc}"}
+        with _PRINT_LOCK:
+            try:
+                print(json.dumps(response), flush=True)
+            except (BrokenPipeError, OSError):
+                pass
+
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                request = json.loads(line)
+            except json.JSONDecodeError as exc:
+                with _PRINT_LOCK:
+                    print(json.dumps({"id": None, "error": f"bad json: {exc}"}), flush=True)
+                continue
+            pool.submit(handle, request if isinstance(request, dict) else {}).add_done_callback(emit)
+    finally:
+        pool.shutdown(wait=True)
     return 0

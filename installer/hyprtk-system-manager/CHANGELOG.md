@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.2.0] — 2026-11-24
+
+### Changed
+
+- **The RPC server is threaded.** Panel probes no longer run one at a time, so
+  a slow probe (Updates can spend a minute in `checkupdates`) cannot freeze the
+  rest of the window; apply/action calls stay serialised.
+- **Search now finds settings, not just panels.** A background index warms the
+  panel probes after startup and matches row labels (`Tap to click`, `Rotation`,
+  `Default sink`, …). Results show the matched setting and re-run while the
+  index finishes warming.
+- **Recent panels** sit above the categories in the sidebar and persist in
+  `ui.json`.
+
+### Added
+
+- **Sound**: default **input** volume and mute, plus **per-application
+  streams** — each active PipeWire stream gets a volume slider and a mute
+  toggle, written with `wpctl set-volume`/`set-mute`.
+- **Users**: **Groups** and **Shell** dialogs per account, wired to the existing
+  `usermod --groups` / `usermod --shell` actions.
+- **Fonts**: **Install a font…** opens the file picker and copies the chosen
+  `.ttf/.otf/.ttc/.woff` into `~/.local/share/fonts`, then refreshes the cache.
+- 79 tests: out-of-order RPC responses, cached-row search, recent-page state,
+  stream parsing and privilege commands, font install.
+
 All notable changes to hyprtk-system-manager are recorded here. The format is
 loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 independent of the suite tag that carries them.

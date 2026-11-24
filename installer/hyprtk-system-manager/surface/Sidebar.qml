@@ -10,6 +10,8 @@ Rectangle {
     property var groups: []
     property var panels: []
     property var searchResults: []
+    property var recent: []
+    property bool searchIndexing: false
     property string currentPage: ""
     property string hostname: ""
     property string version: ""
@@ -29,6 +31,13 @@ Rectangle {
     }
     function panelsIn(groupId) {
         return sidebar.panels.filter(p => p.group === groupId);
+    }
+    function panelById(id) {
+        for (let i = 0; i < sidebar.panels.length; i++) {
+            if (sidebar.panels[i].id === id)
+                return sidebar.panels[i];
+        }
+        return null;
     }
     function matches(panel) {
         if (search.text.length === 0)
@@ -171,7 +180,9 @@ Rectangle {
                                     width: parent.width
                                 }
                                 Text {
-                                    text: modelData.description || ""
+                                    text: (modelData.matches && modelData.matches.length)
+                                          ? modelData.matches.slice(0, 2).join(" · ")
+                                          : (modelData.description || "")
                                     color: Theme.dim
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.size(0)
@@ -182,6 +193,41 @@ Rectangle {
                         }
                         HoverHandler { id: resultHover }
                         TapHandler { onTapped: sidebar.select(modelData.id) }
+                    }
+                }
+
+                // recent panels
+                Column {
+                    width: navColumn.width
+                    spacing: 1
+                    visible: sidebar.searchText.length === 0 && sidebar.recent.length > 0
+
+                    Text {
+                        x: 14
+                        topPadding: 10
+                        bottomPadding: 2
+                        text: "Recent"
+                        color: Theme.accent2
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.size(0)
+                        font.bold: true
+                    }
+
+                    Repeater {
+                        model: sidebar.searchText.length === 0
+                            ? sidebar.recent.filter(id => id !== sidebar.currentPage)
+                            : []
+                        delegate: NavItem {
+                            required property var modelData
+                            readonly property var meta: sidebar.panelById(modelData)
+                            visible: meta !== null
+                            x: 10
+                            width: navColumn.width - 20
+                            glyph: meta ? meta.icon : ""
+                            label: meta ? meta.title : ""
+                            active: sidebar.currentPage === modelData
+                            onClicked: sidebar.select(modelData)
+                        }
                     }
                 }
 
@@ -228,6 +274,16 @@ Rectangle {
                     color: Theme.dim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.size(2)
+                }
+
+                Text {
+                    visible: sidebar.searchText.length > 0 && sidebar.searchIndexing
+                    x: 14
+                    topPadding: 8
+                    text: "Indexing the remaining panels…"
+                    color: Theme.dim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.size(0)
                 }
             }
         }

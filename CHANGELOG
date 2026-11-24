@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.14.0] - 2026-11-24
+
+### Added
+
+- **hyprtk-system-manager 0.2.0** — the first feature release:
+  - the RPC backend is threaded, so a slow probe (Updates/`checkupdates`)
+    cannot freeze the rest of the window;
+  - row-level settings search (matches labels such as “Tap to click”,
+    “Default sink”, “Rotation”) with recent panels in the sidebar;
+  - Sound: default input volume/mute and per-application stream volume/mute;
+  - Users: Groups and Shell dialogs; Fonts: install a font from the picker.
+- Installer/ISO entries unchanged from v1.13.0.
+
 ## [v1.13.1] - 2026-11-24
 
 ### Documentation

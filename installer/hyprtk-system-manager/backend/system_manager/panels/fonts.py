@@ -51,8 +51,10 @@ def probe() -> dict:
             form.info("Resolved monospace", mono),
         ]),
         form.section("Install a font", [
-            form.note("Drop a .ttf or .otf into ~/.local/share/fonts and refresh the cache. "
-                      "Every toolkit picks it up without a restart.", "info"),
+            form.note("Install a .ttf, .otf, .ttc or .woff file; it is copied to "
+                      "~/.local/share/fonts and the cache is refreshed. Every toolkit "
+                      "picks it up without a restart.", "info"),
+            form.action("Install a font…", "fonts.install", variant="primary", needs="file"),
             form.action("Refresh the font cache", "fonts.refresh"),
         ]),
         form.section("Applied to", [

@@ -1,4 +1,9 @@
-"""Sound — PipeWire/WirePlumber sinks, sources, volume and mute."""
+"""Sound — PipeWire/WirePlumber sinks, sources, per-app streams and mute.
+
+The panel can set the default output and input volume/mute, pick the default
+devices, and adjust every active application stream individually (each stream
+is two rows: volume and mute).
+"""
 
 from __future__ import annotations
 
@@ -7,17 +12,22 @@ from . import base
 
 
 def parse_wpctl(text: str) -> dict:
-    """Parse ``wpctl status`` into sinks, sources and default ids."""
-    data = {"sinks": [], "sources": []}
+    """Parse ``wpctl status`` into sinks, sources and application streams."""
+    data = {"sinks": [], "sources": [], "streams": []}
     section = ""
     for line in text.splitlines():
         stripped = line.strip().strip("│").strip()
         if stripped.endswith(":") and stripped and not stripped[0].isdigit():
-            words = stripped[:-1].replace("├", " ").replace("─", " ").split()
+            words = (stripped[:-1].replace("├", " ").replace("─", " ")
+                     .replace("└", " ").split())
             name = words[-1].lower() if words else ""
-            section = name if name in ("sinks", "sources") else ""
+            section = name if name in ("sinks", "sources", "streams") else ""
             continue
         if not section or not stripped:
+            continue
+        # Under Streams, only the top-level app node is a stream; the indented
+        # port lines contain "<" or ">" and belong to it.
+        if section == "streams" and ("<" in stripped or ">" in stripped):
             continue
         default = stripped.startswith("*")
         cleaned = stripped.lstrip("*").strip()
@@ -38,8 +48,8 @@ def parse_wpctl(text: str) -> dict:
     return data
 
 
-def _default_volume() -> tuple[float, bool]:
-    result = util.run(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"], timeout=6)
+def _volume(target: str) -> tuple[float, bool]:
+    result = util.run(["wpctl", "get-volume", target], timeout=6)
     volume = 0.0
     muted = "[MUTED]" in result.out
     for part in result.out.split():
@@ -51,15 +61,19 @@ def _default_volume() -> tuple[float, bool]:
     return volume, muted
 
 
+def _default_name(items: list[dict]) -> str:
+    return next((item["name"] for item in items if item["default"]), "none")
+
+
 def probe() -> dict:
     if util.which("wpctl") is None:
         return base.make_page("sound", [
             form.section("Unavailable", [base.missing_note("wpctl", "WirePlumber")]),
         ])
 
-    status = util.run(["wpctl", "status"], timeout=10)
-    parsed = parse_wpctl(status.out)
-    volume, muted = _default_volume()
+    parsed = parse_wpctl(util.run(["wpctl", "status"], timeout=10).out)
+    sink_volume, sink_muted = _volume("@DEFAULT_AUDIO_SINK@")
+    source_volume, source_muted = _volume("@DEFAULT_AUDIO_SOURCE@")
 
     sink_items = [
         {"title": sink["name"], "subtitle": f"id {sink['id']} · volume {sink['volume'] or '?'}",
@@ -78,41 +92,90 @@ def probe() -> dict:
         for source in parsed["sources"]
     ]
 
+    stream_rows: list[dict] = []
+    for stream in parsed["streams"]:
+        volume, muted = _volume(str(stream["id"]))
+        stream_rows.append(form.slider(
+            f"stream.{stream['id']}.volume", stream["name"],
+            round(volume * 100), minimum=0, maximum=150,
+            help="Application volume",
+        ))
+        stream_rows.append(form.toggle(
+            f"stream.{stream['id']}.muted", "Mute", muted,
+            help=f"Application stream {stream['id']}",
+        ))
+    if not stream_rows:
+        stream_rows.append(form.note("No application streams are active.", "info"))
+
     return base.make_page("sound", [
         form.section("Output", [
-            form.slider("volume", "Volume", round(volume * 100), minimum=0, maximum=100, unit="%"),
-            form.toggle("muted", "Mute", muted),
-            form.info("Default sink", next((s["name"] for s in parsed["sinks"] if s["default"]), "none")),
+            form.slider("volume", "Volume", round(sink_volume * 100),
+                        minimum=0, maximum=150, unit="%"),
+            form.toggle("muted", "Mute", sink_muted),
+            form.info("Default sink", _default_name(parsed["sinks"])),
         ]),
         form.section("Output devices", [
             form.list_row(sink_items) if sink_items else form.note("No audio outputs found.", "warn"),
         ]),
+        form.section("Input", [
+            form.slider("input_volume", "Volume", round(source_volume * 100),
+                        minimum=0, maximum=150, unit="%"),
+            form.toggle("input_muted", "Mute", source_muted),
+            form.info("Default source", _default_name(parsed["sources"])),
+        ]),
         form.section("Input devices", [
             form.list_row(source_items) if source_items else form.note("No audio inputs found.", "warn"),
         ]),
+        form.section("Application streams", stream_rows,
+                     "Per-application volume and mute for active PipeWire streams."),
         form.section("Service", [
             form.info("PipeWire", "running" if util.which("pipewire") else "not installed", mono=True),
-            form.note("Per-application streams and profiles arrive in the next milestone.", "info"),
         ]),
     ])
+
+
+def _set_volume(target: str, level: int) -> str:
+    result = util.run(["wpctl", "set-volume", target, f"{level}%"], timeout=8)
+    if not result.ok:
+        raise RuntimeError(result.text.strip() or f"wpctl set-volume {target} failed")
+    return f"wpctl set-volume {target} {level}%"
+
+
+def _set_mute(target: str, muted: bool) -> str:
+    result = util.run(["wpctl", "set-mute", target, "1" if muted else "0"], timeout=8)
+    if not result.ok:
+        raise RuntimeError(result.text.strip() or f"wpctl set-mute {target} failed")
+    return f"wpctl set-mute {target} {'1' if muted else '0'}"
 
 
 def apply(changes: dict) -> dict:
     if util.which("wpctl") is None:
         return base.fail("wpctl is not installed")
     details: list[str] = []
-    if "volume" in changes:
-        level = max(0, min(100, int(changes["volume"])))
-        result = util.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", f"{level}%"], timeout=8)
-        if not result.ok:
-            return base.fail(result.text.strip() or "wpctl failed")
-        details.append(f"wpctl set-volume {level}%")
-    if "muted" in changes:
-        value = "1" if changes["muted"] else "0"
-        result = util.run(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", value], timeout=8)
-        if not result.ok:
-            return base.fail(result.text.strip() or "wpctl failed")
-        details.append(f"wpctl set-mute {value}")
+    try:
+        if "volume" in changes:
+            details.append(_set_volume("@DEFAULT_AUDIO_SINK@",
+                                      max(0, min(150, int(changes["volume"])))))
+        if "muted" in changes:
+            details.append(_set_mute("@DEFAULT_AUDIO_SINK@", bool(changes["muted"])))
+        if "input_volume" in changes:
+            details.append(_set_volume("@DEFAULT_AUDIO_SOURCE@",
+                                      max(0, min(150, int(changes["input_volume"])))))
+        if "input_muted" in changes:
+            details.append(_set_mute("@DEFAULT_AUDIO_SOURCE@", bool(changes["input_muted"])))
+        for key, value in (changes or {}).items():
+            if not key.startswith("stream."):
+                continue
+            parts = key.split(".")
+            if len(parts) != 3 or not parts[1].isdigit():
+                continue
+            target, field = parts[1], parts[2]
+            if field == "volume":
+                details.append(_set_volume(target, max(0, min(150, int(value)))))
+            elif field == "muted":
+                details.append(_set_mute(target, bool(value)))
+    except (RuntimeError, TypeError, ValueError) as exc:
+        return base.fail(str(exc))
     if not details:
         return base.ok("Nothing to change")
     return base.ok("Audio updated", details=details)
@@ -122,9 +185,7 @@ def action(name: str, args: dict) -> dict:
     ident = str(args.get("id") or "")
     if not ident:
         return base.fail("No device given")
-    if name == "sound.default_sink":
-        result = util.run(["wpctl", "set-default", ident], timeout=8)
-    elif name == "sound.default_source":
+    if name in ("sound.default_sink", "sound.default_source"):
         result = util.run(["wpctl", "set-default", ident], timeout=8)
     else:
         return base.fail(f"unknown action {name!r}")

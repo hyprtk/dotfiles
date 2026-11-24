@@ -26,6 +26,8 @@ Item {
     property string status: "Connecting to the backend…"
     property string searchText: ""
     property var searchResults: []
+    property var recentIds: []
+    property bool searchIndexing: false
     property string shotPath: Quickshell.env("HYPRTK_SM_SHOT") || ""
 
     readonly property var groups: catalogData.groups || []
@@ -45,6 +47,10 @@ Item {
     // dialogs
     property var confirmState: ({})
     property var passwordState: ({})
+    property var groupsState: ({})
+    property var selectedGroups: []
+    property var shellState: ({})
+    property string selectedShell: ""
     property var pickerState: ({})
     property string pickerPath: ""
     property string pickerParent: ""
@@ -141,6 +147,7 @@ Item {
         if (tag === "hello") {
             backend = r || ({});
             catalogData = (r && r.catalog) || ({ groups: [], panels: [] });
+            app.recentIds = (r && r.ui && r.ui.recent) || [];
             const envPage = Quickshell.env("HYPRTK_SM_PAGE") || "";
             let start = envPage || (r && r.ui && r.ui.last_page) || "about";
             if (!panels.some(p => p.id === start))
@@ -151,7 +158,9 @@ Item {
         }
 
         if (tag === "panel") {
-            pageModel = r || ({});
+            if (!r || r.id !== app.pageId)
+                return;
+            pageModel = r;
             loading = false;
             status = (r.title || pageId) + " · " + (r.statusLabel || "");
             const cache = Object.assign({}, pageCache);
@@ -187,7 +196,14 @@ Item {
         }
 
         if (tag === "search") {
-            searchResults = (r && r.results) || [];
+            if (!r || r.query !== app.searchText.trim())
+                return;
+            searchResults = r.results || [];
+            searchIndexing = !!r.indexing;
+            if (searchIndexing)
+                reindexTimer.restart();
+            else
+                reindexTimer.stop();
             return;
         }
 
@@ -205,6 +221,7 @@ Item {
             return;
         Config.page = id;
         Config.lastPage = id;
+        app.recentIds = [id].concat(app.recentIds.filter(other => other !== id)).slice(0, 5);
         call("ui.set", { values: { last_page: id } });
         sidebar.clearSearch();
         const cached = pageCache[id];
@@ -231,6 +248,8 @@ Item {
         searchText = text;
         if (!text || text.trim().length === 0) {
             searchResults = [];
+            searchIndexing = false;
+            reindexTimer.stop();
             return;
         }
         searchTimer.restart();
@@ -306,6 +325,26 @@ Item {
     function requestAction(panelId, actionObj) {
         if (!actionObj || !actionObj.action)
             return;
+        if (actionObj.needs === "file") {
+            pickerState = { panelId: panelId, actionObj: actionObj, mode: "file" };
+            pickerSelected = "";
+            picker.open = true;
+            call("fs.list", { path: Quickshell.env("HOME") || "/" }, "fs");
+            return;
+        }
+        if (actionObj.needs === "groups") {
+            groupsState = { panelId: panelId, actionObj: actionObj };
+            const current = (actionObj.args && actionObj.args.groups) || [];
+            selectedGroups = current.slice();
+            groupsDialog.open = true;
+            return;
+        }
+        if (actionObj.needs === "shell") {
+            shellState = { panelId: panelId, actionObj: actionObj };
+            selectedShell = (actionObj.args && actionObj.args.shell) || "";
+            shellDialog.open = true;
+            return;
+        }
         if (actionObj.needs === "password") {
             passwordState = { panelId: panelId, actionObj: actionObj };
             passwordField.text = "";
@@ -368,7 +407,10 @@ Item {
         const value = pickerState.mode === "dir" ? pickerPath : pickerSelected;
         if (!value)
             return;
-        setPending(pickerState.panelId, pickerState.key, value);
+        if (pickerState.actionObj)
+            runAction(pickerState.panelId, pickerState.actionObj, { path: value });
+        else
+            setPending(pickerState.panelId, pickerState.key, value);
         picker.open = false;
     }
 
@@ -404,6 +446,17 @@ Item {
         id: searchTimer
         interval: 150
         onTriggered: app.call("search", { query: app.searchText }, "search")
+    }
+
+    // The background index keeps warming after the first search; re-run the
+    // active query so row matches appear without retyping.
+    Timer {
+        id: reindexTimer
+        interval: 1200
+        onTriggered: {
+            if (app.searchText.trim().length > 0 && app.searchIndexing)
+                app.call("search", { query: app.searchText }, "search");
+        }
     }
 
     Timer {
@@ -446,6 +499,8 @@ Item {
         sequence: "Escape"
         onActivated: {
             if (confirmDialog.open) { confirmDialog.open = false; return; }
+            if (groupsDialog.open) { groupsDialog.open = false; return; }
+            if (shellDialog.open) { shellDialog.open = false; return; }
             if (passwordDialog.open) { passwordDialog.open = false; return; }
             if (picker.open) { picker.open = false; return; }
             if (app.searchText.length > 0) { sidebar.clearSearch(); return; }
@@ -472,6 +527,8 @@ Item {
                 groups: app.groups
                 panels: app.panels
                 searchResults: app.searchResults
+                recent: app.recentIds
+                searchIndexing: app.searchIndexing
                 currentPage: app.pageId
                 hostname: (app.backend && app.backend.hostname) || ""
                 version: (app.backend && app.backend.version) || "0.1.0"
@@ -802,6 +859,90 @@ Item {
                   passwordRepeat.text.length > 0 &&
                   passwordField.text !== passwordRepeat.text
                   ? "Passwords do not match." : ""
+        }
+    }
+
+    Modal {
+        id: groupsDialog
+        title: "Groups"
+        message: "Supplementary groups for " + ((app.groupsState.actionObj &&
+                 app.groupsState.actionObj.args &&
+                 app.groupsState.actionObj.args.username) || "this account") + "."
+        confirmText: "Save groups"
+        onAccepted: {
+            const state = app.groupsState;
+            groupsDialog.open = false;
+            app.runAction(state.panelId, state.actionObj,
+                          { groups: app.selectedGroups.join(",") });
+        }
+        onRejected: groupsDialog.open = false
+
+        Flickable {
+            width: parent.width
+            height: Math.min(300, groupColumn.implicitHeight + 4)
+            contentHeight: groupColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Column {
+                id: groupColumn
+                width: parent.width
+                spacing: 2
+
+                Repeater {
+                    model: app.pageId === "users" ? (app.pageModel.groups || []) : []
+                    delegate: SettingRow {
+                        required property var modelData
+                        width: groupColumn.width
+                        label: String(modelData)
+                        ToggleSwitch {
+                            checked: app.selectedGroups.indexOf(String(modelData)) >= 0
+                            onToggled: (on) => {
+                                let next = app.selectedGroups.slice();
+                                if (on) {
+                                    if (next.indexOf(String(modelData)) < 0)
+                                        next.push(String(modelData));
+                                } else {
+                                    next = next.filter(name => name !== String(modelData));
+                                }
+                                app.selectedGroups = next;
+                            }
+                        }
+                    }
+                }
+                Text {
+                    visible: (app.pageModel.groups || []).length === 0
+                    width: parent.width
+                    text: "No groups available."
+                    color: Theme.dim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.size(1)
+                }
+            }
+        }
+    }
+
+    Modal {
+        id: shellDialog
+        title: "Login shell"
+        message: "For " + ((app.shellState.actionObj &&
+                 app.shellState.actionObj.args &&
+                 app.shellState.actionObj.args.username) || "this account") + "."
+        confirmText: "Change shell"
+        confirmEnabled: app.selectedShell.length > 0
+        onAccepted: {
+            const state = app.shellState;
+            shellDialog.open = false;
+            app.runAction(state.panelId, state.actionObj, { shell: app.selectedShell });
+        }
+        onRejected: shellDialog.open = false
+
+        Dropdown {
+            width: parent.width
+            value: app.selectedShell
+            choices: ((app.pageId === "users" ? app.pageModel.shells : []) || [])
+                     .map(item => ({ value: item, label: item }))
+            onSelected: (value) => app.selectedShell = value
         }
     }
 

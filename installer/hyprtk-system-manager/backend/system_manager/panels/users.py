@@ -105,6 +105,16 @@ def _accounts() -> list[dict]:
                 "variant": "default",
             })
             actions.append({
+                "label": "Groups", "action": "users.groups",
+                "args": {"username": user["name"], "groups": groups},
+                "variant": "default", "needs": "groups",
+            })
+            actions.append({
+                "label": "Shell", "action": "users.shell",
+                "args": {"username": user["name"], "shell": user["shell"]},
+                "variant": "default", "needs": "shell",
+            })
+            actions.append({
                 "label": "Change password", "action": "users.password",
                 "args": {"username": user["name"]}, "variant": "default",
                 "needs": "password",
