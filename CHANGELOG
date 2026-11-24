@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.17.3] - 2026-11-24
+
+### Fixed
+
+- **hyprtk-bar-qt 0.43.19**: a theme written outside the bar was ignored until
+  the bar restarted. `config/Config.qml` read the flat Qt overrides
+  (`themeSource`, `themeAccent`, …) once at startup while the nested `theme`
+  block re-themed live; its FileView now watches `config.json`.
+- **hyprtk-system-manager 0.5.3**: bar theme edits only wrote the nested
+  `theme` block, so with the flat `themeSource: "pywal"` in the config every
+  colour change was ignored while the panel displayed it as applied. Both
+  representations are written now (as the bar's own Settings does), the panel
+  reads the flat override first, and switching back to pywal clears the colour
+  overrides. Verified live: the bar border followed `#00ff00` → `#ff0000`
+  with no restart.
+- The wallpaper row reads the image actually on screen (`awww`/`swww`) instead
+  of a config key nothing read; the banner timeout accepts the bar's 60 s
+  maximum; `suite.open_*` no longer blocks the RPC handler.
+
 ## [v1.17.2] - 2026-11-24
 
 ### Fixed

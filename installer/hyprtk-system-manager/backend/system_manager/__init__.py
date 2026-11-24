@@ -1,5 +1,5 @@
 """hyprtk-system-manager — a settings application for the whole hyprtk desktop."""
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 APP_NAME = "hyprtk-system-manager"
 TITLE = "System Settings"

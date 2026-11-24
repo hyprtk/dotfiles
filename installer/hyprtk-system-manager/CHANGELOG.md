@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.5.3] — 2026-11-24
+
+Settings that are shared with the rest of the suite now reach the running
+applications, and the panel shows what the bar actually resolves.
+
+### Fixed
+
+- **Bar theme changes never reached the bar.** The bar's theme lives in two
+  places in one file — the nested `theme` block and top-level Qt overrides
+  (`themeAccent`, `themeSource`, …) which win. This panel wrote only the nested
+  block, so with the flat `themeSource: "pywal"` the bar kept following pywal
+  and ignored every colour change, while the panel displayed the value it had
+  written. Both representations are now written on every theme edit (as the
+  bar's own Settings does), and the panel reads the flat override first so it
+  shows the effective value. Verified live: `#00ff00` → `#ff0000` re-coloured
+  the running bar's border.
+- **Choose “Follow the wallpaper” now clears the colour overrides** instead of
+  leaving the previous manual colours winning over pywal.
+- **The wallpaper row showed a stale path.** It now asks `awww`/`swww` for the
+  image actually on screen (the bar's Themer path), and no longer writes a
+  `wallpaper` key into the bar config that nothing read.
+- **Banner timeout** now accepts up to 60 s, matching the bar's own control.
+- `suite.open_*` launches through `util.spawn`, so opening the bar settings or
+  config-manager no longer blocks the RPC handler.
+
+### Added
+
+- 137 tests: both theme representations, pywal reset, effective-value probe,
+  live wallpaper lookup.
+
 ## [0.5.2] — 2026-11-24
 
 Every Hyprland Lua write is now a real write plus a reload, and the two places

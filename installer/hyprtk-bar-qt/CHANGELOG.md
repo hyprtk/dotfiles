@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.43.19 — 2026-11-24
+
+- **A theme change made outside the bar was ignored until the bar restarted.**
+  The Qt override layer (`themeSource`, `themeAccent`, …) was read from
+  `config.json` once at startup (`config/Config.qml` did not watch the file),
+  so when `hyprtk-system-manager` wrote a new accent the running bar kept the
+  old one. The override FileView now watches the file like the nested `theme`
+  block and `BarConfig` already do, so an external writer re-themes the bar
+  live. Verified: writing `themeAccent` from the settings app re-coloured the
+  bar border (pure `#00ff00` → `#ff0000`) without a restart.
+
 ## 0.43.18 — 2026-11-23
 
 - **"Log out" in the start menu did nothing.** The power entry ran

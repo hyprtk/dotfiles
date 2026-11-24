@@ -98,18 +98,21 @@ def action(name: str, args: dict) -> dict:
     if name == "suite.open_bar_settings":
         if util.which("hyprtk-bar-qt-settings-toggle") is None:
             return base.fail("The bar settings toggle is not installed")
-        util.run(["hyprtk-bar-qt-settings-toggle"], timeout=10)
+        if not util.spawn(["hyprtk-bar-qt-settings-toggle"]):
+            return base.fail("Could not open the bar settings")
         return base.ok("Opened the bar's settings")
     if name == "suite.open_hyprland":
         if util.which("config-manager") is None:
             return base.fail("config-manager is not installed")
-        util.run(["config-manager", "open"], timeout=10)
+        if not util.spawn(["config-manager", "open"]):
+            return base.fail("Could not open Hyprland settings")
         return base.ok("Opened Hyprland settings")
     if name == "suite.open_folder":
         command = ["hyprtk-fm", str(Path.home() / ".local" / "share")]
         if util.which("hyprtk-fm") is None:
             command = ["xdg-open", str(Path.home() / ".local" / "share")]
-        util.run(command, timeout=10)
+        if not util.spawn(command):
+            return base.fail("Could not open the suite folder")
         return base.ok("Opened the suite folder")
     app = next((item for item in apps.APPS if item["id"] == args.get("id")), None)
     if app is None:

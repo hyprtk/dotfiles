@@ -115,9 +115,66 @@ def _cursor_default(name: str) -> None:
     util.atomic_write(path, f"[Icon Theme]\nName=Default\nComment=Default cursor theme\nInherits={name}\n")
 
 
+# The bar's theme lives in two places in one file: the nested `theme` block
+# (persisted) and top-level Qt overrides (`themeAccent`, ...) which win. The
+# bar's own Settings writes both; a writer that touches only the nested block
+# is shadowed by a flat override, and one that touches only the flat keys is
+# ignored by anything that reads the block. Write both.
+THEME_FLAT = {
+    "source": "themeSource",
+    "theme_name": "themeName",
+    "background": "themeBackground",
+    "foreground": "themeForeground",
+    "accent": "themeAccent",
+}
+THEME_COLOURS = ("background", "foreground", "accent")
+
+
+def current_wallpaper() -> str:
+    """The wallpaper actually on screen.
+
+    The bar's Themer asks its own backend (`wallpapers.py current`), which reads
+    awww; a `wallpaper` key in the bar config was never read by anything, so
+    writing one only made the panel look persisted when it was not.
+    """
+    for tool in ("awww", "swww"):
+        if util.which(tool) is None:
+            continue
+        result = util.run([tool, "query"], timeout=6)
+        for line in result.lines():
+            if "image:" in line:
+                return line.split("image:", 1)[1].strip()
+    return ""
+
+
+def effective_theme(cfg: dict) -> dict:
+    """Theme values as the bar resolves them (flat override first)."""
+    theme = dict(cfg.get("theme") or {})
+    for key, flat in THEME_FLAT.items():
+        value = cfg.get(flat)
+        if isinstance(value, str) and value:
+            theme[key] = value
+    if not theme.get("source"):
+        theme["source"] = "pywal" if cfg.get("use_pywal") is not False else "manual"
+    return theme
+
+
+def theme_patch(updates: dict, *, source: str = "") -> dict:
+    """A patch carrying both representations of *updates*."""
+    patch: dict = {"theme": dict(updates)}
+    for key, flat in THEME_FLAT.items():
+        if key in updates:
+            patch[flat] = updates[key]
+    if source == "pywal":
+        # Back to the wallpaper: drop the colour overrides, or they keep winning.
+        for key in THEME_COLOURS:
+            patch[THEME_FLAT[key]] = ""
+    return patch
+
+
 def probe() -> dict:
     cfg = jsonconf.load()
-    theme = cfg.get("theme") or {}
+    theme = effective_theme(cfg)
     font = cfg.get("font") or {}
     source = theme.get("source") or ("manual" if cfg.get("use_pywal") is False else "pywal")
     gtk = gtk_values()
@@ -130,7 +187,7 @@ def probe() -> dict:
     cursor_size = int(gtk.get("gtk-cursor-theme-size") or 24)
     gtk_theme = gtk.get("gtk-theme-name") or ""
     gtk_font = gtk.get("gtk-font-name") or "Noto Sans 10"
-    wallpaper = str(cfg.get("wallpaper") or "")
+    wallpaper = current_wallpaper()
 
     theme_rows = [
         form.choice("source", "Colour source", source, [
@@ -187,13 +244,16 @@ def apply(changes: dict) -> dict:
     details: list[str] = []
     gtk: dict[str, str] = {}
 
-    if "source" in changes:
-        bar.setdefault("theme", {})["source"] = str(changes["source"])
+    theme_updates: dict = {}
     for key in ("background", "foreground", "accent"):
         if key in changes:
-            bar.setdefault("theme", {})[key] = str(changes[key])
+            theme_updates[key] = str(changes[key])
+    if "source" in changes:
+        theme_updates["source"] = str(changes["source"])
     if "border_animation" in changes:
-        bar.setdefault("theme", {})["border_animation"] = bool(changes["border_animation"])
+        theme_updates["border_animation"] = bool(changes["border_animation"])
+    if theme_updates:
+        bar.update(theme_patch(theme_updates, source=str(changes.get("source") or "")))
     if "opacity" in changes:
         bar["opacity"] = max(0.4, min(1.0, float(changes["opacity"])))
     if "border_width" in changes:
@@ -241,7 +301,6 @@ def action(name: str, args: dict) -> dict:
         result = util.run(command, timeout=45)
         if not result.ok:
             return base.fail(f"Could not apply the wallpaper: {result.text.strip()}")
-        jsonconf.patch({"wallpaper": str(path)})
         return base.ok("Wallpaper applied", details=[f"{command[0]} img {path}",
                                                      "pywal palette regenerated"])
 

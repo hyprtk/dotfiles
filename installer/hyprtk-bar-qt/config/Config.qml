@@ -101,9 +101,16 @@ Singleton {
     FileView {
         id: file
         path: root.filePath
+        // The Qt overrides are the highest-precedence layer of the bar theme, so
+        // an external writer (hyprtk-system-manager) must be able to change them
+        // while the bar is running; without this the bar kept the values it read
+        // at startup and looked like it ignored the change.
+        watchChanges: true
         blockLoading: true
         printErrors: false
         onLoaded: root._load()
+        onTextChanged: root._load()
+        onFileChanged: reload()
     }
 
     // `blockLoading` only blocks calls to file.text(); onLoaded is still async,

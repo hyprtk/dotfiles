@@ -17,7 +17,7 @@ def probe() -> dict:
             form.number("max_stored", "History size", int(block.get("max_stored") or 50),
                         minimum=0, maximum=500),
             form.number("default_timeout", "Banner timeout", int(block.get("default_timeout") or 5000),
-                        minimum=1000, maximum=30000, step=500, unit="ms"),
+                        minimum=1000, maximum=60000, step=500, unit="ms"),
         ], "Written to ~/.config/hyprtk-bar-qt/config.json."),
         form.section("Do not disturb", [
             form.note("Do-not-disturb is a live toggle in the bar; it is not persisted by "
@@ -39,7 +39,7 @@ def apply(changes: dict) -> dict:
     if "max_stored" in changes:
         updates["max_stored"] = max(0, min(500, int(changes["max_stored"])))
     if "default_timeout" in changes:
-        updates["default_timeout"] = max(1000, min(30000, int(changes["default_timeout"])))
+        updates["default_timeout"] = max(1000, min(60000, int(changes["default_timeout"])))
     if not updates:
         return base.ok("Nothing to change")
     jsonconf.patch({"notifications": updates})
