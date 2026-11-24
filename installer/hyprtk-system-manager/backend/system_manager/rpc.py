@@ -264,8 +264,7 @@ def _ui_get(params: dict) -> dict:
     data = util.read_json(paths.UI_STATE, {})
     if not isinstance(data, dict):
         return {}
-    recent = data.get("recent")
-    data["recent"] = [str(item) for item in recent] if isinstance(recent, list) else []
+    data.pop("recent", None)
     return data
 
 
@@ -275,10 +274,8 @@ def _ui_set(params: dict) -> dict:
         raise RpcError("values must be an object")
     current = _ui_get({})
     if "last_page" in updates:
-        last = str(updates["last_page"])
-        recent = [item for item in current.get("recent", []) if item != last]
-        recent.insert(0, last)
-        updates["recent"] = recent[:5]
+        updates["last_page"] = str(updates["last_page"])
+    current.pop("recent", None)
     current.update(updates)
     util.write_json(paths.UI_STATE, current)
     return current

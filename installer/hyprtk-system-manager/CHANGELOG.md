@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.1] — 2026-11-24
+
+### Removed
+
+- **The sidebar's “Recent” and “Suggested” groups.** They duplicated navigation
+  that the search field and the grouped list already cover; the sidebar is now
+  search → groups only. The `ui.json` state no longer carries a `recent` list
+  (a stale one is dropped on the next write).
+
 ## [0.5.0] — 2026-11-24
 
 The remainder of the P1 backlog: every panel that was read-only or partial now

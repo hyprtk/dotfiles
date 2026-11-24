@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.17.1] - 2026-11-24
+
+### Removed
+
+- **hyprtk-system-manager 0.5.1**: the sidebar's Recent and Suggested groups.
+  They duplicated the search field and the grouped list; the rail is now
+  search → groups only, and `ui.json` no longer stores a recent list.
+
 ## [v1.17.0] - 2026-11-24
 
 ### Added

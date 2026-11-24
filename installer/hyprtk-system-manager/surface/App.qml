@@ -26,7 +26,6 @@ Item {
     property string status: "Connecting to the backend…"
     property string searchText: ""
     property var searchResults: []
-    property var recentIds: []
     property bool searchIndexing: false
     property string shotPath: Quickshell.env("HYPRTK_SM_SHOT") || ""
 
@@ -148,7 +147,6 @@ Item {
         if (tag === "hello") {
             backend = r || ({});
             catalogData = (r && r.catalog) || ({ groups: [], panels: [] });
-            app.recentIds = (r && r.ui && r.ui.recent) || [];
             const envPage = Quickshell.env("HYPRTK_SM_PAGE") || "";
             let start = envPage || (r && r.ui && r.ui.last_page) || "about";
             if (!panels.some(p => p.id === start))
@@ -222,7 +220,6 @@ Item {
             return;
         Config.page = id;
         Config.lastPage = id;
-        app.recentIds = [id].concat(app.recentIds.filter(other => other !== id)).slice(0, 5);
         call("ui.set", { values: { last_page: id } });
         sidebar.clearSearch();
         const cached = pageCache[id];
@@ -535,7 +532,6 @@ Item {
                 groups: app.groups
                 panels: app.panels
                 searchResults: app.searchResults
-                recent: app.recentIds
                 searchIndexing: app.searchIndexing
                 currentPage: app.pageId
                 hostname: (app.backend && app.backend.hostname) || ""
