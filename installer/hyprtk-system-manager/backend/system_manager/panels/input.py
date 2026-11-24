@@ -25,10 +25,16 @@ OPTIONS = {
 
 
 def parse_option(text: str) -> str:
-    """``hyprctl getoption`` prints ``str: gb`` / ``int: 25`` on the first line."""
+    """``hyprctl getoption`` prints ``str: gb`` / ``int: 25`` on the first line.
+
+    An unset string option prints the literal marker ``[[EMPTY]]``, which must
+    become an empty value — writing it into the Lua block would configure a
+    profile called "[[EMPTY]]" instead of leaving the option alone.
+    """
     for line in text.splitlines():
         if ":" in line and line.split(":", 1)[0].strip() in ("str", "int", "float", "bool", "color"):
-            return line.split(":", 1)[1].strip().strip('"')
+            value = line.split(":", 1)[1].strip().strip('"')
+            return "" if value == "[[EMPTY]]" else value
     return ""
 
 
@@ -74,7 +80,7 @@ def probe() -> dict:
             form.text("kb_variant", "Variant", variant),
             form.number("repeat_rate", "Repeat rate", rate, minimum=1, maximum=100),
             form.number("repeat_delay", "Repeat delay", delay, minimum=100, maximum=2000, unit="ms"),
-        ], "Applied to the running compositor immediately."),
+        ], "Written to input.lua and applied by reloading the compositor."),
         form.section("Pointer", [
             form.slider("sensitivity", "Mouse sensitivity", sensitivity, minimum=-1.0, maximum=1.0, step=0.05),
             form.choice("accel_profile", "Acceleration profile", profile, [
@@ -95,10 +101,10 @@ def probe() -> dict:
             ),
         ]),
         form.section("Persistence", [
-            form.note("Changes apply to the running compositor immediately. Save them "
-                      "into input.lua to keep them after a reload or reboot; the block "
+            form.note("Applying writes the managed block into input.lua and reloads "
+                      "Hyprland — this build has no runtime `keyword` path. The block "
                       "only contains the settings on this page.", "info"),
-            form.action("Save to input.lua", "input.persist", variant="primary"),
+            form.action("Save current values", "input.persist", variant="primary"),
             form.action("Remove saved settings", "input.clear_persistent"),
             form.info("Config file", str(config) if config else "not found", mono=True),
             form.action("Open Hyprland settings", "input.open_hyprland"),
@@ -108,25 +114,39 @@ def probe() -> dict:
     return page
 
 
-def apply(changes: dict) -> dict:
-    details: list[str] = []
+def _merge(values: dict, changes: dict) -> dict:
+    """Overlay validated panel changes onto the live values."""
+    merged = dict(values)
     for key, value in (changes or {}).items():
         if key not in OPTIONS:
             continue
-        hypr_key, kind = OPTIONS[key]
+        kind = OPTIONS[key][1]
         if kind == "bool":
-            text = "true" if value else "false"
+            merged[key] = bool(value)
+        elif kind == "int":
+            merged[key] = int(value)
         elif kind == "float":
-            text = f"{float(value):g}"
+            merged[key] = float(value)
         else:
-            text = str(value)
-        result = util.run(["hyprctl", "keyword", hypr_key, text], timeout=8)
-        if not result.ok:
-            return base.fail(f"hyprctl rejected {hypr_key}: {result.text.strip()}")
-        details.append(f"{hypr_key} = {text}")
-    if not details:
+            merged[key] = "" if value is None else str(value).strip()
+    merged["repeat_rate"] = max(1, min(100, int(merged.get("repeat_rate") or 25)))
+    merged["repeat_delay"] = max(100, min(2000, int(merged.get("repeat_delay") or 600)))
+    merged["sensitivity"] = max(-1.0, min(1.0, float(merged.get("sensitivity") or 0.0)))
+    return merged
+
+
+def apply(changes: dict) -> dict:
+    """Write the managed block and reload.
+
+    ``hyprctl keyword`` is unsupported on this Lua-dispatch build (it answers
+    "unknown request" while exiting 0), so a runtime change is only possible by
+    writing the config and reloading — the same path the Displays panel uses.
+    """
+    if not any(key in OPTIONS for key in (changes or {})):
         return base.ok("Nothing to change")
-    return base.ok("Input settings applied for this session", details=details, live=True)
+    values = _merge(_values(), changes)
+    return _write(_lua_block(values),
+                  message="Input settings applied and saved to input.lua")
 
 
 def _values() -> dict:
@@ -174,7 +194,7 @@ def _strip_block(text: str) -> str:
     return pattern.sub("", text)
 
 
-def _write(block: str | None) -> dict:
+def _write(block: str | None, message: str = "") -> dict:
     target = paths.input_file()
     if target is None:
         return base.fail("No Hyprland Lua config found (input.lua)")
@@ -184,13 +204,14 @@ def _write(block: str | None) -> dict:
     if updated == original:
         return base.ok("Nothing to change")
     util.atomic_write(target, updated)
-    result = util.run(["hyprctl", "reload"], timeout=10)
-    if not result.ok:
+    ok, text = base.hypr_reload()
+    if not ok:
         util.atomic_write(target, original)
-        util.run(["hyprctl", "reload"], timeout=10)
-        return base.fail(f"Hyprland rejected the block: {result.text.strip()}")
+        base.hypr_reload()
+        return base.fail(f"Hyprland rejected the block: {text}")
     return base.ok(
-        "Saved input settings to input.lua" if block else "Removed saved input settings",
+        message or ("Saved input settings to input.lua" if block
+                    else "Removed saved input settings"),
         details=[str(target)],
     )
 

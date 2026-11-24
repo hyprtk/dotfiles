@@ -75,7 +75,10 @@ def parse_monitors(payload) -> list[dict]:
             "scale": float(mon.get("scale") or 1.0),
             "transform": int(mon.get("transform") or 0),
             "vrr": int(mon.get("vrr") or 0),
-            "mirror": str(mon.get("mirrorOf") or ""),
+            # hyprctl reports the literal string "none" when an output is not
+            # mirroring, which must not become `mirror = "none"` in the config.
+            "mirror": "" if str(mon.get("mirrorOf") or "").lower() in ("", "none")
+                      else str(mon.get("mirrorOf")),
             "format": str(mon.get("currentFormat") or ""),
             "currentCm": str(mon.get("colorManagementPreset") or ""),
             "disabled": bool(mon.get("disabled")),
@@ -169,16 +172,8 @@ def _strip_block(text: str) -> str:
 
 
 def _reload() -> tuple[bool, str]:
-    """Reload the config and treat hyprctl's textual errors as failures.
-
-    ``hyprctl`` exits 0 for some rejected requests ("unknown request"), so the
-    exit code alone is not a reliable success signal on this Lua build.
-    """
-    result = util.run(["hyprctl", "reload"], timeout=10)
-    text = result.text.strip()
-    lowered = text.lower()
-    ok = result.ok and "unknown request" not in lowered and "error:" not in lowered
-    return ok, text
+    """Reload the config; textual hyprctl errors count as failures."""
+    return base.hypr_reload()
 
 
 def _write_layout(monitors: list[dict], message: str) -> dict:

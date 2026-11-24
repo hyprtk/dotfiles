@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.17.2] - 2026-11-24
+
+### Fixed
+
+- **hyprtk-system-manager 0.5.2**: the Input panel's live Apply did nothing.
+  `hyprctl keyword` is unsupported on this Lua-dispatch Hyprland (it answers
+  “unknown request” and exits 0), so the panel reported success while no value
+  changed and `input.lua` was never written. Apply now writes the managed block
+  and reloads, with rollback on rejection.
+- `accel_profile = "[[EMPTY]]"` could be written into `input.lua` (hyprctl’s
+  marker for an unset string), and `mirror = "none"` into `monitors.lua` on
+  every save (hyprctl’s marker for not mirroring).
+
 ## [v1.17.1] - 2026-11-24
 
 ### Removed

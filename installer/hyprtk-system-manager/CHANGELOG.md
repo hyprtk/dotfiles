@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.5.2] — 2026-11-24
+
+Every Hyprland Lua write is now a real write plus a reload, and the two places
+that could corrupt the block are fixed.
+
+### Fixed
+
+- **Input’s live Apply did nothing.** `input.apply` used `hyprctl keyword`,
+  which this Lua-dispatch Hyprland answers with “unknown request” while exiting
+  **0** — so the panel reported success, the live value never changed and
+  `input.lua` was never written. Apply now merges the change into the managed
+  block and reloads, with rollback if Hyprland rejects it (the Displays path).
+  Verified live: `repeat_rate` 25 → 31 in the running compositor and in the file,
+  with the hand-written part of `input.lua` untouched.
+- **`accel_profile = "[[EMPTY]]"` could be written into `input.lua`.**
+  `hyprctl getoption` prints the literal `[[EMPTY]]` for an unset string option;
+  it is now parsed as empty and the row is omitted from the block.
+- **`mirror = "none"` was written into `monitors.lua` on every save.**
+  `hyprctl monitors` reports `mirrorOf: "none"` when an output is not mirroring;
+  that value is now treated as “not mirroring” and omitted.
+- Shared `base.hypr_reload()` treats `hyprctl` textual errors (“unknown request”,
+  `error:`) as failures, so a rejected reload rolls the file back.
+
+### Added
+
+- 134 tests: input apply through the file + reload, rollback on rejection,
+  `[[EMPTY]]` parsing, `mirrorOf: none`, plus the existing panel coverage.
+
 ## [0.5.1] — 2026-11-24
 
 ### Removed

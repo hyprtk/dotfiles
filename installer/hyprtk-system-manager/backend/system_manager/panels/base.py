@@ -51,6 +51,19 @@ def denied(message: str, command: str) -> dict:
     }
 
 
+def hypr_reload() -> tuple[bool, str]:
+    """Reload the Hyprland config, treating textual errors as failures.
+
+    ``hyprctl`` exits 0 for requests it rejects ("unknown request"), so the exit
+    code alone is not a success signal on this Lua-dispatch build.
+    """
+    result = util.run(["hyprctl", "reload"], timeout=10)
+    text = result.text.strip()
+    lowered = text.lower()
+    ok = result.ok and "unknown request" not in lowered and "error:" not in lowered
+    return ok, text
+
+
 def missing_note(binary: str, what: str) -> dict:
     return form.note(f"{what} is not installed ({binary} not found).", "warn")
 
