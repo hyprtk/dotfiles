@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.5 — 2026-11-24
+
+### Added
+
+- **`--system` install mode**, matching the rest of the suite. The payload goes
+  to `/usr/local/share/hyprtk-config-manager`, the launcher to
+  `/usr/local/bin/config-manager`, and the desktop entry to
+  `/usr/local/share/applications`; `--uninstall --system` removes them. This is
+  what lets the ISO ship Hyprland Settings, so the System Settings link and the
+  bar's Settings entry work on a live image.
+- `--dry-run` now reports the mode and works with `--system` without root.
+
 ## 0.2.4 — 2026-11-18
 
 ### Fixed

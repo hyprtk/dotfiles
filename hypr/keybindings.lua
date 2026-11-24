@@ -120,5 +120,8 @@ end)
 -- Application keybinds
 -- -----------------------------------------------------
 
+-- System Settings: hardware, users, appearance, network and suite app settings.
+hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("sh -c 'p=$HOME/.local/bin/hyprtk-settings; [ -x \"$p\" ] && exec \"$p\"'"))
+
 hl.bind(mainMod .. " + CTRL + U", hl.dsp.exec_cmd("pavucontrol"))
 hl.bind(mainMod .. " + CTRL + P", hl.dsp.exec_cmd("pamac-manager"))

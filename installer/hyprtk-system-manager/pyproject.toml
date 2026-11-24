@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyprtk-system-manager"
+dynamic = ["version"]
+description = "A single, searchable settings application for the hyprtk desktop"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+hyprtk-settings = "system_manager.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "backend" }
+packages = ["system_manager", "system_manager.panels"]
+
+[tool.setuptools.dynamic]
+version = { attr = "system_manager.__version__" }

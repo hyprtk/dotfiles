@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=System Settings
+GenericName=System Manager
+Comment=Configure the hyprtk desktop, hardware and suite applications
+Exec=hyprtk-settings open
+Icon=hyprtk-system-manager
+Terminal=false
+Categories=Settings;System;
+Keywords=settings;system;display;users;appearance;fonts;network;power;hyprtk;
+StartupNotify=true

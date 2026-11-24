@@ -115,7 +115,7 @@ for name in hyprtk-bar-qt hyprtk-bar-qt-arc-toggle hyprtk-bar-qt-clipboard-toggl
             hyprtk-bar-qt-settings-toggle hyprtk-bar-qt-themer-toggle \
             hyprtk-bar-qt-widget-move hyprtk-screenshot wal \
             hyprtk-fm hyprtk-edit hyprtk-term hyprtk-calc \
-            hyprtk-shot hyprtk-rec; do
+            hyprtk-shot hyprtk-rec hyprtk-settings config-manager; do
     [ -x "$SYS_BIN/$name" ] || continue
     ln -sfn "$SYS_BIN/$name" "$HOME/.local/bin/$name"
 done

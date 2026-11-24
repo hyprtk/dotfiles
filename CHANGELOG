@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.13.0] - 2026-11-24
+
+### Added
+
+- **hyprtk-system-manager 0.1.0** — the suite's System Settings app. Vendored at
+  `installer/hyprtk-system-manager/`, installed by `1-install.sh` after
+  config-manager, bound to `Super+I`, and installed system-wide on the ISO with
+  a first-run `~/.local/bin/hyprtk-settings` link.
+- **config-manager 0.2.5** — `--system` install mode. The ISO now installs
+  Hyprland Settings system-wide, so the bar's Settings entry and the System
+  Settings → Hyprland link work on a live image.
+
+### Fixed
+
+- **`config-manager --dry-run --system`** reports the mode and works without
+  root; `--uninstall --system` removes the launcher, payload and desktop entry.
+
 ## [v1.12.7] - 2026-11-23
 
 ### Fixed

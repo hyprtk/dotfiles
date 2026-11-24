@@ -2,7 +2,7 @@
 
 <img src="assets/branding/banner.png" alt="hyprtk — the desktop and the suite" width="100%" />
 
-[![suite](https://img.shields.io/badge/suite-v1.9.2-02DEDE?style=flat-square&labelColor=05060B)](CHANGELOG)
+[![suite](https://img.shields.io/badge/suite-v1.13.0-02DEDE?style=flat-square&labelColor=05060B)](CHANGELOG)
 [![distros](https://img.shields.io/badge/distributions-18-FD4FB6?style=flat-square&labelColor=05060B)](README.md#portability)
 [![license](https://img.shields.io/badge/license-GPL--2.0-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 [![palette](https://img.shields.io/badge/palette-02DEDE%20%C2%B7%20FD4FB6-8A93A6?style=flat-square&labelColor=05060B)](#branding)
@@ -24,7 +24,7 @@ A single installer for a fully themed **Hyprland (Wayland)** desktop on **any Li
 ---
 
 > **The hyprtk suite** — this repository is the desktop itself.
-> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [screenshot](https://github.com/hyprtk/hyprtk-shot) · [recorder](https://github.com/hyprtk/hyprtk-rec) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
+> Apps: [dotfiles](https://github.com/hyprtk/dotfiles) · [system settings](installer/hyprtk-system-manager) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [screenshot](https://github.com/hyprtk/hyprtk-shot) · [recorder](https://github.com/hyprtk/hyprtk-rec) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
 
 ## What is this?
 
@@ -112,6 +112,7 @@ works. See [`PORTABILITY.md`](PORTABILITY.md) for the full matrix.
 | `Super + F` | File manager (hyprtk-fm) |
 | `Super + E` | Text editor (hyprtk-edit) |
 | `Super + N` | Calculator (hyprtk-calc) |
+| `Super + I` | System Settings (hyprtk-settings) |
 | `Super + B` / `Super + Ctrl + B` | Brave / Chromium |
 | `Super + X` | Exit session |
 | `Super + M` | Toggle fullscreen |
@@ -205,7 +206,7 @@ the crop.
 
 ## Suite repositories
 
-hyprtk is one desktop kept in eleven repositories. **This one is the desktop**:
+hyprtk is one desktop kept in twelve repositories. **This one is the desktop**:
 the installer, the Hyprland configuration, the themes and the scripts. The apps
 are separate repositories, each with its own installer, vendored into this tree
 so a single install lays down all of them:
@@ -221,6 +222,7 @@ so a single install lays down all of them:
 | [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool — grim capture, frozen overlay, annotations, crop grips, window picker, pin to screen, save/copy, CLI | vendored, installed after the calculator |
 | [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder — wf-recorder/wl-screenrec, system+mic mix, window picker, GIF, trim, recovery, HUD, CLI | vendored, installed after hyprtk-shot |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI (Lua-first), opened from the bar's Settings | vendored and installed |
+| [**hyprtk-system-manager**](installer/hyprtk-system-manager) | the suite's System Settings — 25 searchable panels covering displays, users, appearance, fonts, network, updates and the suite apps | vendored, installed after config-manager |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a built ISO to a USB stick, with optional persistence | shipped installer app |
 | [**Hyprtk-ISO-Creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed | shipped installer app |
 

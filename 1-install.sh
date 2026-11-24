@@ -1064,6 +1064,11 @@ else
         _spin "Installing config-manager..." "bash $SCRIPT_DIR/installer/config-manager/install.sh" "$LOG_FILE"
         _ok "config-manager installed (opened from the bar's Settings → Hyprland Settings)"
 
+        # ── hyprtk-system-manager (System Settings) ─────────────────
+        _step "Installing System Settings (hyprtk-system-manager)"
+        _spin "Installing hyprtk-system-manager..." "bash $SCRIPT_DIR/installer/hyprtk-system-manager/install.sh" "$LOG_FILE"
+        _ok "hyprtk-system-manager installed (hyprtk-settings; Super+I)"
+
         # ── hyprtk-file-manager (GUI) ──────────────────────────────
         _step "Installing hyprtk-file-manager"
         _spin "Installing hyprtk-file-manager..." "bash $SCRIPT_DIR/installer/hyprtk-file-manager/install.sh" "$LOG_FILE"

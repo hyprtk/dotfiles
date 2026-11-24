@@ -6,7 +6,8 @@
 # No root is needed and no system packages are modified: Quickshell (`qs`) and a
 # Lua interpreter come from the hyprtk suite / your distro.
 #
-# Usage: ./install.sh             install or update
+# Usage: ./install.sh             install or update (user)
+#        ./install.sh --system    install under /usr/local (ISO / system-wide)
 #        ./install.sh --dry-run   check dependencies, change nothing
 #        ./install.sh --uninstall remove the app (keeps your backups)
 #        ./install.sh --help      show this message
@@ -17,18 +18,16 @@ APP_NAME="hyprtk-config-manager"
 LAUNCHER_NAME="config-manager"
 TITLE="Hyprland Settings"
 SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
-INSTALL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/$APP_NAME"
-BIN_DIR="$HOME/.local/bin"
-APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
-DESKTOP_FILE="$APPS_DIR/$APP_NAME.desktop"
 STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hyprtk-config-manager"
 
+SYSTEM_MODE=0
 DRY_RUN=0
 DO_UNINSTALL=0
 
 usage() {
-    echo "Usage: $0 [--dry-run|--uninstall|--help]"
-    echo "  (no args)     Install or update $TITLE."
+    echo "Usage: $0 [--system] [--dry-run|--uninstall|--help]"
+    echo "  (no args)     Install or update $TITLE for the current user."
+    echo "  --system      Install under /usr/local (used by the ISO)."
     echo "  --dry-run     Check requirements and report what is missing; change nothing."
     echo "  --uninstall   Remove the app, launcher and desktop entry (backups are kept)."
 }
@@ -37,16 +36,34 @@ for arg in "$@"; do
     case "$arg" in
         -h|--help) usage; exit 0 ;;
         --dry-run) DRY_RUN=1 ;;
+        --system) SYSTEM_MODE=1 ;;
         -u|--uninstall) DO_UNINSTALL=1 ;;
         *) echo ":: WARN: unknown option '$arg' (ignored)" >&2 ;;
     esac
 done
+
+if [ "$SYSTEM_MODE" -eq 1 ]; then
+    INSTALL_DIR="/usr/local/share/$APP_NAME"
+    BIN_DIR="/usr/local/bin"
+    APPS_DIR="/usr/local/share/applications"
+else
+    INSTALL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/$APP_NAME"
+    BIN_DIR="$HOME/.local/bin"
+    APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+fi
+DESKTOP_FILE="$APPS_DIR/$APP_NAME.desktop"
 
 # Called by hyprtk-merged's installer under HYPRTK_DRYRUN: the package step is
 # simulated, so do not fail on (intentionally) missing runtime tools.
 if [ "${HYPRTK_DRYRUN:-}" = "1" ]; then
     echo ":: DRYRUN: would install $TITLE into $INSTALL_DIR"
     exit 0
+fi
+
+# Root is required only for --system.
+if [ "$SYSTEM_MODE" -eq 1 ] && [ "$(id -u)" -ne 0 ] && [ "$DRY_RUN" -eq 0 ]; then
+    echo ":: --system needs root (sudo $0 --system)" >&2
+    exit 1
 fi
 
 on_path() {
@@ -71,15 +88,10 @@ missing_deps() {
 }
 
 if [ "$DO_UNINSTALL" -eq 1 ]; then
-    echo ":: Uninstalling $APP_NAME..."
+    echo ":: Uninstalling $APP_NAME (system mode: $SYSTEM_MODE)..."
     if [ -L "$BIN_DIR/$LAUNCHER_NAME" ] \
         && [ "$(readlink -f "$BIN_DIR/$LAUNCHER_NAME")" = "$INSTALL_DIR/bin/$LAUNCHER_NAME" ]; then
         rm -f "$BIN_DIR/$LAUNCHER_NAME"
-    fi
-    if [ -L "/usr/local/bin/$LAUNCHER_NAME" ] \
-        && [ "$(readlink -f "/usr/local/bin/$LAUNCHER_NAME")" = "$INSTALL_DIR/bin/$LAUNCHER_NAME" ]; then
-        rm -f "/usr/local/bin/$LAUNCHER_NAME" 2>/dev/null \
-            || sudo rm -f "/usr/local/bin/$LAUNCHER_NAME" 2>/dev/null || true
     fi
     rm -rf "${INSTALL_DIR:?}"
     rm -f "$DESKTOP_FILE"
@@ -92,8 +104,9 @@ fi
 
 MISSING="$(missing_deps)"
 
-if [ "$DRY_RUN" -eq 1 ] || [ "${HYPRTK_DRYRUN:-}" = "1" ]; then
+if [ "$DRY_RUN" -eq 1 ]; then
     echo ":: Dry run — nothing will be installed or modified."
+    echo ":: Mode:            $([ "$SYSTEM_MODE" -eq 1 ] && echo system || echo user)"
     echo ":: Install dir:     $INSTALL_DIR"
     echo ":: Launcher:        $BIN_DIR/$LAUNCHER_NAME"
     echo ":: Desktop entry:   $DESKTOP_FILE"
@@ -104,9 +117,7 @@ if [ "$DRY_RUN" -eq 1 ] || [ "${HYPRTK_DRYRUN:-}" = "1" ]; then
         echo ":: Result: MISSING — $(echo "$MISSING" | tr '\n' ' ')"
         exit 1
     fi
-    if on_path "$BIN_DIR"; then
-        echo ":: ~/.local/bin on PATH: yes"
-    else
+    if [ "$SYSTEM_MODE" -eq 0 ] && ! on_path "$BIN_DIR"; then
         echo ":: ~/.local/bin on PATH: no (the launcher will be linked into /usr/local/bin when possible)"
     fi
     echo ":: Result: ready."
@@ -139,19 +150,7 @@ chmod +x "$stage/bin/$LAUNCHER_NAME"
 rm -rf "${INSTALL_DIR:?}"
 mv "$stage" "$INSTALL_DIR"
 
-# Launcher on PATH.
 ln -sf "$INSTALL_DIR/bin/$LAUNCHER_NAME" "$BIN_DIR/$LAUNCHER_NAME"
-if ! on_path "$BIN_DIR"; then
-    if [ "$(id -u)" -eq 0 ]; then
-        ln -sf "$INSTALL_DIR/bin/$LAUNCHER_NAME" "/usr/local/bin/$LAUNCHER_NAME" 2>/dev/null || true
-    elif command -v sudo >/dev/null 2>&1; then
-        sudo ln -sf "$INSTALL_DIR/bin/$LAUNCHER_NAME" "/usr/local/bin/$LAUNCHER_NAME" 2>/dev/null \
-            && echo ":: ~/.local/bin is not on PATH — linked into /usr/local/bin" \
-            || echo ":: NOTE: ~/.local/bin is not on PATH; run $INSTALL_DIR/bin/$LAUNCHER_NAME"
-    else
-        echo ":: NOTE: add $BIN_DIR to PATH to use '$LAUNCHER_NAME' directly."
-    fi
-fi
 
 # App icon: absolute path next to the app, so the entry never depends on an
 # icon package being installed.

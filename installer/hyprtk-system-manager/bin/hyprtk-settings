@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+# hyprtk-settings launcher: CLI and the Quickshell front end.
+set -eu
+
+# Suite conventions: GTK icons/fonts for the Qt platform theme, Basic controls
+# so our own QML styling is what gets drawn.
+: "${QT_QPA_PLATFORMTHEME:=gtk3}"
+: "${QT_QUICK_CONTROLS_STYLE:=Basic}"
+# Quickshell names every toplevel "org.quickshell" unless this is set, which
+# costs the app its desktop entry, icon and window rules.
+: "${QS_APP_ID:=hyprtk-system-manager}"
+export QT_QPA_PLATFORMTHEME QT_QUICK_CONTROLS_STYLE QS_APP_ID
+
+SELF=$(readlink -f "$0")
+ROOT=$(CDPATH= cd -- "$(dirname -- "$SELF")/.." && pwd)
+export PYTHONPATH="$ROOT/backend${PYTHONPATH:+:$PYTHONPATH}"
+
+exec python3 -m system_manager.cli "$@"
