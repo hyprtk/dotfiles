@@ -10,7 +10,7 @@
 
 # hyprtk-bar-qt
 
-> **Part of the hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
+> **Part of the hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [screenshot](https://github.com/hyprtk/hyprtk-shot) · [recorder](https://github.com/hyprtk/hyprtk-rec) · [system manager](https://github.com/hyprtk/hyprtk-system-manager) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
 
 The hyprtk taskbar, rewritten on Qt. **QML presentation + Python/IPC logic**,
 built on [Quickshell](https://quickshell.org/) (a QtQuick toolkit that provides
@@ -254,7 +254,7 @@ The banner, icon and palette are generated from the brand kit described in the
 
 ## Part of the hyprtk suite
 
-hyprtk is one desktop kept in nine repositories: every one of them installs
+hyprtk is one desktop kept in twelve repositories: every one of them installs
 or configures part of the same pywal-themed, Arch-first Hyprland setup.
 
 | project | what it is |
@@ -265,6 +265,9 @@ or configures part of the same pywal-themed, Arch-first Hyprland setup.
 | [**hyprtk-editor**](https://github.com/hyprtk/hyprtk-editor) | the Qt Quick text editor, default for `text/plain` and `text/markdown` |
 | [**hyprtk-term**](https://github.com/hyprtk/hyprtk-term) | the Qt Quick terminal: libvterm core, tabs, scrollback search, pywal palette |
 | [**hyprtk-calc**](https://github.com/hyprtk/hyprtk-calc) | the Qt Quick calculator: exact decimal arithmetic, three modes |
+| [**hyprtk-shot**](https://github.com/hyprtk/hyprtk-shot) | the screenshot tool: frozen overlay, crop grips, annotations, window picker, pin to screen |
+| [**hyprtk-rec**](https://github.com/hyprtk/hyprtk-rec) | the screen recorder: wf-recorder/wl-screenrec, mixed audio, GIF, trim, HUD |
+| [**hyprtk-system-manager**](https://github.com/hyprtk/hyprtk-system-manager) | the suite's System Settings: 25 searchable panels for hardware, users, appearance and the apps |
 | [**config-manager**](https://github.com/hyprtk/hyprtk-hyprland-config-manager) | the Hyprland settings GUI, opened from the bar's Settings |
 | [**hyprtk-usb**](https://github.com/hyprtk/hyprtk-usb) | writes a hyprtk ISO to a USB stick, with optional persistence |
 | [**ISO creator**](https://github.com/hyprtk/Hyprtk-ISO-Creator) | builds the installable ISO: `airootfs`, package lists, first-run seed |

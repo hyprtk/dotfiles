@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.13.1] - 2026-11-24
+
+### Documentation
+
+- **hyprtk-system-manager is now public** at
+  https://github.com/hyprtk/hyprtk-system-manager and appears in the suite list
+  of the dotfiles README, the four wikis, the profile repository and every app
+  README. The suite tables are up to twelve repositories again (screenshot,
+  recorder and system manager were missing from several of them).
+- Docs only: the v1.13.0 gate is carried (T1 1384/26/88/0, T2 9/9, audit 1498
+  rows / 0 Unexpected / 0 TODO).
+
 ## [v1.13.0] - 2026-11-24
 
 ### Added
