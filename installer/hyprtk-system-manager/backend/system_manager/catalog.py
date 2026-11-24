@@ -72,8 +72,9 @@ PANELS: list[dict[str, Any]] = [
         "status": "full", "module": "displays",
         "keywords": ["display", "monitor", "screen", "resolution", "refresh",
                      "scale", "scaling", "rotation", "transform", "position",
-                     "output", "mode", "vrr", "hidpi", "mirror"],
-        "description": "Arrange, enable, scale and rotate your monitors.",
+                     "output", "mode", "vrr", "hidpi", "mirror", "bit depth",
+                     "10-bit", "hdr", "colour management", "color management"],
+        "description": "Arrange, mirror, scale, rotate and colour your monitors.",
     },
     {
         "id": "graphics", "title": "Graphics", "group": "hardware", "icon": "\uf2db",
@@ -86,8 +87,9 @@ PANELS: list[dict[str, Any]] = [
         "id": "sound", "title": "Sound", "group": "hardware", "icon": "\uf028",
         "status": "partial", "module": "sound",
         "keywords": ["sound", "audio", "volume", "mute", "sink", "output",
-                     "input", "microphone", "pipewire", "wireplumber", "pulse"],
-        "description": "Output and input devices, volume and mute.",
+                     "input", "microphone", "pipewire", "wireplumber", "pulse",
+                     "profile", "card", "codec", "hdmi", "stream", "per-app"],
+        "description": "Output and input devices, volume, card profiles and streams.",
     },
     {
         "id": "input", "title": "Input Devices", "group": "hardware", "icon": "\uf11c",
@@ -113,9 +115,10 @@ PANELS: list[dict[str, Any]] = [
     },
     {
         "id": "printers", "title": "Printers", "group": "hardware", "icon": "\uf02f",
-        "status": "read", "module": "printers",
-        "keywords": ["printer", "printing", "cups", "queue", "scanner", "paper"],
-        "description": "CUPS queues and default printer.",
+        "status": "partial", "module": "printers",
+        "keywords": ["printer", "printing", "cups", "queue", "scanner", "paper",
+                     "lpadmin", "driver", "test page", "default printer"],
+        "description": "CUPS queues: add, remove, test and set the default.",
     },
     {
         "id": "storage", "title": "Storage", "group": "hardware", "icon": "\uf0a0",
@@ -130,8 +133,9 @@ PANELS: list[dict[str, Any]] = [
         "id": "network", "title": "Network", "group": "network", "icon": "\uf1eb",
         "status": "partial", "module": "network",
         "keywords": ["network", "wifi", "wi-fi", "wireless", "ethernet", "vpn",
-                     "connection", "nmcli", "networkmanager", "ip", "dns", "proxy"],
-        "description": "Wi-Fi networks, saved connections and radio state.",
+                     "connection", "nmcli", "networkmanager", "ip", "dns", "proxy",
+                     "openvpn", "wireguard", "ovpn", "import", "forget"],
+        "description": "Wi-Fi, saved networks, VPN profiles and radio state.",
     },
 
     # ── Personalisation ─────────────────────────────────────────────────
@@ -213,8 +217,10 @@ PANELS: list[dict[str, Any]] = [
         "id": "accessibility", "title": "Accessibility", "group": "accessibility", "icon": "\uf29a",
         "status": "partial", "module": "accessibility",
         "keywords": ["accessibility", "a11y", "large text", "zoom", "contrast",
-                     "sticky keys", "screen reader", "cursor size", "visual alerts"],
-        "description": "Visual and input accessibility options.",
+                     "sticky keys", "slow keys", "bounce keys", "mouse keys",
+                     "screen reader", "orca", "on-screen keyboard", "osk",
+                     "cursor size", "visual alerts", "text scaling", "reduced motion"],
+        "description": "Text scaling, contrast, motion, keyboard aids, reader and OSK.",
     },
 ]
 

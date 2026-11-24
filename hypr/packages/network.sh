@@ -6,31 +6,32 @@ _PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 
 case "$HYPRTK_PM" in
 pacman)
-    PKGS=(networkmanager network-manager-applet git freerdp curl gvfs gvfs-afc
-          gvfs-dnssd gvfs-goa gvfs-gphoto2 gvfs-mtp gvfs-nfs gvfs-onedrive gvfs-smb
-          gvfs-wsdd ntfs-3g samba)
+    PKGS=(networkmanager network-manager-applet networkmanager-openvpn git freerdp
+          curl gvfs gvfs-afc gvfs-dnssd gvfs-goa gvfs-gphoto2 gvfs-mtp gvfs-nfs
+          gvfs-onedrive gvfs-smb gvfs-wsdd ntfs-3g samba)
     ;;
 apt)
-    PKGS=(network-manager network-manager-gnome git freerdp3-x11 curl gvfs
-          gvfs-backends ntfs-3g samba)
+    PKGS=(network-manager network-manager-gnome network-manager-openvpn git
+          freerdp3-x11 curl gvfs gvfs-backends ntfs-3g samba)
     ;;
 dnf)
-    PKGS=(NetworkManager network-manager-applet git freerdp curl gvfs gvfs-afc
-          gvfs-goa gvfs-gphoto2 gvfs-mtp gvfs-nfs gvfs-smb ntfs-3g samba)
+    PKGS=(NetworkManager network-manager-applet NetworkManager-openvpn git freerdp
+          curl gvfs gvfs-afc gvfs-goa gvfs-gphoto2 gvfs-mtp gvfs-nfs gvfs-smb
+          ntfs-3g samba)
     ;;
 zypper)
-    PKGS=(NetworkManager NetworkManager-applet git freerdp curl gvfs gvfs-backends
-          ntfs-3g samba)
+    PKGS=(NetworkManager NetworkManager-applet NetworkManager-openvpn git freerdp
+          curl gvfs gvfs-backends ntfs-3g samba)
     ;;
 xbps)
     # Void's gvfs is monolithic — the nfs backend ships in `gvfs` itself, so
     # there is no separate gvfs-nfs to request.
-    PKGS=(NetworkManager network-manager-applet git freerdp curl gvfs gvfs-afc
-          gvfs-goa gvfs-gphoto2 gvfs-mtp gvfs-smb ntfs-3g samba)
+    PKGS=(NetworkManager network-manager-applet NetworkManager-openvpn git freerdp
+          curl gvfs gvfs-afc gvfs-goa gvfs-gphoto2 gvfs-mtp gvfs-smb ntfs-3g samba)
     ;;
 apk)
-    PKGS=(networkmanager networkmanager-wifi network-manager-applet git freerdp curl
-          gvfs ntfs-3g samba)
+    PKGS=(networkmanager networkmanager-wifi network-manager-applet
+          networkmanager-openvpn git freerdp curl gvfs ntfs-3g samba)
     ;;
 esac
 

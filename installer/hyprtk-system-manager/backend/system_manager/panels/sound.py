@@ -48,6 +48,46 @@ def parse_wpctl(text: str) -> dict:
     return data
 
 
+def parse_cards(text: str) -> list[dict]:
+    """Parse ``pactl list cards`` into cards with their selectable profiles."""
+    cards: list[dict] = []
+    card: dict | None = None
+    in_profiles = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("Card #"):
+            card = {"name": "", "description": "", "active": "", "profiles": []}
+            cards.append(card)
+            in_profiles = False
+            continue
+        if card is None:
+            continue
+        if stripped.startswith("Name:"):
+            card["name"] = stripped.split(":", 1)[1].strip()
+            continue
+        if stripped.startswith("device.description"):
+            card["description"] = stripped.split("=", 1)[1].strip().strip('"')
+            continue
+        if stripped == "Profiles:":
+            in_profiles = True
+            continue
+        if stripped.startswith("Active Profile:"):
+            card["active"] = stripped.split(":", 1)[1].strip()
+            in_profiles = False
+            continue
+        if stripped in ("Ports:", "Properties:", "Volume:", "Formats:"):
+            in_profiles = False
+            continue
+        if in_profiles and ": " in stripped:
+            ident, _, rest = stripped.partition(": ")
+            label = rest.split(" (sinks:", 1)[0].strip()
+            available = "available: yes" in rest
+            card["profiles"].append({
+                "id": ident.strip(), "label": label, "available": available,
+            })
+    return [card for card in cards if card["name"]]
+
+
 def _volume(target: str) -> tuple[float, bool]:
     result = util.run(["wpctl", "get-volume", target], timeout=6)
     volume = 0.0
@@ -92,6 +132,22 @@ def probe() -> dict:
         for source in parsed["sources"]
     ]
 
+    card_rows: list[dict] = []
+    for card in parse_cards(util.run(["pactl", "list", "cards"], timeout=10).out):
+        choices = [
+            {"value": profile["id"], "label": profile["label"]}
+            for profile in card["profiles"] if profile["available"]
+        ]
+        if not choices:
+            continue
+        card_rows.append(form.choice(
+            f"card::{card['name']}::profile",
+            card["description"] or card["name"],
+            card["active"],
+            choices,
+            help="Card profile (output/input combination and codec).",
+        ))
+
     stream_rows: list[dict] = []
     for stream in parsed["streams"]:
         volume, muted = _volume(str(stream["id"]))
@@ -126,6 +182,9 @@ def probe() -> dict:
         form.section("Input devices", [
             form.list_row(source_items) if source_items else form.note("No audio inputs found.", "warn"),
         ]),
+        form.section("Card profiles", card_rows,
+                     "Choose an output/input combination for each sound card.") if card_rows else
+        form.section("Card profiles", [form.note("No selectable card profiles.", "info")]),
         form.section("Application streams", stream_rows,
                      "Per-application volume and mute for active PipeWire streams."),
         form.section("Service", [
@@ -164,6 +223,16 @@ def apply(changes: dict) -> dict:
         if "input_muted" in changes:
             details.append(_set_mute("@DEFAULT_AUDIO_SOURCE@", bool(changes["input_muted"])))
         for key, value in (changes or {}).items():
+            if key.startswith("card::") and key.endswith("::profile"):
+                card = key[len("card::"):-len("::profile")]
+                profile = str(value)
+                if not card or not profile:
+                    continue
+                result = util.run(["pactl", "set-card-profile", card, profile], timeout=10)
+                if not result.ok:
+                    raise RuntimeError(result.text.strip() or f"pactl set-card-profile {card} failed")
+                details.append(f"pactl set-card-profile {card} {profile}")
+                continue
             if not key.startswith("stream."):
                 continue
             parts = key.split(".")

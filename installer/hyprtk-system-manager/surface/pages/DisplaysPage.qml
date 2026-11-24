@@ -24,6 +24,20 @@ Flickable {
     property string configFile: model.configFile || ""
     property bool managed: !!model.managed
 
+    readonly property var bitDepthChoices: [
+        {value: "auto", label: "Auto"},
+        {value: "8", label: "8-bit"},
+        {value: "10", label: "10-bit"},
+    ]
+
+    readonly property var cmChoices: [
+        {value: "auto", label: "Auto"},
+        {value: "srgb", label: "sRGB"},
+        {value: "hdr", label: "HDR"},
+        {value: "wide", label: "Wide gamut"},
+        {value: "edid", label: "EDID"},
+    ]
+
     readonly property var vrrChoices: [
         {value: "0", label: "Off"},
         {value: "1", label: "Always on"},
@@ -51,6 +65,12 @@ Flickable {
                 transform: String(mon.transform || 0),
                 vrr: String(mon.vrr || 0),
                 mirror: mon.mirror || "",
+                // The compositor reports the current buffer format, so a 10-bit
+                // scanout is visible; anything else starts at the default.
+                bitdepth: String(mon.format || "").indexOf("2101010") >= 0 ? "10" : "auto",
+                cm: "auto",
+                format: mon.format || "",
+                currentCm: mon.currentCm || "",
                 x: mon.x,
                 y: mon.y,
                 disabled: mon.disabled,
@@ -93,6 +113,8 @@ Flickable {
             transform: parseInt(item.transform) || 0,
             vrr: parseInt(item.vrr) || 0,
             mirror: item.mirror || "",
+            bitdepth: item.bitdepth || "auto",
+            cm: item.cm || "auto",
             x: item.x || 0,
             y: item.y || 0,
             disabled: !!item.disabled,
@@ -240,7 +262,9 @@ Flickable {
                     description: (model.description || "Monitor") + " · " +
                                  (model.disabled ? "disabled"
                                   : model.width + "×" + model.height + " @ " +
-                                    Number(model.refreshRate).toFixed(2) + " Hz")
+                                    Number(model.refreshRate).toFixed(2) + " Hz" +
+                                    (model.format ? " · " + model.format : "") +
+                                    (model.currentCm ? " · " + model.currentCm : ""))
 
                     SettingRow {
                         label: "Enabled"
@@ -291,6 +315,28 @@ Flickable {
                             value: model.vrr
                             choices: page.vrrChoices
                             onSelected: (v) => layout.setProperty(index, "vrr", v)
+                        }
+                    }
+                    SettingRow {
+                        label: "Bit depth"
+                        help: "Auto keeps the compositor default; 10-bit needs a capable display."
+                        visible: !model.disabled
+                        Dropdown {
+                            preferredWidth: 160
+                            value: model.bitdepth
+                            choices: page.bitDepthChoices
+                            onSelected: (v) => layout.setProperty(index, "bitdepth", v)
+                        }
+                    }
+                    SettingRow {
+                        label: "Colour management"
+                        help: "HDR requires an HDR-capable output; unsupported rules are ignored."
+                        visible: !model.disabled
+                        Dropdown {
+                            preferredWidth: 180
+                            value: model.cm
+                            choices: page.cmChoices
+                            onSelected: (v) => layout.setProperty(index, "cm", v)
                         }
                     }
                     SettingRow {

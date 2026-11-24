@@ -90,6 +90,28 @@ def run_json(argv: Sequence[str], **kwargs: Any) -> Any:
     return run(argv, **kwargs).json()
 
 
+def spawn(argv: Sequence[str], *, env: dict[str, str] | None = None) -> bool:
+    """Start a detached process and return immediately.
+
+    A GUI launched by an RPC handler must not be waited on: the panel would
+    block until the app exits, and a killed parent would take the child with it.
+    """
+    args = [str(part) for part in argv]
+    merged = None
+    if env:
+        merged = dict(os.environ)
+        merged.update(env)
+    try:
+        subprocess.Popen(
+            args, env=merged, start_new_session=True,
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, ValueError):
+        return False
+    return True
+
+
 def read_text(path: str | Path, default: str = "") -> str:
     try:
         return Path(path).read_text(encoding="utf-8", errors="replace")

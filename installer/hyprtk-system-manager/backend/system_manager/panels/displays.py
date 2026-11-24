@@ -76,6 +76,8 @@ def parse_monitors(payload) -> list[dict]:
             "transform": int(mon.get("transform") or 0),
             "vrr": int(mon.get("vrr") or 0),
             "mirror": str(mon.get("mirrorOf") or ""),
+            "format": str(mon.get("currentFormat") or ""),
+            "currentCm": str(mon.get("colorManagementPreset") or ""),
             "disabled": bool(mon.get("disabled")),
             "modes": modes,
             "currentMode": current,
@@ -150,6 +152,12 @@ def _lua_block(monitors: list[dict]) -> str:
             mirror = str(mon.get("mirror") or "")
             if mirror:
                 fields.append("mirror = {}".format(json.dumps(mirror)))
+            bitdepth = str(mon.get("bitdepth") or "auto")
+            if bitdepth not in ("", "auto"):
+                fields.append("bitdepth = {}".format(int(bitdepth)))
+            cm = str(mon.get("cm") or "auto")
+            if cm not in ("", "auto"):
+                fields.append("cm = {}".format(json.dumps(cm)))
         lines.append("hl.monitor({ " + ", ".join(fields) + " })")
     lines.append(END)
     return "\n".join(lines) + "\n"
@@ -205,7 +213,7 @@ def action(name: str, args: dict) -> dict:
             if mon["name"] != target_name:
                 continue
             found = True
-            for key in ("mode", "scale", "transform", "vrr", "mirror"):
+            for key in ("mode", "scale", "transform", "vrr", "mirror", "bitdepth", "cm"):
                 if key in args:
                     mon[key] = args[key]
             for key in ("x", "y"):

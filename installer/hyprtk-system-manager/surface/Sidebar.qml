@@ -46,6 +46,22 @@ Rectangle {
                      (panel.keywords || []).join(" ")).toLowerCase();
         return hay.indexOf(search.text.toLowerCase()) >= 0;
     }
+    // Panels that cover most everyday tasks, shown when the search box is empty.
+    readonly property var suggestedIds: ["displays", "sound", "network", "appearance", "updates"]
+    function suggested() {
+        const out = [];
+        for (let i = 0; i < sidebar.suggestedIds.length; i++) {
+            const id = sidebar.suggestedIds[i];
+            if (id === sidebar.currentPage)
+                continue;
+            if (sidebar.recent.indexOf(id) >= 0)
+                continue;
+            if (sidebar.panelById(id) === null)
+                continue;
+            out.push(id);
+        }
+        return out;
+    }
 
     color: Theme.alpha(Theme.background, 0.60)
     // Match the panel's corner so the rail never paints a square corner outside
@@ -217,6 +233,39 @@ Rectangle {
                         model: sidebar.searchText.length === 0
                             ? sidebar.recent.filter(id => id !== sidebar.currentPage)
                             : []
+                        delegate: NavItem {
+                            required property var modelData
+                            readonly property var meta: sidebar.panelById(modelData)
+                            visible: meta !== null
+                            x: 10
+                            width: navColumn.width - 20
+                            glyph: meta ? meta.icon : ""
+                            label: meta ? meta.title : ""
+                            active: sidebar.currentPage === modelData
+                            onClicked: sidebar.select(modelData)
+                        }
+                    }
+                }
+
+                // suggested panels (nothing searched, nothing repeated)
+                Column {
+                    width: navColumn.width
+                    spacing: 1
+                    visible: sidebar.searchText.length === 0 && sidebar.suggested().length > 0
+
+                    Text {
+                        x: 14
+                        topPadding: 10
+                        bottomPadding: 2
+                        text: "Suggested"
+                        color: Theme.accent2
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.size(0)
+                        font.bold: true
+                    }
+
+                    Repeater {
+                        model: sidebar.searchText.length === 0 ? sidebar.suggested() : []
                         delegate: NavItem {
                             required property var modelData
                             readonly property var meta: sidebar.panelById(modelData)

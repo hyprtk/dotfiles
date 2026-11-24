@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import tempfile
 from contextlib import contextmanager
+from pathlib import Path
 
 from .. import form, util
 from . import base
@@ -70,7 +71,8 @@ def parse_wifi(text: str) -> list[dict]:
     return networks
 
 
-def parse_connections(text: str) -> list[dict]:
+def parse_connections(text: str,
+                      kinds: tuple[str, ...] = ("wifi", "802-11-wireless", "wireless")) -> list[dict]:
     connections: list[dict] = []
     for line in text.splitlines():
         parts = _split_terse(line)
@@ -78,10 +80,10 @@ def parse_connections(text: str) -> list[dict]:
             continue
         name, kind = parts[0], parts[1]
         device = parts[2] if len(parts) > 2 else ""
-        if kind not in ("wifi", "802-11-wireless", "wireless"):
+        if kind not in kinds:
             continue
         connections.append({
-            "name": name, "device": device, "active": bool(device),
+            "name": name, "type": kind, "device": device, "active": bool(device),
         })
     return connections
 
@@ -100,6 +102,38 @@ def _wifi() -> list[dict]:
 def _saved() -> list[dict]:
     return parse_connections(util.run(
         ["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show"], timeout=10).out)
+
+
+VPN_PLUGIN_DIRS = ("/usr/lib/NetworkManager/VPN", "/usr/lib64/NetworkManager/VPN",
+                   "/usr/lib/networkmanager/VPN")
+PLUGIN_ROOT = Path("/usr/lib/NetworkManager")
+
+
+def vpn_plugin(kind: str) -> str:
+    """Path of the NetworkManager plugin for *kind*, or "" when absent.
+
+    WireGuard is built into NetworkManager; OpenVPN needs a separate package
+    (networkmanager-openvpn). Without it ``nmcli connection import`` fails with
+    "unknown VPN plugin", so the panel checks first instead of offering a button
+    that cannot work.
+    """
+    if kind == "wireguard":
+        return "built-in"
+    for directory in VPN_PLUGIN_DIRS:
+        root = Path(directory)
+        if not root.is_dir():
+            continue
+        for path in sorted(root.glob(f"*{kind}*")):
+            return str(path)
+    for path in sorted(PLUGIN_ROOT.glob(f"*{kind}*")):
+        return str(path)
+    return ""
+
+
+def _saved_vpn() -> list[dict]:
+    return parse_connections(util.run(
+        ["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show"], timeout=10).out,
+        kinds=("vpn", "wireguard"))
 
 
 def _is_secured(network: dict) -> bool:
@@ -147,6 +181,45 @@ def probe() -> dict:
             "actions": actions,
         })
 
+    vpn = _saved_vpn()
+    vpn_items = []
+    for connection in vpn:
+        actions = []
+        if connection["active"]:
+            actions.append({
+                "label": "Disconnect", "action": "network.vpn_disconnect",
+                "args": {"name": connection["name"]},
+            })
+        else:
+            actions.append({
+                "label": "Connect", "action": "network.vpn_connect",
+                "args": {"name": connection["name"]},
+            })
+        actions.append({
+            "label": "Forget", "action": "network.vpn_forget",
+            "args": {"name": connection["name"]},
+            "variant": "danger", "danger": True, "confirm": connection["name"],
+        })
+        vpn_items.append({
+            "title": connection["name"],
+            "subtitle": connection["type"],
+            "badges": ["connected"] if connection["active"] else [],
+            "actions": actions,
+        })
+
+    vpn_rows: list[dict] = [
+        form.list_row(vpn_items) if vpn_items else
+        form.note("No VPN connections.", "info"),
+    ]
+    if vpn_plugin("openvpn"):
+        vpn_rows.append(form.action("Import VPN…", "network.vpn_import", needs="file"))
+        vpn_rows.append(form.note("OpenVPN (.ovpn) and WireGuard (.conf) profiles are "
+                                  "imported by NetworkManager.", "info"))
+    else:
+        vpn_rows.append(form.note(
+            "OpenVPN support is not installed (networkmanager-openvpn), so only a "
+            "WireGuard .conf can be imported here.", "warn"))
+
     saved_items = []
     for connection in saved:
         actions = []
@@ -173,20 +246,23 @@ def probe() -> dict:
         ]),
         form.section("Wi-Fi", [
             form.info("Radio", radio or "unknown", mono=True),
-            form.list_row(wifi_items) if wifi_items else
-            form.note("No Wi-Fi networks visible (the radio may be off).", "info"),
-        ]),
-        form.section("Saved networks", [
-            form.list_row(saved_items) if saved_items else
-            form.note("No saved Wi-Fi connections.", "info"),
-        ]),
-        form.section("Actions", [
             form.action("Turn Wi-Fi on", "network.wifi_on"),
             form.action("Turn Wi-Fi off", "network.wifi_off", variant="danger"),
             form.action("Rescan", "network.rescan"),
             form.note("A secured network asks for its password. It is handed to "
                       "NetworkManager through a private 0600 passwd-file and never "
                       "stored by this application.", "info"),
+        ]),
+        # Saved and VPN connections come before the (long) scan list: they are the
+        # sections a user acts on, and the scan list can run for many screens.
+        form.section("Saved networks", [
+            form.list_row(saved_items) if saved_items else
+            form.note("No saved Wi-Fi connections.", "info"),
+        ]),
+        form.section("VPN", vpn_rows),
+        form.section("Available networks", [
+            form.list_row(wifi_items) if wifi_items else
+            form.note("No Wi-Fi networks visible (the radio may be off).", "info"),
         ]),
     ], status="partial")
 
@@ -253,6 +329,34 @@ def action(name: str, args: dict) -> dict:
         return base.fail("nmcli is not installed")
     if name == "network.connect":
         return _connect(args)
+    if name == "network.vpn_import":
+        path = Path(str(args.get("path") or "")).expanduser()
+        if not path.is_file():
+            return base.fail("Choose a VPN profile file")
+        kind = "wireguard" if path.suffix.lower() in (".conf", ".wg") else "openvpn"
+        if not vpn_plugin(kind):
+            label = "OpenVPN" if kind == "openvpn" else "WireGuard"
+            return base.fail(f"{label} support is not installed "
+                             f"(networkmanager-{kind})")
+        result = util.run(
+            ["nmcli", "connection", "import", "type", kind, "file", str(path)], timeout=60)
+        if not result.ok:
+            return base.fail(result.text.strip() or "nmcli import failed")
+        return base.ok(f"Imported {path.name}",
+                       details=[f"nmcli connection import type {kind}"])
+    if name in ("network.vpn_connect", "network.vpn_disconnect", "network.vpn_forget"):
+        connection = str(args.get("name") or "")
+        if not connection:
+            return base.fail("No VPN connection given")
+        argv = {
+            "network.vpn_connect": ["nmcli", "--wait", "30", "connection", "up", "id", connection],
+            "network.vpn_disconnect": ["nmcli", "connection", "down", "id", connection],
+            "network.vpn_forget": ["nmcli", "connection", "delete", "id", connection],
+        }[name]
+        result = util.run(argv, timeout=90)
+        if not result.ok:
+            return base.fail(result.text.strip() or "nmcli failed")
+        return base.ok("Done", details=[f"nmcli {name.split('.', 1)[1]} {connection}"])
     if name == "network.disconnect":
         connection = str(args.get("name") or "")
         if not connection:

@@ -1,5 +1,26 @@
 # Changelog
 
+## [v1.17.0] - 2026-11-24
+
+### Added
+
+- **hyprtk-system-manager 0.5.0** — the rest of the P1 backlog:
+  - Sound: per-card output/input profiles (`pactl set-card-profile`).
+  - Network: VPN list with connect/disconnect/forget and OpenVPN/WireGuard
+    profile import, gated on the NetworkManager plugin actually being present.
+  - Displays: per-monitor bit depth and colour management in the managed block,
+    with the live buffer format shown.
+  - Accessibility: text scaling/contrast/motion, keyboard aids (stored, daemon
+    state reported), Orca and on-screen-keyboard detection + launch.
+  - Printers: add/remove/default/test page and the CUPS web interface.
+  - Region & Language: locale generation and selection in one privileged call;
+    keymap validated against `localectl list-keymaps`.
+  - Sidebar: a Suggested group that skips Recent and the current page.
+  - Network is ordered Saved/VPN before the (long) access-point scan list.
+- **Installer**: `network` installs the NetworkManager OpenVPN plugin on every
+  family (`network-manager-openvpn`, `NetworkManager-openvpn`,
+  `networkmanager-openvpn`).
+
 ## [v1.16.0] - 2026-11-24
 
 ### Added

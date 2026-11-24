@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.5.0] — 2026-11-24
+
+The remainder of the P1 backlog: every panel that was read-only or partial now
+has a real workflow behind it.
+
+### Added
+
+- **Sound: card profiles.** Each ALSA/PipeWire card exposes its selectable
+  profiles (output/input combination and codec), applied with
+  `pactl set-card-profile`; the panel re-probes after a change.
+- **Network: VPN.** Saved OpenVPN and WireGuard connections are listed with
+  Connect/Disconnect/Forget, and `.ovpn`/`.conf` profiles can be imported
+  (`nmcli connection import`). The panel checks for the NetworkManager plugin
+  first, so it says “OpenVPN support is not installed” instead of surfacing
+  *unknown VPN plugin* from nmcli.
+- **Displays: bit depth and colour management.** Per-monitor `bitdepth` and `cm`
+  are written into the managed block when set; the live buffer format
+  (`XRGB8888`, `XRGB2101010`, …) and the current colour preset are shown, and a
+  10-bit scanout preselects 10-bit.
+- **Accessibility** (expanded): text scaling slider and quick sizes, animations,
+  reduced motion, high contrast, always-show-caret, cursor size, sticky / slow /
+  bounce / mouse keys, screen-reader and on-screen-keyboard preferences. The
+  panel reports whether a settings daemon, Orca or an OSK is actually present and
+  offers to launch them, rather than implying the toggles work on their own.
+- **Printers**: add a queue (`lpadmin` with a device, a device URI or a driver,
+  plus location/description), remove, set the default, send a test page and open
+  the CUPS web interface.
+- **Region & Language**: generating a locale (`/etc/locale.gen` + `locale-gen`)
+  and setting it happen in **one** privileged call, and the console keymap is
+  validated against `localectl list-keymaps` before applying.
+- **Sidebar: Suggested group** — five everyday panels (Displays, Sound, Network,
+  Appearance, Updates), hidden while searching and skipping anything already in
+  Recent or currently open.
+- `util.spawn()`: detached process launch for GUI helpers, so an RPC action never
+  blocks on a window (Orca, OSK, config-manager, CUPS).
+- 131 tests, including the new panels, the VPN plugin gate, printer parsing and
+  locale generation.
+
+### Changed
+
+- **Network is ordered by what you act on**: Devices → Wi-Fi (radio + actions) →
+  Saved networks → VPN → Available networks. A room with twenty access points no
+  longer buries the saved list behind the scan results.
+- The installer's `network` step includes the OpenVPN plugin on every family
+  (`network-manager-openvpn`, `NetworkManager-openvpn`, `networkmanager-openvpn`),
+  so VPN import works on a fresh install.
+
+### Fixed
+
+- `locale.parse_localectl()` dropped every indented key, so the panel reported
+  “unknown” for the keymap and X11 layout of real `localectl` output.
+- The keymap name is validated before the privileged call: an invalid name is
+  rejected without an authentication prompt.
+
 ## [0.4.0] — 2026-11-24
 
 ### Changed
