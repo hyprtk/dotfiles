@@ -15,28 +15,28 @@ if [ "${1:-}" = "--list" ]; then
         printf '%s ' xf86-video-intel mesa vulkan-intel \
             xf86-video-amdgpu vulkan-radeon vdpauinfo corectrl libvdpau \
             nvidia-open-dkms nvidia-utils nvidia-settings qt5-wayland qt5ct \
-            qt6-wayland qt6ct libva libva-nvidia-driver-git
+            qt6-wayland qt6ct libva libva-nvidia-driver-git vulkan-tools
         ;;
     apt)
         printf '%s ' mesa-vulkan-drivers intel-media-va-driver-non-free \
             i965-va-driver mesa-va-drivers libvdpau-va-gl1 \
-            nvidia-driver nvidia-settings libva2 libva-drm2
+            nvidia-driver nvidia-settings libva2 libva-drm2 vulkan-tools
         ;;
     dnf)
         printf '%s ' mesa-dri-drivers mesa-vulkan-drivers libva-intel-media-driver \
-            mesa-va-drivers-freeworld akmod-nvidia xorg-x11-drv-nvidia-cuda nvidia-settings
+            mesa-va-drivers-freeworld akmod-nvidia xorg-x11-drv-nvidia-cuda nvidia-settings vulkan-tools
         ;;
     zypper)
         printf '%s ' Mesa Mesa-libva intel-media-driver \
-            nvidia-open-driver-G06-signed-kmp-default nvidia-settings
+            nvidia-open-driver-G06-signed-kmp-default nvidia-settings vulkan-tools
         ;;
     xbps)
         printf '%s ' mesa-dri mesa-vulkan-intel intel-video-accel \
-            mesa-vulkan-radeon mesa-vaapi nvidia nvidia-settings
+            mesa-vulkan-radeon mesa-vaapi nvidia nvidia-settings Vulkan-Tools
         ;;
     apk)
         printf '%s ' mesa-vulkan-intel mesa-dri-gallium intel-media-driver \
-            mesa-vulkan-ati mesa-va-gallium nvidia nvidia-settings
+            mesa-vulkan-ati mesa-va-gallium nvidia nvidia-settings vulkan-tools
         ;;
     esac
     echo
@@ -79,12 +79,12 @@ read -r GRAPHICSCARD
 case "$GRAPHICSCARD" in
 1)
     case "$HYPRTK_PM" in
-        pacman) PKGS=(xf86-video-intel mesa vulkan-intel) ;;
-        apt)    PKGS=(mesa-vulkan-drivers intel-media-va-driver-non-free i965-va-driver) ;;
-        dnf)    PKGS=(mesa-dri-drivers mesa-vulkan-drivers libva-intel-media-driver) ;;
-        zypper) PKGS=(Mesa Mesa-libva intel-media-driver) ;;
-        xbps)   PKGS=(mesa-dri mesa-vulkan-intel intel-video-accel) ;;
-        apk)    PKGS=(mesa-vulkan-intel mesa-dri-gallium intel-media-driver) ;;
+        pacman) PKGS=(xf86-video-intel mesa vulkan-intel vulkan-tools) ;;
+        apt)    PKGS=(mesa-vulkan-drivers intel-media-va-driver-non-free i965-va-driver vulkan-tools) ;;
+        dnf)    PKGS=(mesa-dri-drivers mesa-vulkan-drivers libva-intel-media-driver vulkan-tools) ;;
+        zypper) PKGS=(Mesa Mesa-libva intel-media-driver vulkan-tools) ;;
+        xbps)   PKGS=(mesa-dri mesa-vulkan-intel intel-video-accel Vulkan-Tools) ;;
+        apk)    PKGS=(mesa-vulkan-intel mesa-dri-gallium intel-media-driver vulkan-tools) ;;
     esac
     pkg_install "${PKGS[@]}"
     ;;
@@ -92,11 +92,11 @@ case "$GRAPHICSCARD" in
     case "$HYPRTK_PM" in
         pacman)
             PKGS=(nvidia-open-dkms nvidia-utils nvidia-settings qt5-wayland qt5ct
-                  qt6-wayland qt6ct libva)
+                  qt6-wayland qt6ct libva vulkan-tools)
             AUR=(libva-nvidia-driver-git)
             ;;
         apt)
-            PKGS=(nvidia-driver nvidia-settings libva2 libva-drm2)
+            PKGS=(nvidia-driver nvidia-settings libva2 libva-drm2 vulkan-tools)
             # Ubuntu/Mint ship no generic `nvidia-driver` meta — only versioned
             # ones (nvidia-driver-5xx). When the meta is missing, pick the newest
             # available versioned driver so the GPU stack still installs.
@@ -104,15 +104,15 @@ case "$GRAPHICSCARD" in
                 _nv="$(apt-cache search --names-only '^nvidia-driver-[0-9][0-9][0-9]$' 2>/dev/null \
                        | awk '{print $1}' | sed 's/^nvidia-driver-//' | sort -n | tail -1)"
                 if [ -n "$_nv" ]; then
-                    PKGS=(nvidia-driver-"$_nv" nvidia-settings libva2 libva-drm2)
+                    PKGS=(nvidia-driver-"$_nv" nvidia-settings libva2 libva-drm2 vulkan-tools)
                     echo "  → nvidia-driver absent; using nvidia-driver-$_nv"
                 fi
             fi
             ;;
-        dnf)    PKGS=(akmod-nvidia xorg-x11-drv-nvidia-cuda nvidia-settings) ;;
-        zypper) PKGS=(nvidia-open-driver-G06-signed-kmp-default nvidia-settings) ;;
-        xbps)   PKGS=(nvidia nvidia-settings) ;;
-        apk)    PKGS=(nvidia nvidia-settings) ;;
+        dnf)    PKGS=(akmod-nvidia xorg-x11-drv-nvidia-cuda nvidia-settings vulkan-tools) ;;
+        zypper) PKGS=(nvidia-open-driver-G06-signed-kmp-default nvidia-settings vulkan-tools) ;;
+        xbps)   PKGS=(nvidia nvidia-settings Vulkan-Tools) ;;
+        apk)    PKGS=(nvidia nvidia-settings vulkan-tools) ;;
     esac
     # Kernel command line: only when this machine boots GRUB.
     if [ -f /etc/default/grub ] && command -v grub-mkconfig >/dev/null 2>&1; then
@@ -131,12 +131,12 @@ case "$GRAPHICSCARD" in
 # the explicit 3) arm — otherwise `*` also matches "3" and Nvidia is unreachable.
 2|*)
     case "$HYPRTK_PM" in
-        pacman) PKGS=(xf86-video-amdgpu mesa vulkan-radeon vdpauinfo corectrl libvdpau) ;;
-        apt)    PKGS=(mesa-vulkan-drivers mesa-va-drivers libvdpau-va-gl1) ;;
-        dnf)    PKGS=(mesa-dri-drivers mesa-vulkan-drivers mesa-va-drivers-freeworld) ;;
-        zypper) PKGS=(Mesa Mesa-libva) ;;
-        xbps)   PKGS=(mesa-dri mesa-vulkan-radeon mesa-vaapi) ;;
-        apk)    PKGS=(mesa-vulkan-ati mesa-va-gallium mesa-dri-gallium) ;;
+        pacman) PKGS=(xf86-video-amdgpu mesa vulkan-radeon vdpauinfo corectrl libvdpau vulkan-tools) ;;
+        apt)    PKGS=(mesa-vulkan-drivers mesa-va-drivers libvdpau-va-gl1 vulkan-tools) ;;
+        dnf)    PKGS=(mesa-dri-drivers mesa-vulkan-drivers mesa-va-drivers-freeworld vulkan-tools) ;;
+        zypper) PKGS=(Mesa Mesa-libva vulkan-tools) ;;
+        xbps)   PKGS=(mesa-dri mesa-vulkan-radeon mesa-vaapi Vulkan-Tools) ;;
+        apk)    PKGS=(mesa-vulkan-ati mesa-va-gallium mesa-dri-gallium vulkan-tools) ;;
     esac
     pkg_install "${PKGS[@]}"
     add_mkinitcpio_module amdgpu

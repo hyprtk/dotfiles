@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.16.0] - 2026-11-24
+
+### Added
+
+- **hyprtk-system-manager 0.4.0**:
+  - Displays: drag-to-arrange monitor canvas and mirroring.
+  - Graphics: reports the Vulkan device/ICD and VA-API drivers; a missing
+    `vulkaninfo` no longer reads as “Vulkan missing”.
+- **Installer**: `vulkan-tools` is now installed by `graphics-card` on every GPU
+  branch (`Vulkan-Tools` on Void).
+
+### Fixed
+
+- **Displays “Apply” did nothing** on this Lua-dispatch Hyprland: `hyprctl
+  keyword monitor` returns "unknown request" while exiting 0. Apply now writes
+  the managed block and reloads, and textual `hyprctl` errors fail.
+- The single-monitor Enabled switch is hidden, and the backend refuses to
+  disable the last enabled output.
+
 ## [v1.15.0] - 2026-11-24
 
 ### Added

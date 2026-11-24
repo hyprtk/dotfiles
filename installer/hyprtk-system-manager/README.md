@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-system-manager — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-0.3.0-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.4.0-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
 </div>
@@ -16,7 +16,7 @@ One searchable settings application for the whole hyprtk desktop and the Linux
 system under it: displays, appearance, fonts, users, date and time, input,
 network, power, storage, services, updates, privacy and every suite app.
 
-**Current version: 0.3.0** — see [CHANGELOG.md](CHANGELOG.md),
+**Current version: 0.4.0** — see [CHANGELOG.md](CHANGELOG.md),
 [PLAN.md](PLAN.md) and the survey in [RESEARCH.md](RESEARCH.md).
 
 ![System Settings](docs/main.png)
@@ -59,7 +59,7 @@ hyprtk-system-manager borrows the good parts and drops the rest:
 |---|---|---|---|
 | Hyprland · Keyboard Shortcuts · Autostart | Default Applications · hyprtk Suite | Privacy & Security | Accessibility |
 
-Fully implemented in 0.3.0: **About, Date & Time, Users & Groups, Displays,
+Fully implemented in 0.4.0: **About, Date & Time, Users & Groups, Displays,
 Appearance, Fonts, Autostart, hyprtk Suite**. The rest are real probes with
 honestly limited writes — see the status table in [PLAN.md](PLAN.md).
 
@@ -139,7 +139,7 @@ hyprtk-settings backups restore 20261123-163000-123
 ## Development
 
 ```sh
-make test    # 85 unit tests
+make test    # 92 unit tests
 make doctor  # probe every panel on this machine
 make qa      # tests + compile + qmllint + off-screen boot + installer round-trip
 ```

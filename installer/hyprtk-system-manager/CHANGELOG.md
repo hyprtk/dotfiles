@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.4.0] — 2026-11-24
+
+### Changed
+
+- **Graphics now reports the Vulkan device/ICD separately from the `vulkaninfo`
+  tool.** A working RADV stack with `vulkan-tools` absent no longer reads as
+  “Vulkan missing”; the panel shows the enumerated device, the ICD file and the
+  VA-API driver files.
+- The installer's `graphics-card` step now includes `vulkan-tools` for every GPU
+  branch (`Vulkan-Tools` on Void), so the diagnostic is present on fresh installs.
+
+### Added
+
+- **Displays**: a drag-to-arrange canvas — monitors are rectangles positioned in
+  global pixels, snapped to 8 px, and the cards below follow; plus per-monitor
+  **mirroring** (included in the live rule and the persistent block).
+- 92 tests: Vulkan summary/ICD parsing, apply through the config,
+  last-monitor/disabled guards, mirror in the persistent block, hyprctl error
+  detection.
+
+### Fixed
+
+- **Displays: “Apply” silently did nothing.** This Hyprland accepts Lua
+  dispatch only, and `hyprctl keyword monitor` answers "unknown request" while
+  exiting 0. Apply now writes the managed block and reloads (the only runtime
+  path on this build), and `hyprctl` textual errors are treated as failures.
+- **The Enabled switch is hidden on a single-monitor setup**, and the backend
+  refuses to disable the last enabled output.
+
 ## [0.3.0] — 2026-11-24
 
 ### Added

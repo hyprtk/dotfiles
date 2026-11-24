@@ -75,6 +75,7 @@ def parse_monitors(payload) -> list[dict]:
             "scale": float(mon.get("scale") or 1.0),
             "transform": int(mon.get("transform") or 0),
             "vrr": int(mon.get("vrr") or 0),
+            "mirror": str(mon.get("mirrorOf") or ""),
             "disabled": bool(mon.get("disabled")),
             "modes": modes,
             "currentMode": current,
@@ -130,24 +131,6 @@ def probe() -> dict:
     return page
 
 
-def _spec(args: dict) -> str:
-    name = str(args.get("name") or "")
-    if not name:
-        raise ValueError("no monitor selected")
-    if args.get("disabled"):
-        return f"{name},disable"
-    mode = str(args.get("mode") or "preferred")
-    x = int(args.get("x") or 0)
-    y = int(args.get("y") or 0)
-    scale = float(args.get("scale") or 1.0)
-    transform = int(args.get("transform") or 0)
-    vrr = int(args.get("vrr") or 0)
-    spec = f"{name},{mode},{x}x{y},{scale:g},{transform}"
-    if vrr:
-        spec += f",{vrr}"
-    return spec
-
-
 def _lua_block(monitors: list[dict]) -> str:
     lines = [START]
     for mon in monitors:
@@ -156,13 +139,17 @@ def _lua_block(monitors: list[dict]) -> str:
             fields.append('mode = "disable"')
         else:
             position = "{}x{}".format(int(mon.get("x") or 0), int(mon.get("y") or 0))
-            fields.append("mode = " + json.dumps(str(mon.get("mode") or "preferred")))
+            mode = mon.get("mode") or mon.get("currentMode") or "preferred"
+            fields.append("mode = " + json.dumps(str(mode)))
             fields.append("position = " + json.dumps(position))
             fields.append("scale = {:.2f}".format(float(mon.get("scale") or 1.0)).rstrip("0").rstrip("."))
             fields.append("transform = {}".format(int(mon.get("transform") or 0)))
             vrr = int(mon.get("vrr") or 0)
             if vrr:
                 fields.append("vrr = {}".format(vrr))
+            mirror = str(mon.get("mirror") or "")
+            if mirror:
+                fields.append("mirror = {}".format(json.dumps(mirror)))
         lines.append("hl.monitor({ " + ", ".join(fields) + " })")
     lines.append(END)
     return "\n".join(lines) + "\n"
@@ -173,29 +160,70 @@ def _strip_block(text: str) -> str:
     return pattern.sub("", text)
 
 
+def _reload() -> tuple[bool, str]:
+    """Reload the config and treat hyprctl's textual errors as failures.
+
+    ``hyprctl`` exits 0 for some rejected requests ("unknown request"), so the
+    exit code alone is not a reliable success signal on this Lua build.
+    """
+    result = util.run(["hyprctl", "reload"], timeout=10)
+    text = result.text.strip()
+    lowered = text.lower()
+    ok = result.ok and "unknown request" not in lowered and "error:" not in lowered
+    return ok, text
+
+
+def _write_layout(monitors: list[dict], message: str) -> dict:
+    if not isinstance(monitors, list) or not monitors:
+        return base.fail("No monitor layout to save")
+    if not any(not mon.get("disabled") for mon in monitors):
+        return base.fail("At least one monitor must stay enabled")
+    target = paths.monitors_file()
+    if target is None:
+        return base.fail("No Hyprland Lua config found (monitors.lua)")
+    original = util.read_text(target)
+    updated = _strip_block(original).rstrip() + "\n\n" + _lua_block(monitors)
+    if updated == original:
+        return base.ok("Nothing to change")
+    util.atomic_write(target, updated)
+    ok, text = _reload()
+    if not ok:
+        util.atomic_write(target, original)
+        _reload()
+        return base.fail(f"Hyprland rejected the layout: {text}")
+    return base.ok(message, details=[str(target)])
+
+
 def action(name: str, args: dict) -> dict:
     if name == "displays.apply":
-        try:
-            spec = _spec(args)
-        except (TypeError, ValueError) as exc:
-            return base.fail(str(exc))
-        result = util.run(["hyprctl", "keyword", "monitor", spec], timeout=10)
-        if not result.ok:
-            return base.fail(f"hyprctl rejected the layout: {result.text.strip()}")
-        return base.ok("Layout applied", details=[f"monitor {spec}"], live=True)
+        monitors = _live_monitors()
+        target_name = str(args.get("name") or "")
+        if not target_name:
+            return base.fail("No monitor selected")
+        found = False
+        for mon in monitors:
+            if mon["name"] != target_name:
+                continue
+            found = True
+            for key in ("mode", "scale", "transform", "vrr", "mirror"):
+                if key in args:
+                    mon[key] = args[key]
+            for key in ("x", "y"):
+                if key in args:
+                    mon[key] = int(args[key] or 0)
+            if "disabled" in args:
+                mon["disabled"] = bool(args["disabled"])
+        if not found:
+            return base.fail(f"Monitor {target_name} is not connected")
+        # A live change is only possible through the config on this Hyprland:
+        # keyword requests are not supported, so apply = write + reload.
+        return _write_layout(monitors, "Layout applied and saved to monitors.lua")
 
     if name == "displays.persist":
         monitors = args.get("monitors")
-        if not isinstance(monitors, list) or not monitors:
+        if not isinstance(monitors, list):
             return base.fail("No monitor layout to save")
-        target = paths.monitors_file()
-        if target is None:
-            return base.fail("No Hyprland Lua config found (monitors.lua)")
-        original = util.read_text(target)
-        updated = _strip_block(original).rstrip() + "\n\n" + _lua_block(monitors)
-        util.atomic_write(target, updated)
-        util.run(["hyprctl", "reload"], timeout=10)
-        return base.ok("Layout saved to monitors.lua", details=[str(target)])
+        return _write_layout(monitors, "Layout saved to monitors.lua")
 
     if name == "displays.clear_persistent":
         target = paths.monitors_file()
@@ -206,13 +234,17 @@ def action(name: str, args: dict) -> dict:
         if updated == original:
             return base.ok("No managed block to remove")
         util.atomic_write(target, updated)
-        util.run(["hyprctl", "reload"], timeout=10)
+        ok, text = _reload()
+        if not ok:
+            util.atomic_write(target, original)
+            _reload()
+            return base.fail(f"Hyprland rejected the reload: {text}")
         return base.ok("Managed monitor block removed", details=[str(target)])
 
     if name == "displays.reload":
-        result = util.run(["hyprctl", "reload"], timeout=10)
-        if not result.ok:
-            return base.fail(result.text.strip() or "hyprctl reload failed")
+        ok, text = _reload()
+        if not ok:
+            return base.fail(text or "hyprctl reload failed")
         return base.ok("Hyprland config reloaded")
 
     return base.fail(f"unknown action {name!r}")
