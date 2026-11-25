@@ -7,7 +7,9 @@ unlinked immediately afterwards; the password is not logged or returned.
 
 from __future__ import annotations
 
+import ipaddress
 import os
+import re
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
@@ -88,6 +90,18 @@ def parse_connections(text: str,
     return connections
 
 
+def parse_all_connections(text: str) -> list[dict]:
+    """Every terse connection row, regardless of type (no Wi-Fi filter)."""
+    rows: list[dict] = []
+    for line in text.splitlines():
+        parts = _split_terse(line)
+        if len(parts) < 3:
+            continue
+        rows.append({"name": parts[0], "type": parts[1], "device": parts[2],
+                     "active": bool(parts[2])})
+    return [row for row in rows if row["type"] != "loopback"]
+
+
 def _devices() -> list[dict]:
     return parse_devices(util.run(
         ["nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device"], timeout=10).out)
@@ -136,6 +150,45 @@ def _saved_vpn() -> list[dict]:
         kinds=("vpn", "wireguard"))
 
 
+def validate_dns(value: str) -> list[str]:
+    problems = []
+    for part in [item.strip() for item in (value or "").split(",") if item.strip()]:
+        try:
+            ipaddress.ip_address(part)
+        except ValueError:
+            problems.append(f"{part} is not an IP address")
+    return problems
+
+
+def validate_search(value: str) -> list[str]:
+    problems = []
+    for part in [item.strip() for item in (value or "").split(",") if item.strip()]:
+        if not re.match(r"^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$", part):
+            problems.append(f"{part} is not a domain name")
+    return problems
+
+
+def _active_connections() -> list[dict]:
+    text = util.run(["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show",
+                     "--active"], timeout=10).out
+    return parse_all_connections(text)
+
+
+def parse_dns_state(lines) -> dict:
+    values = [str(line).strip() for line in lines]
+    while len(values) < 4:
+        values.append("")
+    return {"method": values[0], "dns": values[1], "search": values[2],
+            "ignore_auto": values[3].lower() in ("yes", "true")}
+
+
+def _dns_state(name: str) -> dict:
+    result = util.run(["nmcli", "-g",
+                       "ipv4.method,ipv4.dns,ipv4.dns-search,ipv4.ignore-auto-dns",
+                       "connection", "show", name], timeout=8)
+    return parse_dns_state(result.out.splitlines())
+
+
 def _is_secured(network: dict) -> bool:
     return bool(network.get("security")) and network["security"].lower() != "open"
 
@@ -180,6 +233,28 @@ def probe() -> dict:
             "badges": ["connected"] if network["active"] else [],
             "actions": actions,
         })
+
+    active = _active_connections()
+    dns_rows: list[dict] = []
+    if active:
+        current = active[0]
+        state = _dns_state(current["name"])
+        dns_rows = [
+            form.choice("dns_connection", "Connection", current["name"],
+                        [{"value": item["name"], "label": f"{item['name']} ({item['device']})"}
+                         for item in active]),
+            form.info("IPv4 method", state["method"] or "auto", mono=True),
+            form.text("dns_servers", "DNS servers", state["dns"].replace(" ", ", "),
+                      mono=True, placeholder="1.1.1.1, 9.9.9.9",
+                      help="Comma-separated addresses. Empty follows the network."),
+            form.text("dns_search", "Search domains", state["search"].replace(" ", ", "),
+                      mono=True, placeholder="lan, example.com"),
+            form.toggle("ignore_auto_dns", "Ignore DHCP DNS servers", state["ignore_auto"]),
+            form.note("The change is written to the NetworkManager connection and is "
+                      "used the next time it is activated.", "info"),
+        ]
+    else:
+        dns_rows = [form.note("No active connection to configure DNS on.", "info")]
 
     vpn = _saved_vpn()
     vpn_items = []
@@ -259,12 +334,13 @@ def probe() -> dict:
             form.list_row(saved_items) if saved_items else
             form.note("No saved Wi-Fi connections.", "info"),
         ]),
+        form.section("DNS", dns_rows),
         form.section("VPN", vpn_rows),
         form.section("Available networks", [
             form.list_row(wifi_items) if wifi_items else
             form.note("No Wi-Fi networks visible (the radio may be off).", "info"),
         ]),
-    ], status="partial")
+    ], status="full" if active else "partial")
 
 
 @contextmanager
@@ -322,6 +398,42 @@ def _connect(params: dict) -> dict:
     return base.ok(f"Connected to {ssid}",
                    details=[f"nmcli connection up id {ssid}"],
                    note="The password was passed to NetworkManager, not stored here.")
+
+
+def _apply_dns(changes: dict) -> dict:
+    name = str(changes.get("dns_connection") or "").strip()
+    known = [item["name"] for item in _active_connections()]
+    if not name:
+        name = known[0] if known else ""
+    if not name:
+        return base.fail("There is no active connection to configure")
+    if name not in known and not util.run(
+            ["nmcli", "-g", "NAME", "connection", "show", name], timeout=8).ok:
+        return base.fail(f"No NetworkManager connection named {name!r}")
+
+    dns = str(changes.get("dns_servers") or "").strip()
+    search = str(changes.get("dns_search") or "").strip()
+    problems = validate_dns(dns) + validate_search(search)
+    if problems:
+        return base.fail("Check the values", details=problems)
+
+    argv = ["nmcli", "connection", "modify", name,
+            "ipv4.dns", ", ".join(part.strip() for part in dns.split(",") if part.strip()),
+            "ipv4.dns-search",
+            ", ".join(part.strip() for part in search.split(",") if part.strip())]
+    if "ignore_auto_dns" in changes:
+        argv += ["ipv4.ignore-auto-dns",
+                 "yes" if changes.get("ignore_auto_dns") else "no"]
+    result = util.run(argv, timeout=20)
+    if not result.ok:
+        return base.fail(result.text.strip() or "nmcli failed")
+    return base.ok(f"DNS saved for {name}", details=["activates on the next connection"])
+
+
+def apply(changes: dict) -> dict:
+    if any(str(key).startswith("dns_") or key == "ignore_auto_dns" for key in changes):
+        return _apply_dns(changes)
+    return base.ok("Nothing to change")
 
 
 def action(name: str, args: dict) -> dict:

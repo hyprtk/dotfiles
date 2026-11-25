@@ -1,8 +1,26 @@
 #!/usr/bin/env sh
 # Privileged helper entry point. Only pkexec should run this, and only for the
 # allow-listed action in the first argument (see system_manager/helper.py).
+#
+# The helper lives in <prefix>/libexec while the payload is in
+# <prefix>/share/hyprtk-system-manager (system install) or ../backend (repo and
+# user installs), so the backend is located rather than assumed.
 set -eu
 SELF=$(readlink -f "$0")
-ROOT=$(CDPATH= cd -- "$(dirname -- "$SELF")/.." && pwd)
-export PYTHONPATH="$ROOT/backend${PYTHONPATH:+:$PYTHONPATH}"
-exec python3 -m system_manager.helper "$@"
+HERE=$(CDPATH= cd -- "$(dirname -- "$SELF")" && pwd)
+for candidate in \
+    "${HYPRTK_SM_BACKEND:-}" \
+    "$HERE/../share/hyprtk-system-manager/backend" \
+    "$HERE/../backend" \
+    "/usr/share/hyprtk-system-manager/backend" \
+    "/usr/local/share/hyprtk-system-manager/backend"
+do
+    [ -n "$candidate" ] || continue
+    if [ -f "$candidate/system_manager/helper.py" ]; then
+        PYTHONPATH="$candidate${PYTHONPATH:+:$PYTHONPATH}"
+        export PYTHONPATH
+        exec python3 -m system_manager.helper "$@"
+    fi
+done
+echo "hyprtk-sm-helper: cannot find the system_manager backend" >&2
+exit 127

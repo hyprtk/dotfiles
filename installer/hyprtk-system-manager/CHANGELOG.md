@@ -1,5 +1,62 @@
 # Changelog
 
+## [0.7.0] — 2026-11-25
+
+Closes the documented panel gaps that are closable on this stack.
+
+### Added
+
+- **Displays: layout profiles.** Save the current arrangement under a name
+  (mode, scale, rotation, position, VRR, mirroring, bit depth, colour preset),
+  apply it later with one action, delete it. Profiles live in
+  `~/.config/hyprtk-system-manager/displays.json`; applying still writes the
+  managed block and reloads, so a profile switch survives a reboot.
+- **Region & Language: input methods.** Detects fcitx5/fcitx/ibus, reports the
+  running daemon and the live `GTK_IM_MODULE`/`QT_IM_MODULE`/`XMODIFIERS`, and
+  writes a managed block into `environment.lua` for new sessions (with reload
+  rollback). An action starts the framework now.
+- **Network: DNS.** Per-connection DNS servers, search domains and the
+  DHCP-DNS override, validated before anything reaches `nmcli`; the panel says
+  the change applies on the next activation.
+
+### Changed
+
+- Network, Displays and Region report `functional` when the tools they need are
+  present.
+- The remaining `partial` labels are documented limitations rather than missing
+  code: accessibility keyboard aids need a settings daemon this desktop does not
+  ship, and per-device pointer/keyboard overrides belong to config-manager.
+
+## [0.6.2] — 2026-11-25
+
+### Packaging
+
+- `packaging/build.sh` builds and verifies every family: Arch (`makepkg`), a
+  real `.deb` in `debian:bookworm`, a real `.rpm` in a Fedora container, and a
+  staged `DESTDIR` install in `alpine:3.24` and Void. Verified on all five.
+- Debian `changelog` and `source/format` added; `debian/rules` installs into
+  `debian/tmp` so `dh_install` maps the payload.
+- The RPM spec takes the staged source tarball by name instead of a URL.
+- A `DESTDIR` staging build no longer requires quickshell on the build host;
+  runtime requirements live in the package metadata.
+
+## [0.6.1] — 2026-11-25
+
+### Fixed
+
+- **The installer's own import check left `__pycache__` in the payload.** It ran
+  `python3 -m system_manager.cli version` after staging, which writes bytecode
+  beside the installed modules — harmless locally, but every distro package then
+  contained compiled-path references and makepkg warned about `$pkgdir`. The
+  check now runs with `PYTHONDONTWRITEBYTECODE=1`.
+
+### Added
+
+- `packaging/build.sh`: builds the Arch package with `makepkg`, a real `.deb`
+  in `debian:bookworm`, a real `.rpm` in a Fedora container, and a staged
+  `DESTDIR` install in any image (how the Alpine and Void recipes are checked).
+- Debian `changelog` and `source/format`.
+
 ## [0.6.0] — 2026-11-25
 
 Closes the remaining roadmap: Power, Storage and Privacy are real panels, the

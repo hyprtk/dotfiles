@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-system-manager — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-0.6.0-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.7.0-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
 </div>
@@ -16,7 +16,7 @@ One searchable settings application for the whole hyprtk desktop and the Linux
 system under it: displays, appearance, fonts, users, date and time, input,
 network, power, storage, services, updates, privacy and every suite app.
 
-**Current version: 0.6.0** — see [CHANGELOG.md](CHANGELOG.md),
+**Current version: 0.7.0** — see [CHANGELOG.md](CHANGELOG.md),
 [PLAN.md](PLAN.md) and the survey in [RESEARCH.md](RESEARCH.md).
 
 ![System Settings](docs/main.png)
@@ -61,10 +61,10 @@ hyprtk-system-manager borrows the good parts and drops the rest:
 
 Fully implemented: **About, Date & Time, Users & Groups, Displays, Sound,
 Printers, Appearance, Fonts, Autostart, hyprtk Suite, Power, Storage, Privacy,
-Bar, Hyprland, Snapshots, Profiles**. Network, Region, Accessibility and Input are
-`partial` — every control they show is real, but each has a documented gap
-(per-monitor profiles, input methods, an a11y settings daemon); the rest are
-read-only probes. See [PLAN.md](PLAN.md).
+Bar, Hyprland, Snapshots, Profiles**. Accessibility and Input stay
+`partial` by design: the keyboard aids need a settings daemon this desktop does
+not ship, and per-device overrides belong to config-manager. See
+[PLAN.md](PLAN.md).
 
 Apply is previewable: **Preview** shows a unified diff of every file an Apply
 would change and writes nothing. Panels that act on the system instead of a file

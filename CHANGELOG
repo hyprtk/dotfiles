@@ -1,5 +1,31 @@
 # Changelog
 
+## [v1.19.0] - 2026-11-25
+
+### Added
+
+- **hyprtk-system-manager 0.7.0**:
+  - **Displays: layout profiles** — save the current arrangement by name and
+    switch back to it later; applying still writes the managed block, so the
+    choice survives a reboot.
+  - **Region & Language: input methods** — detects fcitx5/fcitx/ibus, reports
+    the running daemon and the live IM environment, and writes a managed
+    `environment.lua` block for new sessions; starts the framework on demand.
+  - **Network: DNS** — per-connection servers, search domains and the DHCP-DNS
+    override, validated before `nmcli` sees them.
+  - Network, Displays and Region now report `functional`; Accessibility and
+    Input stay `partial` for documented reasons (no settings daemon on this
+    stack; per-device overrides belong to config-manager).
+
+### Packaging
+
+- **hyprtk-system-manager 0.6.2**: `packaging/build.sh` builds and verifies all
+  five families — Arch (`makepkg`), a real `.deb` in `debian:bookworm`, a real
+  `.rpm` in Fedora, and staged `DESTDIR` installs on Alpine 3.24 and Void.
+  Debian metadata added, the RPM spec takes the staged tarball by name, a
+  `DESTDIR` build no longer needs quickshell, and the installer stops leaving
+  `__pycache__` in the payload.
+
 ## [v1.18.0] - 2026-11-25
 
 ### Added

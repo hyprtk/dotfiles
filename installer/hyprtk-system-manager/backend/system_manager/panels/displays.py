@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 
 from .. import form, paths, util
 from . import base
@@ -136,6 +137,11 @@ def probe() -> dict:
     page["transforms"] = TRANSFORMS
     page["configFile"] = str(paths.monitors_file() or "")
     page["managed"] = bool(paths.monitors_file() and START in util.read_text(paths.monitors_file()))
+    page["profiles"] = [
+        {"name": name, "created": entry.get("created") or "",
+         "count": len(entry.get("monitors") or [])}
+        for name, entry in sorted(load_profiles().items())
+    ]
     return page
 
 
@@ -172,6 +178,32 @@ def _lua_block(monitors: list[dict]) -> str:
 def _strip_block(text: str) -> str:
     pattern = re.compile(re.escape(START) + r".*?" + re.escape(END) + r"\n?", re.DOTALL)
     return pattern.sub("", text)
+
+
+def profiles_file():
+    return paths.CONFIG_ROOT / "displays.json"
+
+
+def load_profiles() -> dict:
+    data = util.read_json(profiles_file(), {})
+    profiles = data.get("profiles") if isinstance(data, dict) else None
+    return profiles if isinstance(profiles, dict) else {}
+
+
+def save_profiles(profiles: dict) -> None:
+    target = profiles_file()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    util.write_json(target, {"version": 1, "profiles": profiles})
+
+
+def _profile_monitors(monitors: list[dict]) -> list[dict]:
+    keep = ("name", "mode", "x", "y", "scale", "transform", "vrr", "mirror",
+            "bitdepth", "cm", "disabled")
+    return [{key: mon[key] for key in keep if key in mon} for mon in monitors]
+
+
+def _valid_profile_name(name: str) -> bool:
+    return bool(name) and len(name) <= 40 and "/" not in name and name.strip() == name
 
 
 def _reload() -> tuple[bool, str]:
@@ -246,6 +278,43 @@ def action(name: str, args: dict) -> dict:
             _reload()
             return base.fail(f"Hyprland rejected the reload: {text}")
         return base.ok("Managed monitor block removed", details=[str(target)])
+
+    if name == "displays.profile_save":
+        profile_name = str(args.get("name") or "").strip()
+        if not _valid_profile_name(profile_name):
+            return base.fail("Use a short name without slashes")
+        monitors = args.get("monitors")
+        if not isinstance(monitors, list) or not monitors:
+            monitors = _live_monitors()
+        if not any(not mon.get("disabled") for mon in monitors):
+            return base.fail("A profile needs at least one enabled monitor")
+        profiles = load_profiles()
+        profiles[profile_name] = {
+            "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "monitors": _profile_monitors(monitors),
+        }
+        save_profiles(profiles)
+        return base.ok(f"Saved display profile {profile_name}",
+                       details=[f"{len(monitors)} monitor(s)"])
+
+    if name == "displays.profile_apply":
+        profile_name = str(args.get("name") or "")
+        entry = load_profiles().get(profile_name)
+        if not entry:
+            return base.fail(f"No display profile named {profile_name!r}")
+        monitors = entry.get("monitors") or []
+        if not monitors:
+            return base.fail("That profile has no monitors")
+        return _write_layout(monitors, f"Applied display profile {profile_name}")
+
+    if name == "displays.profile_delete":
+        profile_name = str(args.get("name") or "")
+        profiles = load_profiles()
+        if profile_name not in profiles:
+            return base.fail(f"No display profile named {profile_name!r}")
+        del profiles[profile_name]
+        save_profiles(profiles)
+        return base.ok(f"Deleted display profile {profile_name}")
 
     if name == "displays.reload":
         ok, text = _reload()

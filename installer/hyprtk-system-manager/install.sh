@@ -137,6 +137,12 @@ if [ "$DRY_RUN" -eq 1 ]; then
     exit 0
 fi
 
+# A package build stages the tree into DESTDIR on a build host that has no
+# desktop stack; the runtime requirements belong in the package metadata.
+if [ -n "$DESTDIR" ]; then
+    MISSING=""
+fi
+
 if [ -n "$MISSING" ]; then
     echo ":: ERROR: missing runtime requirements:" >&2
     while IFS= read -r dep; do [ -n "$dep" ] && echo "   - $dep" >&2; done <<<"$MISSING"
@@ -201,8 +207,9 @@ fi
 command -v update-desktop-database >/dev/null 2>&1 \
     && update-desktop-database "$APPS_DIR" >/dev/null 2>&1 || true
 
-PYTHONPATH="$INSTALL_DIR_D/backend" python3 -m system_manager.cli version >/dev/null
-echo ":: Backend import OK ($(PYTHONPATH="$INSTALL_DIR_D/backend" python3 -m system_manager.cli version))"
+PYTHONPATH="$INSTALL_DIR_D/backend" PYTHONDONTWRITEBYTECODE=1 \
+    python3 -m system_manager.cli version >/dev/null
+echo ":: Backend import OK ($(PYTHONPATH="$INSTALL_DIR_D/backend" PYTHONDONTWRITEBYTECODE=1 python3 -m system_manager.cli version))"
 
 echo ":: Installed."
 echo ":: Run:       $LAUNCHER_NAME"

@@ -125,17 +125,46 @@ Flickable {
         // (keyword requests are unsupported), so applying writes the block.
         page.persistAll();
     }
-    function persistAll() {
+    function collectLayout() {
         const monitors = [];
         for (let i = 0; i < layout.count; i++) {
             const entry = layoutEntry(i);
             if (entry)
                 monitors.push(entry);
         }
+        return monitors;
+    }
+    function persistAll() {
         page.invoke("displays", {
             action: "displays.persist",
-            args: { monitors: monitors },
+            args: { monitors: page.collectLayout() },
         });
+    }
+    function saveProfile(name) {
+        if (!name || name.trim().length === 0)
+            return;
+        page.invoke("displays", {
+            action: "displays.profile_save",
+            args: { name: name.trim(), monitors: page.collectLayout() },
+        });
+    }
+    readonly property var profileItems: {
+        const out = [];
+        for (const item of (page.model.profiles || [])) {
+            out.push({
+                title: item.name,
+                subtitle: (item.created || "") + " · " + item.count + " monitor(s)",
+                badges: [],
+                actions: [
+                    { label: "Apply", action: "displays.profile_apply",
+                      args: { name: item.name } },
+                    { label: "Delete", action: "displays.profile_delete",
+                      args: { name: item.name }, danger: true, confirm: item.name,
+                      message: "Delete the display profile? The current layout stays." },
+                ],
+            });
+        }
+        return out;
     }
     function applyAll() {
         page.persistAll();
@@ -407,6 +436,43 @@ Flickable {
                     text: page.managed
                         ? "A managed block is present in " + page.configFile
                         : "No managed block yet — “Make persistent” adds one to " + page.configFile
+                    color: Theme.dim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.size(1)
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            SectionCard {
+                width: column.width
+                title: "Layout profiles"
+                description: "Save this arrangement by name, then switch the whole layout back to it later."
+                Row {
+                    width: parent.width
+                    spacing: 8
+                    TTextField {
+                        id: profileName
+                        preferredWidth: 240
+                        placeholder: "Desk, Movie, Docked…"
+                    }
+                    TButton {
+                        text: "Save current layout"
+                        onClicked: {
+                            page.saveProfile(profileName.text);
+                            profileName.text = "";
+                        }
+                    }
+                }
+                ListBlock {
+                    width: parent.width
+                    items: page.profileItems
+                    onInvoke: (action) => page.invoke("displays", action)
+                }
+                Text {
+                    visible: page.profileItems.length === 0
+                    topPadding: 4
+                    width: parent.width
+                    text: "No saved layouts yet. A profile stores every monitor's mode, scale, rotation, position, VRR and mirroring."
                     color: Theme.dim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.size(1)
