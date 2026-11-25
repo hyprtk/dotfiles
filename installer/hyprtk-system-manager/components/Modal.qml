@@ -15,6 +15,7 @@ Item {
     property bool busy: false
     property bool showCancel: true
     property bool confirmEnabled: true
+    property int cardWidth: 460
     default property alias body: bodyColumn.data
 
     signal accepted()
@@ -33,7 +34,7 @@ Item {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: Math.min(460, parent.width - 80)
+        width: Math.min(modal.cardWidth, parent.width - 80)
         implicitHeight: content.implicitHeight + 36
         radius: Theme.radiusLg
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b,

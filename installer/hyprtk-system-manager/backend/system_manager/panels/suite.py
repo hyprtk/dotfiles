@@ -8,6 +8,9 @@ from .. import apps, form, jsonconf, util
 from . import base
 
 
+# Apply is a pure file edit, so a dry run can show it as a diff.
+PREVIEW = "files"
+
 def _bar_rows() -> list[dict]:
     cfg = jsonconf.load()
     theme = cfg.get("theme") or {}

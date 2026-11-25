@@ -1,5 +1,37 @@
 # Changelog
 
+## [v1.18.0] - 2026-11-25
+
+### Added
+
+- **hyprtk-system-manager 0.6.0** — the rest of the roadmap:
+  - **Power**: platform profile (`powerprofilesctl`), battery health and charge
+    cycles, a charge-limit slider for batteries that expose
+    `charge_control_end_threshold`, TLP status, lid state and binding,
+    suspend/hibernate/lock actions, hypridle start/restart/edit.
+  - **Storage**: `/etc/fstab` listed with per-entry removal, an add-a-mount form
+    validated by `findmnt --verify` on a candidate file before writing, mount
+    point creation, formatting for unmounted removable partitions behind a
+    typed device name.
+  - **Privacy & Security**: ufw state and rules with enable/disable, nftables
+    start, applications currently capturing audio, camera devices, Flatpak
+    permission overrides with reset.
+  - **Bar**: the whole `config.json` rendered as typed rows, grouped as the file
+    stores it; a `theme.*` edit writes the flat `theme*` key too.
+  - **Hyprland**: config-manager's schema pages and values rendered in System
+    Settings and written back through `config-manager set`.
+  - **Snapshots** and **Profiles** panels: typed-confirmation restores, and
+    per-host capture/replay of every file-backed setting.
+  - **Preview**: a diff of every file an Apply would change, writing nothing.
+  - **Settings bus**: `hyprtk-settings open --page … --row …` deep-links into
+    the running window and highlights the row (`org.hyprtk.Settings` on the
+    session bus where PyGObject is present).
+  - **Polkit helper** (`hyprtk-sm-helper` + five actions) and packaging recipes
+    for Arch, Fedora/openSUSE, Debian, Alpine and Void; `install.sh` gained
+    `--prefix` and `DESTDIR`.
+- No distro package list changed: every new panel probes for its tools and says
+  what is missing (the recipes carry them as recommendations).
+
 ## [v1.17.3] - 2026-11-24
 
 ### Fixed

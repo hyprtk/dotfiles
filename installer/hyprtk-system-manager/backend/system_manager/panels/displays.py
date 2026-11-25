@@ -28,6 +28,9 @@ TRANSFORMS = [
 ]
 
 
+# Apply is a pure file edit, so a dry run can show it as a diff.
+PREVIEW = "files"
+
 def _mode(value: str) -> dict | None:
     raw = str(value).strip().removesuffix("Hz")
     try:

@@ -24,6 +24,9 @@ OPTIONS = {
 }
 
 
+# Apply is a pure file edit, so a dry run can show it as a diff.
+PREVIEW = "files"
+
 def parse_option(text: str) -> str:
     """``hyprctl getoption`` prints ``str: gb`` / ``int: 25`` on the first line.
 

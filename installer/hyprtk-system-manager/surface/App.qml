@@ -23,6 +23,11 @@ Item {
     property bool applyRunning: false
     property var applyQueue: []
     property var applyResults: []
+    property bool previewRunning: false
+    property var previewQueue: []
+    property var previewResults: []
+    property string previewText: ""
+    property string focusRow: ""
     property string status: "Connecting to the backend…"
     property string searchText: ""
     property var searchResults: []
@@ -133,6 +138,10 @@ Item {
                 applyResults.push({ ok: false, message: res.error });
                 applyQueue = [];
                 finishApply();
+            } else if (tag === "preview") {
+                previewResults.push({ ok: false, message: res.error, preview: [] });
+                previewQueue = [];
+                finishPreview();
             } else {
                 status = "Error: " + res.error;
                 toast.show(res.error, "danger");
@@ -153,6 +162,9 @@ Item {
                 start = "about";
             status = "Ready · " + ((r && r.hostname) || "this device");
             openPage(start, true);
+            const envRow = Quickshell.env("HYPRTK_SM_ROW") || "";
+            if (envRow.length > 0)
+                app.focusOn(start, envRow);
             return;
         }
 
@@ -176,6 +188,18 @@ Item {
 
         if (tag === "apply") {
             handleApply(r);
+            return;
+        }
+
+        if (tag === "preview") {
+            handlePreview(r);
+            return;
+        }
+
+        if (tag === "focus") {
+            const requests = (r && r.requests) || [];
+            for (const item of requests)
+                app.focusOn(item.panel, item.row);
             return;
         }
 
@@ -277,6 +301,69 @@ Item {
         }
         const job = applyQueue[0];
         call("apply", { id: job.id, changes: job.changes }, "apply");
+    }
+
+    function previewAll() {
+        if (!dirty || previewRunning || applyRunning)
+            return;
+        const ids = [];
+        for (const key in pending) {
+            const pid = key.split("::")[0];
+            if (ids.indexOf(pid) < 0)
+                ids.push(pid);
+        }
+        previewQueue = ids.map(pid => ({ id: pid, changes: pendingFor(pid) }));
+        previewResults = [];
+        previewRunning = true;
+        status = "Preparing a preview…";
+        sendNextPreview();
+    }
+
+    function sendNextPreview() {
+        if (previewQueue.length === 0) {
+            finishPreview();
+            return;
+        }
+        const job = previewQueue[0];
+        call("apply", { id: job.id, changes: job.changes, preview: true }, "preview");
+    }
+
+    function handlePreview(result) {
+        if (!result || result.message)
+            previewResults.push(result || ({ ok: true, preview: [] }));
+        else
+            previewResults.push({ ok: true, preview: [] });
+        previewQueue.shift();
+        if (previewQueue.length === 0)
+            finishPreview();
+        else
+            sendNextPreview();
+    }
+
+    function finishPreview() {
+        previewRunning = false;
+        previewQueue = [];
+        let text = "";
+        let count = 0;
+        for (const item of previewResults) {
+            if (!item || !item.preview)
+                continue;
+            for (const change of item.preview) {
+                text += change.diff;
+                count++;
+            }
+            if (item.ok === false)
+                text += "! " + item.message + "\n";
+        }
+        if (count === 0) {
+            status = "Nothing would change";
+            toast.show("Nothing would change", "info");
+            previewDialog.open = false;
+            return;
+        }
+        previewText = text;
+        status = count + " file" + (count === 1 ? "" : "s") + " would change";
+        previewDialog.open = true;
     }
 
     function handleApply(result) {
@@ -469,12 +556,36 @@ Item {
         onTriggered: app.captureShot()
     }
 
+    function focusOn(panel, row) {
+        if (!panel)
+            return;
+        if (panel !== pageId)
+            app.openPage(panel, true);
+        app.focusRow = row || "";
+        if (row)
+            focusHold.restart();
+    }
+
     function captureShot() {
         app.grabToImage(function(result) {
             const saved = result.saveToFile(app.shotPath);
             console.log("SHOT " + (saved ? "SAVED" : "FAILED") + " " + app.shotPath);
             Qt.exit(saved ? 0 : 1);
         }, Qt.size(app.width, app.height));
+    }
+
+    Timer {
+        id: focusPollTimer
+        interval: 1200
+        running: !Config.testMode
+        repeat: true
+        onTriggered: app.call("focus.poll", {}, "focus")
+    }
+
+    Timer {
+        id: focusHold
+        interval: 4000
+        onTriggered: app.focusRow = ""
     }
 
     Timer {
@@ -632,6 +743,7 @@ Item {
                         model: app.pageModel
                         panelId: app.pageId
                         pending: app.pending
+                        focusRow: app.focusRow
                         onChange: (panelId, key, value) => app.setPending(panelId, key, value)
                         onInvoke: (panelId, action) => app.requestAction(panelId, action)
                         onBrowse: (panelId, key, mode, value) => app.browse(panelId, key, mode, value)
@@ -752,6 +864,12 @@ Item {
                             onClicked: app.revertAll()
                         }
                         TButton {
+                            text: app.previewRunning ? "Checking…" : "Preview"
+                            visible: app.dirty
+                            enabled: app.dirty && !app.applyRunning && !app.previewRunning
+                            onClicked: app.previewAll()
+                        }
+                        TButton {
                             text: app.applyRunning ? "Applying…" : "Apply"
                             primary: true
                             visible: app.dirty || app.applyRunning
@@ -784,6 +902,43 @@ Item {
     }
 
     // ── dialogs ───────────────────────────────────────────────────────
+    Modal {
+        id: previewDialog
+        title: "Preview — files an Apply would change"
+        confirmText: "Close"
+        showCancel: false
+        cardWidth: 760
+        onAccepted: previewDialog.open = false
+        Rectangle {
+            width: parent.width
+            height: 380
+            radius: Theme.radiusSm
+            color: Theme.alpha(Theme.background, 0.6)
+            border.width: 1
+            border.color: Theme.alpha(Theme.foreground, 0.10)
+            clip: true
+            Flickable {
+                anchors.fill: parent
+                anchors.margins: 8
+                clip: true
+                contentWidth: Math.max(width, diffText.implicitWidth)
+                contentHeight: Math.max(height, diffText.implicitHeight)
+                flickableDirection: Flickable.VerticalFlick
+                TextEdit {
+                    id: diffText
+                    width: Math.max(parent.width, implicitWidth)
+                    text: app.previewText
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: TextEdit.NoWrap
+                    color: Theme.foreground
+                    font.family: Theme.monoFamily
+                    font.pixelSize: Theme.size(-1)
+                }
+            }
+        }
+    }
+
     Modal {
         id: confirmDialog
         title: app.confirmState.title || "Confirm"

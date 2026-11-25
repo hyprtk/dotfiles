@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Privileged helper entry point. Only pkexec should run this, and only for the
+# allow-listed action in the first argument (see system_manager/helper.py).
+set -eu
+SELF=$(readlink -f "$0")
+ROOT=$(CDPATH= cd -- "$(dirname -- "$SELF")/.." && pwd)
+export PYTHONPATH="$ROOT/backend${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m system_manager.helper "$@"

@@ -25,7 +25,7 @@ import traceback
 from pathlib import Path
 from typing import Any, Callable
 
-from . import __version__, apps, catalog, form, paths, priv, util
+from . import __version__, apps, bus, catalog, form, paths, preview, priv, util
 
 PROBE_TTL = 600
 WARM_SKIP = {"updates"}  # network-bound; catalog keywords still cover it
@@ -63,6 +63,7 @@ def _cached() -> list[tuple[str, dict]]:
 
 def _hello(params: dict) -> dict:
     _start_warm()
+    bus.start()
     return {
         "version": __version__,
         "catalog": catalog.catalog(),
@@ -125,6 +126,25 @@ def _apply(params: dict) -> dict:
     apply = getattr(module, "apply", None)
     if apply is None:
         raise RpcError(f"{panel_id} is read-only")
+    if params.get("preview"):
+        if getattr(module, "PREVIEW", "") != "files":
+            return {"ok": False, "refresh": False,
+                    "message": "This panel changes the system directly; there is "
+                               "no file diff to show."}
+        with preview.capture() as entries:
+            returned = apply(changes)
+        if not isinstance(returned, dict):
+            raise RpcError(f"{panel_id}.apply returned {type(returned).__name__}")
+        result = dict(returned)
+        result["preview"] = list(entries)
+        result["refresh"] = False
+        if entries:
+            result["ok"] = True
+            result["message"] = (f"{len(entries)} file(s) would change")
+        elif result.get("ok", True):
+            result["ok"] = True
+            result["message"] = "Nothing would change"
+        return result
     result = apply(changes)
     if not isinstance(result, dict):
         raise RpcError(f"{panel_id}.apply returned {type(result).__name__}")
@@ -281,6 +301,10 @@ def _ui_set(params: dict) -> dict:
     return current
 
 
+def _focus_poll(params: dict) -> dict:
+    return {"requests": bus.poll()}
+
+
 def _status(params: dict) -> dict:
     return {
         "version": __version__,
@@ -335,6 +359,7 @@ HANDLERS: dict[str, Callable[[dict], Any]] = {
     "ui.get": _ui_get,
     "ui.set": _ui_set,
     "status": _status,
+    "focus.poll": _focus_poll,
 }
 
 

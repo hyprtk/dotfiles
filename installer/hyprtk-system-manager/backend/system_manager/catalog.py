@@ -59,6 +59,20 @@ PANELS: list[dict[str, Any]] = [
         "description": "Systemd units: start, stop, enable at boot.",
     },
     {
+        "id": "snapshots", "title": "Snapshots", "group": "system", "icon": "\uf0e2",
+        "status": "full", "module": "snapshots",
+        "keywords": ["snapshots", "backup", "backups", "restore", "undo", "revert",
+                     "history", "previous", "rollback", "fstab backup"],
+        "description": "Restore the files an Apply changed.",
+    },
+    {
+        "id": "profiles", "title": "Profiles", "group": "system", "icon": "\uf0c5",
+        "status": "full", "module": "profiles",
+        "keywords": ["profiles", "profile", "per-host", "host", "save settings",
+                     "restore settings", "sync", "preset", "machine"],
+        "description": "Save this machine's settings and replay them on another.",
+    },
+    {
         "id": "updates", "title": "Updates", "group": "system", "icon": "\uf0ed",
         "status": "partial", "module": "updates",
         "keywords": ["updates", "upgrade", "packages", "pacman", "yay", "aur",
@@ -101,9 +115,11 @@ PANELS: list[dict[str, Any]] = [
     },
     {
         "id": "power", "title": "Power", "group": "hardware", "icon": "\uf0e7",
-        "status": "read", "module": "power",
-        "keywords": ["power", "battery", "ac", "charge", "suspend", "hibernate",
-                     "idle", "hypridle", "profile", "thermal", "temperature"],
+        "status": "full", "module": "power",
+        "keywords": ["power", "battery", "ac", "charge", "charge limit", "health",
+                     "suspend", "hibernate", "idle", "hypridle", "profile",
+                     "performance", "balanced", "power saver", "tlp", "lid",
+                     "thermal", "temperature"],
         "description": "Power source, battery and idle behaviour.",
     },
     {
@@ -122,9 +138,10 @@ PANELS: list[dict[str, Any]] = [
     },
     {
         "id": "storage", "title": "Storage", "group": "hardware", "icon": "\uf0a0",
-        "status": "partial", "module": "storage",
+        "status": "full", "module": "storage",
         "keywords": ["storage", "disk", "drive", "partition", "mount", "unmount",
-                     "block", "filesystem", "usb", "ssd", "hdd", "luks"],
+                     "block", "filesystem", "usb", "ssd", "hdd", "luks", "fstab",
+                     "format", "ext4", "exfat", "vfat", "swap", "automount"],
         "description": "Block devices, usage and removable media.",
     },
 
@@ -165,10 +182,20 @@ PANELS: list[dict[str, Any]] = [
     # ── Desktop ─────────────────────────────────────────────────────────
     {
         "id": "hyprland", "title": "Hyprland", "group": "desktop", "icon": "\uf1de",
-        "status": "link", "module": "hyprland",
+        "status": "full", "module": "hyprland",
         "keywords": ["hyprland", "compositor", "gaps", "blur", "rounding", "shadow",
-                     "animations", "decorations", "window rules", "monitor config"],
-        "description": "Compositor settings, opened in the Hyprland settings app.",
+                     "animations", "decorations", "window rules", "monitor config",
+                     "dwindle", "master", "focus", "border", "opacity", "misc"],
+        "description": "Compositor settings, rendered from config-manager's pages.",
+    },
+    {
+        "id": "bar", "title": "Bar", "group": "desktop", "icon": "\uf108",
+        "status": "full", "module": "bar",
+        "keywords": ["bar", "bar-qt", "status bar", "panel", "opacity", "radius",
+                     "height", "position", "clock", "layout", "modules", "tray",
+                     "quicklinks", "arc menu", "theme", "accent", "font size",
+                     "animations", "sysmon", "updates", "quick settings"],
+        "description": "Every bar setting, grouped as config.json stores it.",
     },
     {
         "id": "shortcuts", "title": "Keyboard Shortcuts", "group": "desktop", "icon": "\uf11c",
@@ -205,10 +232,10 @@ PANELS: list[dict[str, Any]] = [
     # ── Security ────────────────────────────────────────────────────────
     {
         "id": "privacy", "title": "Privacy & Security", "group": "security", "icon": "\uf132",
-        "status": "partial", "module": "privacy",
+        "status": "full", "module": "privacy",
         "keywords": ["privacy", "security", "firewall", "lock", "screen lock",
-                     "session", "permissions", "nftables", "ufw", "camera",
-                     "microphone", "location"],
+                     "session", "permissions", "nftables", "ufw", "flatpak",
+                     "camera", "microphone", "location", "sandbox"],
         "description": "Screen lock, firewall and session security.",
     },
 

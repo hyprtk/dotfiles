@@ -17,6 +17,9 @@ from . import base
 IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".avif")
 
 
+# Apply is a pure file edit, so a dry run can show it as a diff.
+PREVIEW = "files"
+
 def _wallpapers() -> list[str]:
     found: list[str] = []
     for root in (Path.home() / "Pictures", Path.home() / "Wallpapers", Path.home() / "wallpapers"):

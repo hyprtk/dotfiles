@@ -21,29 +21,42 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
 SYSTEM_MODE=0
 DRY_RUN=0
 DO_UNINSTALL=0
+PREFIX=""
 
 usage() {
-    echo "Usage: $0 [--system] [--dry-run|--uninstall|--help]"
+    echo "Usage: $0 [--system [--prefix DIR]] [--dry-run|--uninstall|--help]"
     echo "  (no args)     Install or update $TITLE for the current user."
     echo "  --system      Install under /usr/local (used by the ISO)."
+    echo "  --prefix DIR  With --system: install under DIR (default /usr/local)."
     echo "  --dry-run     Check requirements and report what is missing; change nothing."
     echo "  --uninstall   Remove the app, launcher and desktop entry (backups are kept)."
+    echo
+    echo "  DESTDIR is honoured for packaging (paths are written under it, but"
+    echo "  launchers still point at the final prefix)."
 }
 
-for arg in "$@"; do
-    case "$arg" in
+while [ "$#" -gt 0 ]; do
+    case "$1" in
         -h|--help) usage; exit 0 ;;
         --dry-run) DRY_RUN=1 ;;
         --system) SYSTEM_MODE=1 ;;
+        --prefix) shift; PREFIX="${1:-}" ;;
+        --prefix=*) PREFIX="${1#--prefix=}" ;;
         -u|--uninstall) DO_UNINSTALL=1 ;;
-        *) echo ":: WARN: unknown option '$arg' (ignored)" >&2 ;;
+        *) echo ":: WARN: unknown option '$1' (ignored)" >&2 ;;
     esac
+    shift
 done
 
+DESTDIR="${DESTDIR:-}"
 if [ "$SYSTEM_MODE" -eq 1 ]; then
-    INSTALL_DIR="/usr/local/share/$APP_NAME"
-    BIN_DIR="/usr/local/bin"
-    APPS_DIR="/usr/local/share/applications"
+    PREFIX="${PREFIX:-/usr/local}"
+    PREFIX="${PREFIX%/}"
+    INSTALL_DIR="$PREFIX/share/$APP_NAME"
+    BIN_DIR="$PREFIX/bin"
+    APPS_DIR="$PREFIX/share/applications"
+    LIBEXEC_DIR="$PREFIX/libexec"
+    POLICY_DIR="$PREFIX/share/polkit-1/actions"
     STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hyprtk-system-manager"
 else
     INSTALL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/$APP_NAME"
@@ -51,7 +64,10 @@ else
     APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
     STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hyprtk-system-manager"
 fi
-DESKTOP_FILE="$APPS_DIR/$APP_NAME.desktop"
+INSTALL_DIR_D="${DESTDIR}${INSTALL_DIR}"
+BIN_DIR_D="${DESTDIR}${BIN_DIR}"
+APPS_DIR_D="${DESTDIR}${APPS_DIR}"
+DESKTOP_FILE="$APPS_DIR_D/$APP_NAME.desktop"
 
 if [ "${HYPRTK_DRYRUN:-}" = "1" ]; then
     echo ":: DRYRUN: would install $TITLE into $INSTALL_DIR"
@@ -59,7 +75,8 @@ if [ "${HYPRTK_DRYRUN:-}" = "1" ]; then
 fi
 
 # Root is required only for --system.
-if [ "$SYSTEM_MODE" -eq 1 ] && [ "$(id -u)" -ne 0 ]; then
+if [ "$SYSTEM_MODE" -eq 1 ] && [ "$DRY_RUN" -eq 0 ] && [ -z "$DESTDIR" ] \
+    && [ "$(id -u)" -ne 0 ]; then
     echo ":: --system needs root (sudo $0 --system)" >&2
     exit 1
 fi
@@ -80,13 +97,17 @@ missing_deps() {
 if [ "$DO_UNINSTALL" -eq 1 ]; then
     echo ":: Uninstalling $APP_NAME (system mode: $SYSTEM_MODE)..."
     if [ -L "$BIN_DIR/$LAUNCHER_NAME" ] \
-        && [ "$(readlink -f "$BIN_DIR/$LAUNCHER_NAME")" = "$INSTALL_DIR/bin/$LAUNCHER_NAME" ]; then
-        rm -f "$BIN_DIR/$LAUNCHER_NAME"
+        && [ "$(readlink -f "$BIN_DIR_D/$LAUNCHER_NAME")" = "$INSTALL_DIR_D/bin/$LAUNCHER_NAME" ]; then
+        rm -f "$BIN_DIR_D/$LAUNCHER_NAME"
     fi
-    rm -rf "${INSTALL_DIR:?}"
+    rm -rf "${INSTALL_DIR_D:?}"
     rm -f "$DESKTOP_FILE"
+    if [ "$SYSTEM_MODE" -eq 1 ]; then
+        rm -f "${DESTDIR}${LIBEXEC_DIR}/hyprtk-sm-helper"
+        rm -f "${DESTDIR}${POLICY_DIR}/org.hyprtk.system-manager.policy"
+    fi
     command -v update-desktop-database >/dev/null 2>&1 \
-        && update-desktop-database "$APPS_DIR" >/dev/null 2>&1 || true
+        && update-desktop-database "$APPS_DIR_D" >/dev/null 2>&1 || true
     echo ":: Removed."
     echo ":: Kept backups in $STATE_DIR"
     exit 0
@@ -97,9 +118,13 @@ MISSING="$(missing_deps)"
 if [ "$DRY_RUN" -eq 1 ]; then
     echo ":: Dry run — nothing will be installed or modified."
     echo ":: Mode:            $([ "$SYSTEM_MODE" -eq 1 ] && echo system || echo user)"
-    echo ":: Install dir:     $INSTALL_DIR"
-    echo ":: Launcher:        $BIN_DIR/$LAUNCHER_NAME"
-    echo ":: Desktop entry:   $DESKTOP_FILE"
+    echo ":: Install dir:     $INSTALL_DIR_D"
+    echo ":: Launcher:        $BIN_DIR_D/$LAUNCHER_NAME"
+    echo ":: Desktop entry:   $APPS_DIR_D/$APP_NAME.desktop"
+    if [ "$SYSTEM_MODE" -eq 1 ]; then
+        echo ":: Polkit policy:   ${DESTDIR}${POLICY_DIR}/org.hyprtk.system-manager.policy"
+        echo ":: Root helper:     ${DESTDIR}${LIBEXEC_DIR}/hyprtk-sm-helper"
+    fi
     printf ':: python3:         %s\n' "$(command -v python3 || echo MISSING)"
     printf ':: Quickshell:      %s\n' "$(qs_bin || echo MISSING)"
     printf ':: Hyprland:        %s\n' "$(command -v hyprctl || echo 'not found (display panels will be read-only)')"
@@ -119,10 +144,10 @@ if [ -n "$MISSING" ]; then
     exit 1
 fi
 
-echo ":: Installing $TITLE into $INSTALL_DIR ..."
-mkdir -p "$INSTALL_DIR" "$BIN_DIR" "$APPS_DIR"
-
-stage="${INSTALL_DIR}.stage.$$"
+echo ":: Installing $TITLE into $INSTALL_DIR_D ..."
+mkdir -p "$INSTALL_DIR_D" "$BIN_DIR_D" "$APPS_DIR_D"
+# The staging dir sits beside the final one so `mv` is a rename, never a copy.
+stage="${INSTALL_DIR_D}.stage.$$"
 rm -rf "$stage"
 mkdir -p "$stage"
 cp -a "$SCRIPT_DIR/shell.qml" "$stage/"
@@ -133,17 +158,29 @@ done
 find "$stage" -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 find "$stage" -name '*.pyc' -delete 2>/dev/null || true
 chmod +x "$stage/bin/$LAUNCHER_NAME"
-rm -rf "${INSTALL_DIR:?}"
-mv "$stage" "$INSTALL_DIR"
+rm -rf "${INSTALL_DIR_D:?}"
+mv "$stage" "$INSTALL_DIR_D"
 
-ln -sf "$INSTALL_DIR/bin/$LAUNCHER_NAME" "$BIN_DIR/$LAUNCHER_NAME"
+ln -sf "$INSTALL_DIR/bin/$LAUNCHER_NAME" "$BIN_DIR_D/$LAUNCHER_NAME"
 if [ "$SYSTEM_MODE" -eq 0 ] && ! on_path "$BIN_DIR"; then
     echo ":: NOTE: add $BIN_DIR to PATH to use '$LAUNCHER_NAME' directly."
 fi
 
-install -Dm644 "$SCRIPT_DIR/data/$APP_NAME.svg" "$INSTALL_DIR/$APP_NAME.svg"
+install -Dm644 "$SCRIPT_DIR/data/$APP_NAME.svg" "$INSTALL_DIR_D/$APP_NAME.svg"
 
-mkdir -p "$APPS_DIR"
+if [ "$SYSTEM_MODE" -eq 1 ]; then
+    install -Dm755 "$SCRIPT_DIR/bin/hyprtk-sm-helper" "${DESTDIR}${LIBEXEC_DIR}/hyprtk-sm-helper"
+    install -Dm644 "$SCRIPT_DIR/data/org.hyprtk.system-manager.policy" \
+        "${DESTDIR}${POLICY_DIR}/org.hyprtk.system-manager.policy"
+    echo ":: Root helper + polkit policy installed (pkexec path)."
+    case "$PREFIX" in
+        /usr) ;;
+        *) echo ":: NOTE: $POLICY_DIR is not a polkit search path on most systems;"
+           echo "::       mount edits will fall back to sudo." ;;
+    esac
+fi
+
+mkdir -p "$APPS_DIR_D"
 if [ -f "$SCRIPT_DIR/data/$APP_NAME.desktop" ]; then
     sed -e "s|^Exec=.*|Exec=\"$BIN_DIR/$LAUNCHER_NAME\" open|" \
         -e "s|^Icon=.*|Icon=$INSTALL_DIR/$APP_NAME.svg|" \
@@ -164,11 +201,11 @@ fi
 command -v update-desktop-database >/dev/null 2>&1 \
     && update-desktop-database "$APPS_DIR" >/dev/null 2>&1 || true
 
-PYTHONPATH="$INSTALL_DIR/backend" python3 -m system_manager.cli version >/dev/null
-echo ":: Backend import OK ($(PYTHONPATH="$INSTALL_DIR/backend" python3 -m system_manager.cli version))"
+PYTHONPATH="$INSTALL_DIR_D/backend" python3 -m system_manager.cli version >/dev/null
+echo ":: Backend import OK ($(PYTHONPATH="$INSTALL_DIR_D/backend" python3 -m system_manager.cli version))"
 
 echo ":: Installed."
 echo ":: Run:       $LAUNCHER_NAME"
-echo ":: App:       $INSTALL_DIR"
+echo ":: App:       $INSTALL_DIR_D"
 echo ":: Backups:   $STATE_DIR/backups"
 echo ":: Uninstall: $0 --uninstall"

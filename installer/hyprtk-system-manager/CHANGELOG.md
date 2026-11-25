@@ -1,5 +1,58 @@
 # Changelog
 
+## [0.6.0] — 2026-11-25
+
+Closes the remaining roadmap: Power, Storage and Privacy are real panels, the
+bar and the compositor are edited inline, Apply can be previewed, snapshots and
+profiles exist, and the app has a polkit helper and packaging.
+
+### Added
+
+- **Power**: platform profile via `power-profiles-daemon` (applied through
+  `powerprofilesctl set`), battery health and cycle count, a charge-limit slider
+  for batteries that expose `charge_control_end_threshold` (root), TLP status,
+  lid state and the configured Hyprland lid binding, suspend/hibernate/lock
+  actions, and hypridle start/restart/edit.
+- **Storage**: `/etc/fstab` parsed and listed with per-entry removal, an
+  add-a-mount form validated structurally and then by `findmnt --verify` on a
+  candidate file before anything is written, mount-point creation, root writes
+  through the privilege layer with a copy kept under the state dir, and
+  `mkfs.ext4`/`exfat`/`vfat` for unmounted removable partitions behind a typed
+  device-name confirmation.
+- **Privacy & Security**: ufw state and rules with enable/disable through
+  polkit, nftables service start, applications currently capturing audio,
+  camera devices, and Flatpak permission overrides with a per-app reset.
+- **Bar panel**: the whole `~/.config/hyprtk-bar-qt/config.json` rendered as
+  typed rows grouped by top-level key; scalar lists are comma text, lists of
+  objects link to the bar's own row editors. A `theme.*` edit also writes the
+  flat `theme*` key, because that is the one the bar loads.
+- **Hyprland panel**: config-manager's own pages and current values are rendered
+  with this app's form model and written back through `config-manager set`, so
+  validation and backups stay in one place instead of a second implementation.
+- **Snapshots panel**: every Apply snapshot listed with a typed-confirmation
+  restore, the root-owned file copies (`/etc/fstab` and friends) and the backup
+  folder.
+- **Profiles panel**: capture every file-backed setting on this host into a
+  named profile and replay it on another machine through each panel's own apply.
+- **Dry-run preview**: a Preview button shows a unified diff of every file an
+  Apply would change, and writes nothing. Panels that act on the system instead
+  of a file say so rather than pretending.
+- **Settings bus**: `hyprtk-settings open --page power --row "Charge limit"`
+  deep-links into the running window (Unix socket, plus `org.hyprtk.Settings`
+  `Open(panel, row)` on the session bus where PyGObject is available); the row
+  is scrolled to and highlighted. `--new-window` keeps the old behaviour.
+- **Polkit helper**: `hyprtk-sm-helper` plus five policy actions
+  (storage/power/privacy/users/system). The helper is an allow-list — binaries,
+  `systemctl` verbs, writable paths — not a shell, and it is now the pkexec path.
+- **Packaging**: `packaging/` with PKGBUILD, RPM spec, Debian, APKBUILD and an
+  xbps template, all installing through `DESTDIR=… ./install.sh --system
+  --prefix /usr`. `install.sh` gained `--prefix` and `DESTDIR` support.
+
+### Fixed
+
+- `ufw status` was parsed as active whenever the word "inactive" appeared,
+  because "inactive" contains "active".
+
 ## [0.5.3] — 2026-11-24
 
 Settings that are shared with the rest of the suite now reach the running

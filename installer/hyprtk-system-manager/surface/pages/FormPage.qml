@@ -9,6 +9,7 @@ Flickable {
     property var model: ({})
     property string panelId: ""
     property var pending: ({})
+    property string focusRow: ""
 
     signal change(string panelId, string key, var value)
     signal invoke(string panelId, var action)
@@ -21,6 +22,26 @@ Flickable {
     flickableDirection: Flickable.VerticalFlick
 
     readonly property var sections: (page.model && page.model.sections) ? page.model.sections : []
+
+    onFocusRowChanged: Qt.callLater(page.scrollTo, page.focusRow)
+
+    function scrollTo(label) {
+        if (!label || label.length === 0)
+            return;
+        for (let c = 0; c < column.children.length; c++) {
+            const card = column.children[c];
+            for (let r = 0; card.children && r < card.children.length; r++) {
+                const row = card.children[r];
+                if (!row || !row.rowData)
+                    continue;
+                if ((row.rowData.label || "") === label) {
+                    const y = row.mapToItem(content, 0, 0).y;
+                    page.contentY = Math.max(0, y - 90);
+                    return;
+                }
+            }
+        }
+    }
     readonly property bool hasHero: !!(page.model && page.model.hero) &&
                                     (page.model.hero.title || "").length > 0
 
@@ -63,6 +84,7 @@ Flickable {
                             panelId: page.panelId
                             pending: page.pending
                             rowData: modelData
+                            focusRow: page.focusRow
                             onChange: (key, value) => page.change(page.panelId, key, value)
                             onInvoke: (action) => page.invoke(page.panelId, action)
                             onBrowse: (key, mode, value) => page.browse(page.panelId, key, mode, value)

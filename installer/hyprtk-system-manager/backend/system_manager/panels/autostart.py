@@ -10,6 +10,9 @@ from . import base
 SYSTEM_DIR = Path("/etc/xdg/autostart")
 
 
+# Apply is a pure file edit, so a dry run can show it as a diff.
+PREVIEW = "files"
+
 def entries() -> list[dict]:
     found: dict[str, dict] = {}
     for directory, system in ((SYSTEM_DIR, True), (paths.AUTOSTART_DIR, False)):

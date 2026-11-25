@@ -199,13 +199,13 @@ def action(name: str, args: dict) -> dict:
         if groups:
             argv += ["--groups", ",".join(groups)]
         argv.append(username)
-        result = priv.run_priv(argv)
+        result = priv.run_priv(argv, action="users")
         if not result.ok:
             return base.denied(f"Could not create {username}: {result.text.strip()}",
                                priv.command_for(argv))
         password = str(args.get("password") or "")
         if password:
-            changed = priv.run_priv(["chpasswd"], input=f"{username}:{password}\n")
+            changed = priv.run_priv(["chpasswd"], input=f"{username}:{password}\n", action="users")
             if not changed.ok:
                 return base.fail(f"{username} was created, but the password was not set: "
                                  f"{changed.text.strip()}", refresh=True)
@@ -222,7 +222,7 @@ def action(name: str, args: dict) -> dict:
         if args.get("remove_home", True):
             argv.append("--remove")
         argv.append(username)
-        result = priv.run_priv(argv)
+        result = priv.run_priv(argv, action="users")
         if not result.ok:
             return base.denied(f"Could not delete {username}: {result.text.strip()}",
                                priv.command_for(argv))
@@ -235,7 +235,7 @@ def action(name: str, args: dict) -> dict:
             return base.fail(problem)
         option = "--lock" if args.get("locked") else "--unlock"
         argv = ["usermod", option, username]
-        result = priv.run_priv(argv)
+        result = priv.run_priv(argv, action="users")
         if not result.ok:
             return base.denied(result.text.strip() or "usermod failed", priv.command_for(argv))
         return base.ok(f"{'Locked' if args.get('locked') else 'Unlocked'} {username}",
@@ -249,7 +249,7 @@ def action(name: str, args: dict) -> dict:
         password = str(args.get("password") or "")
         if len(password) < 1:
             return base.fail("Password cannot be empty")
-        result = priv.run_priv(["chpasswd"], input=f"{username}:{password}\n")
+        result = priv.run_priv(["chpasswd"], input=f"{username}:{password}\n", action="users")
         if not result.ok:
             return base.denied(f"Could not change the password: {result.text.strip()}",
                                priv.command_for(["chpasswd"]))
@@ -262,7 +262,7 @@ def action(name: str, args: dict) -> dict:
             return base.fail(problem)
         groups = [g for g in parse_groups(str(args.get("groups") or "")) if g]
         argv = ["usermod", "--groups", ",".join(groups), username]
-        result = priv.run_priv(argv)
+        result = priv.run_priv(argv, action="users")
         if not result.ok:
             return base.denied(result.text.strip() or "usermod failed", priv.command_for(argv))
         return base.ok(f"Groups updated for {username}", details=[priv.command_for(argv)])
@@ -276,7 +276,7 @@ def action(name: str, args: dict) -> dict:
         if shell not in shells():
             return base.fail(f"{shell} is not a valid login shell")
         argv = ["usermod", "--shell", shell, username]
-        result = priv.run_priv(argv)
+        result = priv.run_priv(argv, action="users")
         if not result.ok:
             return base.denied(result.text.strip() or "usermod failed", priv.command_for(argv))
         return base.ok(f"Shell for {username} set to {shell}", details=[priv.command_for(argv)])

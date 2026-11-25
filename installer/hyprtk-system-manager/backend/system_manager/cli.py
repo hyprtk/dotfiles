@@ -9,16 +9,24 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import __version__, apps, catalog, form, priv, state, util
+from . import __version__, apps, bus, catalog, form, priv, state, util
 
 APP_DIR = Path(__file__).resolve().parents[2]
 def cmd_open(args) -> int:
+    # A second launch is a deep link into the running window, not a new one.
+    if not args.foreground and not getattr(args, "new_window", False):
+        target = {"panel": args.page or "", "row": args.row or ""}
+        if bus.send(target):
+            print("focused the running window")
+            return 0
     env = dict(os.environ)
     # Quickshell reports every toplevel as org.quickshell unless this is set,
     # which costs the app its desktop entry, icon and window rules.
     env.setdefault("QS_APP_ID", "hyprtk-system-manager")
     if args.page:
         env["HYPRTK_SM_PAGE"] = args.page
+    if args.row:
+        env["HYPRTK_SM_ROW"] = args.row
     if args.overlay:
         env["HYPRTK_SM_OVERLAY"] = "1"
     try:
@@ -184,10 +192,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="cmd")
 
-    p = sub.add_parser("open", help="open the GUI")
+    p = sub.add_parser("open", help="open the GUI, or deep-link into the running one")
     p.add_argument("--page")
+    p.add_argument("--row", help="settings row to highlight")
     p.add_argument("--overlay", action="store_true", help="layer-shell overlay for the bar")
     p.add_argument("--foreground", action="store_true")
+    p.add_argument("--new-window", action="store_true", help="do not reuse the running window")
     p.set_defaults(func=cmd_open)
 
     p = sub.add_parser("serve", help="JSON-lines RPC over stdio")
@@ -230,7 +240,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):
-        return cmd_open(argparse.Namespace(page=None, overlay=False, foreground=False))
+        return cmd_open(argparse.Namespace(page=None, row=None, overlay=False,
+                                           foreground=False, new_window=False))
     try:
         return args.func(args)
     except (state.TransactionError, RuntimeError) as exc:

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "https://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>hyprtk</vendor>
+  <vendor_url>https://github.com/hyprtk</vendor_url>
+
+  <action id="org.hyprtk.system-manager.manage-storage">
+    <description>Change mounts and filesystems</description>
+    <message>Authentication is required to edit /etc/fstab or format a device</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/hyprtk-sm-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">storage</annotate>
+  </action>
+
+  <action id="org.hyprtk.system-manager.manage-power">
+    <description>Change battery charge limits</description>
+    <message>Authentication is required to change a battery charge threshold</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/hyprtk-sm-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">power</annotate>
+  </action>
+
+  <action id="org.hyprtk.system-manager.manage-privacy">
+    <description>Change firewall and security settings</description>
+    <message>Authentication is required to change the firewall</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/hyprtk-sm-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">privacy</annotate>
+  </action>
+
+  <action id="org.hyprtk.system-manager.manage-users">
+    <description>Change user accounts</description>
+    <message>Authentication is required to change an account</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/hyprtk-sm-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">users</annotate>
+  </action>
+
+  <action id="org.hyprtk.system-manager.manage-system">
+    <description>Change system services and settings</description>
+    <message>Authentication is required to change a system setting</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/hyprtk-sm-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">system</annotate>
+  </action>
+</policyconfig>

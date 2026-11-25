@@ -6,6 +6,9 @@ from .. import form, jsonconf, util
 from . import base
 
 
+# Apply is a pure file edit, so a dry run can show it as a diff.
+PREVIEW = "files"
+
 def probe() -> dict:
     cfg = jsonconf.load()
     block = cfg.get("notifications") or {}

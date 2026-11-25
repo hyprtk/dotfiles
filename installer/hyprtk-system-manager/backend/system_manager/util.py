@@ -129,6 +129,11 @@ def read_json(path: str | Path, default: Any = None) -> Any:
 
 def atomic_write(path: str | Path, text: str, mode: int | None = None) -> None:
     target = Path(path)
+    from . import preview
+
+    if preview.active():
+        preview.record(target, preview.read_before(target), text)
+        return
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=str(target.parent), prefix=f".{target.name}.", suffix=".tmp")
     try:

@@ -65,6 +65,11 @@ class Session:
 
     # ── finishing ──────────────────────────────────────────────────────
     def rollback(self) -> None:
+        from . import preview
+
+        if preview.active():
+            self.finished = True
+            return
         for name, text in self.originals.items():
             try:
                 atomic_write(name, text)
@@ -78,6 +83,8 @@ class Session:
         self.finished = True
 
     def commit(self, status: str = "ok", error: str | None = None) -> dict:
+        from . import preview
+
         manifest = {
             "stamp": self.stamp,
             "reason": self.reason,
@@ -86,6 +93,9 @@ class Session:
             "started": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self.started)),
             "files": self.files,
         }
+        if preview.active():
+            self.finished = True
+            return manifest
         if status == "ok" and self.files:
             root = paths.BACKUP_ROOT / self.stamp
             root.mkdir(parents=True, exist_ok=True)

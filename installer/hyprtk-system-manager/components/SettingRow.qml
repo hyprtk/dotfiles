@@ -12,10 +12,21 @@ Item {
     property bool mono: false
     property bool copyValue: false
     property int labelWidth: 180
+    property bool highlighted: false
     default property alias control: controlRow.data
 
     width: parent ? parent.width : 0
     implicitHeight: Math.max(leftColumn.implicitHeight, host.implicitHeight, Theme.controlHeight) + 4
+
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -6
+        radius: Theme.radiusSm
+        visible: row.highlighted
+        color: Theme.alpha(Theme.accent2, 0.10)
+        border.width: 1
+        border.color: Theme.alpha(Theme.accent2, 0.45)
+    }
 
     Column {
         id: leftColumn

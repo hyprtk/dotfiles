@@ -10,6 +10,7 @@ Item {
     property string panelId: ""
     property var pending: ({})
     property var current: null
+    property string focusRow: ""
 
     signal change(string key, var value)
     signal invoke(var action)
@@ -50,6 +51,8 @@ Item {
         value: root.kind === "info" ? (root.rowData.value || "") : ""
         mono: !!root.rowData.mono
         copyValue: !!root.rowData.copy
+        highlighted: root.focusRow.length > 0 &&
+                     (root.rowData.label || "") === root.focusRow
 
         ToggleSwitch {
             visible: root.kind === "toggle"

@@ -12,6 +12,9 @@ from . import base
 FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".woff", ".woff2")
 
 
+# Apply is a pure file edit, so a dry run can show it as a diff.
+PREVIEW = "files"
+
 def families() -> list[str]:
     result = util.run(["fc-list", ":", "family"], timeout=20)
     names: set[str] = set()
