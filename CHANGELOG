@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.20.0] - 2026-11-25
+
+### Added
+
+- **hyprtk-file-manager 1.9.0** (bar 0.43.20 vendors it):
+  - **Archives**: browse zip/tar/7z contents, extract a member or everything
+    (absolute paths, `..` and link members refused), and create `.zip`/`.tar.gz`/
+    `.tar.xz`.
+  - **Tags and smart folders**: colour labels per path, a tag filter for the
+    listing and saved searches in the palette.
+  - **Git**: M/A/D badges per row and a per-file diff dialog, including
+    untracked files.
+  - **Custom actions**: JSON actions in `~/.config/hyprtk-file-manager/actions`,
+    paths passed as argv/env and never interpolated.
+  - **Folder tools**: duplicate finder (size then SHA-256), disk-usage treemap
+    and recursive folder comparison.
+  - **Remote locations**: SFTP/SMB/NFS/DAV through GVfs, MTP devices and cloud
+    mounts listed, “Connect to Server…”.
+  - **LAN share**: serve the current folder read-only over HTTP.
+  - **Local LLM**: describe the cursor file with `llm-vision`/`llm-chat` and keep
+    the text as its note.
+
 ## [v1.19.0] - 2026-11-25
 
 ### Added

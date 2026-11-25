@@ -277,7 +277,8 @@ def scan() -> dict:
     }
 
 
-NETWORK_SCHEMES = ("smb://", "nfs://")
+NETWORK_SCHEMES = ("smb://", "nfs://", "sftp://", "ftp://", "ftps://",
+                    "dav://", "davs://")
 
 
 def is_network_uri(value: str) -> bool:

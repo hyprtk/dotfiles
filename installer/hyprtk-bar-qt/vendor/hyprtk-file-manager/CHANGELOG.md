@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.9.0 — 2026-11-25
+
+### Added
+
+- **Tags, colour labels and smart folders** (`tags.py`, `TagDialog.qml`): a tag
+  store with six preset colours, a tag filter for the listing, and saved
+  searches that appear in the command palette.
+- **Git status badges and diffs** (`gitinfo.py`, `GitDiffDialog.qml`): M/A/D
+  marks per row from `git status -z`, and a per-file diff that also shows an
+  untracked file as added content.
+- **Custom actions** (`actions.py`, `CustomActionsDialog.qml`): JSON actions in
+  `~/.config/hyprtk-file-manager/actions/`; selected paths arrive as argv and in
+  `$HYPRTK_FM_PATHS`, never interpolated into the shell command.
+- **Folder tools** (`tools.py`, `ToolsDialog.qml`): duplicate finder grouped by
+  size then SHA-256, disk-usage treemap (squarified, drawn on a Canvas), and a
+  recursive folder comparison.
+- **Remote and virtual locations** (`remote.py`): SFTP/SMB/NFS/DAV mounting
+  through GVfs (reusing `network.mount`), plus MTP devices and cloud drives
+  listed from `/run/user/*/gvfs`; “Connect to Server…” navigates to the mount.
+- **LAN share** (`share.py`): serve the current folder read-only over HTTP to
+  the local network and show the URL; writes are refused with 405.
+- **Local LLM descriptions** (`llm.py`): `llm-vision`/`llm-chat` describe the
+  cursor file and the text is stored as its note.
+
+- **Archive browser** (`archive.py`, `ArchiveDialog.qml`): zip, tar (gz/xz/bz2)
+  and 7z archives are listed with nested directory walking; a member or the
+  whole archive is extracted into the same folder. Extraction refuses absolute
+  paths, `..` segments and link members before writing anything.
+- **Create archives**: “Compress…” writes `.zip`, `.tar.gz` or `.tar.xz` from
+  the selection (or the cursor) using the standard library.
+
 ## 1.8.12 — 2026-11-20
 
 ### Fixed

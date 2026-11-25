@@ -27,6 +27,12 @@ FloatingWindow {
     property int sessionId: -1
     property bool sessionLoaded: false
     property bool restoring: false
+    property var compressTargets: []
+    property string compressDir: ""
+    property var smartFolders: []
+    property int smartId: -1
+    property string pendingTool: ""
+    property int toolId: -1
 
     function setActivePane(pane) {
         win.activePane = pane;
@@ -71,7 +77,7 @@ FloatingWindow {
         const pane = win.activePane;
         if (!pane)
             return;
-        palette.open([
+        const entries = [
             { label: "Go Home", action: function () { pane.navigate(Config.startPath); } },
             { label: "Go Up", action: function () { pane.goUp(); } },
             { label: "Back", action: function () { pane.goBack(); } },
@@ -97,6 +103,47 @@ FloatingWindow {
             { label: "Delete Permanently…", action: function () { pane.deleteSelection(); } },
             { label: "Undo", action: function () { Jobs.undo(); } },
             { label: "Redo", action: function () { Jobs.redo(); } },
+            { label: "Git Diff…", action: function () { Ui.askGitDiff(pane.cursorPath()); } },
+            { label: "Disk Usage…", action: function () { toolsDialog.openUsage(pane.path); } },
+            { label: "Connect to Server…", action: function () {
+                connectDialog.open("Connect to server",
+                                   "sftp://user@host/path, smb://host/share or dav://host/path", "");
+            } },
+            { label: "Mounted Locations", action: function () {
+                win.pendingTool = "mounts";
+                win.toolId = Backend.call("remote.mounts", {});
+            } },
+            { label: "Share This Folder…", action: function () {
+                win.pendingTool = "share";
+                win.toolId = Backend.call("share.start", { path: pane.path });
+            } },
+            { label: "Stop All Shares", action: function () {
+                Backend.call("share.list", {});
+            } },
+            { label: "Describe with Local LLM", action: function () {
+                win.pendingTool = "describe";
+                win.toolId = Backend.call("llm.describe", { path: pane.cursorPath() });
+            } },
+            { label: "Find Duplicates…", action: function () { toolsDialog.openDuplicates(pane.path); } },
+            { label: "Compare Folders…", action: function () {
+                const other = Config.dualPane ? paneB.path : pane.path;
+                compareDialog.open("Compare folders", "Path of the folder to compare with", other);
+            } },
+            { label: "Tags…", action: function () {
+                const paths = pane.selectedPaths();
+                Ui.askTags(paths.length > 0 ? paths : [pane.cursorPath()]);
+            } },
+            { label: "Filter by Tag…", action: function () { Ui.askTagFilter(); } },
+            { label: "Clear Tag Filter", action: function () { pane.tagFilter = ""; } },
+            { label: "Open Archive…", action: function () { Ui.askArchive(pane.cursorPath()); } },
+            { label: "Compress…", action: function () {
+                const paths = pane.selectedPaths();
+                Ui.askCompress(paths.length > 0 ? paths : [pane.cursorPath()]);
+            } },
+            { label: "Custom Actions…", action: function () {
+                const paths = pane.selectedPaths();
+                Ui.askCustomActions(paths.length > 0 ? paths : [pane.cursorPath()]);
+            } },
             { label: "Properties…", action: function () { Ui.askProperties(pane.cursorPath()); } },
             { label: "Open Terminal Here", action: function () { pane.openTerminal(); } },
             { label: "Open as Root", action: function () { pane.openAsRoot(); } },
@@ -109,7 +156,16 @@ FloatingWindow {
             { label: "Select All", action: function () { pane.selectAll(); } },
             { label: "Settings…", action: function () { Ui.askSettings(); } },
             { label: "Quit", action: function () { Qt.quit(); } }
-        ]);
+        ];
+        for (const item of win.smartFolders) {
+            entries.push({
+                label: "Search: " + item.name,
+                action: function () {
+                    searchPanel.openSmart(item.root || pane.path, item.query, item.mode);
+                },
+            });
+        }
+        palette.open(entries);
     }
 
     Rectangle {
@@ -254,6 +310,135 @@ FloatingWindow {
         onClosed: win.focusActivePane()
     }
 
+    ArchiveDialog {
+        id: archiveDialog
+        onClosed: win.focusActivePane()
+    }
+
+    TagDialog {
+        id: tagDialog
+        onClosed: win.focusActivePane()
+    }
+
+    GitDiffDialog {
+        id: gitDiffDialog
+        onClosed: win.focusActivePane()
+    }
+
+    CustomActionsDialog {
+        id: customActionsDialog
+        onClosed: win.focusActivePane()
+    }
+
+    ToolsDialog {
+        id: toolsDialog
+        onClosed: win.focusActivePane()
+    }
+
+    InfoDialog {
+        id: infoDialog
+        onClosed: win.focusActivePane()
+    }
+
+    PromptDialog {
+        id: connectDialog
+        title: "Connect to server"
+        label: "sftp://user@host/path, smb://host/share or dav://host/path"
+        onAccepted: (value) => {
+            win.pendingTool = "connect";
+            win.toolId = Backend.call("remote.mount", { uri: value.trim() });
+            Ui.close();
+        }
+        onCancelled: {
+            Ui.close();
+            win.focusActivePane();
+        }
+    }
+
+    PromptDialog {
+        id: compareDialog
+        title: "Compare folders"
+        label: "Path of the folder to compare with"
+        onAccepted: (value) => {
+            const other = value.trim();
+            if (other.length > 0 && win.activePane)
+                toolsDialog.openCompare(win.activePane.path, other);
+            Ui.close();
+            win.focusActivePane();
+        }
+        onCancelled: {
+            Ui.close();
+            win.focusActivePane();
+        }
+    }
+
+    PromptDialog {
+        id: tagFilterDialog
+        title: "Filter by tag"
+        label: "Tag name (empty clears the filter)"
+        onAccepted: (value) => {
+            win.activePane.tagFilter = value.trim();
+            Ui.close();
+            win.focusActivePane();
+        }
+        onCancelled: {
+            Ui.close();
+            win.focusActivePane();
+        }
+    }
+
+    PromptDialog {
+        id: saveSearchDialog
+        title: "Save this search"
+        label: "Name for the smart folder"
+        onAccepted: (value) => {
+            Backend.call("smart.save", {
+                name: value.trim(),
+                query: searchPanel.currentQuery(),
+                mode: searchPanel.mode,
+                root: searchPanel.rootDir,
+            });
+            win.smartId = Backend.call("smart.list", {});
+            Ui.close();
+            win.focusActivePane();
+        }
+        onCancelled: {
+            Ui.close();
+            win.focusActivePane();
+        }
+    }
+
+    PromptDialog {
+        id: compressDialog
+        title: "Compress"
+        label: "Archive name (.zip, .tar.gz or .tar.xz)"
+        onAccepted: (value) => {
+            if (win.compressTargets.length === 0)
+                return;
+            const name = value.trim();
+            if (name.length === 0)
+                return;
+            let format = "zip";
+            if (name.endsWith(".tar.gz") || name.endsWith(".tgz"))
+                format = "tar.gz";
+            else if (name.endsWith(".tar.xz") || name.endsWith(".txz"))
+                format = "tar.xz";
+            Backend.call("archive.create", {
+                paths: win.compressTargets,
+                destination: win.compressDir.replace(/\/$/, "") + "/" + name,
+                format: format,
+            });
+            win.compressTargets = [];
+            Ui.close();
+            win.focusActivePane();
+        }
+        onCancelled: {
+            win.compressTargets = [];
+            Ui.close();
+            win.focusActivePane();
+        }
+    }
+
     SettingsDialog {
         id: settingsDialog
         onClosed: win.focusActivePane()
@@ -305,6 +490,11 @@ FloatingWindow {
 
     SearchPanel {
         id: searchPanel
+        onSaveRequested: {
+            Ui.askSaveSearch();
+            saveSearchDialog.open("Save this search", "Name for the smart folder",
+                                  searchPanel.currentQuery());
+        }
         onActivated: (entry) => {
             if (entry.dir)
                 win.activePane.navigate(entry.path);
@@ -327,6 +517,36 @@ FloatingWindow {
     Connections {
         target: Backend
         function onResponse(id, result) {
+            if (id === win.toolId) {
+                win.toolId = -1;
+                if (win.pendingTool === "connect") {
+                    if (result && result.path && win.activePane)
+                        win.activePane.navigate(result.path);
+                } else if (win.pendingTool === "share") {
+                    infoDialog.show("Folder shared on the local network",
+                                    (result && result.url) + "\n\n" +
+                                    "Read-only. Anyone on this network can open it " +
+                                    "until the app exits or the share is stopped.");
+                } else if (win.pendingTool === "describe") {
+                    infoDialog.show("Local model description",
+                                    (result && result.text) || "No description.");
+                } else if (win.pendingTool === "mounts") {
+                    const items = (result && result.mounts) || [];
+                    const lines = items.map(function (item) {
+                        return item.kind + "  " + item.label + "\n    " + item.path;
+                    });
+                    infoDialog.show("Mounted locations",
+                                    lines.length > 0 ? lines.join("\n\n")
+                                                     : "Nothing is mounted remotely.");
+                }
+                win.pendingTool = "";
+                return;
+            }
+            if (id === win.smartId) {
+                win.smartId = -1;
+                win.smartFolders = (result && result.smart) || [];
+                return;
+            }
             if (id !== win.sessionId)
                 return;
             win.sessionId = -1;
@@ -352,7 +572,10 @@ FloatingWindow {
         function onSessionChanged() { win.scheduleSessionSave(); }
     }
 
-    Component.onCompleted: win.sessionId = Backend.call("session.get", {})
+    Component.onCompleted: {
+        win.sessionId = Backend.call("session.get", {});
+        win.smartId = Backend.call("smart.list", {});
+    }
 
     Connections {
         target: Ui
@@ -378,6 +601,37 @@ FloatingWindow {
         }
         function onOpenWithRequested(path) {
             openWithDialog.open(path);
+        }
+        function onArchiveRequested(path) {
+            archiveDialog.open(path);
+        }
+        function onCustomActionsRequested(paths) {
+            customActionsDialog.open(paths);
+        }
+        function onGitDiffRequested(path) {
+            gitDiffDialog.open(path);
+        }
+        function onTagsRequested(paths) {
+            tagDialog.open(paths);
+        }
+        function onTagFilterRequested() {
+            tagFilterDialog.open("Filter by tag", "Tag name (empty clears the filter)",
+                                 win.activePane ? win.activePane.tagFilter : "");
+        }
+        function onSaveSearchRequested() {
+            saveSearchDialog.open("Save this search", "Name for the smart folder",
+                                  searchPanel.currentQuery());
+        }
+        function onCompressRequested(paths) {
+            const list = Array.prototype.slice.call(paths || [], 0);
+            if (list.length === 0)
+                return;
+            win.compressTargets = list;
+            const dir = list[0].substring(0, list[0].lastIndexOf("/"));
+            win.compressDir = dir || "/";
+            const base = list[0].substring(list[0].lastIndexOf("/") + 1);
+            compressDialog.open("Compress", "Archive name (.zip, .tar.gz or .tar.xz)",
+                                (base.replace(/\.[^.]+$/, "") || "archive") + ".zip");
         }
         function onSettingsRequested() {
             settingsDialog.open();

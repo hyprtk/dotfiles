@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.20 — 2026-11-25
+
+- Vendor **hyprtk-file-manager 1.9.0**: archive browsing, tags and smart
+  folders, git badges with a diff dialog, custom actions, duplicate finder /
+  usage treemap / folder compare, remote locations, a read-only LAN share and
+  local-LLM descriptions. The bar's installer provisions the same version.
+
 ## 0.43.19 — 2026-11-24
 
 - **A theme change made outside the bar was ignored until the bar restarted.**

@@ -30,6 +30,9 @@ Item {
     property int anchor: 0
     property bool filtering: false
     property string filterText: ""
+    property string tagFilter: ""
+    property var gitStatus: ({})
+    property int gitId: -1
     property string filterQuery: ""
     property string pendingReveal: ""
 
@@ -528,6 +531,11 @@ Item {
             { key: "addPlace", label: "Add to Places", group: "organize" },
             { key: "selectAll", label: "Select All", group: "organize" },
 
+            { key: "tags", label: "Tags…", group: "organize" },
+            { key: "gitDiff", label: "Git Diff…", group: "info" },
+            { key: "custom", label: "Custom Actions…", group: "tools" },
+            { key: "archive", label: "Open Archive…", group: "tools" },
+            { key: "compress", label: "Compress…", group: "tools" },
             { key: "terminal", label: "Open Terminal Here", group: "tools" },
             { key: "root", label: "Open as Root", group: "tools" },
             { key: "rootTerminal", label: "Open Terminal as Root", group: "tools" },
@@ -563,6 +571,20 @@ Item {
             undo: function () { root.undoLast(); },
             redo: function () { root.redoLast(); },
             properties: function () { root.showProperties(); },
+            gitDiff: function () { Ui.askGitDiff(root.cursorPath()); },
+            custom: function () {
+                const paths = root.selectedPaths();
+                Ui.askCustomActions(paths.length > 0 ? paths : [root.cursorPath()]);
+            },
+            tags: function () {
+                const paths = root.selectedPaths();
+                Ui.askTags(paths.length > 0 ? paths : [root.cursorPath()]);
+            },
+            archive: function () { Ui.askArchive(root.cursorPath()); },
+            compress: function () {
+                const paths = root.selectedPaths();
+                Ui.askCompress(paths.length > 0 ? paths : [root.cursorPath()]);
+            },
             terminal: function () { root.openTerminal(); },
             root: function () { root.openAsRoot(); },
             rootTerminal: function () { root.openTerminalRoot(); },
@@ -582,7 +604,12 @@ Item {
             emptyTrash: root.inTrash(),
             openTrash: !root.inTrash(),
             selectAll: listing.entries.length > 0,
-            properties: single
+            properties: single,
+            archive: single,
+            tags: single || has,
+            gitDiff: singleFile,
+            custom: single || has,
+            compress: has
         };
 
         const hidden = Config.hiddenMenuItems || [];
@@ -770,7 +797,9 @@ Item {
         dirsFirst: Config.dirsFirst
         showHidden: Config.showHidden
         query: root.filterQuery
+        tag: root.tagFilter
         onLoaded: {
+            root.gitId = Backend.call("git.status", { path: root.path });
             if (root.cursor >= listing.entries.length)
                 root.cursor = Math.max(0, listing.entries.length - 1);
             root.pruneSelection();
@@ -818,6 +847,18 @@ Item {
 
     Connections {
         target: Backend
+        function onResponse(id, result) {
+            if (id !== root.gitId)
+                return;
+            root.gitId = -1;
+            root.gitStatus = (result && result.files) ? result.files : ({});
+        }
+        function onFailure(id, message) {
+            if (id === root.gitId) {
+                root.gitId = -1;
+                root.gitStatus = ({});
+            }
+        }
         function onFsEvent(token, dir) {
             if (token === root.watchToken)
                 root.refreshSoon();
@@ -1232,6 +1273,21 @@ Item {
                         sourceSize: Qt.size(Math.max(Theme.iconSource, rowItem.iconPx),
                                             Math.max(Theme.iconSource, rowItem.iconPx))
                         source: Quickshell.iconPath(modelData.icon, modelData.dir ? "folder" : "text-x-generic")
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !!root.gitStatus[root.path + "/" + modelData.name]
+                        text: root.gitStatus[root.path + "/" + modelData.name] || ""
+                        color: {
+                            const mark = root.gitStatus[root.path + "/" + modelData.name];
+                            if (mark === "M") return Theme.warn;
+                            if (mark === "D") return Theme.danger;
+                            if (mark === "A" || mark === "R") return Theme.ok;
+                            return Theme.info;
+                        }
+                        font.pixelSize: Theme.fontSize - 1
+                        font.bold: true
                     }
 
                     Text {

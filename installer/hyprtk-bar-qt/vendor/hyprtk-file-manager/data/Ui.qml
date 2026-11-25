@@ -14,6 +14,13 @@ Singleton {
     signal batchRenameRequested(var paths)
     signal propertiesRequested(string path)
     signal openWithRequested(string path)
+    signal archiveRequested(string path)
+    signal compressRequested(var paths)
+    signal tagsRequested(var paths)
+    signal tagFilterRequested()
+    signal saveSearchRequested()
+    signal gitDiffRequested(string path)
+    signal customActionsRequested(var paths)
     signal settingsRequested()
     signal emptyTrashRequested()
     signal placesChanged()
@@ -44,6 +51,41 @@ Singleton {
     function askProperties(path) {
         root.modalOpen = true;
         root.propertiesRequested(path);
+    }
+
+    function askArchive(path) {
+        root.modalOpen = true;
+        root.archiveRequested(path);
+    }
+
+    function askTags(paths) {
+        root.modalOpen = true;
+        root.tagsRequested(paths);
+    }
+
+    function askTagFilter() {
+        root.modalOpen = true;
+        root.tagFilterRequested();
+    }
+
+    function askCustomActions(paths) {
+        root.modalOpen = true;
+        root.customActionsRequested(paths);
+    }
+
+    function askGitDiff(path) {
+        root.modalOpen = true;
+        root.gitDiffRequested(path);
+    }
+
+    function askSaveSearch() {
+        root.modalOpen = true;
+        root.saveSearchRequested();
+    }
+
+    function askCompress(paths) {
+        root.modalOpen = true;
+        root.compressRequested(paths);
     }
 
     function askOpenWith(path) {

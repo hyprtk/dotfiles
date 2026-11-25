@@ -101,6 +101,7 @@ def list_dir(
     hidden: bool = False,
     dirs_first: bool = True,
     query: str = "",
+    tag: str = "",
 ) -> dict:
     target = Path(path).expanduser()
     if not target.exists():
@@ -112,6 +113,12 @@ def list_dir(
     if query:
         lowered = str(query).lower()
         rows = [row for row in rows if lowered in row[0].lower()]
+    if tag:
+        from . import tags as tags_mod
+
+        wanted = set(tags_mod.paths_with_tag(tag))
+        rows = [row for row in rows
+                if os.path.join(target, row[0]) in wanted]
     total = len(rows)
     offset = max(0, int(offset))
     limit = max(1, int(limit))

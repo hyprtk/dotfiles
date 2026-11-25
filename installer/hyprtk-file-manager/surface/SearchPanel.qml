@@ -14,6 +14,8 @@ Item {
 
     property string rootDir: ""
     property string mode: "name"
+
+    signal saveRequested()
     property var results: []
     property int pendingId: -1
     property bool truncated: false
@@ -31,6 +33,17 @@ Item {
         Ui.modalOpen = true;
         field.text = "";
         Qt.callLater(function () { field.forceActiveFocus(); });
+    }
+
+    function openSmart(dir, query, mode) {
+        root.open(dir);
+        root.mode = mode || "name";
+        field.text = query || "";
+        root.run();
+    }
+
+    function currentQuery() {
+        return field.text || "";
     }
 
     function close() {
@@ -158,6 +171,11 @@ Item {
                         color: Theme.alpha(Theme.foreground, 0.35)
                         font.pixelSize: 13
                     }
+                }
+
+                TButton {
+                    text: "Save…"
+                    onClicked: root.saveRequested()
                 }
 
                 Repeater {

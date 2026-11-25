@@ -10,6 +10,7 @@ Item {
     property bool dirsFirst: true
     property bool showHidden: false
     property string query: ""
+    property string tag: ""
     property int pageSize: 300
 
     property var entries: []
@@ -45,7 +46,8 @@ Item {
             desc: root.sortDesc,
             dirsFirst: root.dirsFirst,
             hidden: root.showHidden,
-            query: root.query
+            query: root.query,
+            tag: root.tag
         });
     }
 

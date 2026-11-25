@@ -10,7 +10,13 @@ import threading
 from pathlib import Path
 
 from . import __version__
+from . import archive as archive_mod
 from . import clipboard as clipboard_mod
+from . import actions as actions_mod
+from . import gitinfo
+from . import llm as llm_mod
+from . import remote as remote_mod
+from . import share as share_mod
 from . import launch
 from . import meta
 from . import network as network_mod
@@ -19,6 +25,8 @@ from . import places as places_mod
 from . import preview as preview_mod
 from . import search as search_mod
 from . import store
+from . import tags as tags_mod
+from . import tools as tools_mod
 from . import trash
 from .journal import Journal
 from .listing import DirCache, list_dir
@@ -60,6 +68,7 @@ def _list(params: dict) -> dict:
         hidden=bool(params.get("hidden", False)),
         dirs_first=bool(params.get("dirsFirst", True)),
         query=str(params.get("query") or ""),
+        tag=str(params.get("tag") or ""),
     )
     result["kind"] = "list"
     return result
@@ -171,6 +180,65 @@ def handle(request: dict) -> dict:
             return {"id": rid, "result": MANAGER.dispatch("redo", params)}
         if method == "stat":
             return {"id": rid, "result": meta.file_info(str(params.get("path") or ""))}
+        if method == "tags.set":
+            return {"id": rid, "result": tags_mod.set_paths(
+                [str(item) for item in (params.get("paths") or [])],
+                params.get("tags") or [],
+                str(params.get("color") or ""),
+                params.get("note") if "note" in params else None,
+            )}
+        if method == "tags.list":
+            return {"id": rid, "result": {"tags": tags_mod.all_tags()}}
+        if method == "tags.for_paths":
+            return {"id": rid, "result": {"paths": tags_mod.for_paths(
+                [str(item) for item in (params.get("paths") or [])])}}
+        if method == "tags.listing":
+            return {"id": rid, "result": {"paths": tags_mod.listing(
+                str(params.get("path") or ""))}}
+        if method == "smart.list":
+            return {"id": rid, "result": {"smart": tags_mod.smart_list()}}
+        if method == "smart.save":
+            return {"id": rid, "result": tags_mod.smart_save(
+                str(params.get("name") or ""), str(params.get("query") or ""),
+                str(params.get("mode") or "name"), str(params.get("root") or ""))}
+        if method == "smart.delete":
+            return {"id": rid, "result": {"deleted": tags_mod.smart_delete(
+                str(params.get("name") or ""))}}
+        if method == "share.list":
+            return {"id": rid, "result": {"shares": share_mod.shares()}}
+        if method == "share.stop":
+            return {"id": rid, "result": share_mod.stop(str(params.get("id") or ""))}
+        if method == "llm.available":
+            return {"id": rid, "result": llm_mod.available()}
+        if method == "remote.mounts":
+            return {"id": rid, "result": {"mounts": remote_mod.mounts(),
+                                          "devices": remote_mod.devices()}}
+        if method == "tools.duplicates":
+            return {"id": rid, "result": tools_mod.duplicates(
+                str(params.get("path") or ""), int(params.get("minSize") or 1))}
+        if method == "tools.usage":
+            return {"id": rid, "result": tools_mod.usage(str(params.get("path") or ""))}
+        if method == "tools.compare":
+            return {"id": rid, "result": tools_mod.compare(
+                str(params.get("left") or ""), str(params.get("right") or ""))}
+        if method == "actions.list":
+            return {"id": rid, "result": {"actions": actions_mod.load(),
+                                          "dir": str(actions_mod.actions_dir()),
+                                          "example": actions_mod.example()}}
+        if method == "actions.run":
+            return {"id": rid, "result": actions_mod.run(
+                str(params.get("id") or ""),
+                [str(item) for item in (params.get("paths") or [])],
+                str(params.get("dir") or ""),
+            )}
+        if method == "git.root":
+            return {"id": rid, "result": {"root": gitinfo.repo_root(
+                str(params.get("path") or ""))}}
+        if method == "archive.kind":
+            return {
+                "id": rid,
+                "result": {"kind": archive_mod.kind_of(str(params.get("path") or ""))},
+            }
         if method == "chmod":
             return {
                 "id": rid,
@@ -226,6 +294,37 @@ def _serve_async(request: dict) -> None:
                 no_ignore=bool(params.get("noIgnore", False)),
                 limit=int(params.get("limit", 500)),
             )
+        elif method == "share.start":
+            result = share_mod.start(str(params.get("path") or ""),
+                                     int(params.get("port") or 0))
+        elif method == "llm.describe":
+            result = llm_mod.describe(str(params.get("path") or ""))
+        elif method == "remote.mount":
+            result = remote_mod.connect(
+                str(params.get("uri") or ""),
+                str(params.get("username") or ""),
+                str(params.get("password") or ""),
+                str(params.get("domain") or ""),
+            )
+        elif method == "git.status":
+            result = gitinfo.status(str(params.get("path") or ""))
+        elif method == "git.diff":
+            result = gitinfo.diff(str(params.get("path") or ""))
+        elif method == "archive.list":
+            result = archive_mod.list_archive(
+                str(params.get("path") or ""), str(params.get("inner") or ""))
+        elif method == "archive.extract":
+            result = archive_mod.extract(
+                str(params.get("path") or ""),
+                str(params.get("inner") or ""),
+                str(params.get("destination") or "") or None,
+            )
+        elif method == "archive.create":
+            result = archive_mod.create(
+                [str(item) for item in (params.get("paths") or [])],
+                str(params.get("destination") or ""),
+                str(params.get("format") or "zip"),
+            )
         elif method == "checksum":
             result = meta.checksum(
                 str(params.get("path") or ""),
@@ -261,6 +360,8 @@ def _serve_async(request: dict) -> None:
 
 ASYNC_METHODS = {
     "preview", "thumb", "search", "checksum", "devices.mount", "devices.eject",
+    "archive.list", "archive.extract", "archive.create", "git.status", "git.diff",
+    "share.start", "llm.describe", "remote.mount",
     "network.scan", "network.mount", "network.shares", "open_with.apps",
     "clipboard.get",
 }
