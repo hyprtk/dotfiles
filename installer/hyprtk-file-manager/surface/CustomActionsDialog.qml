@@ -149,7 +149,7 @@ Item {
                 wrapMode: Text.WordWrap
             }
 
-            TButton { text: "Close"; onClicked: root.dismiss() }
+            DialogButton { text: "Close"; onClicked: root.dismiss() }
         }
     }
 

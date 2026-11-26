@@ -128,7 +128,7 @@ Item {
                     color: Theme.warn
                     font.pixelSize: Theme.size(1)
                 }
-                TButton { text: "Close"; onClicked: root.dismiss() }
+                DialogButton { text: "Close"; onClicked: root.dismiss() }
             }
         }
     }

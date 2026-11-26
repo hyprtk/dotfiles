@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.20.1] - 2026-11-26
+
+### Fixed
+
+- **hyprtk-file-manager 1.9.1** (bar 0.43.21 vendors it): 1.9.0 did not start.
+  The new dialogs referenced `TButton` / `TTextField`, which are not suite
+  components (`DialogButton` / `LabeledField` are), and `ToolsDialog.qml` was
+  missing the closing brace of its treemap `Canvas`. `MainWindow.qml` declares
+  the dialogs, so the unresolvable type stopped the whole shell configuration
+  loading and no window ever opened.
+- **The file manager's QA now boots the real shell** (`scripts/bootcheck.sh`):
+  `qs -p .` headless must report "Configuration Loaded" with no errors. The
+  previous QA only ran an isolated QML test, which is why a dialog that could
+  not be created shipped. Gate carried from v1.20.0 (T1 1402/26/88/0, T2 9/9,
+  audit 1516 rows / 0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.0] - 2026-11-25
 
 ### Added

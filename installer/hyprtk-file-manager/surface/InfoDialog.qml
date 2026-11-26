@@ -87,7 +87,7 @@ Item {
                 }
             }
 
-            TButton {
+            DialogButton {
                 id: closeButton
                 text: "Close"
                 onClicked: root.dismiss()

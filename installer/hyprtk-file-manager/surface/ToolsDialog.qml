@@ -227,6 +227,8 @@ Item {
                         }
                     }
                 }
+            }
+
             ListView {
                 visible: root.mode === "duplicates"
                 width: parent.width
@@ -326,7 +328,7 @@ Item {
 
             Row {
                 spacing: 8
-                TButton { text: "Close"; onClicked: root.dismiss() }
+                DialogButton { text: "Close"; onClicked: root.dismiss() }
             }
         }
     }

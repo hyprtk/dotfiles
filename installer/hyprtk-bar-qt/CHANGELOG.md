@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.43.21 — 2026-11-26
+
+- Vendor **hyprtk-file-manager 1.9.1**: fixes the 1.9.0 startup failure (dialogs
+  referenced non-existent `TButton` / `TTextField` types and `ToolsDialog.qml`
+  was missing a brace, so the shell config never loaded) and adds a headless
+  boot check to the app's QA. `BUNDLING.md` now lists `scripts/bootcheck.sh`
+  among the development-only files kept out of the vendored snapshot.
+
 ## 0.43.20 — 2026-11-25
 
 - Vendor **hyprtk-file-manager 1.9.0**: archive browsing, tags and smart

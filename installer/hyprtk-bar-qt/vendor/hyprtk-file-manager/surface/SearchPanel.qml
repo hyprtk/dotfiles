@@ -173,7 +173,7 @@ Item {
                     }
                 }
 
-                TButton {
+                DialogButton {
                     text: "Save…"
                     onClicked: root.saveRequested()
                 }

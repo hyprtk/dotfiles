@@ -122,7 +122,7 @@ Item {
                 wrapMode: Text.WordWrap
             }
 
-            TTextField {
+            LabeledField {
                 id: tagField
                 width: parent.width
                 placeholder: "work, holiday, to-review"
@@ -159,8 +159,8 @@ Item {
 
             Row {
                 spacing: 8
-                TButton { text: "Apply"; primary: true; onClicked: root.apply() }
-                TButton { text: "Cancel"; onClicked: root.dismiss() }
+                DialogButton { text: "Apply"; primary: true; onClicked: root.apply() }
+                DialogButton { text: "Cancel"; onClicked: root.dismiss() }
             }
 
             Text {

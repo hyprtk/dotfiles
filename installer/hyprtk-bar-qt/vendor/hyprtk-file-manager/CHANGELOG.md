@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.9.1 — 2026-11-26
+
+### Fixed
+
+- **The app did not start after 1.9.0.** The seven new dialogs referenced
+  `TButton` / `TTextField`, names that do not exist in the suite (the real
+  components are `DialogButton` / `LabeledField`), and `ToolsDialog.qml` was
+  missing the closing brace of its treemap `Canvas`. `MainWindow.qml` declares
+  those dialogs, so one unresolvable type took the whole configuration down
+  with "TButton is not a type" and no window ever opened.
+- **QA now boots the real shell** (`scripts/bootcheck.sh`, run by
+  `scripts/qa.sh`): `qs -p .` headless, requiring "Configuration Loaded" and no
+  errors. The previous suite only ran an isolated QML test, so a dialog that
+  could not be created passed unnoticed.
+
 ## 1.9.0 — 2026-11-25
 
 ### Added

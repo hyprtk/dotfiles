@@ -208,18 +208,18 @@ Item {
             Row {
                 width: parent.width
                 spacing: 8
-                TButton {
+                DialogButton {
                     text: "Up"
                     enabled: root.inner.length > 0
                     onClicked: root.up()
                 }
-                TButton {
+                DialogButton {
                     text: "Extract all here"
                     primary: true
                     enabled: !root.loading && root.extractId < 0
                     onClicked: root.extract("")
                 }
-                TButton {
+                DialogButton {
                     text: "Extract selected"
                     enabled: !root.loading && root.extractId < 0 && list.count > 0 &&
                              list.currentIndex >= 0
@@ -229,7 +229,7 @@ Item {
                             root.extract(entry.path);
                     }
                 }
-                TButton { text: "Close"; onClicked: root.dismiss() }
+                DialogButton { text: "Close"; onClicked: root.dismiss() }
             }
 
             Text {
