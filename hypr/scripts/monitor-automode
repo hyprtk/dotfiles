@@ -1,0 +1,446 @@
+#!/usr/bin/env python3
+"""Keep each output on a mode the monitor still offers.
+
+A monitor that withdraws modes — picture-by-picture (PBP) on a 32:9 panel is the
+usual case — leaves Hyprland on a mode the panel no longer has, so the desktop
+never re-fits: you get 3840x1080 on a panel that now offers 1920x1080 and have
+to pick "preferred" by hand.
+
+This watches `availableModes` for every output configured in monitors.lua and,
+when the mode in use disappears, applies the closest one that is still offered.
+When the withdrawn mode comes back (PBP off) it is restored, so the resolution
+pinned in the Displays panel is what you get whenever the panel can do it.
+
+The correction is written to ``~/.config/hypr/monitor-automode.lua``, which
+monitors.lua includes *last* (so it overrides the panel's own rule), and applied
+with ``hyprctl reload``. `hl.monitor` through `hyprctl eval` is not used: this
+Hyprland build accepts it but silently ignores resolution changes.
+
+  monitor-automode              run in the foreground (autostart calls it)
+  monitor-automode --once       apply once and exit
+  monitor-automode --status     print what it would do, change nothing
+  monitor-automode --selftest   run the chooser's unit checks
+  monitor-automode --no-reload  write the override but do not reload
+  monitor-automode --config F   read another monitors.lua
+  monitor-automode --interval N poll every N seconds (default 2)
+
+Only stdlib; talks to Hyprland over its IPC socket for reads.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import socket
+import sys
+import time
+from dataclasses import dataclass
+
+CONFIG_DEFAULT = "~/.config/hypr/monitors.lua"
+OVERRIDE_DEFAULT = "~/.config/hypr/monitor-automode.lua"
+# Hyprland reports modes as "3840x1080@144.00Hz"; the config writes
+# "3840x1080@144.00". Accept both.
+MODE_RE = __import__("re").compile(r"^\s*(\d+)x(\d+)(?:@([\d.]+))?(?:Hz)?\s*$")
+MONITOR_BLOCK = __import__("re").compile(r"hl\.monitor\(\s*\{(.*?)\}\s*\)", __import__("re").S)
+FIELD = __import__("re").compile(r'(\w+)\s*=\s*("(?:[^"\\]|\\.)*"|[\w.+-]+)')
+
+
+# ─────────────────────────────────────────────────────────────── config ──
+
+
+@dataclass(frozen=True)
+class Desired:
+    """What the config asks for: a concrete mode, or the panel's preferred."""
+
+    output: str
+    mode: str
+    position: str
+    scale: float
+    transform: int
+
+    @property
+    def resolution(self) -> tuple[int, int] | None:
+        match = MODE_RE.match(self.mode)
+        return (int(match.group(1)), int(match.group(2))) if match else None
+
+    @property
+    def refresh(self) -> float | None:
+        match = MODE_RE.match(self.mode)
+        return float(match.group(3)) if match and match.group(3) else None
+
+
+def _value(raw: str):
+    raw = raw.strip()
+    if raw.startswith('"') and raw.endswith('"'):
+        return raw[1:-1].encode().decode("unicode_escape")
+    try:
+        return float(raw) if "." in raw else int(raw)
+    except ValueError:
+        return raw
+
+
+def read_config(path: str) -> dict[str, Desired]:
+    """Monitor rules from monitors.lua, the last entry per output winning."""
+    try:
+        text = open(os.path.expanduser(path), encoding="utf-8").read()
+    except OSError:
+        return {}
+    out: dict[str, Desired] = {}
+    for block in MONITOR_BLOCK.finditer(text):
+        fields = {}
+        for key, raw in FIELD.findall(block.group(1)):
+            fields[key] = _value(raw)
+        output = str(fields.get("output") or "").strip()
+        if not output:
+            continue
+        out[output] = Desired(
+            output=output,
+            mode=str(fields.get("mode") or "preferred"),
+            position=str(fields.get("position") or "auto"),
+            scale=float(fields.get("scale") or 1.0),
+            transform=int(fields.get("transform") or 0),
+        )
+    return out
+
+
+# ────────────────────────────────────────────────────────────── chooser ──
+
+
+def parse_mode(mode: str) -> tuple[int, int, float]:
+    match = MODE_RE.match(mode)
+    if not match:
+        raise ValueError(f"not a mode: {mode!r}")
+    return int(match.group(1)), int(match.group(2)), float(match.group(3) or 0.0)
+
+
+def strip_hz(mode: str) -> str:
+    """The config spelling of a mode Hyprland reported."""
+    return mode[:-2] if mode.endswith("Hz") else mode
+
+
+def choose_mode(available: list[str], desired: Desired,
+                max_refresh: float = 144.0) -> str | None:
+    """The best offered mode for *desired*, as a config-spelled string.
+
+    Same resolution first (highest refresh not above the wanted one, then the
+    highest at all), then the widest resolution the panel can do now.
+    """
+    if not available:
+        return None
+    parsed = []
+    for mode in available:
+        try:
+            parsed.append((*parse_mode(mode), mode))
+        except ValueError:
+            continue
+    if not parsed:
+        return None
+
+    want = desired.resolution
+    if want is not None:
+        same = [row for row in parsed if (row[0], row[1]) == want]
+        if same:
+            cap = desired.refresh or max_refresh
+            under = [row for row in same if row[2] <= cap + 0.01]
+            return strip_hz(max(under or same, key=lambda row: row[2])[3])
+
+    widest = max(row[0] for row in parsed)
+    pool = [row for row in parsed if row[0] == widest]
+    sane = [row for row in pool if row[2] <= max_refresh + 0.01] or pool
+    tallest = max(row[1] for row in sane)
+    pool = [row for row in sane if row[1] == tallest]
+    return strip_hz(max(pool, key=lambda row: row[2])[3])
+
+
+def current_is_offered(monitor: dict, available: list[str]) -> bool:
+    width, height, refresh = monitor.get("width"), monitor.get("height"), monitor.get("refreshRate", 0)
+    for mode in available:
+        try:
+            mw, mh, mr = parse_mode(mode)
+        except ValueError:
+            continue
+        if (mw, mh) == (width, height) and abs(mr - refresh) < 0.6:
+            return True
+    return False
+
+
+def pinned_is_offered(desired: Desired, monitor: dict, available: list[str]) -> bool:
+    """Can the panel do the configured mode again?"""
+    want = desired.resolution
+    if want is not None:
+        return any(parse_mode(mode)[:2] == want for mode in available if MODE_RE.match(mode))
+    # "preferred": the panel's biggest mode is what we want back.
+    width, height = monitor.get("width", 0), monitor.get("height", 0)
+    for mode in available:
+        if not MODE_RE.match(mode):
+            continue
+        mw, mh, _ = parse_mode(mode)
+        if mw > width or (mw == width and mh > height):
+            return True
+    return False
+
+
+def plan(desired: dict[str, Desired], monitors: list[dict],
+         existing: dict[str, str]) -> dict[str, str]:
+    """The override map that should be on disk (output -> mode)."""
+    out: dict[str, str] = {}
+    for monitor in monitors:
+        name = monitor.get("name")
+        want = desired.get(name)
+        if want is None:
+            continue
+        available = monitor.get("availableModes") or []
+        if not available:
+            continue
+        if current_is_offered(monitor, available):
+            # The mode in use is fine. Keep an override only while the panel
+            # still cannot do what the config asked for.
+            if name in existing and not pinned_is_offered(want, monitor, available):
+                out[name] = existing[name]
+            continue
+        target = choose_mode(available, want)
+        if target is not None:
+            out[name] = target
+    return out
+
+
+# ─────────────────────────────────────────────────────────────── hyprland ──
+
+
+def _socket_path(name: str) -> str | None:
+    runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    signature = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE") or ""
+    if not signature:
+        try:
+            entries = [entry for entry in os.listdir(f"{runtime}/hypr")
+                       if os.path.isdir(f"{runtime}/hypr/{entry}")]
+        except OSError:
+            return None
+        if len(entries) != 1:
+            return None
+        signature = entries[0]
+    path = os.path.join(runtime, "hypr", signature, name)
+    return path if os.path.exists(path) else None
+
+
+def hypr_request(command: str) -> str:
+    path = _socket_path(".socket.sock")
+    if path is None:
+        raise RuntimeError("Hyprland socket not found (is HYPRLAND_INSTANCE_SIGNATURE set?)")
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+        sock.settimeout(2.0)
+        sock.connect(path)
+        sock.sendall(command.encode())
+        chunks = []
+        while True:
+            chunk = sock.recv(65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+    return b"".join(chunks).decode("utf-8", "replace")
+
+
+def monitors() -> list[dict]:
+    return json.loads(hypr_request("j/monitors"))
+
+
+def render_override(overrides: dict[str, str], desired: dict[str, Desired]) -> str:
+    lines = ["-- Generated by monitor-automode. monitors.lua includes this file last, so",
+             "-- these rules win over the Displays panel's own rule while the monitor",
+             "-- cannot offer the mode that is pinned there. Do not edit by hand.", ""]
+    for name, mode in sorted(overrides.items()):
+        want = desired.get(name)
+        position = want.position if want and want.position != "auto" else "auto"
+        scale = want.scale if want else 1.0
+        transform = want.transform if want else 0
+        lines.append(
+            f"hl.monitor({{ output = {json.dumps(name)}, mode = {json.dumps(mode)}, "
+            f"position = {json.dumps(position)}, scale = {scale}, transform = {transform} }})"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def read_override(path: str) -> dict[str, str]:
+    text = ""
+    try:
+        text = open(os.path.expanduser(path), encoding="utf-8").read()
+    except OSError:
+        return {}
+    out = {}
+    for block in MONITOR_BLOCK.finditer(text):
+        fields = {key: _value(raw) for key, raw in FIELD.findall(block.group(1))}
+        output, mode = str(fields.get("output") or ""), str(fields.get("mode") or "")
+        if output and mode:
+            out[output] = mode
+    return out
+
+
+def write_override(path: str, content: str) -> bool:
+    """Write when it changed. Returns whether it did."""
+    path = os.path.expanduser(path)
+    try:
+        with open(path, encoding="utf-8") as handle:
+            if handle.read() == content:
+                return False
+    except OSError:
+        pass
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    temporary = path + ".tmp"
+    with open(temporary, "w", encoding="utf-8") as handle:
+        handle.write(content)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
+    return True
+
+
+# ───────────────────────────────────────────────────────────────── main ──
+
+
+def tick(desired: dict[str, Desired], override_path: str, *,
+         verbose: bool = False, dry_run: bool = False, reload: bool = True) -> list[str]:
+    """One pass. Returns a human summary of what changed."""
+    existing = read_override(override_path)
+    wanted = plan(desired, monitors(), existing)
+    if wanted == existing:
+        if verbose:
+            print("monitor-automode: nothing to change")
+        return []
+
+    notes = []
+    for name in sorted(set(existing) | set(wanted)):
+        before, after = existing.get(name, ""), wanted.get(name, "")
+        if before == after:
+            continue
+        notes.append(f"{name}: {before or '(config)'} -> {after or '(config)'}")
+    content = render_override(wanted, desired) if wanted else ""
+    if verbose or dry_run:
+        for note in notes:
+            print("monitor-automode:", note)
+    if dry_run:
+        return notes
+
+    if write_override(override_path, content) and reload:
+        hypr_request("reload")
+        if verbose:
+            print("monitor-automode: reloaded")
+    return notes
+
+
+def selftest() -> int:
+    failures = 0
+
+    def check(label: str, got, want) -> None:
+        nonlocal failures
+        if got != want:
+            failures += 1
+            print(f"FAIL {label}: got {got!r}, want {want!r}")
+
+    full = ["3840x1080@59.97Hz", "3840x1080@144.00Hz", "3840x1080@119.97Hz",
+            "2560x1080@60.00Hz", "1920x1080@60.00Hz"]
+    pbp = ["1920x1080@60.00Hz", "1920x1080@143.98Hz", "1680x1050@59.95Hz"]
+
+    want = Desired("DP-2", "3840x1080@144.00", "0x0", 1.0, 0)
+    check("full panel keeps the pinned mode", choose_mode(full, want), "3840x1080@144.00")
+    check("PBP falls back to 1920x1080", choose_mode(pbp, want), "1920x1080@143.98")
+    check("empty mode list", choose_mode([], want), None)
+    check("garbage is skipped", choose_mode(["bogus"], want), None)
+    check("widest wins when the pin is gone",
+          choose_mode(["2560x1080@60.00Hz", "1920x1080@60.00Hz"], want), "2560x1080@60.00")
+
+    preferred = Desired("DP-2", "preferred", "auto", 1.0, 0)
+    check("preferred picks the widest", choose_mode(full, preferred), "3840x1080@144.00")
+    check("preferred under PBP", choose_mode(pbp, preferred), "1920x1080@143.98")
+
+    big = {"name": "DP-2", "width": 3840, "height": 1080, "refreshRate": 144.0,
+           "availableModes": full}
+    small = {"name": "DP-2", "width": 3840, "height": 1080, "refreshRate": 60.0,
+             "availableModes": pbp}
+    check("valid current mode", current_is_offered(big, full), True)
+    check("PBP invalidates 3840", current_is_offered(small, pbp), False)
+    check("pin available again", pinned_is_offered(want, big, full), True)
+    check("pin still missing", pinned_is_offered(want, small, pbp), False)
+
+    # A config file round-trip, the managed block winning.
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".lua", delete=False) as handle:
+        handle.write('hl.monitor({ output = "DP-2", mode = "3840x1080@144.00", '
+                     'position = "auto", scale = 1 })\n')
+        handle.write('hl.monitor({ output = "DP-2", mode = "preferred", '
+                     'position = "0x0", scale = 1, transform = 0 })\n')
+        path = handle.name
+    cfg = read_config(path)
+    os.unlink(path)
+    check("last rule per output wins", cfg["DP-2"].mode, "preferred")
+    check("scale parsed", cfg["DP-2"].scale, 1.0)
+
+    # plan(): substitute under PBP, keep the override while the pin is missing,
+    # drop it when the pin is back.
+    d = {"DP-2": want}
+    check("plan substitutes under PBP", plan(d, [small], {}), {"DP-2": "1920x1080@143.98"})
+    check("plan keeps the override",
+          plan(d, [small], {"DP-2": "1920x1080@143.98"}), {"DP-2": "1920x1080@143.98"})
+    check("plan drops it when the pin returns", plan(d, [big], {"DP-2": "1920x1080@143.98"}), {})
+    check("plan does nothing on a healthy output", plan(d, [big], {}), {})
+
+    # render/read round-trip
+    import tempfile as tf
+    with tf.TemporaryDirectory() as tmp:
+        target = os.path.join(tmp, "override.lua")
+        write_override(target, render_override({"DP-2": "1920x1080@143.98"}, d))
+        check("override round-trips", read_override(target), {"DP-2": "1920x1080@143.98"})
+        check("second write is a no-op",
+              write_override(target, render_override({"DP-2": "1920x1080@143.98"}, d)), False)
+
+    print("selftest:", "ok" if failures == 0 else f"{failures} failure(s)")
+    return 0 if failures == 0 else 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--once", action="store_true", help="apply once and exit")
+    ap.add_argument("--status", action="store_true", help="report only, change nothing")
+    ap.add_argument("--selftest", action="store_true", help="run the chooser checks")
+    ap.add_argument("--config", default=CONFIG_DEFAULT, help="monitors.lua to read")
+    ap.add_argument("--override", default=OVERRIDE_DEFAULT, help="generated override file")
+    ap.add_argument("--interval", type=float, default=2.0, help="poll seconds")
+    ap.add_argument("--no-reload", action="store_true", help="write without hyprctl reload")
+    ap.add_argument("--verbose", action="store_true")
+    args = ap.parse_args(argv)
+
+    if args.selftest:
+        return selftest()
+
+    desired = read_config(args.config)
+    if not desired:
+        print(f"monitor-automode: no monitor rules in {args.config}", file=sys.stderr)
+        return 2
+
+    if not (args.once or args.status):
+        import fcntl
+        lock_path = os.path.join(os.environ.get("XDG_CACHE_HOME")
+                                 or os.path.expanduser("~/.cache"),
+                                 "hyprtk", "monitor-automode.lock")
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        lock = open(lock_path, "a+")
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            print("monitor-automode: already running", file=sys.stderr)
+            return 0
+
+    if args.once or args.status:
+        return 0 if tick(desired, args.override, verbose=args.verbose or args.status,
+                         dry_run=args.status, reload=not args.no_reload) is not None else 1
+
+    while True:
+        try:
+            tick(desired, args.override, verbose=args.verbose, reload=not args.no_reload)
+        except (RuntimeError, OSError, json.JSONDecodeError) as exc:
+            print(f"monitor-automode: {exc}", file=sys.stderr)
+        time.sleep(max(0.5, args.interval))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

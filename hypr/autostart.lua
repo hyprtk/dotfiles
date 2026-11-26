@@ -30,6 +30,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("~/.config/hypr/scripts/hypr-watchdog.sh &")
     hl.exec_cmd("~/hyprtk/hypr/scripts/wallpaper-restore.sh")
     hl.exec_cmd("~/hyprtk/hypr/scripts/wal-watcher.sh &")
+    -- Re-fit the desktop when a monitor withdraws its modes (PiP/PBP): Hyprland
+    -- stays on a mode the panel no longer offers. See hypr/scripts/monitor-automode.
+    hl.exec_cmd("~/hyprtk/hypr/scripts/monitor-automode &")
     hl.exec_cmd("~/hyprtk/configs/gtk/gtk.sh")
     hl.exec_cmd("cat ~/.cache/wal/colors.Xresources > ~/.Xresources")
     hl.exec_cmd("~/hyprtk/installer/scripts/reset-sudo-attempts.sh")

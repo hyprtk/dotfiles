@@ -1,5 +1,28 @@
 # Changelog
 
+## [v1.20.7] - 2026-11-26
+
+### Fixed
+
+- **Picture-by-picture no longer leaves the desktop on a mode the monitor has
+  withdrawn.** A panel that switches to PiP/PBP (here a Samsung C49J89x, 3840x1080
+  to two 1920x1080 halves) stops advertising the modes it had, but Hyprland keeps
+  the mode it already applied — the desktop never re-fits and the only way out is
+  to set "preferred" by hand, which gives up any pinned resolution.
+  `hypr/scripts/monitor-automode` watches `availableModes` for every output in
+  `monitors.lua` and, when the mode in use disappears, applies the closest one
+  still offered (same resolution if possible, otherwise the widest, at the
+  highest refresh up to the pinned one). When the withdrawn mode comes back the
+  pinned mode is restored, so a pinned 3840x1080@144 survives a PiP session.
+  The correction goes to `~/.config/hypr/monitor-automode.lua`, which
+  `hyprland.lua` loads last, and is applied with `hyprctl reload`:
+  `hl.monitor` through `hyprctl eval` accepts resolution changes on this build
+  and silently ignores them. Started from `autostart.lua`, one instance only,
+  `--status`/`--selftest`/`--once` for checking.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.6] - 2026-11-26
 
 ### Fixed
