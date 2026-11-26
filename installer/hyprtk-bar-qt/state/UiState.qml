@@ -24,4 +24,10 @@ Singleton {
     property bool aboutOpen: false
     property bool barMenuOpen: false
     property real barMenuX: 40      // cursor x within the bar window (for the context menu)
+
+    // The Settings surface owns the config-manager launch (it needs the window's
+    // own process/state), but its IPC handler now lives in shell.qml so the
+    // keybind keeps working before the surface has been created. A flag, not a
+    // signal: the surface may be created by the same IPC call that sets it.
+    property bool configManagerRequested: false
 }

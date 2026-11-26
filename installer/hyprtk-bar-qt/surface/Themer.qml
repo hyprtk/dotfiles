@@ -503,13 +503,6 @@ PanelWindow {
         transform: Translate { y: (1 - win.reveal) * -8 }
     }
 
-    IpcHandler {
-        target: "themer"
-        function toggle() { UiState.themerOpen = !UiState.themerOpen; }
-        function open() { UiState.themerOpen = true; }
-        function close() { UiState.themerOpen = false; }
-    }
-
     RowLayout {
         anchors.fill: parent
         spacing: 0

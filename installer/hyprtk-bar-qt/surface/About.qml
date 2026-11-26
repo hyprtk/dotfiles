@@ -74,13 +74,6 @@ PanelWindow {
         transform: Translate { y: (1 - about.reveal) * -8 }
     }
 
-    IpcHandler {
-        target: "about"
-        function toggle() { UiState.aboutOpen = !UiState.aboutOpen; }
-        function open() { UiState.aboutOpen = true; }
-        function close() { UiState.aboutOpen = false; }
-    }
-
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 24

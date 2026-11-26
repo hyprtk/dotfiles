@@ -68,13 +68,6 @@ PanelWindow {
     implicitWidth: Math.min(920, win.availW)
     implicitHeight: Math.min(600, win.availH)
 
-    IpcHandler {
-        target: "sysmon"
-        function toggle() { UiState.sysMonitorOpen = !UiState.sysMonitorOpen; }
-        function open() { UiState.sysMonitorOpen = true; }
-        function close() { UiState.sysMonitorOpen = false; }
-    }
-
     // Drive the backend only while the dialog is open.
     property real reveal: 0
     readonly property int animMs: Config.uiAnimations ? Config.animationDuration : 0

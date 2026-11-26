@@ -45,13 +45,6 @@ PanelWindow {
     implicitWidth: 380
     implicitHeight: 420
 
-    IpcHandler {
-        target: "notifications"
-        function toggle() { UiState.notificationCenterOpen = !UiState.notificationCenterOpen; }
-        function open() { UiState.notificationCenterOpen = true; }
-        function close() { UiState.notificationCenterOpen = false; }
-    }
-
     property real reveal: 0
     readonly property int animMs: Config.uiAnimations ? Config.animationDuration : 0
     Behavior on reveal { NumberAnimation { duration: center.animMs; easing.type: Easing.OutCubic } }

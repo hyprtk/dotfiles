@@ -69,18 +69,91 @@ ShellRoot {
         }
     }
 
-    QuickSettings {}
-    Settings {}
-    WidgetSettings {}
-    ArcMenu {}
-    BarMenu {}
-    StartMenu {}
-    Launcher {}
-    Themer {}
-    SysMonitor {}
-    NotificationCenter {}
-    Clipboard {}
-    About {}
+    // Transient surfaces are built on first open instead of at startup. All 12
+    // used to be instantiated eagerly, which cost ~140 MB of RSS and a longer
+    // launch for windows that are closed almost all the time. Each loader stays
+    // active once it has fired, so a reopen is instant after the first time.
+    component SurfaceLoader: Loader {
+        property bool want: false
+        active: false
+        onWantChanged: if (want) active = true
+        Component.onCompleted: if (want) active = true
+    }
+
+    // The IPC toggles live here, not in the surfaces: a keybind must work before
+    // the surface it opens has ever been created.
+    IpcHandler { target: "quicksettings"
+        function toggle() { UiState.quickSettingsOpen = !UiState.quickSettingsOpen; }
+        function open() { UiState.quickSettingsOpen = true; }
+        function close() { UiState.quickSettingsOpen = false; }
+    }
+    IpcHandler { target: "settings"
+        function toggle() { UiState.settingsOpen = !UiState.settingsOpen; }
+        function open() { UiState.settingsOpen = true; }
+        function close() { UiState.settingsOpen = false; }
+        function configManager() { UiState.settingsOpen = true; UiState.configManagerRequested = true; }
+    }
+    IpcHandler { target: "launcher"
+        function toggle() { UiState.launcherOpen = !UiState.launcherOpen; }
+        function open() { UiState.launcherOpen = true; }
+        function close() { UiState.launcherOpen = false; }
+    }
+    IpcHandler { target: "themer"
+        function toggle() { UiState.themerOpen = !UiState.themerOpen; }
+        function open() { UiState.themerOpen = true; }
+        function close() { UiState.themerOpen = false; }
+    }
+    IpcHandler { target: "clipboard"
+        function toggle() { UiState.clipboardOpen = !UiState.clipboardOpen; }
+        function open() { UiState.clipboardOpen = true; }
+        function close() { UiState.clipboardOpen = false; }
+    }
+    IpcHandler { target: "notifications"
+        function toggle() { UiState.notificationCenterOpen = !UiState.notificationCenterOpen; }
+        function open() { UiState.notificationCenterOpen = true; }
+        function close() { UiState.notificationCenterOpen = false; }
+    }
+    IpcHandler { target: "startmenu"
+        function toggle() { UiState.startMenuOpen = !UiState.startMenuOpen; }
+        function open() { UiState.startMenuOpen = true; }
+        function close() { UiState.startMenuOpen = false; }
+    }
+    IpcHandler { target: "arcmenu"
+        function toggle() { UiState.arcMenuOpen = !UiState.arcMenuOpen; }
+        function open() { UiState.arcMenuOpen = true; }
+        function close() { UiState.arcMenuOpen = false; }
+    }
+    IpcHandler { target: "sysmon"
+        function toggle() { UiState.sysMonitorOpen = !UiState.sysMonitorOpen; }
+        function open() { UiState.sysMonitorOpen = true; }
+        function close() { UiState.sysMonitorOpen = false; }
+    }
+    IpcHandler { target: "about"
+        function toggle() { UiState.aboutOpen = !UiState.aboutOpen; }
+        function open() { UiState.aboutOpen = true; }
+        function close() { UiState.aboutOpen = false; }
+    }
+    IpcHandler { target: "barMenu"
+        function toggle() { UiState.barMenuOpen = !UiState.barMenuOpen; }
+        function open() { UiState.barMenuOpen = true; }
+        function close() { UiState.barMenuOpen = false; }
+    }
+
+    SurfaceLoader { want: UiState.quickSettingsOpen; source: "surface/QuickSettings.qml" }
+    SurfaceLoader { want: UiState.settingsOpen; source: "surface/Settings.qml" }
+    SurfaceLoader { want: UiState.widgetSettingsOpen; source: "surface/WidgetSettings.qml" }
+    // The arc menu's FAB is always on screen when the menu is enabled, so its
+    // surface has to exist from the start in that case (it renders/inputs
+    // through a mask that is just the FAB while collapsed).
+    SurfaceLoader { want: BarConfig.arcmenu.enabled !== false; source: "surface/ArcMenu.qml" }
+    SurfaceLoader { want: UiState.barMenuOpen; source: "surface/BarMenu.qml" }
+    SurfaceLoader { want: UiState.startMenuOpen; source: "surface/StartMenu.qml" }
+    SurfaceLoader { want: UiState.launcherOpen; source: "surface/Launcher.qml" }
+    SurfaceLoader { want: UiState.themerOpen; source: "surface/Themer.qml" }
+    SurfaceLoader { want: UiState.sysMonitorOpen; source: "surface/SysMonitor.qml" }
+    SurfaceLoader { want: UiState.notificationCenterOpen; source: "surface/NotificationCenter.qml" }
+    SurfaceLoader { want: UiState.clipboardOpen; source: "surface/Clipboard.qml" }
+    SurfaceLoader { want: UiState.aboutOpen; source: "surface/About.qml" }
     DesktopWidgets {}
 
     Loader {

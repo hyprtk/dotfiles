@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.43.23 — 2026-11-26
+
+Performance: the bar was burning a whole core and holding ~590 MB for surfaces
+nobody was looking at.
+
+- **Visualizer glow without the software blur.** `ctx.shadowBlur = 10` inside the
+  per-frame `Canvas` paint blurred all 48 bars in software at 60 fps: measured at
+  **88.9 % of one core**. The glow is now a `MultiEffect` GPU blur of the finished
+  canvas, drawn behind the crisp bars: **3.3 %**, same look (bars stay distinct,
+  the halo is slightly tighter).
+- **Surfaces load on first open.** All 12 transient windows (QuickSettings,
+  Settings, WidgetSettings, ArcMenu, BarMenu, StartMenu, Launcher, Themer,
+  SysMonitor, NotificationCenter, Clipboard, About) were instantiated at startup;
+  they now go through a sticky `SurfaceLoader`. RSS **591 → 473 MB** and the QML
+  load time **577 → 276 ms**. ArcMenu still loads eagerly when the menu is
+  enabled, because its FAB has to be on screen.
+- **IPC toggles moved into `shell.qml`.** A keybind must work before the surface
+  it opens exists, so the handlers can no longer live inside the surfaces.
+  `qs ipc call settings configManager` still opens the config manager, via a
+  `UiState.configManagerRequested` flag the Settings window consumes.
+- **`monitor.py --light`** for the desktop widgets: they never display the
+  process/thread counts, and that `/proc` scan was ~14 ms of every 1 s sample.
+  The widgets now also request only the pages they actually show.
+- `tests/test_startup_cost.py` guards both regressions (no eager surface, no
+  `shadowBlur` assignment, every loader has an IPC target).
+
 ## 0.43.22 — 2026-11-26
 
 - Vendor **hyprtk-file-manager 1.9.2**: the 1.9.x dialogs referenced theme

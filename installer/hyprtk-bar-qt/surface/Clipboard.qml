@@ -84,13 +84,6 @@ PanelWindow {
         onActivated: UiState.clipboardOpen = false
     }
 
-    IpcHandler {
-        target: "clipboard"
-        function toggle() { UiState.clipboardOpen = !UiState.clipboardOpen; }
-        function open() { UiState.clipboardOpen = true; }
-        function close() { UiState.clipboardOpen = false; }
-    }
-
     Process {
         id: listProc
         command: ["python3", clip.backend, "list"]

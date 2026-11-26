@@ -118,13 +118,6 @@ PanelWindow {
             Quickshell.execDetached(["sh", "-c", item.command]);
     }
 
-    IpcHandler {
-        target: "arcmenu"
-        function toggle() { UiState.arcMenuOpen = !UiState.arcMenuOpen; }
-        function open() { UiState.arcMenuOpen = true; }
-        function close() { UiState.arcMenuOpen = false; }
-    }
-
     // items, fanned
     Repeater {
         model: arc.items

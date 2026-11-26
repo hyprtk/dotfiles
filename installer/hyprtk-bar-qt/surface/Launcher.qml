@@ -111,13 +111,6 @@ PanelWindow {
 
     function close() { UiState.launcherOpen = false; }
 
-    IpcHandler {
-        target: "launcher"
-        function toggle() { UiState.launcherOpen = !UiState.launcherOpen; }
-        function open() { UiState.launcherOpen = true; }
-        function close() { UiState.launcherOpen = false; }
-    }
-
     Shortcut {
         sequence: "Escape"
         enabled: l.visible

@@ -65,10 +65,10 @@ class MonitorSampler:
             with self._static_lock:
                 self._static = info
 
-    def sample(self) -> dict:
+    def sample(self, full: bool = True) -> dict:
         out: dict = {}
         if self._cpu is not None:
-            out["cpu"] = self._cpu.sample()
+            out["cpu"] = self._cpu.sample(full=full)
         if "memory" in self.pages:
             out["memory"] = monitor_data.memory()
         if self._disk is not None:
@@ -101,6 +101,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--active", default="cpu", help="the page currently on screen (gates 'apps')"
     )
+    ap.add_argument(
+        "--light",
+        action="store_true",
+        help="skip the /proc process+thread counts (desktop widgets never show them; "
+        "that scan is ~14 ms of every sample)",
+    )
     args = ap.parse_args(argv)
 
     pages = tuple(p.strip() for p in args.pages.split(",") if p.strip())
@@ -110,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         while True:
-            print(json.dumps(sampler.sample()), flush=True)
+            print(json.dumps(sampler.sample(full=not args.light)), flush=True)
             time.sleep(max(0.1, args.interval))
     except KeyboardInterrupt:
         return 0

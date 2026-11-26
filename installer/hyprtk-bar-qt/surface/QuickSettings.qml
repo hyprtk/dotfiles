@@ -44,13 +44,6 @@ PanelWindow {
     property var targetScreen: null
     screen: Screens.byName(BarAnchors.qsScreen) || targetScreen
 
-    IpcHandler {
-        target: "quicksettings"
-        function toggle() { UiState.quickSettingsOpen = !UiState.quickSettingsOpen; }
-        function open() { UiState.quickSettingsOpen = true; }
-        function close() { UiState.quickSettingsOpen = false; }
-    }
-
     // Reveal animation (gated by the shared animations switch).
     property real reveal: 0
     readonly property int animMs: Config.uiAnimations ? Config.animationDuration : 0

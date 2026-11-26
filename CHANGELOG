@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.20.3] - 2026-11-26
+
+### Performance
+
+- **hyprtk-bar-qt 0.43.23** — the bar was holding a full CPU core and ~590 MB:
+  - The desktop visualizer set `ctx.shadowBlur = 10` inside its per-frame
+    `Canvas` paint, i.e. a software blur of 48 bars at 60 fps. Measured at
+    **88.9 % of one core**; a `MultiEffect` GPU blur of the finished canvas
+    draws the same glow at **3.3 %**.
+  - `shell.qml` instantiated all 12 transient surfaces at startup for ~140 MB
+    of RSS and ~300 ms of the QML load. They now load on first open through a
+    sticky `SurfaceLoader`; the IPC toggles moved into `shell.qml` so keybinds
+    work before the surface exists. QML load **577 → 276 ms**, RSS
+    **591 → 473 MB**.
+  - `monitor.py --light` drops the `/proc` process/thread scan (~14 ms of every
+    1 s sample) for the desktop widgets, which never display those counts.
+  - `tests/test_startup_cost.py` fails if an eager surface or a `shadowBlur`
+    assignment comes back.
+
 ## [v1.20.2] - 2026-11-26
 
 ### Fixed

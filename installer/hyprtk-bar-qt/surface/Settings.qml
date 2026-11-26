@@ -27,13 +27,30 @@ PanelWindow {
     property var targetScreen: null
     screen: targetScreen
 
+    // `qs ipc call settings configManager` arrives from shell.qml's handler so it
+    // works before this surface has ever been created. The request can arrive
+    // before this window exists (and before these bindings do), so consume it
+    // from every point where the window can become ready, not just the signal.
+    function _consumeConfigRequest() {
+        if (UiState.configManagerRequested && win.visible) {
+            UiState.configManagerRequested = false;
+            win.openConfigManager();
+        }
+    }
+    Connections {
+        target: UiState
+        function onConfigManagerRequestedChanged() { win._consumeConfigRequest(); }
+    }
+
     property real reveal: 0
     readonly property int animMs: Config.uiAnimations ? Config.animationDuration : 0
     Behavior on reveal { NumberAnimation { duration: win.animMs; easing.type: Easing.OutCubic } }
     onVisibleChanged: {
         reveal = visible ? 1 : 0;
-        if (visible)
+        if (visible) {
             targetScreen = Screens.focused();
+            win._consumeConfigRequest();
+        }
     }
 
     readonly property string backend:
@@ -313,7 +330,10 @@ PanelWindow {
             }
         }
     }
-    Component.onCompleted: win.refreshInstalledThemes()
+    Component.onCompleted: {
+        win.refreshInstalledThemes();
+        win._consumeConfigRequest();
+    }
 
     // ── arc menu item editor ───────────────────────────────────────────
     function arcItems() { return win.g("arcmenu.items", []); }
@@ -388,14 +408,6 @@ PanelWindow {
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, Theme.panelOpacityStrong)
         opacity: win.reveal
         transform: Translate { y: (1 - win.reveal) * -8 }
-    }
-
-    IpcHandler {
-        target: "settings"
-        function toggle() { UiState.settingsOpen = !UiState.settingsOpen; }
-        function open() { UiState.settingsOpen = true; }
-        function close() { UiState.settingsOpen = false; }
-        function configManager() { win.openConfigManager(); }
     }
 
 

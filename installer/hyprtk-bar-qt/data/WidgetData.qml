@@ -49,7 +49,10 @@ Singleton {
         running: root.needs
         command: ["python3", "-u", root.backend,
                   "--interval", "1",
-                  "--pages", "cpu,memory,disks,network"]
+                  "--pages", root.wantedPages.join(","),
+                  // The widgets never show process/thread counts, and that
+                  // /proc scan is ~14 ms of every sample.
+                  "--light"]
         stdout: SplitParser {
             onRead: line => {
                 let o;
