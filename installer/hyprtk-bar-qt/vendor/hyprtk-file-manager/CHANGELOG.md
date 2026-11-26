@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.9.3 — 2026-11-26
+
+### Security
+
+- **SMB passwords no longer appear in the process arguments.** Share discovery
+  ran `smbclient -U user%password`, so the password was readable from
+  `/proc/<pid>/cmdline` for as long as the scan took. Credentials now go into a
+  `0600` auth file passed with `-A`, removed in a `finally`. A test asserts the
+  password is absent from argv, the file is `0600`, and it does not outlive the
+  call.
+
 ## 1.9.2 — 2026-11-26
 
 ### Fixed

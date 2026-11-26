@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.7.1] — 2026-11-26
+
+### Security
+
+The polkit helper is the app's only root entry point, so its allow-list is the
+whole security model. Five ways past it are closed:
+
+- **Path allow-list was prefix-only.** `/run/media/../../etc/sudoers` and
+  `/sys/class/leds/../../../etc/sudoers` passed `startswith` and were then
+  written as root by `install` / `tee`. Every target is now normalised
+  (`abspath` to collapse `..`, then the deepest existing ancestor resolved so a
+  symlink cannot redirect it) before it is compared.
+- **`install` could set the setuid bits** (`-m 4755`), turning any writable
+  source into root's own binary, and could copy from any source path
+  (`/etc/shadow` into `/mnt`). Modes with `06000` are refused, only known flags
+  are accepted, and the source must be under a world-writable location.
+- **`grub-mkconfig -o`** wrote to any path as root; it now only accepts
+  `/boot/grub/grub.cfg`.
+- **`usermod -p`/`--password`** sets a password hash, i.e. any account's
+  password without knowing the old one. Password hashes go through `passwd`
+  only, and `passwd` now needs exactly one user name (no flags).
+- **`chpasswd`** accepted `-R <chroot>`; only `-e` remains. `systemctl` also
+  refuses `--root` / `--machine` / `--host` / `-H`.
+
+Legitimate operations (mount-point creation, fstab, battery thresholds, printer
+and service management) are unchanged. 13 regression tests cover the cases.
+
 ## [0.7.0] — 2026-11-25
 
 Closes the documented panel gaps that are closable on this stack.

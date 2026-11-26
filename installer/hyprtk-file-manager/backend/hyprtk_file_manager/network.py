@@ -9,6 +9,7 @@ import re
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
@@ -197,15 +198,36 @@ def resolve_host_name(host: str) -> str:
     return name
 
 
+def _smb_authfile(username: str, password: str, domain: str) -> str:
+    """Write smbclient credentials to a private file for ``-A``.
+
+    ``smbclient -U user%password`` puts the password in the process arguments,
+    where any local user can read it from /proc while the scan runs. The auth
+    file is created 0600 and removed by the caller.
+    """
+    handle = tempfile.NamedTemporaryFile(
+        "w", prefix="hyprtk-smb-", suffix=".auth", delete=False, encoding="utf-8"
+    )
+    try:
+        os.chmod(handle.name, 0o600)
+        handle.write(f"username = {username}\npassword = {password or ''}\n")
+        if domain:
+            handle.write(f"domain = {domain}\n")
+        handle.flush()
+    finally:
+        handle.close()
+    return handle.name
+
+
 def smb_shares(host: str, username: str = "", password: str = "",
                domain: str = "") -> list[dict]:
     if not shutil.which("smbclient"):
         return []
     command = ["smbclient", "-L", f"//{host}", "-g"]
+    authfile = ""
     if username:
-        command += ["-U", f"{username}%{password or ''}"]
-        if domain:
-            command += ["-W", domain]
+        authfile = _smb_authfile(username, password, domain)
+        command += ["-A", authfile]
     else:
         command.append("-N")
     try:
@@ -215,6 +237,12 @@ def smb_shares(host: str, username: str = "", password: str = "",
         )
     except (OSError, subprocess.TimeoutExpired):
         return []
+    finally:
+        if authfile:
+            try:
+                os.unlink(authfile)
+            except OSError:
+                pass
     if proc.returncode != 0:
         return []
     shares = []

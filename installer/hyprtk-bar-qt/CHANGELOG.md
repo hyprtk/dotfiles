@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.43.24 — 2026-11-26
+
+- Vendor **hyprtk-file-manager 1.9.3**: share discovery passed
+  `smbclient -U user%password`, so an SMB password was readable from
+  `/proc/<pid>/cmdline` while the scan ran. Credentials now go to a `0600`
+  auth file passed with `-A` and removed afterwards.
+
 ## 0.43.23 — 2026-11-26
 
 Performance: the bar was burning a whole core and holding ~590 MB for surfaces

@@ -1,5 +1,36 @@
 # Changelog
 
+## [v1.20.4] - 2026-11-26
+
+### Security
+
+- **hyprtk-system-manager 0.7.1** — five ways past the polkit helper's
+  allow-list, which is the app's only root entry point:
+  - the path allow-list compared raw strings, so `/run/media/../../etc/sudoers`
+    (and `/sys/class/leds/../../../etc/sudoers`) passed `startswith` and were
+    written as root by `install` / `tee`. Targets are now normalised before
+    comparison (`abspath`, then the deepest existing ancestor resolved so a
+    symlink cannot redirect the write);
+  - `install` could set the setuid bits (`-m 4755`) and copy from any source
+    (`/etc/shadow` into `/mnt`). `06000` modes are refused, only known flags are
+    accepted, and the source must be in a world-writable location;
+  - `grub-mkconfig -o` wrote anywhere as root; only `/boot/grub/grub.cfg` is
+    accepted;
+  - `usermod -p/--password` sets a password hash — i.e. any account's password
+    without knowing the old one; hashes now go through `passwd` only, which
+    needs exactly one user name and no flags. `chpasswd` keeps only `-e`;
+  - `systemctl` refuses `--root` / `--machine` / `--host` / `-H`.
+- **hyprtk-file-manager 1.9.3** (bar 0.43.24 vendors it) — share discovery ran
+  `smbclient -U user%password`, so the password was readable from
+  `/proc/<pid>/cmdline` for the length of the scan. Credentials go to a `0600`
+  auth file passed with `-A`, removed in a `finally`.
+
+Legitimate panel operations (mount points, fstab, battery thresholds, printers,
+services) are unchanged. 14 new regression tests cover both fixes.
+
+Gate carried from v1.20.3 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.3] - 2026-11-26
 
 ### Performance

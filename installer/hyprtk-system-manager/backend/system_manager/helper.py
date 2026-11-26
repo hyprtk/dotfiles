@@ -53,14 +53,78 @@ def _fail(message: str) -> int:
     return 126
 
 
+def _norm(path: str) -> str:
+    """Normalise a path before it is compared against an allow-list.
+
+    ``abspath`` collapses ``.``/``..`` lexically (no filesystem access, so a
+    target that does not exist yet still normalises), then the deepest existing
+    ancestor is resolved so a symlink cannot point the write somewhere else.
+    Without this, ``/run/media/../../etc/sudoers`` passed the prefix check.
+    """
+    if not path:
+        return ""
+    absolute = os.path.abspath(path)
+    head, tail = absolute, []
+    while head not in ("/", "") and not os.path.exists(head):
+        head, leaf = os.path.split(head)
+        tail.insert(0, leaf)
+    return os.path.join(os.path.realpath(head), *tail) if tail else os.path.realpath(head)
+
+
 def _write_target_ok(path: str) -> bool:
     if not path:
         return False
-    if path in ETC_FILES:
+    target = _norm(path)
+    if target in ETC_FILES:
         return True
-    if path.startswith(SYS_PREFIXES):
+    if any(target.startswith(prefix) for prefix in SYS_PREFIXES):
         return True
-    return any(path.startswith(prefix) for prefix in WRITE_ROOT_FILES)
+    return any(target.startswith(prefix) for prefix in WRITE_ROOT_FILES)
+
+
+def _install_ok(argv: Sequence[str]) -> str:
+    """``install`` may create directories and copy files, but never with a
+    setuid/setgid/owner override: that turns any writable source into root's
+    own binary."""
+    allowed_flags = {"-d", "-D", "-p", "-v", "--directory", "--preserve-timestamps"}
+    targets: list[str] = []
+    mode = None
+    index = 1
+    while index < len(argv):
+        part = argv[index]
+        if part in ("-m", "--mode"):
+            index += 1
+            if index >= len(argv):
+                return "install -m needs a mode"
+            mode = argv[index]
+        elif part.startswith("--mode="):
+            mode = part.split("=", 1)[1]
+        elif part in allowed_flags:
+            pass
+        elif part.startswith("-"):
+            return f"install {part} is not allowed"
+        else:
+            targets.append(part)
+        index += 1
+    if mode is not None:
+        try:
+            bits = int(mode, 8)
+        except ValueError:
+            return f"install mode {mode!r} is not octal"
+        if bits & 0o6000:
+            return "install may not set the setuid/setgid bits"
+    if not targets:
+        return "install needs a target"
+    if "-d" not in argv and "--directory" not in argv:
+        if len(targets) < 2:
+            return "install needs a source and a target"
+        for source in targets[:-1]:
+            if not _norm(source).startswith(("/tmp/", "/var/tmp/", "/run/user/", "/mnt/",
+                                             "/media/", "/run/media/")):
+                return f"install may not copy {source}"
+    if not _write_target_ok(targets[-1]):
+        return f"{targets[-1]} is outside the paths this action may write"
+    return ""
 
 
 def check(action: str, argv: Sequence[str]) -> str:
@@ -73,25 +137,48 @@ def check(action: str, argv: Sequence[str]) -> str:
     if binary not in ACTIONS[action]:
         return f"{binary} is not allowed for {action}"
     if binary == "systemctl":
+        for part in argv[1:]:
+            if part.startswith(("--root", "--machine", "--host", "-H")):
+                return f"systemctl {part} is not allowed"
         verb = next((part for part in argv[1:] if not part.startswith("-")), "")
         if verb not in SYSTEMCTL_VERBS and not verb.startswith("is-"):
             return f"systemctl {verb} is not allowed"
         return ""
-    if binary in ("install", "tee"):
+    if binary == "install":
+        return _install_ok(argv)
+    if binary == "tee":
         targets = [part for part in argv[1:] if not part.startswith("-")]
-        if binary == "install":
-            # `install -d -m 0755 DIR` has no source; the last argument is the target.
-            if not targets:
-                return "install needs a target"
-            if "-d" not in argv and len(targets) < 2:
-                return "install needs a source and a target"
-            target = targets[-1]
-        else:
-            if not targets:
-                return "tee needs a file"
-            target = targets[0]
-        if not _write_target_ok(target):
-            return f"{target} is outside the paths this action may write"
+        for part in argv[1:]:
+            if part.startswith("-") and part not in ("-a", "--append"):
+                return f"tee {part} is not allowed"
+        if not targets:
+            return "tee needs a file"
+        if not _write_target_ok(targets[0]):
+            return f"{targets[0]} is outside the paths this action may write"
+        return ""
+    if binary == "grub-mkconfig":
+        # `-o` writes the generated config anywhere as root.
+        if len(argv) == 1:
+            return ""
+        if len(argv) == 3 and argv[1] == "-o" and _norm(argv[2]) == "/boot/grub/grub.cfg":
+            return ""
+        return "grub-mkconfig only accepts -o /boot/grub/grub.cfg"
+    if binary == "update-grub":
+        return "" if len(argv) == 1 else "update-grub takes no arguments"
+    if binary == "usermod":
+        for part in argv[1:]:
+            if part in ("-p", "--password", "--root", "-R", "--prefix") or part.startswith(
+                    ("--password=", "--root=", "--prefix=")):
+                return f"usermod {part} is not allowed (password hashes are set with passwd)"
+        return ""
+    if binary == "passwd":
+        if len(argv) != 2 or argv[1].startswith("-"):
+            return "passwd needs exactly one user name"
+        return ""
+    if binary == "chpasswd":
+        for part in argv[1:]:
+            if part not in ("-e", "--encrypted"):
+                return f"chpasswd {part} is not allowed"
         return ""
     if binary.startswith("mkfs."):
         if not argv[-1].startswith("/dev/") or not os.path.exists(argv[-1]):
