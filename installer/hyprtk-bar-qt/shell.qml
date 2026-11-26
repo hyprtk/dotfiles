@@ -154,7 +154,35 @@ ShellRoot {
     SurfaceLoader { want: UiState.notificationCenterOpen; source: "surface/NotificationCenter.qml" }
     SurfaceLoader { want: UiState.clipboardOpen; source: "surface/Clipboard.qml" }
     SurfaceLoader { want: UiState.aboutOpen; source: "surface/About.qml" }
-    DesktopWidgets {}
+    // Desktop widgets, rebuilt when an output's geometry changes. Hyprland drops
+    // other clients' layer surfaces on a monitor mode change (PiP/PBP, a rotate,
+    // a resolution switch) and Quickshell does not re-map a PanelWindow it did
+    // not create again — the widgets would stay gone until the bar restarted.
+    Loader {
+        id: desktopWidgets
+        active: true
+        source: "surface/DesktopWidgets.qml"
+        property string built: ""
+
+        readonly property string signature: {
+            const screens = Quickshell.screens || [];
+            return screens.map(s => s.name + ":" + s.width + "x" + s.height + "@" + s.scale).join("|");
+        }
+
+        onSignatureChanged: {
+            // The first value arrives right after start-up; only a later change
+            // means an output really moved.
+            if (built.length === 0) {
+                built = signature;
+                return;
+            }
+            if (signature === built)
+                return;
+            built = signature;
+            active = false;
+            Qt.callLater(function() { desktopWidgets.active = true; });
+        }
+    }
 
     Loader {
         active: Quickshell.env("HYPRTK_BAR_QT_NOTIFICATIONS") !== "0"

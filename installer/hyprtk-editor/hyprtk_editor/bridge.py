@@ -28,6 +28,7 @@ from PySide6.QtQuick import QQuickTextDocument
 from PySide6.QtWidgets import QDialog, QFileDialog
 
 from . import __version__, dialogs, fileio, gitdiff, languages, palette, printdoc, search, textops
+from .gitworker import GitWorker
 from .highlight import MAX_HIGHLIGHT_CHARS, PAGE_BLOCKS, Highlighter, spans
 from .session import Drafts, Session
 from .settings import MONO_FAMILIES, Settings
@@ -86,7 +87,14 @@ class Bridge(QObject):
         self._spans_generation: dict[str, int] = {}
         self.spansReady.connect(self._on_spans_ready)
         self._search_error = ""
-        self._git = gitdiff.GitDiff()
+        # The gutter ran `git diff` on the GUI thread (three subprocesses per
+        # save, load and settings change). The worker owns the cache; this
+        # thread only reads it and asks for a refresh.
+        # Unparented: Qt destroys a child QThread with its parent, and destroying
+        # a running one aborts the process. The bridge stops it explicitly.
+        self._git_worker = GitWorker(None)
+        self._git_worker.ready.connect(self._on_git_ready)
+        self._git_worker.start()
         app = QCoreApplication.instance()
         if app is not None:
             app.aboutToQuit.connect(self._shutdown)
@@ -459,10 +467,19 @@ class Bridge(QObject):
         item.highlighter.set_spans(data.get("spans") or {})
         self.refresh(str(key), int(data.get("first") or 0), int(data.get("last") or 0))
 
+    def __del__(self) -> None:  # pragma: no cover - GC path
+        try:
+            self._shutdown()
+        except Exception:
+            pass
+
     def _shutdown(self) -> None:
         if self._spans_future is not None:
             self._spans_future.cancel()
         self._spans_pool.shutdown(wait=False, cancel_futures=True)
+        worker = getattr(self, "_git_worker", None)
+        if worker is not None:
+            worker.stop()
 
     @Slot(str, str)
     def setLanguage(self, doc_id: str, alias: str):
@@ -607,8 +624,13 @@ class Bridge(QObject):
         three `git` calls on the GUI thread blocked saves for up to 6 s in a
         slow repository.
         """
-        status = self._git.status(str(path or ""))
-        return status.as_dict()
+        key = str(path or "")
+        self._git_worker.request(key)
+        return self._git_worker.cached(key)
+
+    @Slot(str, "QVariant")
+    def _on_git_ready(self, path: str, payload) -> None:
+        self.gitChanged.emit(str(path))
 
     # -- printing --------------------------------------------------------
     def _print_document(self, doc_id: str):

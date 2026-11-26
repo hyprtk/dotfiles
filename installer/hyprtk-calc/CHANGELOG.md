@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.2 — 2026-11-26
+
+### Added
+
+- **A memory row above the keypad**: `MC` / `MR` / `M+` / `M-` / `MS` with the
+  stored value shown beside them, and `MC`/`MR` dimmed when the memory is empty.
+  The backend already had `Bridge.memory()`; nothing exposed it.
+- **`ans` as a clickable token** — the last result can be inserted into an
+  expression instead of retyped, and it is dimmed until there is one.
+- **Expression editing**: `Ctrl+A` select all, `Ctrl+X` cut, `Ctrl+Z` / `Ctrl+
+  Shift+Z` undo/redo in the entry field (all native to `TextInput`, none were
+  reachable before), and `Ctrl+Shift+C` copies the whole line
+  (`expression = result`) for pasting into a document.
+
+Variable assignment (`x = …`) is still open: the expression parser has no
+environment yet, so it stays in the v0.2 plan rather than shipping half of it.
+
 ## 0.1.1 — 2026-11-26
 
 ### Fixed

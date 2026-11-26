@@ -72,3 +72,4 @@ screenshots go to ~/Pictures/Screenshots, recordings to ~/Videos/Recordings
 # share your own files on github 
   - so we can all learn
   - and you have a backup
+| `monitor-automode --status` | Show what the PiP/PBP mode fallback sees |

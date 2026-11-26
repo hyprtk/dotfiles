@@ -204,6 +204,38 @@ the crop.
 | `Super + left mouse` | Move a window |
 | `Super + Shift + left mouse` | Move a desktop widget (drop near another to snap them together) |
 
+The widget surfaces are rebuilt when an output's geometry changes: Hyprland drops
+other clients' layer surfaces on a monitor mode change, and without that the
+widgets would stay gone until the bar was restarted.
+
+### Displays that change under you (PiP / PBP)
+
+A monitor in picture-by-picture or picture-in-picture mode stops advertising the
+modes it had. Hyprland keeps the mode it already applied, so the desktop is left
+rendering to a resolution the panel no longer offers and never re-fits — the
+usual workaround is to pick "preferred" by hand, which gives up a pinned
+resolution.
+
+`hypr/scripts/monitor-automode` (started from `autostart.lua`) watches
+`availableModes` for every output in `monitors.lua` and, when the mode in use
+disappears, applies the closest one still offered — the same resolution if the
+panel can do it, otherwise the widest, at the highest refresh up to the one you
+pinned. When the mode comes back, your pinned resolution is restored, so
+`3840x1080@144` survives a PiP session.
+
+```sh
+monitor-automode --status      # what it sees, and what it would change
+monitor-automode --once        # apply a pass now
+monitor-automode --selftest    # the mode chooser's unit checks
+```
+
+The pinned mode itself is still chosen in Settings → Displays (it writes the
+managed block in `monitors.lua`); the daemon only corrects it while the panel
+cannot honour it. Corrections go to `~/.cache/hyprtk/monitor-automode.lua`, which
+`hyprland.lua` loads last, and are applied with `hyprctl reload` — `hl.monitor`
+through `hyprctl eval` accepts a resolution change on this build and silently
+ignores it.
+
 ## Suite repositories
 
 hyprtk is one desktop kept in twelve repositories. **This one is the desktop**:

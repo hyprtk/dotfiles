@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.5 — 2026-11-26
+
+### Changed
+
+- **The git gutter runs off the GUI thread.** `gitStatus` used to run up to
+  three `git` subprocesses (2 s timeout each) on the GUI thread, on every save,
+  every load and every settings change; v0.2.4 only capped it at 1.2 s. A
+  `QThread` worker now owns the cache: `gitStatus` returns the last known answer
+  and asks for a refresh, and the gutter is repainted from `gitChanged`. The
+  worker exits when idle and is joined at exit, so nothing is left running.
+
 ## 0.2.4 — 2026-11-26
 
 ### Fixed

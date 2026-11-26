@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.43.27 — 2026-11-26
+
+- **Desktop widgets survive a monitor mode change.** Hyprland drops other
+  clients' layer surfaces when an output reconfigures (a PiP/PBP switch, a
+  resolution or rotation change), and Quickshell does not re-map a `PanelWindow`
+  it did not create again: the widgets stayed gone until the bar was restarted.
+  They now sit behind a `Loader` keyed on the screens' geometry signature, so a
+  change in any output's size or scale rebuilds them. Verified on DP-2 at
+  3840x1080 → 2560x1080: all seven widget surfaces come back without a restart.
+  `tests/test_startup_cost.py` fails if `DesktopWidgets` is instantiated
+  directly again.
+
 ## 0.43.26 — 2026-11-26
 
 - Keep the vendored terminal's README screenshots (`docs/*.png`) with the

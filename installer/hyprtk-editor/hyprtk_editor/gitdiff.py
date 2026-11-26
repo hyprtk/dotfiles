@@ -122,6 +122,11 @@ class GitDiff:
         self._deadline = 0.0
         self._on_change = on_change
 
+    def cached(self, path: str):
+        """Last computed status for *path*, or None. Never runs git."""
+        entry = self._cache.get(os.path.abspath(str(path or "")))
+        return entry[1] if entry else None
+
     def invalidate(self, path: str = "") -> None:
         if path:
             self._cache.pop(os.path.abspath(path), None)

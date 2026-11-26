@@ -114,6 +114,19 @@ ApplicationWindow {
         justCommitted = false;
     }
 
+    // The whole line — expression and result — for pasting into a document.
+    function copyAll() {
+        var text = expression.length ? expression : "";
+        if (result.ok && result.display.length)
+            text = text.length ? text + " = " + result.display : result.display;
+        if (!text)
+            return;
+        if (Bridge.copy(text)) {
+            copied = true;
+            copyTimer.restart();
+        }
+    }
+
     function copyResult() {
         var text = result.ok ? result.display : "";
         if (!text)
@@ -338,7 +351,22 @@ ApplicationWindow {
                             win.stepHistory(-1);
                             event.accepted = true;
                         } else if (event.modifiers & Qt.ControlModifier) {
-                            if (event.key === Qt.Key_C && entry.selectedText.length === 0) {
+                            if (event.key === Qt.Key_A) {
+                                entry.selectAll();
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_X) {
+                                entry.cut();
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_Z) {
+                                if (event.modifiers & Qt.ShiftModifier)
+                                    entry.redo();
+                                else
+                                    entry.undo();
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_C && (event.modifiers & Qt.ShiftModifier)) {
+                                win.copyAll();
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_C && entry.selectedText.length === 0) {
                                 win.copyResult();
                                 event.accepted = true;
                             } else if (event.key === Qt.Key_L) {
@@ -437,6 +465,20 @@ ApplicationWindow {
                     }
                 }
             }
+        }
+
+        // -- memory and last answer ---------------------------------------
+        MemoryRow {
+            Layout.fillWidth: true
+            Layout.topMargin: 2
+            th: win.th
+            mono: win.mono
+            fontScale: win.scale
+            set: Bridge.memorySet
+            memoryText: Bridge.memoryValue
+            ansText: win.result.ok ? win.result.value : ""
+            onAction: function (name) { Bridge.memory(name); }
+            onAnsRequested: win.insertToken("ans")
         }
 
         // -- keypad -------------------------------------------------------

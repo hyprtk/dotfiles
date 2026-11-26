@@ -1,5 +1,35 @@
 # Changelog
 
+## [v1.20.11] - 2026-11-26
+
+### Fixed
+
+- **Desktop widgets no longer vanish after a monitor change (bar 0.43.27).**
+  Hyprland drops other clients' layer surfaces when an output reconfigures — a
+  PiP/PBP switch, a resolution or rotation change — and Quickshell does not
+  re-map a `PanelWindow` it did not create again, so the widgets stayed gone
+  until the bar restarted. They are now rebuilt when any screen's size or scale
+  changes. Verified on DP-2 at 3840x1080 → 2560x1080.
+
+### Changed
+
+- **The editor's git gutter runs off the GUI thread (editor 0.2.5).** It used to
+  run up to three `git` subprocesses on the GUI thread on every save, load and
+  settings change (v0.2.4 only capped it at 1.2 s). A `QThread` worker owns the
+  cache and the gutter repaints from `gitChanged`.
+
+### Added
+
+- **Calculator memory and editing (calc 0.1.2).** `MC`/`MR`/`M+`/`M-`/`MS` above
+  the keypad with the stored value shown, `ans` as a clickable token, `Ctrl+A` /
+  `Ctrl+X` / `Ctrl+Z` in the entry field and `Ctrl+Shift+C` to copy the whole
+  line. Variable assignment stays open in the v0.2 plan.
+- **Documented**: `monitor-automode` (PiP/PBP mode fallback) in the README and
+  cheatsheet, and the widget-rebuild behaviour next to the widget keys.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.10] - 2026-11-26
 
 ### Fixed
