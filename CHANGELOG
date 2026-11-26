@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.20.12] - 2026-11-26
+
+### Documentation
+
+- **Every app README carries its shipped version again.** Eight of nine had a
+  stale shields.io badge and a stale `**Current version**` line (bar 0.43.16 vs
+  0.43.27, file manager 1.8.11 vs 1.9.3, term 0.2.6, editor 0.2.3, calc 0.1.0,
+  shot 0.2.4, rec 0.2.4, settings 0.7.0). The suite links themselves were
+  already complete: all eleven READMEs link all twelve repositories, including
+  `hyprtk-system-manager`.
+- **Wikis corrected where they described the retired GTK bar.** The dotfiles
+  Home still presented `hyprtk-bar` (GTK3) as the status bar and called the suite
+  "two companion projects"; the bar-qt wiki documented a Themer "Rofi" page, a
+  `sync-rofi-theme.sh` helper, rofi as a folder picker and rofi in the
+  dependency list — all removed in v1.5.0. The launcher is the bar's own
+  (`surface/Launcher.qml` + `data/LauncherTheme.qml`), the folder picker is QML,
+  and Papirus folders take the theme colour. Versions in the wiki footers
+  refreshed (file manager 1.8.11 → 1.9.3).
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no package name changed.
+
 ## [v1.20.11] - 2026-11-26
 
 ### Fixed

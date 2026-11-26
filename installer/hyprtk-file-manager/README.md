@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-file-manager — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-1.8.11-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.9.3-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-GPL--3.0-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
 </div>
@@ -17,7 +17,7 @@ A fast, keyboard-first file manager for the hyprtk desktop — Qt 6 QML
 with the power of Dolphin/Yazi one shortcut away. It follows the suite's live
 pywal theme and ships as the default `Super+F` / `inode/directory` handler.
 
-**Current version: 1.8.11** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 1.9.3** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 

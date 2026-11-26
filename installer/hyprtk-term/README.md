@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-term — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-0.2.6-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.2.7-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
 </div>
@@ -18,7 +18,7 @@ underneath. It follows the wallpaper, opens in a few hundred milliseconds and
 keeps a real shell honest: alt screen, truecolor, wide characters, scrollback,
 mouse reporting and bracketed paste all work.
 
-**Current version: 0.2.6** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
+**Current version: 0.2.7** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
 
 ![hyprtk-term rendering a shell](docs/probe.png)
 ![scrollback search](docs/search.png)

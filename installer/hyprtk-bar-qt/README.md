@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-bar-qt — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-0.43.16-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.43.27-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-GPL--2.0-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
 </div>

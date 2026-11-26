@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-calc — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-0.1.0-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.1.2-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
 </div>
@@ -16,7 +16,7 @@ A small, exact, theme-aware calculator for the hyprtk desktop — Qt Quick/QML o
 the front, Python `decimal` underneath. It opens from a keybinding in a fraction
 of a second, evaluates while you type, and `0.1 + 0.2` is `0.3`.
 
-**Current version: 0.1.0** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
+**Current version: 0.1.2** — see [CHANGELOG.md](CHANGELOG.md) and [PLAN.md](PLAN.md).
 
 ![basic mode](docs/basic.png)
 ![scientific mode](docs/scientific.png)
