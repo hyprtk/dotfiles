@@ -37,4 +37,8 @@ require("animations-high")
 -- it is empty the rest of the time. Loaded last so it wins over monitors.lua,
 -- and kept out of monitors.lua itself because the Displays panel and the user
 -- both own that file.
-pcall(dofile, (os.getenv("HOME") or "") .. "/.config/hypr/monitor-automode.lua")
+-- require(), not dofile(): Hyprland's sandboxed Lua has no dofile. The cache
+-- entry is cleared first because require() caches across reloads, which would
+-- keep whatever the file held the first time it was loaded.
+package.loaded["monitor-automode"] = nil
+pcall(require, "monitor-automode")

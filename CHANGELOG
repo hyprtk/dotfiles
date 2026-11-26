@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.20.8] - 2026-11-26
+
+### Fixed
+
+- **monitor-automode's override was never loaded.** v1.20.7 pulled it in with
+  `pcall(dofile, …)`, but Hyprland's sandboxed Lua has no `dofile`: the call
+  failed silently inside `pcall` and the file was never read (a deliberate
+  syntax error in it produced no `configerrors` entry either). It now uses
+  `require` — the same loader `monitors.lua` itself goes through — after
+  clearing `package.loaded["monitor-automode"]`, because `require` caches across
+  reloads and would otherwise keep whatever the file held the first time.
+  Verified both ways: with the daemon stopped, a simulated PiP mode list drops
+  the output to 1920x1080 and the pinned 3840x1080@144 is restored when the
+  modes come back.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.7] - 2026-11-26
 
 ### Fixed
