@@ -40,5 +40,6 @@ require("animations-high")
 -- require(), not dofile(): Hyprland's sandboxed Lua has no dofile. The cache
 -- entry is cleared first because require() caches across reloads, which would
 -- keep whatever the file held the first time it was loaded.
+package.path = (os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")) .. "/hyprtk/?.lua;" .. package.path
 package.loaded["monitor-automode"] = nil
 pcall(require, "monitor-automode")

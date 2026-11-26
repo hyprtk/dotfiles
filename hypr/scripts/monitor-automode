@@ -11,9 +11,9 @@ when the mode in use disappears, applies the closest one that is still offered.
 When the withdrawn mode comes back (PBP off) it is restored, so the resolution
 pinned in the Displays panel is what you get whenever the panel can do it.
 
-The correction is written to ``~/.config/hypr/monitor-automode.lua``, which
-monitors.lua includes *last* (so it overrides the panel's own rule), and applied
-with ``hyprctl reload``. `hl.monitor` through `hyprctl eval` is not used: this
+The correction is written to ``~/.cache/hyprtk/monitor-automode.lua``, which
+hyprland.lua adds to ``package.path`` and requires last (so it overrides the
+panel's own rule), and applied with ``hyprctl reload``. `hl.monitor` through `hyprctl eval` is not used: this
 Hyprland build accepts it but silently ignores resolution changes.
 
   monitor-automode              run in the foreground (autostart calls it)
@@ -38,7 +38,10 @@ import time
 from dataclasses import dataclass
 
 CONFIG_DEFAULT = "~/.config/hypr/monitors.lua"
-OVERRIDE_DEFAULT = "~/.config/hypr/monitor-automode.lua"
+# Runtime state, not config: ~/.config/hypr is a git worktree, and a generated
+# file there shows up as untracked noise. hyprland.lua puts this directory on
+# package.path before requiring the file.
+OVERRIDE_DEFAULT = "~/.cache/hyprtk/monitor-automode.lua"
 # Hyprland reports modes as "3840x1080@144.00Hz"; the config writes
 # "3840x1080@144.00". Accept both.
 MODE_RE = __import__("re").compile(r"^\s*(\d+)x(\d+)(?:@([\d.]+))?(?:Hz)?\s*$")

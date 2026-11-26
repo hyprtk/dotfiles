@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.20.9] - 2026-11-26
+
+### Fixed
+
+- **monitor-automode no longer writes into the dotfiles worktree.**
+  `~/.config/hypr` is a git clone here, so the generated
+  `~/.config/hypr/monitor-automode.lua` appeared as an untracked file. The
+  override now lives at `~/.cache/hyprtk/monitor-automode.lua`, and
+  `hyprland.lua` puts that directory on `package.path` before requiring it.
+  Verified end to end with the daemon stopped and then started: pinned
+  3840x1080@144 → simulated PiP list drops to 1920x1080@60 → the daemon restores
+  144 and empties the override.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.8] - 2026-11-26
 
 ### Fixed
