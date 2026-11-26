@@ -14,12 +14,23 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import signal
 import socket
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
-SOCKET = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / "hyprtk-settings.sock"
+_RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
+SOCKET = _RUNTIME / "hyprtk-settings.sock"
+# The QML front end polls the queue from a timer. A server whose front end is
+# gone (the window was closed but the backend kept running) still answers on the
+# socket, which made every later launch print "focused the running window" and
+# show nothing. The heartbeat is the front end's liveness signal.
+HEARTBEAT = _RUNTIME / "hyprtk-settings.heartbeat"
+PIDFILE = _RUNTIME / "hyprtk-settings.pid"
+HEARTBEAT_MAX_AGE = 4.0
 BUS_NAME = "org.hyprtk.Settings"
 OBJECT_PATH = "/org/hyprtk/Settings"
 INTERFACE = """<node>
@@ -41,7 +52,97 @@ def _queue(payload: dict) -> None:
         _QUEUE.append(payload)
 
 
+def touch_heartbeat() -> None:
+    """Called by the front end while a window exists."""
+    try:
+        HEARTBEAT.write_text(str(int(time.time())))
+    except OSError:
+        pass
+
+
+def _heartbeat_fresh() -> bool:
+    try:
+        return time.time() - HEARTBEAT.stat().st_mtime <= HEARTBEAT_MAX_AGE
+    except OSError:
+        return False
+
+
+def _surface_pids() -> set[int] | None:
+    """Pids that own a mapped surface, or None when Hyprland cannot be asked."""
+    try:
+        import subprocess
+
+        done = subprocess.run(["hyprctl", "layers", "-j"], capture_output=True,
+                              text=True, timeout=2)
+        layers = json.loads(done.stdout or "{}")
+        clients = json.loads(subprocess.run(["hyprctl", "clients", "-j"],
+                                            capture_output=True, text=True,
+                                            timeout=2).stdout or "[]")
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+    # {"DP-2": {"levels": {"1": [ {"pid": 1234, ...}, ... ]}}}
+    pids = {int(surface.get("pid", 0))
+            for monitor in layers.values()
+            for surfaces in (monitor.get("levels") or {}).values()
+            for surface in (surfaces or [])
+            if (surface or {}).get("pid")}
+    pids |= {int(window.get("pid", 0)) for window in clients}
+    pids.discard(0)
+    return pids
+
+
+def is_ours_argv(argv: list[str]) -> bool:
+    """Is this argv our Quickshell front end or its backend?
+
+    Matching a substring anywhere in the command line is not enough: a shell
+    whose -c string merely mentions the project path looks like a target, and
+    reaping it would kill an unrelated process.
+    """
+    if not argv:
+        return False
+    exe = os.path.basename(argv[0])
+    if exe in ("qs", "quickshell"):
+        return any("hyprtk-system-manager" in part for part in argv[1:])
+    if exe.startswith("python"):
+        return any(part == "system_manager.cli" for part in argv[1:])
+    return False
+
+
+def _is_ours(pid: int) -> bool:
+    try:
+        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except OSError:
+        return False
+    argv = [part.decode("utf-8", "replace") for part in raw.split(b"\0") if part]
+    return is_ours_argv(argv)
+
+
+def reap_stale(force: bool = False) -> bool:
+    """Kill a backend whose window is gone and clear its socket. True if it did."""
+    if not force and _heartbeat_fresh():
+        return False
+    dropped = False
+    try:
+        pid = int(PIDFILE.read_text().strip())
+    except (OSError, ValueError):
+        pid = 0
+    if pid and pid != os.getpid() and _is_ours(pid):
+        try:
+            os.kill(pid, signal.SIGTERM)
+            dropped = True
+        except OSError:
+            pass
+    for path in (SOCKET, HEARTBEAT, PIDFILE):
+        try:
+            path.unlink()
+            dropped = True
+        except OSError:
+            pass
+    return dropped
+
+
 def poll(limit: int = 20) -> list[dict]:
+    touch_heartbeat()
     with _LOCK:
         items = _QUEUE[:limit]
         del _QUEUE[:limit]
@@ -93,6 +194,14 @@ def _start_socket() -> bool:
         server.listen(8)
     except OSError:
         return False
+    try:
+        # The *window* pid, not this backend's: Hyprland reports surfaces
+        # against the Quickshell process, which is our parent. Recording our own
+        # pid made every healthy instance look windowless.
+        PIDFILE.write_text(str(os.getppid()))
+    except OSError:
+        pass
+    touch_heartbeat()
     threading.Thread(target=_serve_socket, args=(server,), name="sm-bus",
                      daemon=True).start()
     return True
@@ -153,9 +262,34 @@ def start() -> dict:
 
 
 def send(payload: dict, timeout: float = 1.5) -> dict | None:
-    """Deliver to a running instance; None when nobody is listening."""
+    """Deliver to a running instance; None when nobody is listening.
+
+    A listener with no live front end is not "running" — it would swallow the
+    request and leave the user with no window.
+    """
     if not SOCKET.exists():
         return None
+    if not _heartbeat_fresh():
+        reap_stale()
+        return None
+    # A backend whose window the compositor dropped (a monitor reload can unmap
+    # a layer surface) keeps answering while polling. Only treat it as running
+    # when its process actually owns a surface — or is young enough to still be
+    # mapping.
+    try:
+        pid = int(PIDFILE.read_text().strip())
+    except (OSError, ValueError):
+        pid = 0
+    if pid:
+        try:
+            age = time.time() - PIDFILE.stat().st_mtime
+        except OSError:
+            age = 0.0
+        pids = _surface_pids()
+        if pids is not None and pid not in pids and age > 6.0:
+            # force: the heartbeat is fresh (the orphan is still polling).
+            reap_stale(force=True)
+            return None
     client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     client.settimeout(timeout)
     try:

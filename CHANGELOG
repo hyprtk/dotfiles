@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.20.10] - 2026-11-26
+
+### Fixed
+
+- **hyprtk-system-manager 0.7.2: the settings app could stop launching.** A
+  backend that outlives its window keeps answering on the settings socket, so
+  every later launch printed "focused the running window" and showed nothing —
+  the process was alive, the window was not. A layer surface the compositor
+  unmaps (a monitor reload or mode change will do it) leaves exactly that state.
+  The front end now refreshes a heartbeat on every poll, and `bus.send()`
+  requires the recorded pid to actually own a Hyprland surface before treating
+  the instance as running; a stranded one is terminated (after an exact
+  argv-based ownership check, not a substring match) and its socket removed so
+  the new instance can start. The pid file records the window process, not the
+  backend, because surfaces are reported against the Quickshell process.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.9] - 2026-11-26
 
 ### Fixed

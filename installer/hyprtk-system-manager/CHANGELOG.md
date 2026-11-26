@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.7.2] — 2026-11-26
+
+### Fixed
+
+- **The app could stop launching at all.** A backend that outlives its window
+  keeps answering on `$XDG_RUNTIME_DIR/hyprtk-settings.sock`, so every later
+  launch printed "focused the running window" and showed nothing — the process
+  was alive, the window was not. A layer surface the compositor unmaps (a
+  monitor reload or mode change will do it) leaves exactly that state, because
+  the shell and its `serve` backend keep running.
+  - The front end now refreshes a heartbeat on every poll; a listener whose
+    heartbeat has gone stale is reaped instead of being treated as running.
+  - `bus.send()` also checks that the backend's pid actually owns a Hyprland
+    surface (layer surfaces and toplevels) before delivering. A stranded backend
+    is sent `SIGTERM` — after checking the pid's cmdline is ours — and its
+    socket, heartbeat and pid file are removed so the new instance can bind.
+  - The pid file records the **window** process (our parent), not the backend:
+    Hyprland reports surfaces against the Quickshell process, so comparing the
+    backend's own pid made every healthy instance look windowless and the
+    launcher kept starting duplicates.
+  - The bus tests now isolate `SOCKET`, `HEARTBEAT` and `PIDFILE` in a temp dir
+    (they used to write the live session's runtime files), and three cases cover
+    a live window, a stranded backend and a stale heartbeat.
+
 ## [0.7.1] — 2026-11-26
 
 ### Security
