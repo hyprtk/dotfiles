@@ -8,6 +8,7 @@ display.
 
 from __future__ import annotations
 
+import logging
 import os
 from decimal import Decimal
 
@@ -81,7 +82,10 @@ class Bridge(QObject):
     def _row(self, text: str, value: Decimal) -> dict:
         precision = self._precision()
         bases = {}
-        if value == value.to_integral_value():
+        # The four-base readout is only meaningful for numbers a human reads;
+        # formatting a 30 000-digit integer in four bases on every keystroke was
+        # pure cost (41 ms for 2^100000).
+        if value == value.to_integral_value() and (value == 0 or value.adjusted() < 40):
             bases = {str(base): number for base, number in all_bases(value).items()}
         return {
             "ok": True,
@@ -102,11 +106,23 @@ class Bridge(QObject):
             value = evaluate(text, self.context())
         except CalcError as exc:
             return None, {"ok": False, "display": "", "error": str(exc), "bases": {}, "value": ""}
-        except Exception as exc:  # pragma: no cover - a parser bug must not kill the UI
+        except (OverflowError, ValueError, ArithmeticError) as exc:
+            # cosh(1000), 0^-1, ...: a real arithmetic limit, reported as such.
             return None, {
                 "ok": False,
                 "display": "",
-                "error": "could not evaluate: {0}".format(exc),
+                "error": str(exc) or "the result is out of range",
+                "bases": {},
+                "value": "",
+            }
+        except Exception:  # pragma: no cover - a parser bug must not kill the UI
+            # Anything else is a bug: log it with a traceback rather than hiding
+            # it behind a user-facing string.
+            logging.getLogger(__name__).exception("evaluate(%r) failed", text)
+            return None, {
+                "ok": False,
+                "display": "",
+                "error": "could not evaluate this expression",
                 "bases": {},
                 "value": "",
             }

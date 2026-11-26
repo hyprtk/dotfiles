@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.1 — 2026-11-26
+
+### Fixed
+
+- **Legal input could hang the UI for minutes.** Live evaluation runs on every
+  keystroke, and three paths had no bound: `1e999999` built a 3.3-million-bit
+  integer and formatted it in four bases, `ncr(1000000, 500000)` spent 5 s in
+  `math.comb`, and `2^100000` formatted a 100 KB binary string. Integers are now
+  capped at 4000 digits, `ncr`/`npr` at 100 000 (like `fact()`), and the
+  four-base readout is skipped above 40 digits. All three answer in ~0.1 ms.
+- **Arithmetic limits were reported as a generic failure.** `cosh(1000)` said
+  "could not evaluate"; `OverflowError`/`ValueError`/`ArithmeticError` now carry
+  their own message, and an unexpected exception is logged with a traceback
+  instead of being hidden behind a user-facing string.
+- **History and config writes left a readable `.tmp` behind** on a crash (the
+  history can contain pasted secrets). Both use `mkstemp` in the target
+  directory, `fsync`, `chmod 0600` and `os.replace`, removing the temp on error.
+- **The window title was the raw expression**, so a pasted formula became the
+  title (breaking title-based window rules). It is now "Calculator".
+
 ## 0.1.0 — 2026-11-18
 
 First release. A calculator for the hyprtk desktop: exact decimals, a live

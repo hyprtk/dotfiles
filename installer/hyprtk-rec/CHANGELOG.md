@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased — documentation
+
+- README: v09 suite banner, palette badges and the twelve-repository suite
+  list (screenshot, recorder and system manager were missing).
+
+## 0.2.5 — 2026-11-26
+
+### Fixed
+
+- **Stopping a paused recording produced an unplayable file.** A `SIGSTOP`-ed
+  encoder keeps `SIGINT` pending, so `stop()` timed out, sent `SIGKILL`, and
+  reported success on a file with no trailer (`moov atom not found`). It now
+  sends `SIGCONT` first, and a replay buffer gets `SIGUSR1` before stopping —
+  without it the whole buffered window was discarded.
+- **A dead encoder read as "recording" for ever.** `os.kill(pid, 0)` succeeds
+  for a zombie, so `status()`/the HUD stayed green, `start()` refused with
+  "already recording", and `stop()` waited out its 10 s timeout. Zombies are now
+  detected from `/proc/<pid>/stat`.
+- **`--countdown` was parsed and ignored by the CLI** (only the GUI counted
+  down). `hyprtk-rec start --countdown 3` now waits.
+- **Two `--toggle` presses inside the spawn grace window started two encoders**
+  on the same file, one of them orphaned with no state to stop it. The whole
+  check-start-write sequence is serialised with a `flock`.
+- **A failed state write left an encoder running** that `stop` could never find,
+  plus its null-sink modules. It is killed and the mix unloaded before the
+  error is reported.
+- **A recording that died mid-session was dropped silently** (only a restart
+  salvaged one). The poller hands it to the same salvage path: history entry,
+  Recents, notification.
+- **Trimming overwrote itself and could hit a live recording.** Non-replace
+  output uses a unique name, and `--replace` refuses the file currently being
+  recorded.
+
 ## 0.2.4 — 2026-11-23
 
 A recording that dies must say so.

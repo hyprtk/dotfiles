@@ -64,7 +64,11 @@ def plan(path: str | os.PathLike, *, start: float | None = None,
     if replace:
         output = source.with_name(source.stem + ".trim" + source.suffix)
     else:
-        output = source.with_name(source.stem + "-trimmed" + source.suffix)
+        # unique_path: trimming the same clip twice used to overwrite the first
+        # result silently (the output name was fixed and ffmpeg runs with -y).
+        from .store import unique_path
+
+        output = unique_path(source.with_name(source.stem + "-trimmed" + source.suffix))
 
     argv = [program or FFMPEG, "-hide_banner", "-loglevel", "error", "-y"]
     if start is not None:
@@ -111,6 +115,15 @@ def run(path: str | os.PathLike, *, start: float | None = None,
     if size <= 0:
         raise TrimError("ffmpeg wrote an empty file")
     if replace:
+        # Never overwrite the file an encoder is still writing.
+        try:
+            from .recorder import Recorder
+
+            active = Recorder().active()
+        except Exception:
+            active = None
+        if active is not None and os.path.abspath(active.path) == os.path.abspath(job["source"]):
+            raise TrimError("that recording is still running")
         os.replace(output, job["source"])
         return job["source"]
     return job["output"]

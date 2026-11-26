@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased — documentation
+
+- README: v09 suite banner, palette badges and the twelve-repository suite
+  list (screenshot, recorder and system manager were missing).
+
+## 0.2.5 — 2026-11-26
+
+### Fixed
+
+- **Every CLI flag that matters was dropped on the editor path.** `run()`
+  builds a fresh `Settings` from disk, so `--delay`, `--cursor` and `--picker`
+  were set on an object nobody read: `hyprtk-shot region --slurp` documented in
+  the README never used slurp. They are passed as overrides now.
+- **`--save PATH` wrote nothing when the config had `save: false`**, and still
+  exited 0. An explicit `--save` now wins.
+- **A failed clipboard copy reported success.** The JSON payload echoed the
+  intent (`"copied": true`) and the exit status was 0; it now reports the real
+  result and returns 1.
+- **A second pin in one process reused the same file** and then unlinked it,
+  leaving a blank pin window that `unpin()` could not clear. Pin files carry a
+  serial number.
+- **Pin files could be world-readable.** With no `XDG_RUNTIME_DIR` the pin dir
+  fell back to `/tmp` at 0755 with 0644 PNGs; it is 0700/0600 now.
+- **`--window ADDRESS` for a window that closed captured whatever had focus**
+  instead of failing.
+- **The annotation ratio was wrong for a named output or a mixed-scale/stacked
+  layout** (ratio 1.0, or the sum of the monitor widths), so strokes and text in
+  the saved file were the wrong weight. It is taken from the captured output and
+  from the union of the monitors.
+- **`deleteCapture`/`openPath` acted on any path from history.jsonl**, so an
+  edited entry could unlink an arbitrary file. Both require the path to live in
+  the screenshots folder.
+
 ## 0.2.4 — 2026-11-23
 
 ### Fixed

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -278,6 +279,14 @@ def cmd_start(opts: Options, settings: Settings) -> int:
             return 3
         print(f"{BIN_NAME}: {message}", file=sys.stderr)
         return 1
+
+    countdown = int(opts.countdown or 0)
+    if countdown > 0:
+        # Documented in the README and parsed here; without this the CLI started
+        # instantly while the GUI counted down.
+        for remaining in range(min(30, countdown), 0, -1):
+            print(f"starting in {remaining}…", file=sys.stderr, flush=True)
+            time.sleep(1)
 
     container = str(settings.get("container") or "mp4")
     base = Path(str(settings.get("dir") or default_dir())).expanduser()

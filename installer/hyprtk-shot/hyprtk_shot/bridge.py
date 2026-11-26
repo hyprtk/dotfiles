@@ -98,6 +98,7 @@ class Bridge(QObject):
         # write into the configured directory.
         self.save_path_override = ""
         self._pin_path = ""
+        self._pin_serial = 0
         self._pin_size = (0, 0)
         self._countdown = 0
         self._pending_mode = "region"
@@ -252,6 +253,16 @@ class Bridge(QObject):
         return self._toast_text
 
     # -- helpers ---------------------------------------------------------
+    def _owned_path(self, path: str) -> bool:
+        """True when *path* is inside the configured screenshots directory."""
+        try:
+            candidate = Path(str(path)).expanduser().resolve()
+        except (OSError, RuntimeError):
+            return False
+        roots = {Path(str(self.settings.get("dir") or default_dir())).expanduser().resolve(),
+                 Path(default_dir()).expanduser().resolve()}
+        return any(candidate == root or root in candidate.parents for root in roots)
+
     def session(self) -> Session | None:
         return self._session
 
@@ -643,14 +654,17 @@ class Bridge(QObject):
         # killed process cannot leave a pin behind for long.
         base = Path(os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()) / "hyprtk-shot"
         try:
-            base.mkdir(parents=True, exist_ok=True)
+            # 0700: with no runtime dir this lands in /tmp, and a capture can
+            # show anything that was on screen.
+            base.mkdir(parents=True, exist_ok=True, mode=0o700)
+            os.chmod(base, 0o700)
         except OSError as exc:
             self._set_error(str(exc))
             return
         # Sweep pins left by processes that no longer exist (a killed app).
         for stale in base.glob("pin-*.png"):
             try:
-                pid = int(stale.stem.split("-", 1)[1])
+                pid = int(stale.stem.split("-")[1])
             except (IndexError, ValueError):
                 continue
             if pid == os.getpid():
@@ -664,11 +678,15 @@ class Bridge(QObject):
                     pass
             except PermissionError:
                 pass
-        target = base / f"pin-{os.getpid()}.png"
+        # A counter, not just the pid: a second pin in the same process used to
+        # write the same path and then unlink it, leaving a blank pin window.
+        self._pin_serial += 1
+        target = base / f"pin-{os.getpid()}-{self._pin_serial}.png"
         try:
             if not image.save(str(target), "PNG"):
                 self._set_error("could not write the pinned image")
                 return
+            os.chmod(target, 0o600)
         except OSError as exc:
             self._set_error(str(exc))
             return
@@ -833,6 +851,9 @@ class Bridge(QObject):
     def openPath(self, path: str) -> None:
         if not path:
             return
+        if not self._owned_path(path):
+            self._set_error("not a capture in the screenshots folder")
+            return
         argv = ["xdg-open", str(Path(path).expanduser())]
         try:
             subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -848,6 +869,11 @@ class Bridge(QObject):
 
     @Slot(str)
     def deleteCapture(self, path: str) -> None:
+        # The path comes from history.jsonl through QML; an edited entry must
+        # not turn this into "unlink any file the user can write".
+        if not self._owned_path(path):
+            self._set_error("not a capture in the screenshots folder")
+            return
         try:
             Path(path).expanduser().unlink()
         except OSError:

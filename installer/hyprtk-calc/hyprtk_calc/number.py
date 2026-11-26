@@ -152,10 +152,17 @@ def format_number(
     return _grouped(_plain(rounded), GROUPS.get(grouping, ""))
 
 
+# Python happily builds a 3.3-million-bit int for 1e999999 and then formats it
+# in four bases on every keystroke; a calculator has no use for that.
+MAX_INTEGER_DIGITS = 4000
+
+
 def integral(value: Decimal) -> int:
     """Bitwise operators and base conversion need an exact integer."""
     if value.is_infinite() or value.is_nan():
         raise CalcError("not an integer")
+    if value != 0 and value.adjusted() >= MAX_INTEGER_DIGITS:
+        raise CalcError("integer is too large (limit {0} digits)".format(MAX_INTEGER_DIGITS))
     if value != value.to_integral_value():
         raise CalcError("{0} is not an integer".format(_plain(round_to(value, 9))))
     return int(value)

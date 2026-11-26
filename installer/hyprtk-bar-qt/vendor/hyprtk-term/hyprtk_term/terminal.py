@@ -49,6 +49,12 @@ class Terminal(QObject):
         self._notifier = QSocketNotifier(self.pty.fd, QSocketNotifier.Type.Read, self)
         self._notifier.activated.connect(self._readable)
 
+        # A PTY master is non-blocking: a paste bigger than the kernel buffer
+        # must be queued and drained when the fd reports writable, not dropped.
+        self._wnotifier = QSocketNotifier(self.pty.fd, QSocketNotifier.Type.Write, self)
+        self._wnotifier.setEnabled(False)
+        self._wnotifier.activated.connect(self._writable)
+
         # A child can exit while a grandchild keeps the slave open; the fd then
         # never reports EOF, so the process is also polled.
         self._reaper = QTimer(self)
@@ -101,15 +107,30 @@ class Terminal(QObject):
             return
         self._exited = True
         self._notifier.setEnabled(False)
+        self._wnotifier.setEnabled(False)
         self._reaper.stop()
+        # Nothing will read or write this master again; closing it here stops a
+        # grandchild holding the slave from keeping the fd (and the pty) alive
+        # for the life of the tab.
+        try:
+            self.pty.close()
+        except OSError:
+            pass
         self.changed.emit()
         self.exited.emit(status)
 
     # ------------------------------------------------------------- commands --
 
     def write(self, data: bytes) -> None:
-        if data:
-            self.pty.write(data)
+        if not data:
+            return
+        self.pty.write(data)
+        if self.pty.pending and not self._exited:
+            self._wnotifier.setEnabled(True)
+
+    def _writable(self, *_args) -> None:
+        if self.pty.flush():
+            self._wnotifier.setEnabled(False)
 
     def send(self, text: str) -> None:
         """Send text as if typed (used by paste, IME commits, drop targets)."""
@@ -130,8 +151,21 @@ class Terminal(QObject):
                 self.pty.terminate(sig)
             except OSError:
                 pass
+            # A child that ignores SIGHUP would otherwise keep running against
+            # a closed master; escalate after a short grace period.
+            import time as _time
+
+            deadline = _time.monotonic() + 0.25
+            while _time.monotonic() < deadline and self.pty.poll() is None:
+                _time.sleep(0.01)
+            if self.pty.poll() is None:
+                try:
+                    self.pty.terminate(signal.SIGKILL)
+                except OSError:
+                    pass
         try:
             self._notifier.setEnabled(False)
+            self._wnotifier.setEnabled(False)
         except RuntimeError:
             pass
         self.pty.close()
@@ -149,6 +183,8 @@ def _osc52_answer(vt: VTerminal, text: str) -> bytes:
     """Answer an OSC 52 read from what the clipboard currently holds."""
     from . import vtcapi as V
     import ctypes as C
+    if not hasattr(V.lib, "vterm_state_send_selection"):
+        return b""
     raw = text.encode("utf-8")
     frag = V.Fragment(raw, len(raw), True, True)
     V.lib.vterm_state_send_selection(vt._state, V.SELECT["CLIPBOARD"], frag)

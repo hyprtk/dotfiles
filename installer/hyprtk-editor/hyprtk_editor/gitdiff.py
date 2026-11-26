@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import time
 from dataclasses import dataclass, field
 
 # @@ -12,3 +12,4 @@  — the counts are omitted when they are 1.
@@ -21,6 +22,8 @@ HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 
 MAX_UNTRACKED_LINES = 20_000
 TIMEOUT = 2.0
+# Total wall time one status() may spend in git subprocesses.
+BUDGET_S = 1.2
 
 
 @dataclass(frozen=True)
@@ -70,16 +73,22 @@ def parse_diff(text: str) -> dict[str, str]:
     return out
 
 
+_DEADLINE = [0.0]
+
+
 def _run(args: list[str], cwd: str) -> tuple[int, str, str]:
     env = dict(os.environ)
     env.update({"GIT_OPTIONAL_LOCKS": "0", "GIT_PAGER": "cat", "LC_ALL": "C"})
+    budget = TIMEOUT
+    if _DEADLINE[0]:
+        budget = max(0.1, min(TIMEOUT, _DEADLINE[0] - time.monotonic()))
     try:
         done = subprocess.run(
             ["git", *args],
             cwd=cwd,
             capture_output=True,
             text=True,
-            timeout=TIMEOUT,
+            timeout=budget,
             env=env,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -100,11 +109,18 @@ def _line_count(path: str) -> int:
 
 
 class GitDiff:
-    """Per-path diff status with a mtime-keyed cache."""
+    """Per-path diff status with a mtime-keyed cache.
 
-    def __init__(self) -> None:
+    ``status()`` is budgeted: one file's diff is capped at ``BUDGET_S`` total,
+    so the save/load/settings paths cannot stack three two-second timeouts into
+    a multi-second freeze on the GUI thread.
+    """
+
+    def __init__(self, on_change=None) -> None:
         self._roots: dict[str, str] = {}
         self._cache: dict[str, tuple[tuple[int, int], Status]] = {}
+        self._deadline = 0.0
+        self._on_change = on_change
 
     def invalidate(self, path: str = "") -> None:
         if path:
@@ -113,6 +129,7 @@ class GitDiff:
             self._cache.clear()
 
     def status(self, path: str) -> Status:
+        """Diff status for a file, with a per-path refresh budget."""
         path = os.path.abspath(str(path or ""))
         if not path or not os.path.isfile(path):
             return Status(ok=False)
@@ -124,7 +141,11 @@ class GitDiff:
         cached = self._cache.get(path)
         if cached is not None and cached[0] == key:
             return cached[1]
-        result = self._compute(path)
+        _DEADLINE[0] = time.monotonic() + BUDGET_S
+        try:
+            result = self._compute(path)
+        finally:
+            _DEADLINE[0] = 0.0
         self._cache[path] = (key, result)
         return result
 

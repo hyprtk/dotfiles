@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -71,11 +72,22 @@ class History:
         directory = os.path.dirname(self.path)
         if directory:
             os.makedirs(directory, exist_ok=True)
-        temporary = self.path + ".tmp"
-        with open(temporary, "w", encoding="utf-8") as handle:
-            for entry in self._entries:
-                handle.write(json.dumps(entry.as_row(), sort_keys=True) + "\n")
-        os.replace(temporary, self.path)
+        fd, temporary = tempfile.mkstemp(dir=directory or ".",
+                                        prefix=".history.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                for entry in self._entries:
+                    handle.write(json.dumps(entry.as_row(), sort_keys=True) + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.chmod(temporary, 0o600)
+            os.replace(temporary, self.path)
+        except BaseException:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
+            raise
 
     # -- api
     def add(self, expression: str, result: str) -> Entry:

@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.2.4 — 2026-11-26
+
+### Fixed
+
+- **A regex search could freeze the editor for good.** `(a+)+$` over a 36 KB
+  document was still running after 120 s: Python's `re` cannot be interrupted
+  and the search ran on the GUI thread with no deadline. Patterns with a
+  quantified group whose body is itself quantified are now refused with a
+  reason (`Bridge.searchError`) instead of being run, and patterns longer than
+  1000 characters are rejected.
+- **Editing commands destroyed the undo stack.** `Ctrl+/`, duplicate/move/sort
+  line, and Replace All assigned `textArea.text`, which clears the history
+  (`canUndo` went true → false). They now edit only the changed span, so undo
+  still works afterwards.
+- **Saving a symlinked file replaced the link with a regular file**, silently
+  detaching a symlinked dotfile from its target. The real path is resolved
+  first and rewritten instead.
+- **A failed encode was reported as success in the old codec.** Writing a
+  cp1252 file with characters it cannot represent silently produced UTF-8 while
+  the document (and the status bar) still said cp1252. The codec actually used
+  is returned and adopted by the document.
+- **A bad replacement template killed Replace All** with a Python traceback
+  (`$1` with no group, `C:\temp`); it is now a message.
+- **The gutter could block the GUI for seconds**: `refreshGit` ran up to three
+  `git` subprocesses (2 s timeout each) on every save, load and settings
+  change. One status call is now capped at 1.2 s total.
+- Inline highlighting threshold lowered from 24 000 to 8 000 characters
+  (measured 59 ms per edit pause at 24 k); superseded tokenising jobs are
+  cancelled instead of queued.
+- `tests/test_dialogs.py` no longer errors offscreen: it asks for the Qt
+  dialog and dresses it after `show()`, which is what the app does.
+
 ## 0.2.3 — 2026-11-18
 
 - **"Open terminal here" prefers the suite terminal.** `Bridge.openTerminal`

@@ -82,7 +82,8 @@ class VTerminal:
         self._state = V.lib.vterm_obtain_state(self._vt)
         V.lib.vterm_screen_reset(self._screen, 1)
         V.lib.vterm_screen_enable_altscreen(self._screen, 1)
-        V.lib.vterm_screen_enable_reflow(self._screen, True)
+        if hasattr(V.lib, "vterm_screen_enable_reflow"):
+            V.lib.vterm_screen_enable_reflow(self._screen, True)
         V.lib.vterm_screen_set_damage_merge(self._screen, V.DAMAGE["ROW"])
 
         # theme
@@ -293,14 +294,24 @@ class VTerminal:
         """Bracketed-paste aware: libvterm wraps it when the app asked for it."""
         if not text:
             return b""
+        normalized = text.replace("\r\n", "\n").replace("\n", "\r")
         V.lib.vterm_keyboard_start_paste(self._vt)
-        for ch in text.replace("\r\n", "\n").replace("\n", "\r"):
+        head = self._drain()
+        # Printable text is exactly its UTF-8 bytes between the paste markers,
+        # so it can be appended in one go: one libvterm call per character is a
+        # million FFI round-trips for a 1 MB paste. Anything with control
+        # characters still goes through libvterm, which knows how to escape it.
+        if all(ch == "\r" or (ch >= " " and ch != "\x7f") for ch in normalized):
+            body = normalized.encode("utf-8")
+            V.lib.vterm_keyboard_end_paste(self._vt)
+            return head + body + self._drain()
+        for ch in normalized:
             if ch == "\r":
                 V.lib.vterm_keyboard_key(self._vt, KEY["ENTER"], 0)
             else:
                 V.lib.vterm_keyboard_unichar(self._vt, ord(ch), 0)
         V.lib.vterm_keyboard_end_paste(self._vt)
-        return self._drain()
+        return head + self._drain()
 
     def mouse_move(self, row: int, col: int, mods: int = 0) -> bytes:
         V.lib.vterm_mouse_move(self._vt, int(row), int(col), int(mods))

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 
 from .number import DEFAULT_PRECISION, GROUPS, clamp_precision
 
@@ -63,11 +64,21 @@ class Settings:
         directory = os.path.dirname(self.path)
         if directory:
             os.makedirs(directory, exist_ok=True)
-        temporary = self.path + ".tmp"
-        with open(temporary, "w", encoding="utf-8") as handle:
-            json.dump(self._values, handle, indent=2, sort_keys=True)
-            handle.write("\n")
-        os.replace(temporary, self.path)
+        fd, temporary = tempfile.mkstemp(dir=directory or ".", prefix=".config.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(self._values, handle, indent=2, sort_keys=True)
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.chmod(temporary, 0o600)
+            os.replace(temporary, self.path)
+        except BaseException:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
+            raise
 
     # -- access
     def get(self, key: str, default=None):

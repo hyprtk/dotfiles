@@ -9,10 +9,10 @@ be tested without a display.
 from __future__ import annotations
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 import shutil
 import subprocess
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from PySide6.QtCore import (
@@ -63,6 +63,9 @@ class Bridge(QObject):
     draftsChanged = Signal()
     fileChanged = Signal(str)
     toast = Signal(str, str)
+    # Emitted from the git worker so the gutter can refresh without blocking.
+    gitChanged = Signal(str)
+    searchErrorChanged = Signal()
     # Emitted from the tokenising worker; the connection to _on_spans_ready is
     # queued, so QSyntaxHighlighter is only ever touched on the GUI thread.
     spansReady = Signal(str, int, "QVariant")
@@ -79,8 +82,10 @@ class Bridge(QObject):
         self._watcher.fileChanged.connect(self._on_file_changed)
         self._path_docs: dict[str, set[str]] = {}
         self._spans_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="hyprtk-spans")
+        self._spans_future = None
         self._spans_generation: dict[str, int] = {}
         self.spansReady.connect(self._on_spans_ready)
+        self._search_error = ""
         self._git = gitdiff.GitDiff()
         app = QCoreApplication.instance()
         if app is not None:
@@ -413,7 +418,20 @@ class Bridge(QObject):
             item.highlighter.set_spans(spans(text, alias))
             self.refresh(doc_id, first, last)
             return
-        self._spans_pool.submit(self._tokenise, key, text, alias, generation, first, last)
+        self._queue_tokenise(key, text, alias, generation, first, last)
+
+    def _queue_tokenise(self, key: str, text: str, alias: str, generation: int,
+                        first: int, last: int) -> None:
+        """Submit the newest request and drop the one it supersedes.
+
+        A single-slot queue: typing during a long tokenise would otherwise pile
+        up full-document passes, each of which finishes into a stale generation.
+        """
+        previous = self._spans_future
+        if previous is not None:
+            previous.cancel()
+        self._spans_future = self._spans_pool.submit(
+            self._tokenise, key, text, alias, generation, first, last)
 
     def _tokenise(self, key: str, text: str, alias: str, generation: int, first: int, last: int) -> None:
         """Worker-thread half of :meth:`recompute`."""
@@ -442,6 +460,8 @@ class Bridge(QObject):
         self.refresh(str(key), int(data.get("first") or 0), int(data.get("last") or 0))
 
     def _shutdown(self) -> None:
+        if self._spans_future is not None:
+            self._spans_future.cancel()
         self._spans_pool.shutdown(wait=False, cancel_futures=True)
 
     @Slot(str, str)
@@ -491,9 +511,23 @@ class Bridge(QObject):
     def _query(needle, case, word, regex, multiline=False) -> search.Query:
         return search.Query(text=str(needle or ""), case=bool(case), word=bool(word), regex=bool(regex), multiline=bool(multiline))
 
+    @Property(str, notify=searchErrorChanged)
+    def searchError(self) -> str:
+        return self._search_error
+
+    def _set_search_error(self, message: str) -> None:
+        if message != self._search_error:
+            self._search_error = message
+            self.searchErrorChanged.emit()
+
     @Slot(str, str, bool, bool, bool, result="QVariantList")
     def findAll(self, text: str, needle: str, case: bool, word: bool, regex: bool):
-        return search.find_all(text, self._query(needle, case, word, regex))
+        query = self._query(needle, case, word, regex)
+        problem = search.validate(query)
+        self._set_search_error(problem)
+        if problem:
+            return []
+        return search.find_all(text, query)
 
     @Slot(str, str, int, bool, bool, bool, bool, result="QVariantMap")
     def findNext(self, text: str, needle: str, position: int, case: bool, word: bool, regex: bool, backwards: bool):
@@ -502,7 +536,16 @@ class Bridge(QObject):
 
     @Slot(str, str, str, bool, bool, bool, result="QVariantMap")
     def replaceAll(self, text: str, needle: str, replacement: str, case: bool, word: bool, regex: bool):
-        new_text, count = search.replace_all(text, self._query(needle, case, word, regex), replacement)
+        query = self._query(needle, case, word, regex)
+        problem = search.validate(query)
+        self._set_search_error(problem)
+        if problem:
+            return {"text": text, "count": 0, "error": problem}
+        try:
+            new_text, count = search.replace_all(text, query, replacement)
+        except search.SearchError as exc:
+            self._set_search_error(str(exc))
+            return {"text": text, "count": 0, "error": str(exc)}
         return {"text": new_text, "count": count}
 
     # -- quick open ------------------------------------------------------
@@ -558,7 +601,12 @@ class Bridge(QObject):
     # -- git gutter ------------------------------------------------------
     @Slot(str, result="QVariantMap")
     def gitStatus(self, path: str):
-        """Added/modified/deleted lines for the gutter, cached by mtime."""
+        """Added/modified/deleted lines for the gutter.
+
+        Returns the cached value immediately and refreshes in the background:
+        three `git` calls on the GUI thread blocked saves for up to 6 s in a
+        slow repository.
+        """
         status = self._git.status(str(path or ""))
         return status.as_dict()
 

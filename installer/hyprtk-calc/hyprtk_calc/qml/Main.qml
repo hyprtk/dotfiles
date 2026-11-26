@@ -29,7 +29,9 @@ ApplicationWindow {
     minimumWidth: 360
     minimumHeight: 560
     color: th.background
-    title: expression.length > 0 ? expression : "Calculator"
+    // A fixed title: the raw expression as a window title broke title-based
+    // window rules and showed a pasted formula to everything that lists windows.
+    title: "Calculator"
     flags: cfg.always_on_top ? (Qt.Window | Qt.WindowStaysOnTopHint) : Qt.Window
 
     // -- behaviour --------------------------------------------------------

@@ -6,7 +6,7 @@ Qt Quick/QML on the front, Python behind it, the same pywal palette as the rest
 of the suite.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 APP_NAME = "hyprtk-calc"
 APP_ID = "hyprtk-calc"

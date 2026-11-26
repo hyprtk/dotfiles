@@ -13,6 +13,7 @@ survives a reboot.
 
 from __future__ import annotations
 
+import fcntl
 import glob
 import json
 import os
@@ -81,7 +82,14 @@ def pid_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
-    return True
+    # os.kill(pid, 0) succeeds for a zombie: an encoder that died after the
+    # spawn grace period would otherwise read "recording" for ever.
+    try:
+        with open(f"/proc/{pid}/stat", "rb") as handle:
+            fields = handle.read().rsplit(b") ", 1)[1].split()
+        return fields[0] not in (b"Z", b"X")
+    except (OSError, IndexError):
+        return True
 
 
 def render_devices() -> list[str]:
@@ -308,6 +316,7 @@ class Recorder:
         self._clock = clock
         self._signal = signal_fn
         self._alive = alive_fn
+        self._salvaged: Recording | None = None
         self._grace = grace
         self._process = None
 
@@ -411,7 +420,15 @@ class Recorder:
             self._clear_state()
             return None
         if not self._alive(rec.pid):
+            # The encoder died while the app was open. Keep the file (it was
+            # written under its final name) and hand it to whoever is polling,
+            # instead of dropping it silently.
             self._discard(rec)
+            try:
+                if os.path.getsize(rec.path) > 0 and self._salvaged is None:
+                    self._salvaged = rec
+            except OSError:
+                pass
             return None
         return rec
 
@@ -422,6 +439,31 @@ class Recorder:
               cursor: bool = True, backend: str = "auto",
               container: str = "mp4", vaapi: bool = False,
               replay: int = 0) -> Recording:
+        # Two `--toggle` calls inside the spawn grace window both used to see
+        # "idle" and start an encoder; one of them was then orphaned with no
+        # state to stop it. Serialise the whole check-start-write sequence.
+        lock_path = os.path.join(os.path.dirname(state_path()), "state.lock")
+        os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+        with open(lock_path, "a+") as lock:
+            try:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                raise RecorderError("another recording is starting") from None
+            try:
+                return self._start_locked(
+                    path=path, source=source, geometry=geometry, output=output,
+                    codec=codec, quality=quality, fps=fps, audio=audio,
+                    audio_device=audio_device, cursor=cursor, backend=backend,
+                    container=container, vaapi=vaapi, replay=replay)
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+    def _start_locked(self, *, path: str, source: str = "output", geometry: str | None = None,
+                      output: str | None = None, codec: str = "h264", quality: str = "medium",
+                      fps: int = 60, audio: str = "none", audio_device: str | None = None,
+                      cursor: bool = True, backend: str = "auto",
+                      container: str = "mp4", vaapi: bool = False,
+                      replay: int = 0) -> Recording:
         current = self.active()
         if current is not None:
             raise RecorderError(f"already recording to {current.path}")
@@ -492,7 +534,20 @@ class Recorder:
                 audio_module.stop_mix(mix_modules)
             self._remove_empty(rec.path)
             raise RecorderError(failure)
-        self._write_state(rec)
+        try:
+            self._write_state(rec)
+        except OSError as exc:
+            # Without state the recording is unreachable by `stop`, and the mix
+            # modules would leak: undo everything before reporting.
+            try:
+                process.kill()
+            except Exception:
+                pass
+            self._process = None
+            if mix_modules:
+                audio_module.stop_mix(mix_modules)
+            self._remove_empty(rec.path)
+            raise RecorderError(f"cannot write the state file: {exc}") from exc
         return rec
 
     @staticmethod
@@ -513,6 +568,20 @@ class Recorder:
         rec = self.active()
         if rec is None:
             return None
+        # A stopped (paused) encoder keeps SIGINT pending until it runs again.
+        if rec.paused_at is not None:
+            try:
+                self._signal(rec.pid, signal.SIGCONT)
+            except (ProcessLookupError, OSError):
+                pass
+        # A replay buffer writes nothing until SIGUSR1 flushes the last N
+        # seconds; stopping it without that discards the whole recording.
+        if rec.replay:
+            try:
+                self._signal(rec.pid, signal.SIGUSR1)
+            except (ProcessLookupError, OSError):
+                pass
+            time.sleep(0.35)
         process = self._process
         try:
             if process is not None and getattr(process, "pid", None) == rec.pid:
@@ -587,6 +656,11 @@ class Recorder:
         except OSError:
             pass
         return None
+
+    def take_salvaged(self) -> Recording | None:
+        """A recording whose encoder died, reported once."""
+        rec, self._salvaged = self._salvaged, None
+        return rec
 
     def save_replay(self) -> str | None:
         """Flush the buffered seconds to the file and keep recording."""

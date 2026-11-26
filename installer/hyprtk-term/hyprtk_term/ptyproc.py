@@ -44,6 +44,7 @@ class Pty:
                 os._exit(127)
 
         self._status: int | None = None
+        self._pending = bytearray()
         self._set_winsize(rows, cols)
         flags = fcntl.fcntl(self.fd, fcntl.F_GETFL)
         fcntl.fcntl(self.fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
@@ -71,16 +72,40 @@ class Pty:
         return b"".join(chunks)
 
     def write(self, data: bytes) -> int:
+        """Queue bytes for the child and flush what the kernel accepts now.
+
+        Returns the number of bytes accepted *by the queue* (i.e. all of them):
+        a PTY master is non-blocking, so a large paste would otherwise be
+        silently truncated when the kernel buffer fills (measured: 197 KB
+        pasted, 22 KB delivered). Callers must drain with :meth:`flush` once
+        the fd reports writable.
+        """
         if not data:
             return 0
-        try:
-            return os.write(self.fd, data)
-        except BlockingIOError:
-            return 0
-        except OSError as exc:
-            if exc.errno == errno.EIO:
-                return 0
-            raise
+        self._pending += data
+        self.flush()
+        return len(data)
+
+    @property
+    def pending(self) -> int:
+        return len(self._pending)
+
+    def flush(self) -> bool:
+        """Write as much of the queue as the kernel takes. True when empty."""
+        while self._pending:
+            try:
+                written = os.write(self.fd, self._pending)
+            except BlockingIOError:
+                return False
+            except OSError as exc:
+                if exc.errno == errno.EIO:
+                    self._pending.clear()
+                    return True
+                raise
+            if written <= 0:
+                return False
+            del self._pending[:written]
+        return True
 
     # --------------------------------------------------------------- sizing --
 

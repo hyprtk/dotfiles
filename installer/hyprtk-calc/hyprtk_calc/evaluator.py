@@ -96,6 +96,8 @@ _NAME = re.compile(r"[^\W\d]\w*", re.UNICODE)
 # A runaway expression should fail cleanly, not take the UI thread with it.
 MAX_TOKENS = 2000
 MAX_FACTORIAL = 3000
+# math.comb(1000000, 500000) takes ~5 s and produces a 300k-digit number.
+MAX_COMBINATION = 100_000
 
 
 class Token(NamedTuple):
@@ -242,6 +244,30 @@ def _factorial(ctx: Context, args: list[Decimal]) -> Decimal:
     return Decimal(math.factorial(number))
 
 
+def _combination_args(args: list[Decimal], name: str) -> tuple[int, int]:
+    total = _int_arg(args, 0, name)
+    chosen = _int_arg(args, 1, name)
+    if total < 0 or chosen < 0:
+        raise CalcError("{0}() needs whole numbers >= 0".format(name))
+    if total > MAX_COMBINATION or chosen > MAX_COMBINATION:
+        raise CalcError("{0}() is limited to {1}".format(name, MAX_COMBINATION))
+    return total, chosen
+
+
+def _ncr(ctx: Context, args: list[Decimal]) -> Decimal:
+    total, chosen = _combination_args(args, "ncr")
+    if chosen > total:
+        return Decimal(0)
+    return Decimal(math.comb(total, chosen))
+
+
+def _npr(ctx: Context, args: list[Decimal]) -> Decimal:
+    total, chosen = _combination_args(args, "npr")
+    if chosen > total:
+        return Decimal(0)
+    return Decimal(math.perm(total, chosen))
+
+
 def _root(ctx: Context, args: list[Decimal]) -> Decimal:
     degree = args[1]
     if degree == 0:
@@ -311,8 +337,8 @@ FUNCTIONS: dict[str, tuple[int, int, Callable[[Context, list], Decimal]]] = {
     "lcm": (1, 64, lambda c, a: Decimal(math.lcm(*(integral(x) for x in a)))),
     "hypot": (1, 64, lambda c, a: _from_float(math.hypot(*(float(x) for x in a)))),
     "fact": (1, 1, _factorial),
-    "ncr": (2, 2, lambda c, a: Decimal(math.comb(_int_arg(a, 0, "ncr"), _int_arg(a, 1, "ncr")))),
-    "npr": (2, 2, lambda c, a: Decimal(math.perm(_int_arg(a, 0, "npr"), _int_arg(a, 1, "npr")))),
+    "ncr": (2, 2, _ncr),
+    "npr": (2, 2, _npr),
     "deg": (1, 1, lambda c, a: a[0] * 180 / PI),
     "rad": (1, 1, lambda c, a: a[0] * PI / 180),
     "sin": (1, 1, _trig(math.sin)),

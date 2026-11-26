@@ -200,7 +200,7 @@ def _quick_capture(opts: Options, settings: Settings) -> int:
         sys.stdout.buffer.flush()
         return 0
 
-    want_save = not opts.no_save and bool(settings.get("save"))
+    want_save = not opts.no_save and (bool(opts.save) or bool(settings.get("save")))
     want_copy = bool(opts.copy if opts.copy is not None else settings.get("copy"))
     path = None
     width = height = 0
@@ -219,8 +219,11 @@ def _quick_capture(opts: Options, settings: Settings) -> int:
                 return 1
             width, height = image.width(), image.height()
             path = save_image(image, path, quality=int(settings.get("quality")))
-    if want_copy and not copy_to_clipboard(data):
-        print(f"{BIN_NAME}: clipboard unavailable (install wl-clipboard)", file=sys.stderr)
+    copied = False
+    if want_copy:
+        copied = copy_to_clipboard(data)
+        if not copied:
+            print(f"{BIN_NAME}: clipboard unavailable (install wl-clipboard)", file=sys.stderr)
 
     if path is not None and not width:
         try:
@@ -235,7 +238,7 @@ def _quick_capture(opts: Options, settings: Settings) -> int:
         payload = {
             "mode": mode,
             "path": str(path) if path else "",
-            "copied": bool(want_copy),
+            "copied": bool(copied),
             "bytes": len(data),
             "width": width,
             "height": height,
@@ -243,6 +246,8 @@ def _quick_capture(opts: Options, settings: Settings) -> int:
         print(json.dumps(payload, sort_keys=True))
     elif path:
         print(f"saved {path} ({human_size(len(data))})")
+    if want_copy and not copied:
+        return 1
     return 0
 
 
@@ -316,8 +321,13 @@ def main(argv: list[str] | None = None) -> int:
     # and the session keeps the full-resolution image.
     from .app import run
 
+    # `run()` builds a fresh Settings from disk, so anything set on this
+    # instance is invisible to the editor: pass it as an override.
     overrides = {"copy": bool(opts.copy) if opts.copy is not None else None,
-                 "save": False if opts.no_save else None}
+                 "save": False if opts.no_save else None,
+                 "delay": None if opts.delay is None else max(0, min(30, int(opts.delay))),
+                 "cursor": True if opts.cursor else None,
+                 "picker": opts.picker or None}
     return run([sys.argv[0]], mode=mode, region=opts.region,
                window=opts.window, overrides=overrides,
                save_path=opts.save or "")

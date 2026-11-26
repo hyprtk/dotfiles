@@ -373,6 +373,10 @@ def resolve_target(
         target_window = None
         if window:
             target_window = next((row for row in windows() if row.address == window), None)
+            if target_window is None:
+                # Falling back to the focused window silently captures a
+                # different app than the one the user picked.
+                raise CaptureError("that window is gone")
         target_window = target_window or active_window()
         if target_window is None:
             raise CaptureError("no window to capture")
@@ -390,16 +394,28 @@ def resolve_target(
             if monitor is None:
                 raise CaptureError("no monitor reported by Hyprland")
             target = monitor.name
+        # Look the output up by name: an explicitly named monitor with a scale
+        # different from the focused one used to fall back to ratio 1.0, so
+        # strokes and text in the saved file were the wrong weight.
+        named = next((row for row in outputs() if row.name == target), None)
         return {
             "mode": mode,
             "geometry": None,
             "output": target,
             "label": target,
-            "logical_width": monitor.logical_width if monitor and monitor.name == target else None,
+            "logical_width": named.logical_width if named is not None else None,
         }
 
     rows = outputs()
-    logical = sum(row.logical_width for row in rows) or None
+    # The capture is one image laid out in the compositor's global space, so the
+    # logical width is the union of the monitors' rectangles, not the sum of
+    # their widths (a stacked or mixed-scale layout made the ratio wrong).
+    logical = None
+    if rows:
+        left = min(row.x for row in rows)
+        right = max(row.x + row.logical_width for row in rows)
+        logical = max(1, right - left) if right > left else sum(
+            row.logical_width for row in rows) or None
     return {
         "mode": "full",
         "geometry": None,

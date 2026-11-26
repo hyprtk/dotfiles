@@ -1,4 +1,16 @@
+<div align="center">
+
+<img src="docs/branding/banner.png" alt="hyprtk-shot — part of the hyprtk suite" width="100%" />
+
+[![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
+[![version](https://img.shields.io/badge/version-0.2.4-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![license](https://img.shields.io/badge/license-MIT-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
+
+</div>
+
 # hyprtk-shot
+
+> **Part of the hyprtk suite** — [dotfiles](https://github.com/hyprtk/dotfiles) · [bar-qt](https://github.com/hyprtk/hyprtk-bar-qt) · [file manager](https://github.com/hyprtk/hyprtk-file-manager) · [editor](https://github.com/hyprtk/hyprtk-editor) · [terminal](https://github.com/hyprtk/hyprtk-term) · [calculator](https://github.com/hyprtk/hyprtk-calc) · [screenshot](https://github.com/hyprtk/hyprtk-shot) · [recorder](https://github.com/hyprtk/hyprtk-rec) · [system manager](https://github.com/hyprtk/hyprtk-system-manager) · [config manager](https://github.com/hyprtk/hyprtk-hyprland-config-manager) · [hyprtk-usb](https://github.com/hyprtk/hyprtk-usb) · [ISO creator](https://github.com/hyprtk/Hyprtk-ISO-Creator)
 
 A Wayland-native screenshot tool for the hyprtk desktop. One keypress freezes
 the screen, you drag a box, annotate it, then save, copy, or both.

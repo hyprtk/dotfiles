@@ -1,5 +1,49 @@
 # Changelog
 
+## [v1.20.5] - 2026-11-26
+
+### Fixed
+
+A code-review pass over the six apps; every item below was reproduced before it
+was fixed, and each app carries a regression test.
+
+- **hyprtk-term 0.2.7** — a paste larger than the kernel buffer was silently
+  truncated (197 KB in, 22 KB out): writes are queued and drained from a
+  `QSocketNotifier`. Copying a long selection rebuilt every cell (0.55 s for a
+  10k-line scrollback); whole lines now come from the cached text. Search
+  highlighting was O(rows × 2000) per frame; matches are bucketed per line. A
+  per-tab zoom was thrown away whenever settings reloaded (every tab switch).
+  The master fd leaked on child exit and `close()` never escalated past
+  `SIGHUP`. A 1 MB paste made one FFI call per character.
+- **hyprtk-editor 0.2.4** — `(a+)+$` froze the editor for good (Python's `re`
+  cannot be interrupted); such patterns are refused with a reason. Line actions
+  and Replace All cleared the undo stack. Saving a symlinked file replaced the
+  link with a regular file. A failed encode was reported in the old codec.
+  Replace All died with a traceback on a bad template. The gutter could block
+  for seconds per save (capped at 1.2 s now).
+- **hyprtk-calc 0.1.1** — `1e999999`, `ncr(1000000, 500000)` and `2^100000`
+  hung live evaluation on every keystroke; integers are capped at 4000 digits,
+  combinators at 100 000, and the four-base readout is skipped above 40 digits.
+  Arithmetic limits carry their own message; history/config writes are atomic
+  and 0600; the window title no longer echoes the expression.
+- **hyprtk-shot 0.2.5** — `--delay/--cursor/--picker` were dropped on the
+  editor path (`--slurp` never worked), `--save` was ignored when the config
+  said `save: false`, a failed clipboard copy reported success, a second pin
+  reused and then deleted the first pin's file, pin images could be
+  world-readable in `/tmp`, a closed `--window` address captured whatever had
+  focus, the annotation ratio was wrong on mixed-scale outputs, and
+  `deleteCapture`/`openPath` accepted any path from the history.
+- **hyprtk-rec 0.2.5** — stopping a paused recording produced an unplayable
+  file (no `SIGCONT`, then `SIGKILL`), a replay buffer was discarded on stop, a
+  zombie encoder read as "recording" for ever, `--countdown` was ignored by the
+  CLI, two toggles inside the spawn window started two encoders, a failed state
+  write orphaned an encoder, a mid-session death was dropped silently, and
+  trimming could overwrite itself or a live recording.
+- **hyprtk-bar-qt 0.43.25** re-vendors the terminal and the file manager.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.4] - 2026-11-26
 
 ### Security

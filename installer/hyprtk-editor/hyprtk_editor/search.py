@@ -11,6 +11,30 @@ import re
 from dataclasses import dataclass
 
 MAX_MATCHES = 20_000
+MAX_PATTERN_LENGTH = 1_000
+
+# A quantified group whose body is itself quantified (`(a+)+`, `(.*)*`) is the
+# shape that backtracks exponentially. Python's `re` cannot be interrupted, so
+# such a pattern on a 36 KB document froze the editor for minutes with no way
+# out; refuse it up front instead.
+_NESTED_QUANTIFIER = re.compile(
+    r"""\(\s*(?:\?:|\?=|\?!|\?<=|\?<!)?[^()]*[*+][^()]*\)\s*(?:[*+]|\{\d*,?\d*\})"""
+)
+
+
+class SearchError(RuntimeError):
+    """A pattern that cannot be run safely (or a bad replacement template)."""
+
+
+def validate(query: "Query") -> str:
+    """Return "" when the query is safe to run, else a user-facing reason."""
+    if not query.text:
+        return ""
+    if len(query.text) > MAX_PATTERN_LENGTH:
+        return f"pattern is longer than {MAX_PATTERN_LENGTH} characters"
+    if query.regex and _NESTED_QUANTIFIER.search(query.text):
+        return "nested quantifiers like (a+)+ can hang the search"
+    return ""
 
 
 @dataclass(frozen=True)
@@ -26,7 +50,7 @@ class Query:
         return self.text == ""
 
     def pattern(self) -> re.Pattern | None:
-        if not self.text:
+        if not self.text or validate(self):
             return None
         flags = re.MULTILINE
         if self.multiline:
@@ -96,7 +120,10 @@ def replace_all(text: str, query: Query, replacement: str) -> tuple[str, int]:
     # as well as Python's \1. Literal replacement never interprets backslashes.
     if query.regex:
         repl = re.sub(r"\$(\d+)", r"\\\1", replacement)
-        new_text, n = pattern.subn(repl, text)
+        try:
+            new_text, n = pattern.subn(repl, text)
+        except re.error as exc:
+            raise SearchError(str(exc)) from exc
         return new_text, n
 
     def _literal(match: re.Match) -> str:

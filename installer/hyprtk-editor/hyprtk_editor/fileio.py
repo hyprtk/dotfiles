@@ -175,7 +175,7 @@ def read_text(path: str, encoding: str = "", max_bytes: int = MAX_READ_BYTES) ->
     return result
 
 
-def _encode(text: str, encoding: str, eol: str, bom: bool) -> bytes:
+def _encode(text: str, encoding: str, eol: str, bom: bool) -> tuple[bytes, str]:
     if eol == "crlf":
         text = text.replace("\n", "\r\n")
     elif eol == "cr":
@@ -185,13 +185,14 @@ def _encode(text: str, encoding: str, eol: str, bom: bool) -> bytes:
         data = text.encode(codec, "strict")
     except (UnicodeEncodeError, LookupError):
         # Never lose characters silently: fall back to UTF-8 (with a BOM when
-        # the document insisted on one).
+        # the document insisted on one). The codec that was actually used is
+        # returned so the document stops claiming the old one.
         codec = "utf-8"
         data = text.encode("utf-8", "replace")
         bom = bom or encoding == "utf-8"
     if bom and codec in BOMS:
         data = BOMS[codec] + data
-    return data
+    return data, codec
 
 
 def write_text(
@@ -204,42 +205,45 @@ def write_text(
 ) -> dict:
     """Atomically write ``text``; returns a small result dict for QML."""
     path = str(path)
-    parent = os.path.dirname(os.path.abspath(path)) or "."
+    # Editing a symlinked dotfile must rewrite its target, not replace the link
+    # with a regular file (which silently detaches it from the dotfiles tree).
+    target = os.path.realpath(path) if os.path.islink(path) else path
+    parent = os.path.dirname(os.path.abspath(target)) or "."
     if not os.path.isdir(parent):
         return {"ok": False, "error": "Folder does not exist"}
 
     try:
-        if expected_mtime and os.path.exists(path):
-            current = os.stat(path).st_mtime
+        if expected_mtime and os.path.exists(target):
+            current = os.stat(target).st_mtime
             if abs(current - float(expected_mtime)) > 1e-6:
                 return {"ok": False, "error": "File changed on disk", "stale": True}
     except OSError:
         pass
 
-    data = _encode(text, encoding, eol, bom)
+    data, codec = _encode(text, encoding, eol, bom)
     try:
-        mode = stat.S_IMODE(os.stat(path).st_mode)
+        mode = stat.S_IMODE(os.stat(target).st_mode)
     except OSError:
         mode = 0o644
 
     fd = None
     tmp = ""
     try:
-        fd, tmp = tempfile.mkstemp(dir=parent, prefix=f".{os.path.basename(path)}.", suffix=".tmp")
+        fd, tmp = tempfile.mkstemp(dir=parent, prefix=f".{os.path.basename(target)}.", suffix=".tmp")
         with os.fdopen(fd, "wb") as fh:
             fd = None
             fh.write(data)
             fh.flush()
             os.fsync(fh.fileno())
         os.chmod(tmp, mode)
-        os.replace(tmp, path)
-        st = os.stat(path)
+        os.replace(tmp, target)
+        st = os.stat(target)
         return {
             "ok": True,
             "path": path,
+            "encoding": codec,
             "size": st.st_size,
             "mtime": st.st_mtime,
-            "encoding": encoding,
             "eol": eol,
             "bom": bom,
         }

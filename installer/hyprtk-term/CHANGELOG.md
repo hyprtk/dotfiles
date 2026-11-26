@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.2.7 — 2026-11-26
+
+### Fixed
+
+- **Large pastes were silently truncated.** The pty master is non-blocking and
+  `Pty.write` returned 0 on `EAGAIN`, which `Terminal.write` discarded: a
+  measured 197 KB paste delivered 22,478 bytes with no error. Writes are now
+  queued and drained from a `QSocketNotifier` on writability; 200 KB round
+  trips intact (regression test included).
+- **Copying a long selection rebuilt every cell.** `selection_text` asked the VT
+  for per-cell strings line by line (0.55 s for a 10k-line scrollback). Whole
+  lines now come from the cached scrollback text; only the two partial end
+  lines build cells.
+- **Search highlighting was O(rows x matches) per frame** (2000 matches ×
+  every visible row, every paint). Matches are bucketed by line when the result
+  list changes, and the search colour is parsed once.
+- **Per-tab zoom was discarded** whenever settings reloaded — the wallpaper
+  sync calls `applySettings` on every tab activation, so zoom only lasted until
+  the next tab switch. Zoom is now a delta applied on top of the config size.
+- **Closing a tab leaked the master fd** when the child exited (a grandchild
+  holding the slave kept the pty alive), and a child that ignored `SIGHUP` kept
+  running against a closed master. The fd is closed on exit and `close()`
+  escalates to `SIGKILL` after a 250 ms grace period.
+- **A 1 MB paste made one libvterm FFI call per character.** Printable text is
+  written as its UTF-8 bytes between the paste markers in one call; control
+  characters still go through libvterm.
+- **A hand-edited `scrollback` was accepted unclamped on load** (only `save`
+  clamped it), and the two optional libvterm symbols were promised as optional
+  but called unconditionally.
+
 ## 0.2.6 — 2026-11-18
 
 ### Fixed

@@ -225,6 +225,11 @@ class Bridge(QObject):
         self._notify("Recording recovered", f"{Path(rec.path).name} ({human_size(size)})")
 
     def _set_status(self) -> None:
+        # An encoder that dies mid-session is only noticed by this poll; hand
+        # the partial file to the same salvage path a startup crash uses.
+        salvaged = self.recorder.take_salvaged()
+        if salvaged is not None:
+            self._salvage(salvaged)
         status = self.recorder.status()
         changed = status != self._status
         self._status = status

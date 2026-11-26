@@ -139,6 +139,7 @@ class TerminalView(QQuickPaintedItem):
         self._sel_anchor = None
         self._selecting = False
         self._matches: list = []
+        self._matches_by_line: dict[int, list] = {}
         self._match_index = -1
         self._search_case = False
         self._search_regex = False
@@ -146,11 +147,13 @@ class TerminalView(QQuickPaintedItem):
         self._default_argv: list[str] | None = None
         self._cwd: str | None = None
         self._font_size = self._cfg.font_size
+        self._zoom_delta = 0.0
         self._opacity = self._cfg.opacity
         self._bg = palette_mod.hex_to_int(self._colors.get("background", "#1e1e2e"), 0x1E1E2E)
         self._fg = palette_mod.hex_to_int(self._colors.get("foreground", "#e5e7eb"), 0xE5E7EB)
         self._accent = palette_mod.hex_to_int(self._colors.get("cursor", "#c084fc"), 0xC084FC)
         self._sel_color = palette_mod.hex_to_int(self._colors.get("selection", "#22d3ee"), 0x22D3EE)
+        self._search_color = palette_mod.hex_to_int(self._colors.get("search", "#f9e2af"), 0xF9E2AF)
 
         self._paint_timer = QTimer(self)
         self._paint_timer.setSingleShot(True)
@@ -284,6 +287,7 @@ class TerminalView(QQuickPaintedItem):
         self._fg = palette_mod.hex_to_int(self._colors.get("foreground", "#e5e7eb"), 0xE5E7EB)
         self._accent = palette_mod.hex_to_int(self._colors.get("cursor", "#c084fc"), 0xC084FC)
         self._sel_color = palette_mod.hex_to_int(self._colors.get("selection", "#22d3ee"), 0x22D3EE)
+        self._search_color = palette_mod.hex_to_int(self._colors.get("search", "#f9e2af"), 0xF9E2AF)
 
     @Slot("QVariant", "QVariant")
     def applySettings(self, cfg, colors) -> None:   # noqa: N802
@@ -295,7 +299,10 @@ class TerminalView(QQuickPaintedItem):
             except (TypeError, ValueError):
                 new_cfg = settings_mod.Settings()
         self._cfg = new_cfg
-        self._font_size = new_cfg.font_size
+        # Keep a per-tab zoom across settings reloads (the wallpaper sync calls
+        # this on every tab activation).
+        self._font_size = settings_mod.clamp_font_size(
+            new_cfg.font_size + self._zoom_delta)
         self._opacity = settings_mod.clamp_opacity(new_cfg.opacity)
         if colors is not None:
             try:
@@ -358,6 +365,7 @@ class TerminalView(QQuickPaintedItem):
         cols, rows = self._grid()
         if self._term.resize(rows, cols):
             self._matches = []
+            self._matches_by_line = {}
             self._match_index = -1
             self.searchChanged.emit()
         self._scroll = min(self._scroll, self._term.vt.scrollback_len)
@@ -484,13 +492,19 @@ class TerminalView(QQuickPaintedItem):
         painter.fillRect(QRectF(pad + start * self._cw, y,
                                 (end - start) * self._cw, self._ch), colour)
 
+    def _reindex_matches(self) -> None:
+        """Bucket matches by line: the paint path asks per row, and scanning
+        every match for every row is O(rows x matches) per frame."""
+        buckets: dict[int, list] = {}
+        for index, match in enumerate(self._matches):
+            buckets.setdefault(match.line, []).append((index, match))
+        self._matches_by_line = buckets
+
     def _fill_matches_row(self, painter: QPainter, line: int, y: float, pad: int) -> None:
         if not self._matches or not self._term:
             return
-        base = palette_mod.hex_to_int(self._colors.get("search", "#f9e2af"), 0xF9E2AF)
-        for index, match in enumerate(self._matches):
-            if match.line != line:
-                continue
+        base = self._search_color
+        for index, match in self._matches_by_line.get(line, ()):
             colour = QColor(base)
             colour.setAlpha(170 if index == self._match_index else 60)
             painter.fillRect(
@@ -733,12 +747,14 @@ class TerminalView(QQuickPaintedItem):
         self._search_regex = bool(regex)
         if not self._term or not self._search_query:
             self._matches = []
+            self._matches_by_line = {}
             self._match_index = -1
             self.searchChanged.emit()
             self._schedule_paint()
             return 0
         self._matches = search_mod.find_matches(
             self._term.vt, self._search_query, self._search_case, self._search_regex)
+        self._reindex_matches()
         self._match_index = 0 if self._matches else -1
         if self._matches:
             self._jump_to_match(0)
@@ -856,11 +872,13 @@ class TerminalView(QQuickPaintedItem):
 
     def zoom(self, delta: float) -> None:           # noqa: N802
         self._font_size = settings_mod.clamp_font_size(self._font_size + float(delta))
+        self._zoom_delta = self._font_size - self._cfg.font_size
         self._metrics()
         self._resize_grid()
         self._schedule_paint()
 
     def resetZoom(self) -> None:                    # noqa: N802
+        self._zoom_delta = 0.0
         self._font_size = settings_mod.clamp_font_size(self._cfg.font_size)
         self._metrics()
         self._resize_grid()

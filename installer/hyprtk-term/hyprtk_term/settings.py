@@ -90,6 +90,8 @@ def _coerce(key: str, value, current):
         if isinstance(current, bool):
             return bool(value)
         if isinstance(current, int):
+            if key == "scrollback":
+                return clamp_scrollback(int(value))
             return max(0, int(value))
         if isinstance(current, float):
             return float(value)

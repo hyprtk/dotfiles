@@ -47,13 +47,22 @@ def selection_text(vt, selection: tuple[int, int, int, int] | None) -> str:
     if (l1, c1) < (l0, c0):
         l0, c0, l1, c1 = l1, c1, l0, c0
     out: list[str] = []
+    cols = getattr(vt, "cols", 0)
+    cached = getattr(vt, "line_text", None)
     for line in range(l0, l1 + 1):
+        # Whole lines come from the cached scrollback text; building cells for
+        # 10k lines is one ctypes call per cell (~0.55 s for a full copy).
+        first_partial = line == l0 and c0 > 0
+        last_partial = line == l1 and (c1 < cols if cols else True)
+        if cached is not None and cols and not first_partial and not last_partial:
+            out.append(cached(line))
+            continue
         cells = vt.line_cells(line)
         if not cells:
             out.append("")
             continue
-        start = c0 if line == l0 else 0
-        end = c1 if line == l1 else len(cells)
+        start = c0 if first_partial else 0
+        end = c1 if last_partial else len(cells)
         out.append(line_text(cells[start:end]))
     return "\n".join(out)
 

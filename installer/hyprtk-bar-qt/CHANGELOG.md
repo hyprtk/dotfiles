@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.43.25 — 2026-11-26
+
+- Vendor **hyprtk-term 0.2.7**: paste truncation, cached scrollback copy,
+  per-line search buckets, zoom preserved across settings reloads, master-fd
+  lifecycle, one-call printable paste.
+
 ## 0.43.24 — 2026-11-26
 
 - Vendor **hyprtk-file-manager 1.9.3**: share discovery passed
