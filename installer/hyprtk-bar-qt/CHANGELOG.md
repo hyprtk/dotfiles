@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.43.26 — 2026-11-26
+
+- Keep the vendored terminal's README screenshots (`docs/*.png`) with the
+  snapshot; 0.43.25 dropped them by excluding the whole `docs/` directory.
+
 ## 0.43.25 — 2026-11-26
 
 - Vendor **hyprtk-term 0.2.7**: paste truncation, cached scrollback copy,

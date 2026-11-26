@@ -1,5 +1,16 @@
 # Changelog
 
+## [v1.20.6] - 2026-11-26
+
+### Fixed
+
+- **hyprtk-bar-qt 0.43.26**: 0.43.25's terminal vendor excluded the whole
+  `docs/` directory, dropping the two README screenshots from the snapshot.
+  They are back; no code changed.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.5] - 2026-11-26
 
 ### Fixed
