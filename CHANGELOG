@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.20.13] - 2026-11-26
+
+### Documentation
+
+- **Six apps have wikis now**: term, editor, calculator, screenshot, recorder and
+  system manager. Each has a Home, the app's own notes (usage/configuration/
+  architecture as it applies), `_Sidebar.md` and `_Footer.md` carrying all twelve
+  suite repositories, the suite banner and icon, and the README's screenshots
+  copied in so they render. Content is lifted from each repository README — no
+  invented features; local links are rewritten to absolute GitHub URLs.
+- **Every app README links its wiki** through a new badge in the header row.
+- **The existing wikis link the new ones**: the dotfiles Home's project table now
+  covers every app rather than three, and the wiki lists in the dotfiles, bar-qt
+  and file-manager wikis name all nine.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): no package name changed.
+
 ## [v1.20.12] - 2026-11-26
 
 ### Documentation

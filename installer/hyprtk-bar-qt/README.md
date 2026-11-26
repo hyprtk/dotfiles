@@ -4,6 +4,7 @@
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
 [![version](https://img.shields.io/badge/version-0.43.27-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![wiki](https://img.shields.io/badge/wiki-bar-qt-C084FC?style=flat-square&labelColor=05060B)](https://github.com/hyprtk/hyprtk-bar-qt/wiki)
 [![license](https://img.shields.io/badge/license-GPL--2.0-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
 </div>
