@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.43.22 — 2026-11-26
+
+- Vendor **hyprtk-file-manager 1.9.2**: the 1.9.x dialogs referenced theme
+  tokens this app family does not define (`Theme.size()`, `radiusLg`,
+  `controlFill`, `rowHover`, `dim`, `fontFamily`, `warn`/`ok`/`info`), so they
+  drew with default fonts, invisible fills and colourless git badges. The tokens
+  are now in `theme/Theme.qml`, and `scripts/qmlcheck.py` (dev-only) keeps the
+  next one from shipping.
+
 ## 0.43.21 — 2026-11-26
 
 - Vendor **hyprtk-file-manager 1.9.1**: fixes the 1.9.0 startup failure (dialogs

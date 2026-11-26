@@ -87,7 +87,7 @@ On Arch/Gentoo/Nix the packaged `quickshell` is used and neither path runs.
 
 Vendor runtime files only. Exclude development material from the snapshot:
 `.git`, `spike/`, `tests/`, `PLAN*.md`, `QA.md`, `scripts/qa.sh`,
-`scripts/bootcheck.sh` and Python caches.
+`scripts/bootcheck.sh`, `scripts/qmlcheck.py` and Python caches.
 
 The bar is vendored byte-identically:
 

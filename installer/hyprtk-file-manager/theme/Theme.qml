@@ -45,8 +45,27 @@ Singleton {
     readonly property color danger: root.palette.color1 || "#f38ba8"
     readonly property color textOnAccent: root.palette.color0 || "#11111b"
 
+    // Status tones + dialog tokens shared with the rest of the suite
+    // (hyprtk-system-manager / bar-qt call these the same names).
+    readonly property color dim: root.alpha(root.foreground, 0.45)
+    readonly property color warn: root.palette.color3 || "#f9e2af"
+    readonly property color ok: root.palette.color2 || "#a6e3a1"
+    readonly property color info: root.palette.color4 || "#89b4fa"
+    readonly property color controlFill: root.alpha(root.background, 0.60)
+    readonly property color controlBorder: root.alpha(root.accent2, 0.30)
+    readonly property color rowHover: root.alpha(root.accent2, 0.12)
+
     readonly property int radius: 8
+    readonly property int radiusLg: 14
     readonly property int fontSize: 12
+    readonly property string fontFamily: "Noto Sans"
+
+    function size(step) {
+        // 0: 10, 1: 11, 2: 12, 3: 13, 4: 15, 5: 18, 6: 22
+        const ladder = [10, 11, 12, 13, 15, 18, 22];
+        const index = Math.max(0, Math.min(ladder.length - 1, step || 0));
+        return Math.max(9, Math.round(ladder[index] * root.fontSize / 12));
+    }
 
     // Request full-color icon variants; Papirus only colors folders at 22px+.
     readonly property int iconSource: 64

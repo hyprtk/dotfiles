@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.9.2 — 2026-11-26
+
+### Fixed
+
+- **The 1.9.x dialogs used theme tokens the app does not have.** They were
+  written against the settings app's vocabulary: `Theme.size(n)`,
+  `Theme.radiusLg`, `Theme.controlFill` / `controlBorder`, `Theme.rowHover`,
+  `Theme.dim`, `Theme.fontFamily` and the status tones `warn` / `ok` / `info`.
+  Every one of those bindings read `undefined`, so the new dialogs drew with
+  default font sizes, invisible control fills and colourless git badges
+  (`Pane.qml`). All of them are now declared in `theme/Theme.qml`, matching the
+  values the rest of the suite uses.
+- **`scripts/qmlcheck.py`** makes that class of bug loud: it fails when any
+  `Theme.<name>` reference is not declared by the singleton, and it runs
+  qmllint treating an unresolved type name (`TButton`) or a syntax error as a
+  failure rather than a warning. Wired into `scripts/qa.sh`; verified by
+  restoring the 1.9.0 files and watching it fail.
+
 ## 1.9.1 — 2026-11-26
 
 ### Fixed

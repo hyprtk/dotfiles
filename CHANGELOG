@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.20.2] - 2026-11-26
+
+### Fixed
+
+- **hyprtk-file-manager 1.9.2** (bar 0.43.22 vendors it): the 1.9.x dialogs
+  used theme tokens this app family does not define — `Theme.size(n)`,
+  `radiusLg`, `controlFill` / `controlBorder`, `rowHover`, `dim`, `fontFamily`
+  and the status tones `warn` / `ok` / `info` — so every binding read
+  `undefined`: default font sizes, invisible control fills and colourless git
+  badges in the listing. The tokens are declared in `theme/Theme.qml`.
+- **Static QML gate**: `scripts/qmlcheck.py` (dev-only) fails when a `Theme`
+  reference is undeclared or qmllint reports an unresolved type or syntax error.
+  Gate carried from v1.20.0 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+  0 Unexpected / 0 TODO): no distro package name changed.
+
 ## [v1.20.1] - 2026-11-26
 
 ### Fixed
