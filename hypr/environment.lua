@@ -8,7 +8,7 @@ hl.env("XCURSOR_THEME", "Adwaita")
 hl.env("XCURSOR_SIZE", "24")
 hl.env("GTK_THEME", "Kripton-v40:dark")
 hl.env("XDG_SESSION_TYPE", "wayland")
--- Preferred terminal for the session: hyprtk-bar's quick links, hyprtk-fm's
+-- Preferred terminal for the session: the bar's quick links, hyprtk-fm's
 -- "Open terminal here", the editor's terminal action and anything else that
 -- honours $TERMINAL resolve this to the suite's terminal. Alacritty stays
 -- installed as the fallback (and because the gum menus tag their window with
@@ -22,7 +22,7 @@ if hypr_home then
     hl.env("PATH", hypr_home .. "/.local/bin:" .. (os.getenv("PATH") or ""))
 end
 
--- Suite file manager: hyprtk-bar's quick links and tools honouring
+-- Suite file manager: the bar's quick links and tools honouring
 -- $FILEMANAGER resolve this instead of the distro default (Thunar remains the
 -- fallback in the Super+F bind).
 hl.env("FILEMANAGER", "hyprtk-fm")

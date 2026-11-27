@@ -1,7 +1,7 @@
 """Pure (toolkit-free) data readers for the hyprtk-bar-qt system monitor.
 
-Ported from the GTK4 ``hyprtk-bar``'s ``monitor_data`` (it was already free of
-GTK/GI). Everything is plain Python over /proc + /sys so the readers work
+Ported from the bar's earlier GTK implementation, which already kept these
+readers free of any toolkit. Everything is plain Python over /proc + /sys so the readers work
 without a display and are trivially testable. Every reader is defensive: on any
 error it returns a zero/empty value rather than raising. Rate readers (CPU,
 disk I/O, network) are sampler classes that keep a previous sample and compute

@@ -1,7 +1,7 @@
 # Vendored: pywal16
 
 This directory is a **verbatim copy** of the pywal16 source tree, vendored into
-hyprtk-bar so the bar (and the merged `1-install.sh`) no longer depend on a
+hyprtk-bar-qt so the bar (and the merged `1-install.sh`) no longer depend on a
 separate system/AUR install of `python-pywal16-git`.
 
 ## Provenance
@@ -32,7 +32,7 @@ Dev/meta only, none of it needed at runtime: `.git/`, `.github/`, `tests/`,
 ## How it is consumed
 
 No `pip install`, no PyPI, no build step. `install.sh` copies this directory to
-`~/.local/share/hyprtk-bar/vendor/pywal16/` and drops a `wal` launcher that puts
+`~/.local/share/hyprtk-bar-qt/vendor/pywal16/` and drops a `wal` launcher that puts
 the tree on `PYTHONPATH` and runs the bar's venv Python:
 
 ```bash
@@ -45,7 +45,7 @@ by the optional image export path in `export.py`.
 
 ## Do not edit
 
-Everything here is upstream code. Local fixes belong in hyprtk-bar, not in the
+Everything here is upstream code. Local fixes belong in the bar repo, not in the
 vendored tree — otherwise the next update clobbers them.
 
 ## Updating
@@ -60,7 +60,7 @@ rsync -a \
   --exclude '.git/' --exclude '.github/' --exclude 'tests/' \
   --exclude '.travis.yml' --exclude '.pylintrc' --exclude '.gitignore' \
   --exclude 'FUNDING.yml' --exclude '__pycache__/' --exclude '*.pyc' \
-  ./ ~/Projects/AI-Projects/hyprtk-bar/vendor/pywal16/
+  ./ ~/Projects/AI-Projects/hyprtk-bar-qt/vendor/pywal16/
 ```
 
 Then update the version/commit/date in the table above and re-run the bar's

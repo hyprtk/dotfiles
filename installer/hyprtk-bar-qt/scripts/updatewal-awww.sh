@@ -5,7 +5,7 @@
 # ----------------------------------------------------- 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Bundled wal (vendored pywal16): prefer $HYPRTK_WAL (set by hyprtk-bar), then
+# Bundled wal (vendored pywal16): prefer $HYPRTK_WAL (set by the bar), then
 # the launcher beside this install, then PATH.
 WAL="${HYPRTK_WAL:-}"
 if [ -z "$WAL" ] && [ -x "$SCRIPT_DIR/../venv/bin/wal" ]; then

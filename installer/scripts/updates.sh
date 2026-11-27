@@ -4,7 +4,7 @@
 # by hyprtk (Kori Tk) (2026)
 # -----------------------------------------------------
 # Pending-update count, distro-agnostic. Detects the package manager and emits
-# the waybar-style JSON the hyprtk-bar updates module reads. Every query is
+# the waybar-style JSON the bar's updates module reads. Every query is
 # read-only (no sudo, no index/cache writes), so it is safe on a timer.
 #
 # Output contract: {"text": "<n>", "alt": "<n>", "tooltip": "<n> Updates", "class": "green|yellow|red"}

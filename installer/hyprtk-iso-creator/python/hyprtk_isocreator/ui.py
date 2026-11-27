@@ -22,8 +22,8 @@ class Palette:
     err: str = "#f38ba8"      # color1
     warn: str = "#f9e2af"     # color3
     opacity: float = 0.92     # panel background alpha (the bar's `opacity`)
-    theme_name: str = ""      # active hyprtk-bar theme profile
-    source: str = "pywal"     # hyprtk-bar theme source
+    theme_name: str = ""      # active bar theme profile
+    source: str = "pywal"     # bar theme source
 
 
 def _read_json(path: str) -> dict:
@@ -38,7 +38,7 @@ def load_palette() -> Palette:
     home = os.path.expanduser("~")
     p = Palette()
     bar = _read_json(os.path.join(home, ".config", "hyprtk-bar-qt", "config.json"))
-    if not bar:  # fall back to a legacy bar install
+    if not bar:  # fall back to the legacy config of the pre-Qt bar
         bar = _read_json(os.path.join(home, ".config", "hyprtk-bar", "config.json"))
     theme = bar.get("theme") or {}
     source = str(theme.get("source") or "pywal")

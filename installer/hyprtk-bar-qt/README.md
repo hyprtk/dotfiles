@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-bar-qt — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-0.43.29-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.43.30-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![wiki](https://img.shields.io/badge/wiki-bar-qt-C084FC?style=flat-square&labelColor=05060B)](https://github.com/hyprtk/hyprtk-bar-qt/wiki)
 [![license](https://img.shields.io/badge/license-GPL--2.0-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
@@ -17,8 +17,7 @@ The hyprtk taskbar, rewritten on Qt. **QML presentation + Python/IPC logic**,
 built on [Quickshell](https://quickshell.org/) (a QtQuick toolkit that provides
 Wayland layer-shell surfaces, Hyprland IPC, SNI tray, MPRIS, PipeWire and more).
 
-This is the hyprtk taskbar, on Qt — it replaced the GTK4 `hyprtk-bar`. The
-rewrite exists because PySide6/QtWidgets has **no supported layer-shell binding
+This is the hyprtk taskbar, on Qt. The rewrite exists because PySide6/QtWidgets has **no supported layer-shell binding
 for Python** — the supported route for a Wayland bar is QML — so the shell is
 QML and any logic that is awkward in QML lives in a toolkit-free Python backend.
 

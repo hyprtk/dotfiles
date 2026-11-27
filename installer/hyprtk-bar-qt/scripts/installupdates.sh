@@ -7,7 +7,7 @@
 # dependency (no library.sh, no yay/timeshift/btrfs assumptions).
 
 # ─────────────────────────────────────────────────────────────────
-#   HYPRTK · hyprtk-bar · updates
+#   HYPRTK · hyprtk-bar-qt · updates
 #   Part of the Hyprtk desktop suite · github.com/hyprtk
 # ─────────────────────────────────────────────────────────────────
 

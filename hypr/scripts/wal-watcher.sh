@@ -24,7 +24,7 @@ while true; do
         cp "$CURRENT" ~/.cache/current-wallpaper.png 2>/dev/null
         hyprctl reload 2>/dev/null
         ~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
-        # hyprtk-bar owns the taskbar + notifications bus
+        # the bar owns the taskbar + notifications bus
         [ -r "$WOB_PID" ] && kill "$(cat "$WOB_PID")" 2>/dev/null
         pkill -f "tail -f $WOB_FIFO" 2>/dev/null
         rm -f "$WOB_FIFO"

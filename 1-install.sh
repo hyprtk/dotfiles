@@ -30,7 +30,7 @@ case "$SCRIPT_DIR" in
 esac
 
 # User-local bin dirs. openSUSE (and some minimal installs) do not put
-# ~/.local/bin on PATH for non-login shells, so bare `wal`/`hyprtk-bar`/
+# ~/.local/bin on PATH for non-login shells, so bare `wal`/`hyprtk-bar-qt`/
 # standalone tools would be "command not found". Prepend both, idempotently.
 case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
@@ -1054,7 +1054,7 @@ else
         _spin "Installing oh-my-zsh..." "_installSymLink oh-my-zsh ~/.oh-my-zsh/oh-my-zsh.sh $SCRIPT_DIR/configs/oh-my-zsh/oh-my-zsh.sh ~/.oh-my-zsh" "$LOG_FILE"
         _ok "Standalone apps installed"
 
-        # ── hyprtk-bar ──────────────────────────────────────────────
+        # ── hyprtk-bar-qt ───────────────────────────────────────────
         _step "Installing hyprtk-bar-qt"
         _spin "Installing hyprtk-bar-qt..." "bash $SCRIPT_DIR/installer/hyprtk-bar-qt/install.sh" "$LOG_FILE"
         _ok "hyprtk-bar-qt installed (autostarted by autostart.lua; owns the notification daemon; hosts the arc menu overlay)"

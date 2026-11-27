@@ -1,10 +1,11 @@
 """Config paths for hyprtk-bar-qt.
 
-The Qt bar keeps its **own** config (``~/.config/hyprtk-bar-qt/config.json``),
-separate from the GTK bar (``~/.config/hyprtk-bar/config.json``), which is only read once for migration, so the two bars are fully independent.
-bars can be configured independently. ``seed_from_gtk`` migrates an existing
-setup: it builds the Qt config from the GTK config and re-applies the Qt-only
-keys the Qt bar owns (so a previously-configured Qt bar keeps its overrides).
+The Qt bar keeps its **own** config (``~/.config/hyprtk-bar-qt/config.json``).
+``seed_from_gtk`` migrates a pre-Qt setup once: it builds the Qt config from the
+legacy ``~/.config/hyprtk-bar/config.json`` (the retired GTK bar's file, if it is
+still on disk) and re-applies the Qt-only keys the Qt bar owns, so a
+previously-configured Qt bar keeps its overrides. After that first run the config
+files are independent.
 
 Toolkit-free; importable both as a package module and when the file is run as a
 script (``python3 paths.py``).

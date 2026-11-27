@@ -16,7 +16,7 @@ pywal and imported themes render identically.
 """
 
 # ─────────────────────────────────────────────────────────────────
-#   HYPRTK · hyprtk-bar-qt · theme_import (ported from hyprtk-bar)
+#   HYPRTK · hyprtk-bar-qt · theme_import
 #   Part of the Hyprtk desktop suite · github.com/hyprtk
 # ─────────────────────────────────────────────────────────────────
 
@@ -504,7 +504,7 @@ def _safe_theme_dir(theme_name: str):
 
 
 def parse_palette(theme_name: str) -> dict | None:
-    """Parse an imported theme into a hyprtk-bar palette dict, or None."""
+    """Parse an imported theme into a bar palette dict, or None."""
     theme_dir = _safe_theme_dir(theme_name)
     if theme_dir is None:
         return None

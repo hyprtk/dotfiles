@@ -1,6 +1,6 @@
 #!/bin/bash
-# ── hyprtk-bar least-privilege sudo ───────────────────────────────────────
-# Installs /etc/sudoers.d/hyprtk-bar granting the desktop user passwordless
+# ── hyprtk desktop least-privilege sudo ──────────────────────────────────
+# Installs /etc/sudoers.d/hyprtk-desktop granting the desktop user passwordless
 # access ONLY to the exact commands the bar invokes non-interactively:
 #   - dmidecode (the system monitor's DIMM readout)
 #   - hyprtk-system-kill (killing SYSTEM-owned processes from the monitor's
@@ -16,7 +16,10 @@
 
 set -euo pipefail
 
-SUDOERS_D="/etc/sudoers.d/hyprtk-bar"
+SUDOERS_D="/etc/sudoers.d/hyprtk-desktop"
+# The drop-in used to be named after the retired GTK bar; drop that file so a
+# stale copy cannot keep granting the same commands.
+LEGACY_SUDOERS_D="/etc/sudoers.d/hyprtk-bar"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HELPER_SRC="$SCRIPT_DIR/hyprtk-system-kill"
 HELPER_DST="/usr/local/bin/hyprtk-system-kill"
@@ -34,6 +37,10 @@ if ! command -v visudo >/dev/null 2>&1; then
     exit 0
 fi
 install -d -m 0750 /etc/sudoers.d
+if [ -f "$LEGACY_SUDOERS_D" ]; then
+    rm -f "$LEGACY_SUDOERS_D"
+    echo "ok: removed legacy $LEGACY_SUDOERS_D"
+fi
 
 # Resolve the desktop user: the sudo invoker, a pkexec caller, else $USER.
 if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
@@ -56,7 +63,7 @@ else
     echo "warn: $HELPER_SRC not found; skipping helper install (system-process kill unavailable)"
 fi
 
-CONTENT="# hyprtk-bar: passwordless sudo for the desktop user.
+CONTENT="# hyprtk-desktop: passwordless sudo for the desktop user.
 # Least privilege: only the system monitor's dmidecode DIMM readout and the
 # scoped hyprtk-system-kill helper run via sudo -n (see monitor_data.py /
 # setup-sudoers.sh). Everything else uses pkexec, which still prompts.

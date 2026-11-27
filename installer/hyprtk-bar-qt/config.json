@@ -114,7 +114,6 @@
     "start_button": true,
     "start_icon": "view-grid-symbolic",
     "start_glyph": "",
-    "start_command": "~/.local/share/hyprtk-bar/scripts/hyprtk-bar-menu-toggle.sh",
     "pinned": []
   },
   "workspaces": {

@@ -36,7 +36,7 @@ def _read_json(path: str) -> dict:
 
 
 def load_palette() -> Palette:
-    """Resolve the palette from the running hyprtk-bar theme.
+    """Resolve the palette from the running bar's theme.
 
     The bar records its active theme in ~/.config/hyprtk-bar-qt/config.json
     (source, theme_name, manual colours, opacity); for the common ``pywal``
@@ -46,7 +46,7 @@ def load_palette() -> Palette:
     home = os.path.expanduser("~")
     p = Palette()
     bar = _read_json(os.path.join(home, ".config", "hyprtk-bar-qt", "config.json"))
-    if not bar:  # fall back to a legacy bar install
+    if not bar:  # fall back to the legacy config of the pre-Qt bar
         bar = _read_json(os.path.join(home, ".config", "hyprtk-bar", "config.json"))
     theme = bar.get("theme") or {}
     source = str(theme.get("source") or "pywal")

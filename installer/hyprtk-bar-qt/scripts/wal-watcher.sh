@@ -7,7 +7,7 @@
 # palette, copied configs and icon colours.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Bundled wal (vendored pywal16): prefer $HYPRTK_WAL (set by hyprtk-bar), then
+# Bundled wal (vendored pywal16): prefer $HYPRTK_WAL (set by the bar), then
 # the launcher beside this install, then PATH. The watcher autostarts under
 # Hyprland's minimal PATH, so the beside-this-install path matters here.
 WAL="${HYPRTK_WAL:-}"
@@ -40,7 +40,7 @@ while true; do
         cp "$CURRENT" ~/.cache/current-wallpaper.png 2>/dev/null
         hyprctl reload 2>/dev/null
         "$SCRIPT_DIR/change-icons.sh"
-        # hyprtk-bar owns the taskbar + notifications bus
+        # the bar owns the taskbar + notifications bus
         [ -r "$WOB_PID" ] && kill "$(cat "$WOB_PID")" 2>/dev/null
         pkill -f "(^|/)tail -f ${WOB_FIFO//./\\.}$" 2>/dev/null
         rm -f "$WOB_FIFO"

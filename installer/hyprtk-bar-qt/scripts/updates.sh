@@ -1,5 +1,5 @@
 #!/bin/bash
-# updates.sh — pending-package-update count for the hyprtk-bar updates module.
+# updates.sh — pending-package-update count for the bar's updates module.
 #
 # Distro-agnostic: detects the package manager and counts pending updates,
 # emitting the waybar-style JSON the module reads. Safe to run on a timer —
@@ -9,7 +9,7 @@
 #   {"text": "<count>", "alt": "<count>", "tooltip": "<count> Updates", "class": "green|yellow|red"}
 
 # ─────────────────────────────────────────────────────────────────
-#   HYPRTK · hyprtk-bar · updates
+#   HYPRTK · hyprtk-bar-qt · updates
 #   Part of the Hyprtk desktop suite · github.com/hyprtk
 # ─────────────────────────────────────────────────────────────────
 

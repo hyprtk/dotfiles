@@ -6,7 +6,7 @@ launched through ``pkexec``, so the Qt app never runs as root and isn't subject
 to pkexec's stripped environment.
 
 A frameless, non-resizable wizard over ``core``, themed from the running
-hyprtk-bar palette (``palette.load_palette``). The compositor draws the pywal
+bar palette (``palette.load_palette``). The compositor draws the pywal
 border + rounding; the panel is frosted at the bar theme's opacity.
 """
 

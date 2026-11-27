@@ -266,8 +266,8 @@ _build_skel() {
     # into the source tree (see .gitignore). Those launchers are generated and
     # carry absolute /home/<builder> paths, so never vendor them: the target
     # user's hyprtk-first-run (re)creates them for its own HOME. Shipping the
-    # stale ones made first-run skip the bar install (the launcher existed and
-    # was executable) and left a dangling ~/.local/bin/hyprtk-bar.
+    # stale ones made first-run skip an app install (the launcher existed and
+    # was executable) and left a dangling /home/<builder> path behind.
     rsync -a --delete \
         --exclude='.git/' \
         --exclude='.scratch/' \
@@ -276,8 +276,6 @@ _build_skel() {
         --exclude='distro/' \
         --exclude='configs/root/.cache/' \
         --exclude='configs/root/.local/' \
-        --exclude='installer/standalone/hyprtk-bar' \
-        --exclude='installer/standalone/hyprtk-bar-*-toggle.sh' \
         --exclude='installer/standalone/wal' \
         --exclude='installer/standalone/hyprtk-usb-gui' \
         --exclude='installer/standalone/hyprtk-usb-helper' \

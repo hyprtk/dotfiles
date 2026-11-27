@@ -4,7 +4,7 @@
 # installer/scripts/library.sh, and by the top-level 1-install.sh. It detects
 # the host package manager and provides install / remove / query / AUR wrappers
 # so the dotfiles install on any Linux distribution — the same portability model
-# as hyprtk-bar/install.sh.
+# as hyprtk-bar-qt/install.sh.
 #
 # Supported families:
 #   Arch (pacman, +AUR via yay/paru)   Debian/Ubuntu (apt)

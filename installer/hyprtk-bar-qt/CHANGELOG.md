@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.43.30 — 2026-11-27
+
+- **The retired GTK bar is gone from the payload.** Four dead legacy copies in
+  `scripts/` (`hyprtk-bar-menu-toggle.sh`, `-arc-toggle.sh`,
+  `-clipboard-toggle.sh`, `hyprtk-bar-widget-move.sh`) were shadowed by the live
+  `bin/hyprtk-bar-qt-*` helpers and nothing invoked them; removed. The shipped
+  `config.json` also carried a dead `center.start_command` pointing at
+  `~/.local/share/hyprtk-bar/scripts/...`, a tree the GTK bar owned and nothing
+  creates any more — no code read the key, so it is dropped. Remaining comments
+  and docstrings that still named the old bar now say what they mean (the bar,
+  the bar repo). The GTK config migration shim is unchanged: `seed_from_gtk()`
+  still reads `~/.config/hyprtk-bar/config.json` once, so an upgrade keeps its
+  settings.
+
 ## 0.43.29 — 2026-11-27
 
 - **Task-list icons resolve as soon as `DesktopEntries` has loaded.** A bar

@@ -15,7 +15,7 @@ wal -i "$WALLPAPER" -n -q
 cp "$WALLPAPER" ~/.cache/current-wallpaper.png 2>/dev/null
 hyprctl reload 2>/dev/null
 ~/hyprtk/assets/papirus-icons/scripts/change-icons.sh
-# hyprtk-bar owns the taskbar + notifications bus. Keep the progress fifo in
+# the bar owns the taskbar + notifications bus. Keep the progress fifo in
 # the private runtime dir (mode 600) so another user can't plant/hijack it.
 WOB_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 WOB_FIFO="$WOB_DIR/wobpipe"

@@ -6,7 +6,7 @@ wizard. The single privileged operation — running ``hyprtk-iso-builder.sh``
 ``hyprtk_isocreator.helper`` launched through ``pkexec``, so the Qt app never
 runs as root. The builder's live output is shown in a scrolling log.
 
-A frameless, non-resizable wizard themed from the running hyprtk-bar palette
+A frameless, non-resizable wizard themed from the running bar palette
 (``ui.load_palette``). The compositor draws the pywal border + rounding.
 """
 

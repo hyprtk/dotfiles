@@ -1,5 +1,34 @@
 # Changelog
 
+## [v1.20.16] - 2026-11-27
+
+### Changed
+
+- **The retired GTK bar is gone from the suite.** hyprtk-bar (GTK4) was archived
+  on 2026-10-13 and replaced by hyprtk-bar-qt; the last references to it are now
+  removed:
+
+  - **hyprtk-bar-qt 0.43.30** — deleted four dead `scripts/hyprtk-bar-*-toggle.sh`
+    / `widget-move.sh` copies (the live helpers are `bin/hyprtk-bar-qt-*`), and
+    dropped the shipped `center.start_command`, which pointed into
+    `~/.local/share/hyprtk-bar/`, a tree nothing creates any more. The GTK config
+    migration shim is unchanged, so an upgrade keeps its settings.
+  - **Sudoers drop-in renamed** to `/etc/sudoers.d/hyprtk-desktop`; the old
+    `/etc/sudoers.d/hyprtk-bar` is deleted when the installer runs, so a stale
+    copy cannot keep granting the same commands.
+  - **ISO builder** no longer excludes `installer/standalone/hyprtk-bar*`, paths
+    that have not existed for months.
+  - Comments and docstrings across `1-install.sh`, `hyprtk-iso-creator`,
+    `hyprtk-usb` and the bar's scripts now say "the bar" instead of naming the
+    retired one. The palette resolvers still fall back to
+    `~/.config/hyprtk-bar/config.json` — that is the documented migration path for
+    a pre-Qt setup, not a live dependency.
+
+- **Docs** — the dotfiles wiki lost the GTK bar's page and every link to it; its
+  bar references now name hyprtk-bar-qt, including the Quickshell/Qt >= 6.6
+  dependency that replaced the gtk-layer-shell floor. The GTK bar's own wiki is
+  an archive that points at this bar on every page.
+
 ## [v1.20.15] - 2026-11-27
 
 ### Fixes
