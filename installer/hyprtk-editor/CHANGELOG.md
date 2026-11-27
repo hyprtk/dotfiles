@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.8 — 2026-11-27
+
+### Added
+
+- **`*.conf` / `*.cfg` are coloured when they are actually INI-shaped.**
+  Pygments has no lexer for a generic `.conf`, so every Hyprland, dunst or
+  app config opened as plain text. Detection now looks at the content: a
+  `[section]` line or `key = value` / `key=value` lines (which covers
+  `monitor=…`, `bind = $mainMod, …`, `$mainMod = SUPER`) use the INI lexer,
+  while a file with its own grammar (Apache, nginx) stays plain text rather
+  than being mis-coloured.
+- **`*.rasi` (rofi themes) is CSS.** Pygments has no rasi lexer and its
+  `guess_lexer` claimed `css+lasso` from the first line, which read badly in
+  the status bar and could flip with the file's content. It is mapped
+  explicitly to `css`.
+
+INI files now show as `INI` in the status bar rather than `INI / Desktop`
+(`.desktop` uses Pygments' own Desktop-file lexer, so that label was never the
+one being shown for it).
+
 ## 0.2.7 — 2026-11-27
 
 ### Fixed

@@ -24,7 +24,7 @@ CURATED = [
     ("JSON", "json"),
     ("YAML", "yaml"),
     ("TOML", "toml"),
-    ("INI / Desktop", "ini"),
+    ("INI", "ini"),
     ("Markdown", "markdown"),
     ("HTML", "html"),
     ("CSS", "css"),
@@ -129,10 +129,66 @@ def lexer_for(alias: str):
         return TextLexer(stripnl=False, ensurenl=False)
 
 
-def detect(path: str, first_line: str = "") -> str:
-    """Return the Pygments alias best matching ``path`` (``text`` if unknown)."""
+# Filenames Pygments has no lexer for, or resolves to a name that reads wrong in
+# the status bar. Values are Pygments aliases. `.conf`/`.cfg` are decided by
+# content instead (see `_conf_alias`) because that extension covers INI-shaped
+# config, Hyprland-style `key = value`, and files that are neither.
+EXPLICIT_ALIASES = {
+    ".rasi": "css",   # rofi themes: CSS-shaped; guess_lexer calls them "css+lasso"
+}
+
+CONF_SUFFIXES = (".conf", ".cfg")
+
+# Enough to see the first section header or a handful of key = value lines.
+CONF_SAMPLE_BYTES = 4096
+
+
+def _conf_alias(text: str) -> str:
+    """INI if ``text`` is section/key-value shaped, plain text otherwise.
+
+    A generic `.conf` is either an INI-ish config (`[section]`, `key = value`,
+    which is what Hyprland, dunst and most app configs look like) or something
+    with its own grammar (Apache, nginx). Colouring the second kind as INI would
+    be a guess presented as fact, so only the first gets a lexer.
+    """
+    for line in (text or "").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped[0] in "#;":
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            return "ini"
+        if "=" in stripped and "{" not in stripped:
+            key = stripped.split("=", 1)[0].strip()
+            if key and all(char.isalnum() or char in "._-$" for char in key):
+                return "ini"
+    return "text"
+
+
+def _sample(path: str, text: str) -> str:
+    if text:
+        return text[:CONF_SAMPLE_BYTES]
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as handle:
+            return handle.read(CONF_SAMPLE_BYTES)
+    except OSError:
+        return ""
+
+
+def detect(path: str, first_line: str = "", text: str = "") -> str:
+    """Return the Pygments alias best matching ``path`` (``text`` if unknown).
+
+    ``text`` is optional context: a generic `.conf` is only coloured when its
+    content is INI-shaped, and callers that already hold the document pass it
+    instead of making this read the file.
+    """
     if path:
         name = os.path.basename(path)
+        lowered = name.lower()
+        for suffix, alias in EXPLICIT_ALIASES.items():
+            if lowered.endswith(suffix):
+                return alias
+        if lowered.endswith(CONF_SUFFIXES):
+            return _conf_alias(_sample(path, text) or first_line)
         try:
             lexer = get_lexer_for_filename(name, stripnl=False, ensurenl=False)
             return (lexer.aliases or ["text"])[0]
@@ -149,6 +205,7 @@ def detect(path: str, first_line: str = "") -> str:
         except ClassNotFound:
             pass
     return "text"
+
 
 
 def display_name(alias: str) -> str:

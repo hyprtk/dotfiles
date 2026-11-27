@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.20.19] - 2026-11-27
+
+### Fixes
+
+- **hyprtk-editor 0.2.8 — generic `.conf` files and rofi themes get coloured.**
+  Pygments has no lexer for a `.conf`, so Hyprland, dunst and app configs opened
+  as plain text. Detection now decides `.conf`/`.cfg` by content: a `[section]`
+  or `key = value` lines (`monitor=…`, `bind = $mainMod, …`, `$mainMod = SUPER`)
+  use the INI lexer, while a file with its own grammar (Apache, nginx) stays
+  plain text rather than being mis-coloured. `*.rasi` is mapped explicitly to
+  `css` — Pygments' `guess_lexer` used to claim `css+lasso` from the first line.
+  INI files now read `INI` in the status bar.
+
+Gate carried from v1.20.18 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): app code only, no package name changed.
+
 ## [v1.20.18] - 2026-11-27
 
 ### Fixes

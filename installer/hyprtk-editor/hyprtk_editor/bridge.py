@@ -274,7 +274,7 @@ class Bridge(QObject):
         loaded = fileio.read_text(path)
         data = loaded.as_dict()
         first_line = loaded.text.split("\n", 1)[0] if loaded.text else ""
-        alias = languages.detect(path, first_line)
+        alias = languages.detect(path, first_line, loaded.text)
         data["language"] = alias
         data["languageName"] = languages.display_name(alias)
         data["title"] = fileio.display_name(path)
