@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.43.32 — 2026-11-27
+
+- **Vendors hyprtk-term 0.2.9.** Copy and paste were dead in the terminal: its
+  view methods (`copy`, `paste`, `selectAll`, `clearScrollback`, `zoom`,
+  `kill`, …) were plain Python methods with no `@Slot`, so QML's call raised
+  "is not a function" and Ctrl+Shift+C/V, the right-click menu, zoom and tab
+  closing did nothing. The vendored copy carries the fix; the bar itself is
+  unchanged.
+
 ## 0.43.31 — 2026-11-27
 
 - **Vendors hyprtk-term 0.2.8.** The terminal's `applySettings` slot received

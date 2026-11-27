@@ -833,12 +833,20 @@ class TerminalView(QQuickPaintedItem):
         return select_mod.selection_text(self._term.vt, self._sel)
 
     # ------------------------------------------------------------------ slots --
+    #
+    # Everything below is called from QML. QML resolves a call through the
+    # meta-object, so a method that is not decorated with ``@Slot`` is simply
+    # absent there: the call raises "Property 'copy' of object TerminalView is
+    # not a function" and nothing happens. That is how Ctrl+Shift+C/V, the
+    # right-click Copy/Paste entries, zoom and Close tab were all dead.
 
+    @Slot()
     def copy(self) -> None:
         text = self.selection_text()
         if text:
             self._clipboard_put(text, False)
 
+    @Slot()
     def paste(self) -> None:
         if not self._term:
             return
@@ -848,6 +856,7 @@ class TerminalView(QQuickPaintedItem):
             self._scroll = 0
             self._schedule_paint()
 
+    @Slot()
     def selectAll(self) -> None:                    # noqa: N802
         if not self._term:
             return
@@ -857,12 +866,14 @@ class TerminalView(QQuickPaintedItem):
         self.selectionChanged.emit()
         self._schedule_paint()
 
+    @Slot()
     def clearSelection(self) -> None:               # noqa: N802
         self._sel = None
         self._sel_anchor = None
         self.selectionChanged.emit()
         self._schedule_paint()
 
+    @Slot()
     def clearScrollback(self) -> None:              # noqa: N802
         if self._term:
             self._term.vt.clear_scrollback()
@@ -882,11 +893,13 @@ class TerminalView(QQuickPaintedItem):
     def selectionText(self) -> str:                 # noqa: N802
         return self.selection_text()
 
+    @Slot()
     def scrollToBottom(self) -> None:               # noqa: N802
         self._scroll = 0
         self.stateChanged.emit()
         self._schedule_paint()
 
+    @Slot(float)
     def zoom(self, delta: float) -> None:           # noqa: N802
         self._font_size = settings_mod.clamp_font_size(self._font_size + float(delta))
         self._zoom_delta = self._font_size - self._cfg.font_size
@@ -894,6 +907,7 @@ class TerminalView(QQuickPaintedItem):
         self._resize_grid()
         self._schedule_paint()
 
+    @Slot()
     def resetZoom(self) -> None:                    # noqa: N802
         self._zoom_delta = 0.0
         self._font_size = settings_mod.clamp_font_size(self._cfg.font_size)
@@ -901,13 +915,16 @@ class TerminalView(QQuickPaintedItem):
         self._resize_grid()
         self._schedule_paint()
 
+    @Slot(str)
     def sendText(self, text: str) -> None:          # noqa: N802
         if self._term and text:
             self._term.send(text)
 
+    @Slot()
     def focusTerminal(self) -> None:                # noqa: N802
         self.forceActiveFocus()
 
+    @Slot()
     def kill(self) -> None:
         if self._term:
             self._term.close()

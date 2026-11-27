@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.9 — 2026-11-27
+
+### Fixed
+
+- **Copy, paste and every other QML-side action on the terminal were dead.**
+  QML resolves a call through the meta-object, and `copy`, `paste`,
+  `selectAll`, `clearSelection`, `clearScrollback`, `scrollToBottom`, `zoom`,
+  `resetZoom`, `sendText`, `focusTerminal` and `kill` were plain Python methods
+  with no `@Slot` decorator, so they were simply absent there: Ctrl+Shift+C/V,
+  the right-click Copy/Paste/Select all/Clear scrollback entries, Ctrl+plus and
+  Ctrl+0 zoom, and tab closing (`view.kill()`) all raised "Property 'paste' of
+  object TerminalView is not a function" and did nothing. All eleven are slots
+  now, verified live (Ctrl+Shift+C word-select → `wl-paste`, Ctrl+Shift+V into a
+  running `cat`, Ctrl+Shift+T/W tabs).
+- `tests/test_view_slots.py` scans the QML for `view.x()` calls and fails when
+  any of them is not a slot, so the class of bug cannot come back.
+
 ## 0.2.8 — 2026-11-27
 
 ### Fixed

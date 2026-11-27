@@ -1,5 +1,28 @@
 # Changelog
 
+## [v1.20.20] - 2026-11-27
+
+### Fixes
+
+- **hyprtk-term 0.2.9 — copy and paste work again.** Ctrl+Shift+C, Ctrl+Shift+V,
+  the right-click Copy/Paste/Select all/Clear scrollback entries, Ctrl+plus/0
+  zoom and closing a tab all did nothing. QML resolves a call through the
+  meta-object, and the view's methods (`copy`, `paste`, `selectAll`,
+  `clearSelection`, `clearScrollback`, `scrollToBottom`, `zoom`, `resetZoom`,
+  `sendText`, `focusTerminal`, `kill`) were plain Python methods with no
+  `@Slot` decorator — absent from the meta-object, so the call raised
+  "Property 'paste' of object TerminalView is not a function" and stopped.
+  Everything driven from Python alone (copy-on-select, painting, the pty) kept
+  working, which is why the app looked healthy.
+- Guards: `tests/test_view_slots.py` scans the QML for `view.x()` calls and
+  fails when one is not a slot, and `scripts/bootcheck.py` asserts the same
+  through the meta-object. Both fail on the 0.2.8 view.py.
+- **hyprtk-bar-qt 0.43.32** vendors the fixed terminal; the bar is otherwise
+  unchanged.
+
+Gate carried from v1.20.19 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): app code only, no package name changed.
+
 ## [v1.20.19] - 2026-11-27
 
 ### Fixes
