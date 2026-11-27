@@ -24,6 +24,7 @@ from PySide6.QtCore import (
     Slot,
 )
 from PySide6.QtGui import QColor, QGuiApplication
+from PySide6.QtQml import QJSValue
 from PySide6.QtQuick import QQuickTextDocument
 from PySide6.QtWidgets import QDialog, QFileDialog
 
@@ -44,6 +45,20 @@ OPEN_FILTER = (
     "*.json *.yaml *.yml *.toml *.ini *.conf *.sh *.zsh *.c *.h *.cpp *.hpp "
     "*.rs *.go *.lua *.sql *.css *.scss *.html *.xml *.desktop);;All files (*)"
 )
+
+
+def plain(value):
+    """Unwrap a JS container that crossed the QML boundary as a ``QJSValue``.
+
+    A ``QVariant`` slot is handed JS objects and arrays as an opaque QJSValue
+    (PySide6 6.12 does this for every container, object as well as array), so
+    ``isinstance(data, dict)`` is false and iterating raises "QJSValue object is
+    not iterable". Unwrap every container argument here; a value that already
+    arrived as a Python type passes straight through.
+    """
+    if isinstance(value, QJSValue):
+        return value.toVariant()
+    return value
 
 
 @dataclass
@@ -506,7 +521,7 @@ class Bridge(QObject):
         if item is None:
             return
         values = []
-        for entry in ranges or []:
+        for entry in plain(ranges) or []:
             try:
                 values.append((int(entry.get("start", 0)), int(entry.get("length", 0)), bool(entry.get("current", False))))
             except Exception:
@@ -519,6 +534,7 @@ class Bridge(QObject):
         if item is None:
             return
         positions = []
+        state = plain(state)
         if isinstance(state, dict) and state.get("ok"):
             positions = state.get("positions") or []
         item.highlighter.set_brackets(positions)
@@ -757,13 +773,14 @@ class Bridge(QObject):
     @Slot("QVariant")
     def saveSession(self, data):
         try:
-            self.session.save(dict(data or {}))
+            self.session.save(dict(plain(data) or {}))
         except Exception:
             pass
 
     # -- settings --------------------------------------------------------
     @Slot("QVariant")
     def updateSettings(self, data):
+        data = plain(data)
         if not isinstance(data, dict):
             return
         patch = {}

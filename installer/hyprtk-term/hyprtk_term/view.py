@@ -12,6 +12,7 @@ import os
 
 from PySide6.QtCore import QPointF, QRectF, Property, QTimer, Signal, Slot, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetricsF, QGuiApplication, QPainter, QPen
+from PySide6.QtQml import QJSValue
 from PySide6.QtQuick import QQuickItem, QQuickPaintedItem
 
 from . import boxdraw
@@ -46,6 +47,13 @@ KEYMAP = {
 }
 for _n in range(1, 13):
     KEYMAP[getattr(Qt, f"Key_F{_n}")] = KEY["FUNCTION_0"] + _n
+
+
+def _plain(value):
+    """Unwrap a JS container that crossed the QML boundary as a ``QJSValue``."""
+    if isinstance(value, QJSValue):
+        return value.toVariant()
+    return value
 
 
 class _Canvas:
@@ -291,7 +299,16 @@ class TerminalView(QQuickPaintedItem):
 
     @Slot("QVariant", "QVariant")
     def applySettings(self, cfg, colors) -> None:   # noqa: N802
-        """Called from QML with ``Bridge.config`` and ``Bridge.palette``."""
+        """Called from QML with ``Bridge.config`` and ``Bridge.palette``.
+
+        A JS object reaches a ``QVariant`` slot as an opaque ``QJSValue``, not a
+        dict (PySide6 6.12 does this for every container). Without unwrapping,
+        ``dict(cfg)`` raises, the ``except`` swallows it and every launch runs
+        on the dataclass defaults -- the user's font size, opacity and
+        scrollback silently ignored.
+        """
+        cfg = _plain(cfg)
+        colors = _plain(colors)
         new_cfg = settings_mod.Settings()
         if cfg is not None:
             try:

@@ -221,7 +221,6 @@ ApplicationWindow {
         if (activate !== false)
             activateTab(data.id);
         win.bump();
-        win.updateWelcome();
         win.scheduleSessionSave();
         return data.id;
     }
@@ -237,20 +236,21 @@ ApplicationWindow {
             outgoing.matches = win.matches;
             outgoing.matchIndex = win.matchIndex;
         }
+
         activeId = id;
         for (var key in panes)
             panes[key].visible = (key === id);
         var pane = panes[id];
         pane.visible = true;
         pane.focusEditor();
-        win.refreshFindForActive();
+        // Finish the switch (the pane is up, the title/status and the saved
+        // session agree) *before* touching the find bar: the per-tab find
+        // refresh calls back into the bridge, and a failure there must not
+        // leave this tab half-activated — that is how an opened document ends
+        // up invisible behind a stale welcome screen.
         win.bump();
-        win.updateWelcome();
         win.scheduleSessionSave();
-    }
-
-    function updateWelcome() {
-        welcome.visible = docs.length === 0;
+        win.refreshFindForActive();
     }
 
     function closeTab(id) {
@@ -297,7 +297,6 @@ ApplicationWindow {
                 activateTab(next.id);
         }
         win.bump();
-        win.updateWelcome();
         win.scheduleSessionSave();
     }
 
@@ -437,7 +436,6 @@ ApplicationWindow {
     function restoreSession() {
         var session = Bridge.loadSession();
         if (!cfg.restore_session || !session.docs || session.docs.length === 0) {
-            win.updateWelcome();
             win.reportDrafts();
             return;
         }
@@ -488,7 +486,6 @@ ApplicationWindow {
             win.activateTab(lastActive);
         else if (docs.length > 0)
             win.activateTab(docs[0].id);
-        win.updateWelcome();
         win.reportDrafts();
     }
 
@@ -990,7 +987,6 @@ ApplicationWindow {
             win.openPath(initial[i]);
         if (docs.length === 0)
             win.restoreSession();
-        win.updateWelcome();
         win.reportDrafts();
     }
 
@@ -1200,6 +1196,9 @@ ApplicationWindow {
                 anchors.fill: parent
             }
 
+            // The document count is the whole condition, so it stays a binding:
+            // an imperative `visible = ...` here destroys it, and one missed
+            // call leaves the welcome screen painted on top of a live document.
             Welcome {
                 id: welcome
                 anchors.fill: parent

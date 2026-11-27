@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.43.31 — 2026-11-27
+
+- **Vendors hyprtk-term 0.2.8.** The terminal's `applySettings` slot received
+  its config as a `QJSValue`, so `dict(cfg)` raised and every launch ran on the
+  dataclass defaults instead of the saved config (font size, opacity,
+  scrollback). The vendored copy carries the unwrap; the bar itself is
+  unchanged.
+
 ## 0.43.30 — 2026-11-27
 
 - **The retired GTK bar is gone from the payload.** Four dead legacy copies in

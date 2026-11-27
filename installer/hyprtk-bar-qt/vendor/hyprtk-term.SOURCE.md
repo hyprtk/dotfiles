@@ -1,7 +1,7 @@
 # hyprtk-term (vendored)
 
 Source: https://github.com/hyprtk/hyprtk-term
-Version: 0.2.6
+Version: 0.2.8
 
 Vendored source snapshot. The bar installer provisions this copy; the separate
 installer in that repository remains the source of truth.

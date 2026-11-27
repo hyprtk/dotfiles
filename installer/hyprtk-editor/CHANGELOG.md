@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.2.6 — 2026-11-27
+
+### Fixed
+
+- **An opened document was hidden behind the welcome screen.** Opening a file
+  built the tab and the editor pane correctly, then died inside
+  `activateTab()`: the per-tab find refresh calls `Bridge.setSearch(doc, [])`,
+  which raised `'QJSValue' object is not iterable` before the tab finished
+  activating — so the welcome screen stayed on top of a live document, and the
+  editor looked empty. Tab activation now finishes its own state (title, status,
+  session) before touching the find bar, and the welcome screen follows
+  `docs.length` as a binding again instead of an imperative assignment that one
+  missed call could leave stale.
+- **Every container that crosses the QML boundary was a no-op.** PySide6 6.12
+  hands JS objects *and* arrays to a `QVariant` slot as an opaque `QJSValue`,
+  not a dict or list, so `setSearch`, `setBrackets`, `updateSettings` and
+  `saveSession` all silently did nothing: no search highlighting, no bracket
+  matching, and settings (font size, word wrap, window size) never persisted.
+  A `plain()` helper unwraps `QJSValue` in each of those slots.
+- **The QA gate now asserts a document is actually visible**, not just that a
+  tab exists: the headless boot check opens a file and fails if the welcome
+  screen is still on top, if the pane text differs from the file, or if a
+  settings write from QML does not reach the bridge.
+
 ## 0.2.5 — 2026-11-26
 
 ### Changed

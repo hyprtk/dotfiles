@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.8 — 2026-11-27
+
+### Fixed
+
+- **Every launch ignored the saved settings.** `applySettings(cfg, colors)` is
+  called from QML, and PySide6 6.12 hands a JS object to a `QVariant` slot as an
+  opaque `QJSValue` rather than a dict, so `dict(cfg)` raised, the `except` in
+  the view swallowed it and the dataclass defaults won: a config of
+  `font_size: 9`, `opacity: 0.5` ran at 11 pt and 0.98 opacity. Both arguments
+  are unwrapped now, with a test that drives the slot with a real `QJSValue`.
+
 ## 0.2.7 — 2026-11-26
 
 ### Fixed

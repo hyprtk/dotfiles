@@ -1,5 +1,34 @@
 # Changelog
 
+## [v1.20.17] - 2026-11-27
+
+### Fixes
+
+- **hyprtk-editor 0.2.6 — an opened file no longer hides behind the welcome
+  screen.** Opening a document built the tab and the pane, then died inside
+  `activateTab()`: the per-tab find refresh calls `Bridge.setSearch(doc, [])`,
+  which raised `'QJSValue' object is not iterable` before the tab finished
+  activating, so the welcome screen stayed painted over a loaded document and
+  the editor looked empty (the status bar already showed the line count).
+  Tab activation now finishes its own state before touching the find bar, and
+  the welcome screen follows `docs.length` as a binding again instead of an
+  imperative assignment one missed call could leave stale.
+- **Both apps — every container crossing the QML boundary was a silent
+  no-op.** PySide6 6.12 hands JS objects *and* arrays to a `QVariant` slot as an
+  opaque `QJSValue`, not a dict or list. In the editor that meant no search
+  highlighting, no bracket matching, and settings (font size, word wrap, window
+  size) never applying or persisting; in the terminal `applySettings` fell back
+  to the dataclass defaults on every launch, so a config of `font_size: 9`,
+  `opacity: 0.5` ran at 11 pt and 0.98. Each affected slot now unwraps the value,
+  with tests that drive the real `QJSValue` and fail without it.
+- **hyprtk-bar-qt 0.43.31** — vendors hyprtk-term 0.2.8 (no bar code change).
+- **The editor's QA gate asserts what the bug looked like.** The headless boot
+  check now opens a file and fails if the welcome screen is still on top, if the
+  pane text differs from the file, or if a settings write from QML does not
+  reach both the bridge and the QML config. Its QML lint step also uses Qt 6
+  `qmllint` — the `/usr/bin` one on Arch is Qt 5 and was linting with the wrong
+  engine — and gates on load errors and unknown types.
+
 ## [v1.20.16] - 2026-11-27
 
 ### Changed
