@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.43.28 — 2026-11-27
+
+- **A dead window can no longer leave a permanent task-list button.** Hyprland's
+  `closewindow` event can be missed (an event-socket reconnect loses whatever
+  closed while it was down) and Quickshell's `refreshToplevels()` only ever adds
+  or updates — it never prunes — so a stale toplevel stayed in
+  `Hyprland.toplevels` for the life of the `qs` process. The bar then drew a
+  button for a window that no longer existed, and neither killing the app nor a
+  QML reload cleared it: the Hyprland singleton outlives a reload, and only a
+  new process starts from a clean `clients` poll. `Tasklist` now cross-checks the
+  model against `hyprctl -j clients` every 15 s and skips entries Hyprland no
+  longer lists, and calls `refreshToplevels()` for the inverse case (a missed
+  open). Only toplevels that predate the poll may be pruned, and an unreadable
+  poll hides nothing, so a window that opens while the snapshot is in flight is
+  never dropped. Seen live with `pamac-tray`, which — with no XEmbed tray host in
+  the session — creates an X11 window Hyprland announces and then loses the close
+  for.
+- **A task-list icon created before `DesktopEntries` had loaded refreshes
+  itself.** Restarting the bar with windows already open resolved their icons to
+  the generic `application-x-executable` fallback and kept it for the session;
+  the periodic regroup above re-resolves them on the next poll.
+
 ## 0.43.27 — 2026-11-26
 
 - **Desktop widgets survive a monitor mode change.** Hyprland drops other

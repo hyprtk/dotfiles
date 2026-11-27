@@ -9,6 +9,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Widgets
 import "../../theme"
 import "../../data"
@@ -18,6 +19,32 @@ RowLayout {
     spacing: 4
     readonly property int fs: BarConfig.fontSize(11)
     readonly property var pinned: (BarConfig.center.pinned || [])
+
+    // A missed Hyprland `closewindow` event (the event socket reconnecting loses
+    // whatever closed while it was down) leaves its toplevel in
+    // Hyprland.toplevels for the life of the process, because Quickshell's
+    // refreshToplevels() only ever adds or updates — it never prunes. The bar
+    // then draws a button for a window that no longer exists, and neither
+    // killing the app nor reloading the QML clears it: the Hyprland singleton
+    // outlives a reload, and only a new `qs` process starts from a clean poll.
+    // So cross-check the model against the live client list (and re-poll it, to
+    // catch a missed *open* as well) on a slow timer. Only a toplevel that was
+    // already in the model when the poll started may be pruned: one that opened
+    // while the snapshot was in flight is not in it yet, and hiding it would
+    // make a fresh window's button vanish for a whole interval.
+    property var live: null      // address set from `hyprctl clients`; null = unknown
+    property var atPollStart: null // model addresses when that poll began
+    property int liveEpoch: 0    // re-runs groups() when a poll lands
+
+    function _addrSet(list) {
+        const set = {};
+        for (const a of list)
+            set[String(a || "").toLowerCase().replace(/^0x/, "")] = true;
+        return set;
+    }
+    function _modelAddrs() {
+        return (Hyprland.toplevels.values || []).map(t => t.address);
+    }
 
     // groups() only re-evaluates when the toplevel *list* changes, but a window's
     // appId/title arrive after it is mapped (XWayland especially late). A window
@@ -59,12 +86,19 @@ RowLayout {
         return a.length > 0 && b.length > 0 && (a === b || a.includes(b) || b.includes(a));
     }
     function groups() {
-        const _rev = root._sig; // regroup when a toplevel's fields change (above)
+        const _rev = root._sig + "|" + root.liveEpoch; // regroup when a toplevel's fields change (above)
         const map = {};
         const label = {};
         for (const t of (Hyprland.toplevels.values || [])) {
             const raw = root._appId(t);
             if (!raw) continue; // appId/title not known yet — nothing to show
+            // Skip a toplevel Hyprland no longer lists (see `live` above). Only
+            // filter on a good poll, and only for a toplevel that predates it —
+            // an unreadable poll or a just-opened window must never hide the
+            // bar's whole window list.
+            const a = String(t.address || "").toLowerCase().replace(/^0x/, "");
+            if (root.live && root.atPollStart && root.atPollStart[a] && !root.live[a])
+                continue;
             const k = root._appKey(t);
             if (!map[k]) { map[k] = []; label[k] = raw; }
             map[k].push(t);
@@ -195,6 +229,36 @@ RowLayout {
                     root._focusWindow(root._recent(wins));
                 }
             }
+        }
+    }
+
+    Process {
+        id: clientsPoll
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let addrs = null;
+                try {
+                    const arr = JSON.parse(text);
+                    if (Array.isArray(arr) && arr.length >= 0)
+                        addrs = arr;
+                } catch (e) {
+                    addrs = null; // unreadable poll: keep showing what we have
+                }
+                root.live = addrs ? root._addrSet(addrs.map(c => c && c.address)) : null;
+                root.liveEpoch++;
+            }
+        }
+    }
+    Timer {
+        interval: 15000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            root.atPollStart = root._addrSet(root._modelAddrs());
+            Hyprland.refreshToplevels(); // a missed `openwindow`
+            clientsPoll.running = true;  // and a missed `closewindow`
         }
     }
 }
