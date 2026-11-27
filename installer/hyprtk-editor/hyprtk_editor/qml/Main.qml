@@ -1244,8 +1244,10 @@ ApplicationWindow {
                 }
                 Text {
                     visible: win.status.line > 0
-                    text: win.status.lang
-                    color: win.th.accent
+                    // Say when the colours are off rather than leaving the
+                    // language name looking like a broken highlighter.
+                    text: win.cfg.syntax === false ? win.status.lang + " · syntax off" : win.status.lang
+                    color: win.cfg.syntax === false ? Util.alpha(win.th.muted, 0.9) : win.th.accent
                     font.pixelSize: 10
                 }
                 Text {

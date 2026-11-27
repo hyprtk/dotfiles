@@ -3,7 +3,7 @@
 <img src="docs/branding/banner.png" alt="hyprtk-editor — part of the hyprtk suite" width="100%" />
 
 [![suite](https://img.shields.io/badge/suite-hyprtk-02DEDE?style=flat-square&labelColor=05060B)](https://github.com/hyprtk)
-[![version](https://img.shields.io/badge/version-0.2.6-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.2.7-FD4FB6?style=flat-square&labelColor=05060B)](CHANGELOG.md)
 [![wiki](https://img.shields.io/badge/wiki-editor-C084FC?style=flat-square&labelColor=05060B)](https://github.com/hyprtk/hyprtk-editor/wiki)
 [![license](https://img.shields.io/badge/license-MIT-5FB8F5?style=flat-square&labelColor=05060B)](LICENSE)
 
@@ -18,7 +18,7 @@ front, Python behind it. Opens like a notepad, grows into the parts of Kate
 that earn their keep: real tabs, a session, regex search, 600+ syntaxes, a
 command palette, line operations and a minimap.
 
-**Current version: 0.2.6** — see [CHANGELOG.md](CHANGELOG.md).
+**Current version: 0.2.7** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 

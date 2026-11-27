@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.7 — 2026-11-27
+
+### Fixed
+
+- **Toggling syntax highlighting did nothing to an open document.** The
+  highlighter keeps its decision in the per-document `opts`, and a settings
+  change only repainted the cached spans, so switching syntax off left the file
+  coloured and switching it on left a plain-text file plain until the next
+  keystroke. A settings change now recomputes the visible range, in both
+  directions.
+- **The status bar says when highlighting is off.** With `syntax: false` the
+  language cell read like a highlighter failure (`Python` and no colours); it
+  now reads `Python · syntax off` in the muted colour. That setting is the
+  entire "syntax highlighting is not applied" case — the highlighter itself
+  detects and colours the file correctly.
+
+### Gate
+
+- The headless boot check now opens a **Python** file and asserts the language
+  spans exist, that switching syntax off clears them immediately, and that
+  switching it back on restores them. Both new assertions were verified to fail
+  on the old code.
+
 ## 0.2.6 — 2026-11-27
 
 ### Fixed

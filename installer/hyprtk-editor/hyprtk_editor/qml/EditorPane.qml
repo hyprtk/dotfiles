@@ -521,7 +521,10 @@ Item {
     Connections {
         target: Bridge
         function onPaletteChanged() { pane.refreshHighlight(); miniCanvas.requestPaint(); }
-        function onSettingsChanged() { pane.refreshGit(); gitCanvas.requestPaint(); }
+        // A settings change can switch syntax highlighting off (or on) — a
+        // repaint of the cached spans would keep the old decision on screen
+        // until the next edit, so recompute from the new options.
+        function onSettingsChanged() { pane.scheduleRecompute(); pane.refreshGit(); gitCanvas.requestPaint(); }
     }
 
     onMinimapLinesChanged: miniCanvas.requestPaint()

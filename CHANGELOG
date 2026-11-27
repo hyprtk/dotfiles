@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.20.18] - 2026-11-27
+
+### Fixes
+
+- **hyprtk-editor 0.2.7 — a syntax-highlighting toggle now applies to open
+  documents at once.** The highlighter keeps its decision per document, and a
+  settings change only repainted the cached spans: switching syntax off left the
+  file coloured and switching it on left a plain file plain until the next
+  keystroke. A settings change recomputes the visible range in both directions.
+- **The status bar says when highlighting is off** — `Python · syntax off` in
+  the muted colour instead of a language name over uncoloured text. A config
+  with `syntax: false` is the whole "syntax highlighting is not applied" case;
+  language detection and the highlighter were correct (a Python file exposes
+  `import`/`def`/`class`, strings and comments when the setting is on).
+- **The editor gate covers it.** The headless boot check now opens a Python
+  file and asserts the language spans exist, that switching syntax off clears
+  them immediately, and that switching it back on restores them — both new
+  assertions were verified to fail on the old code.
+
 ## [v1.20.17] - 2026-11-27
 
 ### Fixes
