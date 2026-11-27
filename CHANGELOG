@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.20.15] - 2026-11-27
+
+### Fixes
+
+- **hyprtk-bar-qt 0.43.29 — task-list icons resolve as soon as
+  `DesktopEntries` has loaded.** A bar started with windows already open (a
+  restart, not a fresh login) built their task-list delegates before the
+  desktop-entry list finished loading (~1 s), so the icon lookup returned the
+  generic `application-x-executable` fallback and the button kept it for the
+  rest of the session — a function call is not a binding dependency, so nothing
+  re-resolved it. The icon lookup now reads `DesktopEntries.applications.values`,
+  which makes the icon a real binding: the list populating re-resolves every
+  button's icon. Verified by restarting the bar with three windows open.
+
+Gate carried from v1.20.4 (T1 1402/26/88/0, T2 9/9, audit 1516 rows /
+0 Unexpected / 0 TODO): app code only, no package name changed.
+
 ## [v1.20.14] - 2026-11-27
 
 ### Fixes

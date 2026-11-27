@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.43.29 — 2026-11-27
+
+- **Task-list icons resolve as soon as `DesktopEntries` has loaded.** A bar
+  started with windows already open (a restart, not a fresh login) created their
+  delegates before the desktop-entry list finished loading (~1 s), so
+  `iconFor()` returned the generic `application-x-executable` fallback and the
+  button kept it for the rest of the session: a function call is not a binding
+  dependency, so nothing re-resolved it. `iconFor()` now reads
+  `DesktopEntries.applications.values`, which makes `IconImage.source` a real
+  binding — the entry list populating (or changing) re-resolves every icon.
+  Verified by restarting the bar with three windows open: they showed fallbacks
+  before and their own icons within a second after.
+
 ## 0.43.28 — 2026-11-27
 
 - **A dead window can no longer leave a permanent task-list button.** Hyprland's
@@ -17,10 +30,9 @@
   never dropped. Seen live with `pamac-tray`, which — with no XEmbed tray host in
   the session — creates an X11 window Hyprland announces and then loses the close
   for.
-- **A task-list icon created before `DesktopEntries` had loaded refreshes
-  itself.** Restarting the bar with windows already open resolved their icons to
-  the generic `application-x-executable` fallback and kept it for the session;
-  the periodic regroup above re-resolves them on the next poll.
+- **Task-list icons created before `DesktopEntries` had loaded keep their own
+  icons** — fixed in 0.43.29; 0.43.28 still showed the generic fallback for a bar
+  restarted with windows already open.
 
 ## 0.43.27 — 2026-11-26
 

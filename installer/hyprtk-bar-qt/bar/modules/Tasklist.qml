@@ -69,6 +69,14 @@ RowLayout {
     }
     // Resolve an appId to a theme icon (desktop entry, symbolic preferred).
     function iconFor(appId) {
+        // Reading the entry list is what makes the delegate's `source` binding
+        // re-resolve once DesktopEntries finishes loading (~1 s after start).
+        // A function call on its own is not a binding dependency, so a bar
+        // restarted with windows already open used to keep the generic fallback
+        // icon for those windows for the rest of the session.
+        const entries = DesktopEntries.applications.values;
+        if (!entries.length)
+            return Quickshell.iconPath("application-x-executable", "application-x-executable");
         let e = null;
         try {
             e = DesktopEntries.byId(appId)
